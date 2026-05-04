@@ -17,11 +17,26 @@ import Sidebar from "../../sidebar/Sidebar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 
+const defaultFilters = {
+  state: "All",
+  offerStatus: "All",
+  sellerAccepted: "All",
+  assigned: "All",
+  search: "",
+  closed: "All",
+  offerMonth: "All",
+  closedMonth: "All",
+  year: "All",
+};
+
 const emptyForm = {
   address: "",
   city: "",
   zipCode: "",
   state: "",
+  propertyType: "Single Family",
+  onMarket: "No",
+  listedPrice: "",
   arv: "",
   rehabCost: "",
   desiredProfit: "",
@@ -59,17 +74,7 @@ function Wholesale() {
   const [tableLoading, setTableLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [form, setForm] = useState(emptyForm);
-  const [filters, setFilters] = useState({
-    state: "All",
-    offerStatus: "All",
-    sellerAccepted: "All",
-    assigned: "All",
-    search: "",
-    closed: "All",
-    offerMonth: "All",
-    closedMonth: "All",
-    year: "All",
-  });
+  const [filters, setFilters] = useState(defaultFilters);
 
   const persist = function persist(nextDeals) {
     setDeals(nextDeals);
@@ -144,6 +149,15 @@ function Wholesale() {
       return;
     }
 
+    if (name === "onMarket") {
+      setForm((prev) => ({
+        ...prev,
+        onMarket: value,
+        ...(value !== "Yes" ? { listedPrice: "" } : {}),
+      }));
+      return;
+    }
+
     if (name === "sellerAccepted") {
       setForm((prev) => ({
         ...prev,
@@ -183,6 +197,7 @@ function Wholesale() {
 
     const currencyFields = [
       "arv",
+      "listedPrice",
       "rehabCost",
       "desiredProfit",
       "mao",
@@ -202,6 +217,7 @@ function Wholesale() {
     const { name, value } = event.target;
     const currencyFields = [
       "arv",
+      "listedPrice",
       "rehabCost",
       "desiredProfit",
       "mao",
@@ -380,6 +396,7 @@ function Wholesale() {
       state: form.state.trim().toUpperCase(),
       zipCode: form.zipCode.trim(),
       arv: parseNumber(form.arv),
+      listedPrice: parseNumber(form.listedPrice),
       rehabCost: parseNumber(form.rehabCost),
       mao: parseNumber(form.mao),
       contractPrice: parseNumber(form.contractPrice),
@@ -424,6 +441,9 @@ function Wholesale() {
       await saveDeal(newDeal);
       setDeals((prevDeals) => [...prevDeals, newDeal]);
       setForm(emptyForm);
+      if (newDeal.offerDate || newDeal.closedDate) {
+        setFilters(defaultFilters);
+      }
     } catch (error) {
       console.error("Failed to save property", error);
       alert("Unable to save property. Check your database connection.");
@@ -632,10 +652,11 @@ function Wholesale() {
                 deals={deals}
                 deleteDeal={deleteDeal}
                 persist={persist}
-                saveDeal={saveDeal}
-                fetchBuyers={fetchBuyers}
-                saveBuyer={saveBuyer}
-              />
+              saveDeal={saveDeal}
+              fetchBuyers={fetchBuyers}
+              saveBuyer={saveBuyer}
+              setFilters={setFilters}
+            />
             </LoadingScreen>
           </>
         ) : (

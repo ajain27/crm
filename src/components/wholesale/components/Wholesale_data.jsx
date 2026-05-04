@@ -13,7 +13,9 @@ function Wholesale_data({
   saveDeal,
   fetchBuyers,
   saveBuyer,
+  setFilters = () => {},
 }) {
+  const today = new Date().toISOString().slice(0, 10);
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [editingBuyerId, setEditingBuyerId] = useState(null);
@@ -114,6 +116,22 @@ function Wholesale_data({
     try {
       await saveDeal(updatedDeal);
       persist(nextDeals);
+      if (
+        field === "offerDate" ||
+        (field === "closed" && value === "Yes" && updatedDeal.closedDate)
+      ) {
+        setFilters({
+          state: "All",
+          offerStatus: "All",
+          sellerAccepted: "All",
+          assigned: "All",
+          search: "",
+          closed: "All",
+          offerMonth: "All",
+          closedMonth: "All",
+          year: "All",
+        });
+      }
 
       // Sync buyer info to buyers list if assigned and buyer details provided
       if (
@@ -166,6 +184,9 @@ function Wholesale_data({
               <th>City</th>
               <th>Zip Code</th>
               <th>State</th>
+              <th>Property Type</th>
+              <th>On Market</th>
+              <th>Listed Price</th>
               <th>ARV</th>
               <th>Rehab Cost</th>
               <th>MAO</th>
@@ -197,6 +218,15 @@ function Wholesale_data({
                 <ReadOnlyCell value={deal.city} />
                 <ReadOnlyCell value={deal.zipCode} />
                 <ReadOnlyCell value={deal.state} small />
+                <ReadOnlyCell value={deal.propertyType || "—"} />
+                <ReadOnlyCell value={deal.onMarket || "No"} />
+                <ReadOnlyCell
+                  value={
+                    deal.onMarket === "Yes" && Number(deal.listedPrice || 0) > 0
+                      ? currency(deal.listedPrice)
+                      : "—"
+                  }
+                />
                 <ReadOnlyCell value={currency(deal.arv)} />
                 <ReadOnlyCell value={currency(deal.rehabCost)} />
                 <ReadOnlyCell value={currency(deal.mao)} />
@@ -221,6 +251,7 @@ function Wholesale_data({
                       type="date"
                       className="readonly-input table-input date-input"
                       defaultValue={deal.offerDate || ""}
+                      max={today}
                       disabled={deal.closed === "Yes"}
                       onBlur={(e) =>
                         updateDeal(deal.id, "offerDate", e.target.value)

@@ -7,6 +7,8 @@ function Wholesale_form({
   handleBlur,
   checkDuplicateAddress,
 }) {
+  const today = new Date().toISOString().slice(0, 10);
+
   return (
     <section className="panel" id="add-property">
       <div>
@@ -49,6 +51,14 @@ function Wholesale_form({
             value={form.state}
             onChange={handleChange}
             maxLength="2"
+            required
+          />
+          <Select
+            label="Property Type"
+            name="propertyType"
+            value={form.propertyType}
+            onChange={handleChange}
+            options={["Land", "Single Family", "Multi Family"]}
             required
           />
           <Field
@@ -104,6 +114,25 @@ function Wholesale_form({
             />
           </label>
           <Select
+            label="On Market"
+            name="onMarket"
+            value={form.onMarket}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+            required
+          />
+          {form.onMarket === "Yes" && (
+            <Field
+              label="Listed Price"
+              name="listedPrice"
+              type="text"
+              value={form.listedPrice}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              required
+            />
+          )}
+          <Select
             label="Offer Status"
             name="offerStatus"
             value={form.offerStatus}
@@ -117,6 +146,7 @@ function Wholesale_form({
               name="offerDate"
               type="date"
               value={form.offerDate}
+              max={today}
               onChange={handleChange}
               required
             />

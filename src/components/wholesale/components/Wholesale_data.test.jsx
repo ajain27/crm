@@ -8,6 +8,9 @@ const deal = {
   city: "Austin",
   zipCode: "78701",
   state: "TX",
+  propertyType: "Single Family",
+  onMarket: "No",
+  listedPrice: 0,
   arv: 450000,
   rehabCost: 45000,
   mao: 275000,
@@ -108,7 +111,10 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    const closedSelect = screen.getByDisplayValue("No");
+    const closedSelect = screen.getAllByRole("combobox").find((select) =>
+      select.className.includes("badge no"),
+    );
+    expect(closedSelect).toBeDefined();
     fireEvent.change(closedSelect, { target: { value: "Yes" } });
 
     await Promise.resolve();
