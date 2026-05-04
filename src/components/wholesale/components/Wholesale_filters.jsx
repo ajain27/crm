@@ -5,6 +5,7 @@ import { useState } from "react";
 function Wholesale_filters({
   filters,
   states,
+  propertyTypes,
   months,
   years,
   RefreshCw,
@@ -59,6 +60,17 @@ function Wholesale_filters({
             options={states}
           />
           <Select
+            label="Property Type"
+            value={filters.propertyType}
+            onChange={(e) =>
+              setFilters({
+                ...filters,
+                propertyType: e.target.value,
+              })
+            }
+            options={propertyTypes}
+          />
+          <Select
             label="Offer Sent In"
             value={filters.offerMonth}
             onChange={(e) =>
@@ -109,6 +121,7 @@ function Wholesale_filters({
             onClick={() =>
               setFilters({
                 state: "All",
+                propertyType: "All",
                 offerStatus: "All",
                 sellerAccepted: "All",
                 assigned: "All",

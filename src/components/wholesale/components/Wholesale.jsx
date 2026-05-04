@@ -19,6 +19,7 @@ import LoadingScreen from "../../loader/LoadingScreen";
 
 const defaultFilters = {
   state: "All",
+  propertyType: "All",
   offerStatus: "All",
   sellerAccepted: "All",
   assigned: "All",
@@ -477,6 +478,18 @@ function Wholesale() {
     ],
     [deals],
   );
+  const propertyTypes = useMemo(
+    () => [
+      "All",
+      ...new Set(
+        deals
+          .map((d) => d.propertyType)
+          .filter(Boolean)
+          .sort(),
+      ),
+    ],
+    [deals],
+  );
   const years = useMemo(
     () => [
       "All",
@@ -513,6 +526,9 @@ function Wholesale() {
     return deals.filter((deal) => {
       const matchesState =
         filters.state === "All" || deal.state === filters.state;
+      const matchesPropertyType =
+        filters.propertyType === "All" ||
+        deal.propertyType === filters.propertyType;
       const matchesStatus =
         filters.offerStatus === "All" ||
         deal.offerStatus === filters.offerStatus;
@@ -572,6 +588,7 @@ function Wholesale() {
 
       return (
         matchesState &&
+        matchesPropertyType &&
         matchesStatus &&
         matchesAccepted &&
         matchesAssigned &&
@@ -631,6 +648,7 @@ function Wholesale() {
             <Wholesale_filters
               filters={filters}
               states={states}
+              propertyTypes={propertyTypes}
               months={months}
               years={years}
               RefreshCw={RefreshCw}
