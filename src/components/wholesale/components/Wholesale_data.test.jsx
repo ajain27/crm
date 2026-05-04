@@ -88,6 +88,64 @@ describe("Wholesale_data", () => {
     expect(closedDateInput).toBeDisabled();
   });
 
+  it("shows the most recent closed deal first by default", () => {
+    const { container } = render(
+      <Wholesale_data
+        filteredDeals={[
+          {
+            ...deal,
+            id: "d1",
+            address: "123 Main St",
+            closed: "Yes",
+            closedDate: "2026-04-12",
+          },
+          {
+            ...deal,
+            id: "d2",
+            address: "456 Oak Ave",
+            closed: "Yes",
+            closedDate: "2026-05-01",
+          },
+          {
+            ...deal,
+            id: "d3",
+            address: "789 Pine St",
+            closed: "No",
+            closedDate: "",
+          },
+        ]}
+        deals={[
+          {
+            ...deal,
+            id: "d1",
+            address: "123 Main St",
+            closed: "Yes",
+            closedDate: "2026-04-12",
+          },
+          {
+            ...deal,
+            id: "d2",
+            address: "456 Oak Ave",
+            closed: "Yes",
+            closedDate: "2026-05-01",
+          },
+          {
+            ...deal,
+            id: "d3",
+            address: "789 Pine St",
+            closed: "No",
+            closedDate: "",
+          },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+
+    expect(getRenderedDealIds(container)).toEqual(["d2", "d1", "d3"]);
+  });
+
   it("saves the entered closed date when a deal is marked closed", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
     const persist = vi.fn();

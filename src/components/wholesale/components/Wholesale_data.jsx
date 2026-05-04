@@ -23,8 +23,8 @@ function Wholesale_data({
   const [editBuyerValue, setEditBuyerValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: "asc",
+    key: "closedDate",
+    direction: "desc",
   });
   const itemsPerPage = 10;
 
@@ -33,8 +33,6 @@ function Wholesale_data({
   }, [filteredDeals, sortConfig]);
 
   const sortedDeals = useMemo(() => {
-    if (!sortConfig.key) return filteredDeals;
-
     const getSortValue = (deal) => {
       switch (sortConfig.key) {
         case "listedPrice":
@@ -290,7 +288,11 @@ function Wholesale_data({
           </thead>
           <tbody>
             {currentDeals.map((deal) => (
-              <tr key={deal.id} data-deal-id={deal.id}>
+              <tr
+                key={deal.id}
+                data-deal-id={deal.id}
+                className={deal.closed === "Yes" ? "closed-row" : ""}
+              >
                 <td className="text-center">
                   <button
                     className="secondary-btn note-btn"

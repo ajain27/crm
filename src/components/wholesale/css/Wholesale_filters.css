@@ -1,10 +1,17 @@
 .filters {
-  padding: 26px 22px 20px;
+  padding: 22px 22px 18px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
-  gap: 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
   align-items: end;
   border-bottom: 1px solid var(--line);
+}
+.filters .field {
+  width: 100%;
+}
+.filters .secondary-btn {
+  width: 100%;
+  min-height: 44px;
 }
 
 .search-container {

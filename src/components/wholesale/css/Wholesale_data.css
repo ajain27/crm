@@ -105,6 +105,12 @@ td {
   border: 1px solid var(--input-border);
   color: var(--input-text);
 }
+.closed-row .table-input {
+  border: transparent;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
 .date-input {
   width: 140px;
   min-width: 140px;

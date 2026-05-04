@@ -15,10 +15,6 @@ function Wholesale_form({
         <div className="panel-header">
           <div>
             <h2>Add Property Lead</h2>
-            <p>
-              Once added, records appear as disabled/read-only fields in the
-              board.
-            </p>
           </div>
         </div>
         <form className="add-form" onSubmit={addDeal}>
