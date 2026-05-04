@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createUserAccount, signInUser } from "../../firebase/firestoreService";
 
 const emptyForm = {
+  firstName: "",
+  lastName: "",
   username: "",
   email: "",
   password: "",
@@ -31,6 +33,8 @@ function AuthGate({ onAuthenticated }) {
               password: form.password,
             })
           : await createUserAccount({
+              firstName: form.firstName,
+              lastName: form.lastName,
               username: form.username,
               email: form.email,
               password: form.password,
@@ -81,16 +85,40 @@ function AuthGate({ onAuthenticated }) {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {mode === "signup" && (
-            <label className="auth-field">
-              <span>Username</span>
-              <input
-                required
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                placeholder="Your name"
-              />
-            </label>
+            <>
+              <label className="auth-field">
+                <span>First Name</span>
+                <input
+                  required
+                  name="firstName"
+                  value={form.firstName}
+                  onChange={handleChange}
+                  placeholder="First name"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Last Name</span>
+                <input
+                  required
+                  name="lastName"
+                  value={form.lastName}
+                  onChange={handleChange}
+                  placeholder="Last name"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Username</span>
+                <input
+                  required
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  placeholder="Username"
+                />
+              </label>
+            </>
           )}
 
           <label className="auth-field">

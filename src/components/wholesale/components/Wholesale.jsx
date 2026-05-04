@@ -8,6 +8,7 @@ import {
   saveDeal,
   saveBuyer,
   deleteDealById,
+  updateUserProfile,
 } from "../../../firebase/firestoreService";
 import Wholesale_filters from "./Wholesale_filters";
 import Wholesale_form from "./wholesale_form";
@@ -17,6 +18,7 @@ import Sidebar from "../../sidebar/Sidebar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
+import Modal from "../../modal/Modal";
 
 const SESSION_STORAGE_KEY = "crmCurrentUser";
 
@@ -87,6 +89,11 @@ function Wholesale() {
   const [errorMessage, setErrorMessage] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [filters, setFilters] = useState(defaultFilters);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    firstName: currentUser?.firstName || "",
+    lastName: currentUser?.lastName || "",
+  });
 
   const persist = function persist(nextDeals) {
     setDeals(nextDeals);
@@ -121,6 +128,10 @@ function Wholesale() {
   function handleAuthenticated(user) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     setCurrentUser(user);
+    setProfileForm({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+    });
   }
 
   function handleSignOut() {
@@ -130,6 +141,34 @@ function Wholesale() {
     setForm(emptyForm);
     setFilters(defaultFilters);
     setActiveView("dashboard");
+    setIsProfileModalOpen(false);
+  }
+
+  useEffect(() => {
+    setProfileForm({
+      firstName: currentUser?.firstName || "",
+      lastName: currentUser?.lastName || "",
+    });
+  }, [currentUser?.firstName, currentUser?.lastName]);
+
+  async function handleSaveProfile() {
+    if (!currentUser?.id) return;
+
+    try {
+      const updatedNames = await updateUserProfile({
+        id: currentUser.id,
+        firstName: profileForm.firstName,
+        lastName: profileForm.lastName,
+      });
+
+      const nextUser = { ...currentUser, ...updatedNames };
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextUser));
+      setCurrentUser(nextUser);
+      setIsProfileModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update profile", error);
+      alert("Unable to update profile. Check your database connection.");
+    }
   }
 
   function handleChange(event) {
@@ -645,6 +684,7 @@ function Wholesale() {
         setActiveView={setActiveView}
         currentUser={currentUser}
         onSignOut={handleSignOut}
+        onEditProfile={() => setIsProfileModalOpen(true)}
       />
 
       <main className="main">
@@ -722,6 +762,56 @@ function Wholesale() {
           />
         )}
       </main>
+      <Modal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        title="Edit Profile"
+        actions={
+          <div className="profile-modal-actions">
+            <button
+              className="secondary-btn profile-modal-btn"
+              onClick={() => setIsProfileModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="primary-btn profile-modal-btn"
+              onClick={handleSaveProfile}
+            >
+              Save Profile
+            </button>
+          </div>
+        }
+      >
+        <div className="auth-form">
+          <label className="auth-field">
+            <span>First Name</span>
+            <input
+              value={profileForm.firstName}
+              onChange={(event) =>
+                setProfileForm((prev) => ({
+                  ...prev,
+                  firstName: event.target.value,
+                }))
+              }
+              placeholder="First name"
+            />
+          </label>
+          <label className="auth-field">
+            <span>Last Name</span>
+            <input
+              value={profileForm.lastName}
+              onChange={(event) =>
+                setProfileForm((prev) => ({
+                  ...prev,
+                  lastName: event.target.value,
+                }))
+              }
+              placeholder="Last name"
+            />
+          </label>
+        </div>
+      </Modal>
     </div>
   );
 }

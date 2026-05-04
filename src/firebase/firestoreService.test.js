@@ -35,6 +35,7 @@ const {
   saveBuyer,
   deleteDealById,
   deleteBuyerById,
+  updateUserProfile,
 } = await import("./firestoreService");
 const { getDocs, setDoc, deleteDoc, collection, doc } =
   await import("firebase/firestore");
@@ -100,5 +101,23 @@ describe("firestoreService", () => {
 
     expect(doc).toHaveBeenCalledWith(expect.anything(), "b1");
     expect(deleteDoc).toHaveBeenCalledWith(expect.anything());
+  });
+
+  it("updates a user profile with first and last name", async () => {
+    await updateUserProfile({
+      id: "u1",
+      firstName: "Ankit",
+      lastName: "Jain",
+    });
+
+    expect(doc).toHaveBeenCalledWith(expect.anything(), "u1");
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        firstName: "Ankit",
+        lastName: "Jain",
+      },
+      { merge: true },
+    );
   });
 });

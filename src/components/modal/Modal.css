@@ -51,3 +51,22 @@
   gap: 12px;
   justify-content: flex-end;
 }
+.profile-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  width: 100%;
+}
+.profile-modal-btn {
+  min-width: 160px;
+  min-height: 48px;
+}
+
+@media (max-width: 600px) {
+  .profile-modal-actions {
+    flex-direction: column;
+  }
+  .profile-modal-btn {
+    width: 100%;
+  }
+}

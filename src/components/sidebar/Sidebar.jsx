@@ -1,8 +1,19 @@
 import { Home, Users } from "lucide-react";
 import logo from "../../assets/logo.png";
 
-function Sidebar({ activeView, setActiveView, currentUser, onSignOut }) {
-  const initials = String(currentUser?.username || currentUser?.email || "U")
+function Sidebar({
+  activeView,
+  setActiveView,
+  currentUser,
+  onSignOut,
+  onEditProfile,
+}) {
+  const fullName = [currentUser?.firstName, currentUser?.lastName]
+    .filter(Boolean)
+    .join(" ");
+  const displayName =
+    fullName || currentUser?.username || currentUser?.email || "CRM User";
+  const initials = String(displayName || "U")
     .split(/\s+/)
     .map((part) => part[0])
     .join("")
@@ -34,8 +45,15 @@ function Sidebar({ activeView, setActiveView, currentUser, onSignOut }) {
         <div className="avatar">{initials}</div>
         <div className="user-meta">
           <div className="user-info">
-            <strong>{currentUser?.username || "CRM User"}</strong>
+            <strong>{displayName}</strong>
           </div>
+          <button
+            type="button"
+            className="secondary-btn sidebar-profile-btn"
+            onClick={onEditProfile}
+          >
+            Edit Profile
+          </button>
           <button
             type="button"
             className="ghost-btn sidebar-signout-btn"

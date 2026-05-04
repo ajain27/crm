@@ -47,7 +47,13 @@ async function hashPassword(password) {
     .join("");
 }
 
-export async function createUserAccount({ username, email, password }) {
+export async function createUserAccount({
+  firstName,
+  lastName,
+  username,
+  email,
+  password,
+}) {
   const normalizedEmail = email.trim().toLowerCase();
   const existingUsers = await getDocs(
     query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
@@ -59,6 +65,8 @@ export async function createUserAccount({ username, email, password }) {
 
   const user = {
     id: crypto.randomUUID(),
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
     username: username.trim(),
     email: normalizedEmail,
     passwordHash: await hashPassword(password),
@@ -68,6 +76,8 @@ export async function createUserAccount({ username, email, password }) {
 
   return {
     id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
     username: user.username,
     email: user.email,
   };
@@ -91,8 +101,28 @@ export async function signInUser({ email, password }) {
 
   return {
     id: user.id,
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
     username: user.username,
     email: user.email,
+  };
+}
+
+export async function updateUserProfile({ id, firstName, lastName }) {
+  const userRef = doc(usersCollection, id);
+  await setDoc(
+    userRef,
+    {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    },
+    { merge: true },
+  );
+
+  return {
+    id,
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
   };
 }
 

@@ -87,7 +87,7 @@ nav a.active {
   min-width: 0;
   flex: 1;
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 .user-info strong {
   display: block;
@@ -102,6 +102,10 @@ nav a.active {
 .sidebar-signout-btn {
   width: 100%;
   padding: 10px 12px;
+  justify-content: center;
+}
+.sidebar-profile-btn {
+  width: 100%;
   justify-content: center;
 }
 .avatar {
