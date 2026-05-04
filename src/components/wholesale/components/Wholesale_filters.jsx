@@ -93,20 +93,12 @@ function Wholesale_filters({
             options={years}
           />
           <Select
-            label="Offer Status"
-            value={filters.offerStatus}
+            label="Offer Accepted"
+            value={filters.offerAccepted}
             onChange={(e) =>
-              setFilters({ ...filters, offerStatus: e.target.value })
+              setFilters({ ...filters, offerAccepted: e.target.value })
             }
-            options={["All", "Offer Sent", "Rejected", "Accepted"]}
-          />
-          <Select
-            label="Accepted"
-            value={filters.sellerAccepted}
-            onChange={(e) =>
-              setFilters({ ...filters, sellerAccepted: e.target.value })
-            }
-            options={["All", "No", "Maybe", "Yes"]}
+            options={["All", "No", "Waiting", "Yes"]}
           />
           <Select
             label="Assigned"
@@ -122,8 +114,7 @@ function Wholesale_filters({
               setFilters({
                 state: "All",
                 propertyType: "All",
-                offerStatus: "All",
-                sellerAccepted: "All",
+                offerAccepted: "All",
                 assigned: "All",
                 search: "",
                 closed: "All",

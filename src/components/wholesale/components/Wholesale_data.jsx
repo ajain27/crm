@@ -206,8 +206,7 @@ function Wholesale_data({
         setFilters({
           state: "All",
           propertyType: "All",
-          offerStatus: "All",
-          sellerAccepted: "All",
+          offerAccepted: "All",
           assigned: "All",
           search: "",
           closed: "All",

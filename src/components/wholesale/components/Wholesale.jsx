@@ -25,8 +25,7 @@ const SESSION_STORAGE_KEY = "crmCurrentUser";
 const defaultFilters = {
   state: "All",
   propertyType: "All",
-  offerStatus: "All",
-  sellerAccepted: "All",
+  offerAccepted: "All",
   assigned: "All",
   search: "",
   closed: "All",
@@ -601,12 +600,9 @@ function Wholesale() {
       const matchesPropertyType =
         filters.propertyType === "All" ||
         deal.propertyType === filters.propertyType;
-      const matchesStatus =
-        filters.offerStatus === "All" ||
-        deal.offerStatus === filters.offerStatus;
       const matchesAccepted =
-        filters.sellerAccepted === "All" ||
-        deal.sellerAccepted === filters.sellerAccepted;
+        filters.offerAccepted === "All" ||
+        deal.sellerAccepted === filters.offerAccepted;
       const matchesAssigned =
         filters.assigned === "All" || deal.assigned === filters.assigned;
       const matchesClosed =
@@ -661,7 +657,6 @@ function Wholesale() {
       return (
         matchesState &&
         matchesPropertyType &&
-        matchesStatus &&
         matchesAccepted &&
         matchesAssigned &&
         matchesSearch &&
