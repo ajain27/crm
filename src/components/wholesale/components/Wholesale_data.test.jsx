@@ -28,6 +28,12 @@ const deal = {
   closedInMonth: "",
 };
 
+function getRenderedDealIds(container) {
+  return Array.from(container.querySelectorAll("tbody tr")).map((row) =>
+    row.getAttribute("data-deal-id"),
+  );
+}
+
 describe("Wholesale_data", () => {
   it("calls saveDeal when offer status changes", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
@@ -130,5 +136,81 @@ describe("Wholesale_data", () => {
       closedInMonth: "04",
     });
     expect(persist).toHaveBeenCalled();
+  });
+
+  it("sorts by a price column when the header is clicked", () => {
+    const { container } = render(
+      <Wholesale_data
+        filteredDeals={[
+          { ...deal, id: "d1", address: "123 Main St", arv: 450000 },
+          { ...deal, id: "d2", address: "456 Oak Ave", arv: 300000 },
+        ]}
+        deals={[
+          { ...deal, id: "d1", address: "123 Main St", arv: 450000 },
+          { ...deal, id: "d2", address: "456 Oak Ave", arv: 300000 },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+
+    const arvSortButton = screen.getByRole("button", { name: "ARV" });
+    fireEvent.click(arvSortButton);
+    expect(getRenderedDealIds(container)).toEqual(["d2", "d1"]);
+
+    fireEvent.click(arvSortButton);
+    expect(getRenderedDealIds(container)).toEqual(["d1", "d2"]);
+  });
+
+  it("sorts by a date column when the header is clicked", () => {
+    const { container } = render(
+      <Wholesale_data
+        filteredDeals={[
+          {
+            ...deal,
+            id: "d1",
+            address: "123 Main St",
+            offerStatus: "Offer Sent",
+            offerDate: "2026-04-15",
+          },
+          {
+            ...deal,
+            id: "d2",
+            address: "456 Oak Ave",
+            offerStatus: "Offer Sent",
+            offerDate: "2026-03-10",
+          },
+        ]}
+        deals={[
+          {
+            ...deal,
+            id: "d1",
+            address: "123 Main St",
+            offerStatus: "Offer Sent",
+            offerDate: "2026-04-15",
+          },
+          {
+            ...deal,
+            id: "d2",
+            address: "456 Oak Ave",
+            offerStatus: "Offer Sent",
+            offerDate: "2026-03-10",
+          },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+
+    const offerDateSortButton = screen.getByRole("button", {
+      name: "Offer Date",
+    });
+    fireEvent.click(offerDateSortButton);
+    expect(getRenderedDealIds(container)).toEqual(["d2", "d1"]);
+
+    fireEvent.click(offerDateSortButton);
+    expect(getRenderedDealIds(container)).toEqual(["d1", "d2"]);
   });
 });

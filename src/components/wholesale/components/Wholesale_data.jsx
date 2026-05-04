@@ -1,7 +1,7 @@
 import { ReadOnlyCell } from "../../elements";
 import { Trash2, FileText, Edit2, Check } from "lucide-react";
 import { currency } from "../../../utils/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Pagination from "../../pagination/Pagination";
 import Modal from "../../modal/Modal";
 
@@ -22,17 +22,102 @@ function Wholesale_data({
   const [editingBuyerField, setEditingBuyerField] = useState(null);
   const [editBuyerValue, setEditBuyerValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
   const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filteredDeals]);
+  }, [filteredDeals, sortConfig]);
 
-  const totalPages = Math.ceil(filteredDeals.length / itemsPerPage) || 1;
-  const currentDeals = filteredDeals.slice(
+  const sortedDeals = useMemo(() => {
+    if (!sortConfig.key) return filteredDeals;
+
+    const getSortValue = (deal) => {
+      switch (sortConfig.key) {
+        case "listedPrice":
+        case "arv":
+        case "rehabCost":
+        case "mao":
+        case "contractPrice":
+        case "assignedPrice":
+          return Number(deal[sortConfig.key] || 0);
+        case "grossRevenue":
+          return (
+            Number(deal.assignedPrice || 0) - Number(deal.contractPrice || 0)
+          );
+        case "offerDate":
+          return deal.offerDate || "";
+        case "closedDate":
+          return deal.closedDate || "";
+        default:
+          return "";
+      }
+    };
+
+    return [...filteredDeals].sort((a, b) => {
+      const aValue = getSortValue(a);
+      const bValue = getSortValue(b);
+
+      if (aValue === bValue) return 0;
+
+      if (sortConfig.direction === "asc") {
+        return aValue > bValue ? 1 : -1;
+      }
+
+      return aValue < bValue ? 1 : -1;
+    });
+  }, [filteredDeals, sortConfig]);
+
+  const totalPages = Math.ceil(sortedDeals.length / itemsPerPage) || 1;
+  const currentDeals = sortedDeals.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
+
+  function handleSort(key) {
+    setSortConfig((prev) => ({
+      key,
+      direction:
+        prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  }
+
+  function getAriaSort(key) {
+    if (sortConfig.key !== key) return "none";
+    return sortConfig.direction === "asc" ? "ascending" : "descending";
+  }
+
+  function renderSortableHeader(label, key) {
+    const isActive = sortConfig.key === key;
+    const indicator = !isActive ? " ↕" : sortConfig.direction === "asc" ? " ↑" : " ↓";
+
+    return (
+      <th aria-sort={getAriaSort(key)}>
+        <button
+          type="button"
+          className={`sort-header ${isActive ? "active" : ""}`}
+          onClick={() => handleSort(key)}
+        >
+          {label}
+          <span className="sort-indicator" aria-hidden="true">
+            {indicator}
+          </span>
+        </button>
+      </th>
+    );
+  }
+
+  function toEditableCurrency(value) {
+    const amount = Number(value || 0);
+    return amount > 0 ? currency(amount) : "";
+  }
+
+  function parseCurrencyInput(value) {
+    return Number(String(value || "").replace(/[^0-9]/g, ""));
+  }
 
   function startEditingBuyer(deal, field) {
     setEditingBuyerId(deal.id);
@@ -112,7 +197,7 @@ function Wholesale_data({
       return nextDeal;
     });
 
-    const updatedDeal = nextDeals.find((deal) => deal.id === id);
+        const updatedDeal = nextDeals.find((deal) => deal.id === id);
     try {
       await saveDeal(updatedDeal);
       persist(nextDeals);
@@ -122,6 +207,7 @@ function Wholesale_data({
       ) {
         setFilters({
           state: "All",
+          propertyType: "All",
           offerStatus: "All",
           sellerAccepted: "All",
           assigned: "All",
@@ -186,20 +272,20 @@ function Wholesale_data({
               <th>State</th>
               <th>Property Type</th>
               <th>On Market</th>
-              <th>Listed Price</th>
-              <th>ARV</th>
-              <th>Rehab Cost</th>
-              <th>MAO</th>
+              {renderSortableHeader("Listed Price", "listedPrice")}
+              {renderSortableHeader("ARV", "arv")}
+              {renderSortableHeader("Rehab Cost", "rehabCost")}
+              {renderSortableHeader("MAO", "mao")}
               <th>Offer Status</th>
-              <th>Offer Date</th>
+              {renderSortableHeader("Offer Date", "offerDate")}
               <th>Accepted</th>
-              <th>Contract Price</th>
+              {renderSortableHeader("Contract Price", "contractPrice")}
               <th>Assigned</th>
-              <th>Assigned Price</th>
+              {renderSortableHeader("Assigned Price", "assignedPrice")}
               <th>Buyer Info</th>
               <th>Closed</th>
-              <th>Closed On</th>
-              <th>Gross Revenue</th>
+              {renderSortableHeader("Closed On", "closedDate")}
+              {renderSortableHeader("Gross Revenue", "grossRevenue")}
             </tr>
           </thead>
           <tbody>
@@ -282,20 +368,28 @@ function Wholesale_data({
                     <span className="placeholder-dash">—</span>
                   ) : (
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       className="readonly-input table-input contract-input"
-                      defaultValue={deal.contractPrice || ""}
+                      defaultValue={toEditableCurrency(deal.contractPrice)}
                       disabled={deal.closed === "Yes"}
+                      onFocus={(e) => {
+                        const numericValue = parseCurrencyInput(e.target.value);
+                        e.target.value = numericValue ? String(numericValue) : "";
+                      }}
                       onBlur={(e) => {
-                        const val = Number(e.target.value);
+                        const val = parseCurrencyInput(e.target.value);
                         if (val > deal.arv && deal.arv > 0) {
                           alert(
                             `Contract price cannot be more than ARV (${currency(deal.arv)}).`,
                           );
-                          e.target.value = deal.contractPrice || "";
+                          e.target.value = toEditableCurrency(
+                            deal.contractPrice,
+                          );
                           return;
                         }
-                        updateDeal(deal.id, "contractPrice", e.target.value);
+                        e.target.value = toEditableCurrency(val);
+                        updateDeal(deal.id, "contractPrice", val);
                       }}
                     />
                   )}
@@ -320,12 +414,17 @@ function Wholesale_data({
                 <td>
                   {deal.assigned === "Yes" ? (
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       className="readonly-input table-input contract-input"
-                      defaultValue={deal.assignedPrice || ""}
+                      defaultValue={toEditableCurrency(deal.assignedPrice)}
                       disabled={deal.closed === "Yes"}
+                      onFocus={(e) => {
+                        const numericValue = parseCurrencyInput(e.target.value);
+                        e.target.value = numericValue ? String(numericValue) : "";
+                      }}
                       onBlur={(e) => {
-                        const val = Number(e.target.value);
+                        const val = parseCurrencyInput(e.target.value);
                         if (
                           val < deal.contractPrice &&
                           val > 0 &&
@@ -334,10 +433,13 @@ function Wholesale_data({
                           alert(
                             `Assigned price needs to be more than or equal to contract price (${currency(deal.contractPrice)}).`,
                           );
-                          e.target.value = deal.assignedPrice || "";
+                          e.target.value = toEditableCurrency(
+                            deal.assignedPrice,
+                          );
                           return;
                         }
-                        updateDeal(deal.id, "assignedPrice", e.target.value);
+                        e.target.value = toEditableCurrency(val);
+                        updateDeal(deal.id, "assignedPrice", val);
                       }}
                     />
                   ) : (
