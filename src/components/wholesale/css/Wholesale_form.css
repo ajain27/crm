@@ -21,6 +21,9 @@
 .add-form .field:first-of-type {
   grid-column: span 2;
 }
+.notes-field {
+  grid-column: span 2;
+}
 .field {
   display: grid;
   gap: 8px;
@@ -43,6 +46,18 @@
   color: var(--text);
   outline: none;
 }
+.field textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  font: inherit;
+}
 .field select {
   appearance: none;
   -webkit-appearance: none;
@@ -57,15 +72,21 @@
   font-size: 0.75rem;
   color: var(--muted);
 }
+.field textarea::placeholder {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
 .form-btn {
   height: 44px;
   grid-column: 1 / -1;
   justify-self: start;
   min-width: 200px;
+  margin: 0 auto;
 }
 
 @media (max-width: 600px) {
-  .add-form .field:first-of-type {
+  .add-form .field:first-of-type,
+  .notes-field {
     grid-column: span 1;
   }
   .form-btn {

@@ -58,9 +58,9 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
   );
 }
 
-function Field({ label, required, ...props }) {
+function Field({ label, required, wrapperClassName = "", ...props }) {
   return (
-    <label className="field">
+    <label className={`field ${wrapperClassName}`.trim()}>
       <span>
         {label}
         {required && <span className="required-marker">*</span>}

@@ -210,13 +210,20 @@ function Wholesale_form({
               />
             </>
           )}
-          <Field
-            label="Notes"
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            required
-          />
+          <label className="field notes-field">
+            <span>
+              Notes
+              <span className="required-marker">*</span>
+            </span>
+            <textarea
+              required
+              id="notes"
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              rows="4"
+            />
+          </label>
           {form.sellerAccepted === "Yes" && form.assigned === "Yes" && (
             <>
               <Select
