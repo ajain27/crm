@@ -1,6 +1,7 @@
 @import "./variables.css";
 @import "./base.css";
 @import "../components/sidebar/Sidebar.css";
+@import "../components/auth/Auth.css";
 @import "../components/stats/Stats.css";
 @import "../components/wholesale/css/Wholesale_form.css";
 @import "../components/wholesale/css/Wholesale_filters.css";

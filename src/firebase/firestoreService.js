@@ -5,7 +5,10 @@ import {
   doc,
   getDocs,
   getFirestore,
+  limit,
+  query,
   setDoc,
+  where,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -24,6 +27,7 @@ const db = getFirestore(app);
 
 const propertiesCollection = collection(db, "properties");
 const buyersCollection = collection(db, "buyers");
+const usersCollection = collection(db, "users");
 
 function mapSnapshot(snapshot) {
   return snapshot.docs.map((docSnap) => ({
@@ -32,8 +36,70 @@ function mapSnapshot(snapshot) {
   }));
 }
 
-export async function fetchDeals() {
-  const snapshot = await getDocs(propertiesCollection);
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const buffer = await crypto.subtle.digest(
+    "SHA-256",
+    encoder.encode(password),
+  );
+  return Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export async function createUserAccount({ username, email, password }) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const existingUsers = await getDocs(
+    query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
+  );
+
+  if (!existingUsers.empty) {
+    throw new Error("An account with this email already exists.");
+  }
+
+  const user = {
+    id: crypto.randomUUID(),
+    username: username.trim(),
+    email: normalizedEmail,
+    passwordHash: await hashPassword(password),
+  };
+
+  await setDoc(doc(usersCollection, user.id), user);
+
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+  };
+}
+
+export async function signInUser({ email, password }) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const matchingUsers = await getDocs(
+    query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
+  );
+
+  const [user] = mapSnapshot(matchingUsers);
+  if (!user) {
+    throw new Error("No account found for that email.");
+  }
+
+  const passwordHash = await hashPassword(password);
+  if (user.passwordHash !== passwordHash) {
+    throw new Error("Incorrect password.");
+  }
+
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+  };
+}
+
+export async function fetchDeals(userId) {
+  const snapshot = userId
+    ? await getDocs(query(propertiesCollection, where("userId", "==", userId)))
+    : await getDocs(propertiesCollection);
   return mapSnapshot(snapshot);
 }
 
@@ -47,8 +113,10 @@ export async function deleteDealById(id) {
   await deleteDoc(propertyRef);
 }
 
-export async function fetchBuyers() {
-  const snapshot = await getDocs(buyersCollection);
+export async function fetchBuyers(userId) {
+  const snapshot = userId
+    ? await getDocs(query(buyersCollection, where("userId", "==", userId)))
+    : await getDocs(buyersCollection);
   return mapSnapshot(snapshot);
 }
 

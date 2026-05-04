@@ -19,7 +19,7 @@ const emptyBuyerForm = {
   realEstateType: "Single Family",
 };
 
-function Buyers({ theme, setTheme }) {
+function Buyers({ theme, setTheme, currentUser = { id: "" } }) {
   const [buyers, setBuyers] = useState([]);
   const [form, setForm] = useState(emptyBuyerForm);
   const [filters, setFilters] = useState({
@@ -31,7 +31,7 @@ function Buyers({ theme, setTheme }) {
   useEffect(() => {
     async function loadBuyers() {
       try {
-        const data = await fetchBuyers();
+        const data = await fetchBuyers(currentUser.id);
         setBuyers(data);
       } catch (error) {
         console.error("Failed to load buyers", error);
@@ -39,7 +39,7 @@ function Buyers({ theme, setTheme }) {
     }
 
     loadBuyers();
-  }, []);
+  }, [currentUser.id]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -109,6 +109,7 @@ function Buyers({ theme, setTheme }) {
     const newBuyer = {
       ...form,
       id: crypto.randomUUID(),
+      userId: currentUser.id,
       state: form.state?.trim().toUpperCase() || "",
     };
 

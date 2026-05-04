@@ -241,6 +241,7 @@ function Wholesale_data({
           // Add new buyer
           const newBuyer = {
             id: crypto.randomUUID(),
+            userId: updatedDeal.userId,
             fullName: updatedDeal.buyerName.trim(),
             email: buyerEmail,
             phone: "",

@@ -16,6 +16,9 @@ import Buyers from "../../buyers/components/Buyers";
 import Sidebar from "../../sidebar/Sidebar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
+import AuthGate from "../../auth/AuthGate";
+
+const SESSION_STORAGE_KEY = "crmCurrentUser";
 
 const defaultFilters = {
   state: "All",
@@ -60,6 +63,14 @@ function Wholesale() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("crmTheme") || "light",
   );
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem(SESSION_STORAGE_KEY);
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeView, setActiveView] = useState("dashboard");
 
   useEffect(() => {
@@ -82,10 +93,16 @@ function Wholesale() {
   };
 
   async function loadDeals() {
+    if (!currentUser?.id) {
+      setDeals([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setErrorMessage("");
-      const data = await fetchDeals();
+      const data = await fetchDeals(currentUser.id);
       setDeals(data);
     } catch (error) {
       console.error("Failed to load deals", error);
@@ -99,7 +116,21 @@ function Wholesale() {
 
   useEffect(() => {
     loadDeals();
-  }, []);
+  }, [currentUser?.id]);
+
+  function handleAuthenticated(user) {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+    setCurrentUser(user);
+  }
+
+  function handleSignOut() {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    setCurrentUser(null);
+    setDeals([]);
+    setForm(emptyForm);
+    setFilters(defaultFilters);
+    setActiveView("dashboard");
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -394,6 +425,7 @@ function Wholesale() {
     const newDeal = {
       ...formWithoutProfit,
       id: crypto.randomUUID(),
+      userId: currentUser.id,
       state: form.state.trim().toUpperCase(),
       zipCode: form.zipCode.trim(),
       arv: parseNumber(form.arv),
@@ -420,7 +452,7 @@ function Wholesale() {
         form.buyerEmail?.trim() &&
         form.buyerName?.trim()
       ) {
-        const existingBuyers = await fetchBuyers();
+        const existingBuyers = await fetchBuyers(currentUser.id);
         const newEmail = form.buyerEmail.trim().toLowerCase();
         const isDuplicate = existingBuyers.some(
           (b) => b.email?.toLowerCase() === newEmail,
@@ -428,6 +460,7 @@ function Wholesale() {
         if (!isDuplicate) {
           const newBuyer = {
             id: crypto.randomUUID(),
+            userId: currentUser.id,
             fullName: form.buyerName.trim(),
             email: newEmail,
             phone: "",
@@ -601,13 +634,17 @@ function Wholesale() {
     });
   }, [deals, filters]);
 
+  if (!currentUser) {
+    return <AuthGate onAuthenticated={handleAuthenticated} />;
+  }
+
   return (
     <div className="layout">
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
-        theme={theme}
-        setTheme={setTheme}
+        currentUser={currentUser}
+        onSignOut={handleSignOut}
       />
 
       <main className="main">
@@ -670,15 +707,19 @@ function Wholesale() {
                 deals={deals}
                 deleteDeal={deleteDeal}
                 persist={persist}
-              saveDeal={saveDeal}
-              fetchBuyers={fetchBuyers}
-              saveBuyer={saveBuyer}
-              setFilters={setFilters}
-            />
+                saveDeal={saveDeal}
+                fetchBuyers={(userId = currentUser.id) => fetchBuyers(userId)}
+                saveBuyer={saveBuyer}
+                setFilters={setFilters}
+              />
             </LoadingScreen>
           </>
         ) : (
-          <Buyers theme={theme} setTheme={setTheme} />
+          <Buyers
+            theme={theme}
+            setTheme={setTheme}
+            currentUser={currentUser}
+          />
         )}
       </main>
     </div>

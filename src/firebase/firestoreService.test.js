@@ -11,6 +11,9 @@ vi.mock("firebase/firestore", () => {
   const mockSetDoc = vi.fn();
   const mockDeleteDoc = vi.fn();
   const mockGetFirestore = vi.fn(() => ({ firestore: true }));
+  const mockQuery = vi.fn((...args) => ({ queryRef: args }));
+  const mockWhere = vi.fn((...args) => ({ whereRef: args }));
+  const mockLimit = vi.fn((value) => ({ limitRef: value }));
 
   return {
     collection: mockCollection,
@@ -19,6 +22,9 @@ vi.mock("firebase/firestore", () => {
     setDoc: mockSetDoc,
     deleteDoc: mockDeleteDoc,
     getFirestore: mockGetFirestore,
+    query: mockQuery,
+    where: mockWhere,
+    limit: mockLimit,
   };
 });
 
