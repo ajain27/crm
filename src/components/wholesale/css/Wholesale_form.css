@@ -21,6 +21,10 @@
 .add-form .field:first-of-type {
   grid-column: span 2;
 }
+.form-row-break {
+  grid-column: 1 / -1;
+  height: 0;
+}
 .notes-field {
   grid-column: span 2;
 }

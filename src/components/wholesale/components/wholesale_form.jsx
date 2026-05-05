@@ -206,6 +206,7 @@ function Wholesale_form({
               />
             </>
           )}
+          <div className="form-row-break" aria-hidden="true" />
           <label className="field notes-field">
             <span>
               Notes
