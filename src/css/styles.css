@@ -1,3 +1,32 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-app-bg: var(--bg);
+  --color-app-panel: var(--panel);
+  --color-app-line: var(--line);
+  --color-app-text: var(--text);
+  --color-app-muted: var(--muted);
+  --color-app-blue: var(--blue);
+  --color-app-blue-light: var(--blue-light);
+  --color-app-green: var(--green);
+  --color-app-red: var(--red);
+  --color-app-orange: var(--orange);
+  --color-app-purple: var(--purple);
+  --color-app-nav: var(--nav-text);
+  --color-app-hover: var(--nav-hover-bg);
+  --color-app-input-bg: var(--input-bg);
+  --color-app-input-border: var(--input-border);
+  --color-app-input-text: var(--input-text);
+  --color-app-th-bg: var(--th-bg);
+  --color-app-th-text: var(--th-text);
+  --color-app-badge-bg: var(--badge-bg);
+  --color-app-green-light: var(--bg-green-light);
+  --color-app-purple-light: var(--bg-purple-light);
+  --color-app-orange-light: var(--bg-orange-light);
+  --color-app-red-light: var(--bg-red-light);
+  --shadow-app-panel: var(--shadow);
+}
+
 @import "./variables.css";
 @import "./base.css";
 @import "../components/sidebar/Sidebar.css";
@@ -6,5 +35,6 @@
 @import "../components/wholesale/css/Wholesale_form.css";
 @import "../components/wholesale/css/Wholesale_filters.css";
 @import "../components/wholesale/css/Wholesale_data.css";
+@import "../components/buyers/css/Buyers.css";
 @import "../components/pagination/Pagination.css";
 @import "../components/modal/Modal.css";

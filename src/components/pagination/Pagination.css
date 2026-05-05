@@ -1,19 +1,17 @@
-.pagination-footer {
-  padding: 16px;
-}
-.pagination-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.pagination-button {
-  padding: 6px 10px;
-}
-.pagination-info {
-  display: flex;
-  align-items: center;
-  margin: 0 8px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
+@layer components {
+  .pagination-footer {
+    @apply p-4;
+  }
+
+  .pagination-actions {
+    @apply flex items-center gap-2;
+  }
+
+  .pagination-button {
+    @apply px-2.5 py-1.5;
+  }
+
+  .pagination-info {
+    @apply mx-2 flex items-center text-sm font-medium text-app-muted;
+  }
 }

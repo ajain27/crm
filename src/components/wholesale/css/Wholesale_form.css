@@ -1,99 +1,78 @@
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  box-shadow: var(--shadow);
-  margin-bottom: 22px;
-}
-.panel-header {
-  padding: 22px 24px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-.add-form {
-  padding: 22px 24px 24px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 24px 16px;
-  align-items: end;
-}
-.add-form .field:first-of-type {
-  grid-column: span 2;
-}
-.form-row-break {
-  grid-column: 1 / -1;
-  height: 0;
-}
-.notes-field {
-  grid-column: span 2;
-}
-.field {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-.field span {
-  color: var(--input-text);
-  font-size: 14px;
-  font-weight: 600;
-}
-.field input,
-.field select,
-.search-field input {
-  width: 100%;
-  height: 44px;
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  padding: 0 12px;
-  background: var(--panel);
-  color: var(--text);
-  outline: none;
-}
-.field textarea {
-  width: 100%;
-  min-height: 120px;
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--panel);
-  color: var(--text);
-  outline: none;
-  resize: vertical;
-  font: inherit;
-}
-.field select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding: 0 40px 0 12px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25L7 9.25L11 5.25' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 14px 14px;
-}
-.field input::placeholder {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.field textarea::placeholder {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.form-btn {
-  height: 44px;
-  grid-column: 1 / -1;
-  justify-self: start;
-  min-width: 200px;
-  margin: 0 auto;
-}
-
-@media (max-width: 600px) {
-  .add-form .field:first-of-type,
-  .notes-field {
-    grid-column: span 1;
+@layer components {
+  .panel {
+    @apply mb-[22px] rounded-[13px] border bg-app-panel shadow-app-panel;
+    border-color: var(--line);
   }
+
+  .panel-header {
+    @apply flex items-start justify-between px-6 pb-0 pt-[22px];
+  }
+
+  .add-form {
+    @apply grid items-end gap-y-6 gap-x-4 px-6 pb-6 pt-[22px];
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .add-form .field:first-of-type {
+    grid-column: span 2;
+  }
+
+  .form-row-break {
+    @apply col-[1/-1] h-0;
+  }
+
+  .notes-field {
+    grid-column: span 2;
+  }
+
+  .field {
+    @apply grid min-w-0 gap-2;
+  }
+
+  .field span {
+    @apply text-sm font-semibold text-app-input-text;
+  }
+
+  .field input,
+  .field select,
+  .search-field input {
+    @apply h-11 w-full rounded-lg border bg-app-panel px-3 text-app-text outline-none transition-colors;
+    border-color: var(--input-border);
+  }
+
+  .field textarea {
+    @apply min-h-[120px] w-full resize-y rounded-lg border bg-app-panel p-3 text-app-text outline-none;
+    border-color: var(--input-border);
+  }
+
+  .field select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 0 40px 0 12px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25L7 9.25L11 5.25' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px 14px;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    @apply text-xs text-app-muted;
+  }
+
   .form-btn {
-    width: 100%;
+    @apply col-[1/-1] mx-auto h-11 min-w-[200px] justify-self-start;
+  }
+
+  @media (max-width: 600px) {
+    .add-form .field:first-of-type,
+    .notes-field {
+      grid-column: span 1;
+    }
+
+    .form-btn {
+      @apply w-full;
+    }
   }
 }

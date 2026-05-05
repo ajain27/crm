@@ -1,72 +1,55 @@
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(4px);
-  display: grid;
-  place-items: center;
-  z-index: 9999;
-}
-.modal {
-  background: var(--panel);
-  padding: 24px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: var(--shadow);
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.modal-close {
-  background: transparent;
-  color: var(--muted);
-  padding: 4px;
-}
-.modal h2 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-size: 20px;
-  color: var(--text);
-}
-.modal textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  resize: vertical;
-  font-size: 15px;
-  margin-bottom: 16px;
-  font-family: inherit;
-}
-.modal textarea:focus {
-  outline: none;
-  border-color: var(--blue);
-}
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-.profile-modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  width: 100%;
-}
-.profile-modal-btn {
-  min-width: 160px;
-  min-height: 48px;
-}
-
-@media (max-width: 600px) {
-  .profile-modal-actions {
-    flex-direction: column;
+@layer components {
+  .modal-overlay {
+    @apply fixed inset-0 z-[9999] grid place-items-center bg-slate-900/40 backdrop-blur-[4px];
   }
+
+  .modal {
+    @apply w-[90%] max-w-[500px] rounded-2xl bg-app-panel p-6 shadow-app-panel;
+  }
+
+  .modal-header {
+    @apply mb-4 flex items-center justify-between;
+  }
+
+  .modal-close {
+    @apply bg-transparent p-1 text-app-muted;
+  }
+
+  .modal h2 {
+    @apply mb-4 mt-0 text-xl text-app-text;
+  }
+
+  .modal textarea {
+    @apply mb-4 w-full resize-y rounded-[10px] border p-3 text-[15px];
+    border-color: var(--line);
+    font-family: inherit;
+  }
+
+  .modal textarea:focus {
+    @apply outline-none;
+    border-color: var(--blue);
+  }
+
+  .modal-actions,
+  .profile-modal-actions {
+    @apply flex justify-end gap-3;
+  }
+
+  .profile-modal-actions {
+    @apply w-full;
+  }
+
   .profile-modal-btn {
-    width: 100%;
+    @apply min-h-12 min-w-[160px];
+  }
+
+  @media (max-width: 600px) {
+    .profile-modal-actions {
+      @apply flex-col;
+    }
+
+    .profile-modal-btn {
+      @apply w-full;
+    }
   }
 }
