@@ -23,6 +23,7 @@ import Modal from "../../modal/Modal";
 
 const SESSION_STORAGE_KEY = "crmCurrentUser";
 const MAX_PROFILE_IMAGE_SIZE = 600 * 1024;
+const IDLE_LOGOUT_MS = 30 * 60 * 1000;
 
 const defaultFilters = {
   state: "All",
@@ -113,6 +114,7 @@ function Wholesale() {
     profileImage: currentUser?.profileImage || "",
   });
   const profileMenuRef = useRef(null);
+  const idleTimeoutRef = useRef(null);
 
   const persist = function persist(nextDeals) {
     setDeals(nextDeals);
@@ -155,6 +157,10 @@ function Wholesale() {
   }
 
   function handleSignOut() {
+    if (idleTimeoutRef.current) {
+      window.clearTimeout(idleTimeoutRef.current);
+      idleTimeoutRef.current = null;
+    }
     localStorage.removeItem(SESSION_STORAGE_KEY);
     setCurrentUser(null);
     setDeals([]);
@@ -164,6 +170,45 @@ function Wholesale() {
     setIsProfileModalOpen(false);
     setIsProfileMenuOpen(false);
   }
+
+  useEffect(() => {
+    if (!currentUser) return undefined;
+
+    const activityEvents = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+
+    function resetIdleTimer() {
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+      }
+
+      idleTimeoutRef.current = window.setTimeout(() => {
+        alert("You have been logged out after 30 minutes of inactivity.");
+        handleSignOut();
+      }, IDLE_LOGOUT_MS);
+    }
+
+    activityEvents.forEach((eventName) =>
+      window.addEventListener(eventName, resetIdleTimer, { passive: true }),
+    );
+    resetIdleTimer();
+
+    return () => {
+      activityEvents.forEach((eventName) =>
+        window.removeEventListener(eventName, resetIdleTimer),
+      );
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = null;
+      }
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     setProfileForm({
