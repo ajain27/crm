@@ -1,8 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { RefreshCw, Menu } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import "../../../css/styles.css";
-import logo from "../../../assets/logo.png";
 import {
   fetchDeals,
   fetchBuyers,
@@ -19,49 +18,18 @@ import Sidebar from "../../sidebar/Sidebar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
-import Modal from "../../modal/Modal";
-
-const SESSION_STORAGE_KEY = "crmCurrentUser";
-const MAX_PROFILE_IMAGE_SIZE = 600 * 1024;
-const IDLE_LOGOUT_MS = 30 * 60 * 1000;
-
-const defaultFilters = {
-  state: "All",
-  propertyType: "All",
-  offerAccepted: "All",
-  assigned: "All",
-  search: "",
-  closed: "All",
-  offerMonth: "All",
-  closedMonth: "All",
-  year: "All",
-};
-
-const emptyForm = {
-  address: "",
-  city: "",
-  zipCode: "",
-  state: "",
-  propertyType: "Single Family",
-  onMarket: "No",
-  listedPrice: "",
-  arv: "",
-  rehabCost: "",
-  desiredProfit: "",
-  mao: "",
-  offerStatus: "Not Sent",
-  offerDate: "",
-  sellerAccepted: "No",
-  contractPrice: "",
-  assigned: "No",
-  assignedPrice: "",
-  buyerName: "",
-  buyerEmail: "",
-  notes: "",
-  closed: "No",
-  closedDate: "",
-  closedInMonth: "",
-};
+import ProfileModal from "./ProfileModal";
+import WholesaleHeader from "./WholesaleHeader";
+import useIdleLogout from "./useIdleLogout";
+import {
+  SESSION_STORAGE_KEY,
+  MAX_PROFILE_IMAGE_SIZE,
+  IDLE_LOGOUT_MS,
+  months,
+  createDefaultFilters,
+  createEmptyDealForm,
+  createProfileForm,
+} from "./wholesaleConfig";
 
 function Wholesale() {
   const [theme, setTheme] = useState(
@@ -104,17 +72,14 @@ function Wholesale() {
   const [isLoading, setIsLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [form, setForm] = useState(emptyForm);
-  const [filters, setFilters] = useState(defaultFilters);
+  const [form, setForm] = useState(createEmptyDealForm);
+  const [filters, setFilters] = useState(createDefaultFilters);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    firstName: currentUser?.firstName || "",
-    lastName: currentUser?.lastName || "",
-    profileImage: currentUser?.profileImage || "",
-  });
+  const [profileForm, setProfileForm] = useState(() =>
+    createProfileForm(currentUser),
+  );
   const profileMenuRef = useRef(null);
-  const idleTimeoutRef = useRef(null);
 
   const persist = function persist(nextDeals) {
     setDeals(nextDeals);
@@ -149,73 +114,31 @@ function Wholesale() {
   function handleAuthenticated(user) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     setCurrentUser(user);
-    setProfileForm({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      profileImage: user.profileImage || "",
-    });
+    setProfileForm(createProfileForm(user));
   }
 
   function handleSignOut() {
-    if (idleTimeoutRef.current) {
-      window.clearTimeout(idleTimeoutRef.current);
-      idleTimeoutRef.current = null;
-    }
     localStorage.removeItem(SESSION_STORAGE_KEY);
     setCurrentUser(null);
     setDeals([]);
-    setForm(emptyForm);
-    setFilters(defaultFilters);
+    setForm(createEmptyDealForm());
+    setFilters(createDefaultFilters());
     setActiveView("dashboard");
     setIsProfileModalOpen(false);
     setIsProfileMenuOpen(false);
   }
 
-  useEffect(() => {
-    if (!currentUser) return undefined;
-
-    const activityEvents = [
-      "mousemove",
-      "mousedown",
-      "keydown",
-      "scroll",
-      "touchstart",
-      "click",
-    ];
-
-    function resetIdleTimer() {
-      if (idleTimeoutRef.current) {
-        window.clearTimeout(idleTimeoutRef.current);
-      }
-
-      idleTimeoutRef.current = window.setTimeout(() => {
-        alert("You have been logged out after 30 minutes of inactivity.");
-        handleSignOut();
-      }, IDLE_LOGOUT_MS);
-    }
-
-    activityEvents.forEach((eventName) =>
-      window.addEventListener(eventName, resetIdleTimer, { passive: true }),
-    );
-    resetIdleTimer();
-
-    return () => {
-      activityEvents.forEach((eventName) =>
-        window.removeEventListener(eventName, resetIdleTimer),
-      );
-      if (idleTimeoutRef.current) {
-        window.clearTimeout(idleTimeoutRef.current);
-        idleTimeoutRef.current = null;
-      }
-    };
-  }, [currentUser]);
+  useIdleLogout({
+    currentUser,
+    timeoutMs: IDLE_LOGOUT_MS,
+    onTimeout: () => {
+      alert("You have been logged out after 30 minutes of inactivity.");
+      handleSignOut();
+    },
+  });
 
   useEffect(() => {
-    setProfileForm({
-      firstName: currentUser?.firstName || "",
-      lastName: currentUser?.lastName || "",
-      profileImage: currentUser?.profileImage || "",
-    });
+    setProfileForm(createProfileForm(currentUser));
   }, [currentUser?.firstName, currentUser?.lastName, currentUser?.profileImage]);
 
   async function handleSaveProfile() {
@@ -620,9 +543,9 @@ function Wholesale() {
 
       await saveDeal(newDeal);
       setDeals((prevDeals) => [...prevDeals, newDeal]);
-      setForm(emptyForm);
+      setForm(createEmptyDealForm());
       if (newDeal.offerDate || newDeal.closedDate) {
-        setFilters(defaultFilters);
+        setFilters(createDefaultFilters());
       }
     } catch (error) {
       console.error("Failed to save property", error);
@@ -682,24 +605,6 @@ function Wholesale() {
     [deals],
   );
 
-  const months = useMemo(
-    () => [
-      "All",
-      "01",
-      "02",
-      "03",
-      "04",
-      "05",
-      "06",
-      "07",
-      "08",
-      "09",
-      "10",
-      "11",
-      "12",
-    ],
-    [],
-  );
   const filteredDeals = useMemo(() => {
     const query = filters.search.toLowerCase();
     return deals.filter((deal) => {
@@ -806,68 +711,19 @@ function Wholesale() {
       />
 
       <main className="main">
-        <div className="company-header">
-          <div className={`company-brand-header ${isSidebarOpen ? "sidebar-visible" : "sidebar-hidden"}`}>
-            <button
-              type="button"
-              className="ghost-btn sidebar-toggle-btn sidebar-toggle-btn-floating"
-              onClick={() => setIsSidebarOpen((prev) => !prev)}
-              aria-label={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
-              title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
-            >
-              <Menu size={18} />
-            </button>
-            <img
-              src={logo}
-              alt="You Win Estates"
-              className={`company-header-logo ${isSidebarOpen ? "is-hidden" : "is-visible"}`}
-            />
-          </div>
-          <div className="profile-menu-wrap" ref={profileMenuRef}>
-            <button
-              type="button"
-              className="profile-avatar-btn"
-              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-              aria-label="Open profile menu"
-              title="Open profile menu"
-            >
-              {currentUser?.profileImage ? (
-                <img
-                  src={currentUser.profileImage}
-                  alt={currentUser.firstName || currentUser.username || "Profile"}
-                  className="profile-avatar-image"
-                />
-              ) : (
-                <span className="profile-avatar-fallback">{profileInitial}</span>
-              )}
-            </button>
-            {isProfileMenuOpen && (
-              <div className="profile-menu-dropdown">
-                <div className="profile-menu-header">
-                  <strong>{displayName}</strong>
-                  <span>{currentUser?.email}</span>
-                </div>
-                <button
-                  type="button"
-                  className="profile-menu-item"
-                  onClick={() => {
-                    setIsProfileMenuOpen(false);
-                    setIsProfileModalOpen(true);
-                  }}
-                >
-                  Edit Profile
-                </button>
-                <button
-                  type="button"
-                  className="profile-menu-item danger"
-                  onClick={handleSignOut}
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <WholesaleHeader
+          currentUser={currentUser}
+          isSidebarOpen={isSidebarOpen}
+          isProfileMenuOpen={isProfileMenuOpen}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          onToggleProfileMenu={() => setIsProfileMenuOpen((prev) => !prev)}
+          onEditProfile={() => {
+            setIsProfileMenuOpen(false);
+            setIsProfileModalOpen(true);
+          }}
+          onSignOut={handleSignOut}
+          profileMenuRef={profileMenuRef}
+        />
         {activeView === "dashboard" ? (
           <>
             <header className="page-header">
@@ -935,93 +791,15 @@ function Wholesale() {
           />
         )}
       </main>
-      <Modal
+      <ProfileModal
+        currentUser={currentUser}
         isOpen={isProfileModalOpen}
+        profileForm={profileForm}
+        setProfileForm={setProfileForm}
         onClose={() => setIsProfileModalOpen(false)}
-        title="Edit Profile"
-        actions={
-          <div className="profile-modal-actions">
-            <button
-              className="secondary-btn profile-modal-btn"
-              onClick={() => setIsProfileModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="primary-btn profile-modal-btn"
-              onClick={handleSaveProfile}
-            >
-              Save Profile
-            </button>
-          </div>
-        }
-      >
-        <div className="auth-form">
-          <label className="auth-field">
-            <span>Profile Photo</span>
-            <div className="profile-image-field">
-              <div className="profile-image-preview">
-                {profileForm.profileImage ? (
-                  <img
-                    src={profileForm.profileImage}
-                    alt="Profile preview"
-                    className="profile-image-preview-img"
-                  />
-                ) : (
-                  <span className="profile-image-preview-fallback">
-                    {String(profileForm.firstName || currentUser?.username || "U")
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfileImageChange}
-              />
-              {profileForm.profileImage && (
-                <button
-                  type="button"
-                  className="secondary-btn profile-photo-clear-btn"
-                  onClick={() =>
-                    setProfileForm((prev) => ({ ...prev, profileImage: "" }))
-                  }
-                >
-                  Remove Photo
-                </button>
-              )}
-            </div>
-          </label>
-          <label className="auth-field">
-            <span>First Name</span>
-            <input
-              value={profileForm.firstName}
-              onChange={(event) =>
-                setProfileForm((prev) => ({
-                  ...prev,
-                  firstName: event.target.value,
-                }))
-              }
-              placeholder="First name"
-            />
-          </label>
-          <label className="auth-field">
-            <span>Last Name</span>
-            <input
-              value={profileForm.lastName}
-              onChange={(event) =>
-                setProfileForm((prev) => ({
-                  ...prev,
-                  lastName: event.target.value,
-                }))
-              }
-              placeholder="Last name"
-            />
-          </label>
-        </div>
-      </Modal>
+        onSave={handleSaveProfile}
+        onProfileImageChange={handleProfileImageChange}
+      />
     </div>
   );
 }
