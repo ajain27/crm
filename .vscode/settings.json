@@ -10,6 +10,10 @@
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

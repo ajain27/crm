@@ -1026,4 +1026,9 @@ function Wholesale() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<Wholesale />);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  createRoot(rootElement).render(<Wholesale />);
+}
+
+export default Wholesale;
