@@ -25,6 +25,9 @@ function Sidebar({
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="brand sidebar-brand">
         <img src={logo} alt="You Win Estates" className="brand-logo" />
+        <span className="sidebar-proprietary-tag">
+          Proprietary & Confidential
+        </span>
       </div>
       <nav>
         <a

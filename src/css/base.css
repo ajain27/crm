@@ -76,6 +76,14 @@
     transition: grid-template-columns 0.28s ease;
   }
 
+  .desktop-sidebar-slot {
+    @apply block;
+  }
+
+  .mobile-sidebar-slot {
+    @apply hidden;
+  }
+
   .layout.sidebar-collapsed {
     grid-template-columns: 0 1fr;
   }
@@ -85,7 +93,7 @@
   }
 
   .company-header {
-    @apply mb-6 flex w-full items-center justify-between px-2 py-2;
+    @apply m-0 flex w-full items-center justify-between p-0;
   }
 
   .company-brand-header {
@@ -110,17 +118,22 @@
     background: color-mix(in srgb, var(--blue-light) 22%, transparent 78%);
   }
 
-  .company-proprietary-tag.is-hidden {
-    @apply pointer-events-none max-w-0 overflow-hidden px-0 opacity-0;
-  }
-
-  .company-proprietary-tag.is-visible {
+  .company-proprietary-tag.is-sidebar-closed,
+  .company-proprietary-tag.is-sidebar-open {
     @apply opacity-100;
   }
 
   .company-header .sidebar-toggle-btn-floating {
     @apply static shrink-0;
     transform: none;
+  }
+
+  .header-actions {
+    @apply flex items-center;
+  }
+
+  .header-theme-toggle {
+    @apply hidden;
   }
 
   .profile-avatar-btn {
@@ -359,8 +372,41 @@
       transition: none;
     }
 
+    .desktop-sidebar-slot {
+      @apply hidden;
+    }
+
+    .mobile-sidebar-slot {
+      @apply mb-2 block;
+    }
+
     .layout.sidebar-collapsed {
       @apply grid-cols-1;
+    }
+
+    .company-header-logo.is-hidden {
+      @apply max-w-[260px] opacity-95;
+      pointer-events: auto;
+    }
+  }
+
+  @media (min-width: 1101px) {
+    .company-header {
+      @apply mb-6;
+    }
+
+    .header-theme-toggle {
+      display: none !important;
+    }
+
+    .company-proprietary-tag.is-sidebar-open {
+      @apply pointer-events-none max-w-0 overflow-hidden px-0 opacity-0;
+    }
+  }
+
+  @media (min-width: 601px) and (max-width: 1100px) {
+    .header-theme-toggle {
+      display: none !important;
     }
   }
 
@@ -369,16 +415,54 @@
       @apply px-4 pb-10 pt-0;
     }
 
+    .mobile-sidebar-slot {
+      @apply mt-3;
+    }
+
     .company-header {
-      @apply mb-4 px-4 py-3;
+      @apply min-h-0 items-start;
+    }
+
+    .company-brand-header {
+      @apply grid items-center justify-start gap-x-2 gap-y-1;
+      grid-template-columns: auto 1fr;
     }
 
     .company-header-logo {
       @apply h-12 max-w-[220px];
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: start;
     }
 
     .company-proprietary-tag {
-      @apply hidden;
+      @apply block px-0 py-0 text-[10px];
+      grid-column: 2;
+      grid-row: 2;
+      justify-self: start;
+    }
+
+    .company-header .sidebar-toggle-btn-floating {
+      @apply mr-1 mt-2;
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      align-self: start;
+    }
+
+    .profile-avatar-btn {
+      @apply ml-2 h-10 w-10;
+    }
+
+    .header-theme-toggle {
+      @apply mt-1 flex h-10 w-10 shrink-0;
+    }
+
+    .profile-menu-wrap {
+      @apply mt-2 ml-2 self-start;
+    }
+
+    .header-actions {
+      @apply mt-2 self-start;
     }
 
     .profile-avatar-btn {

@@ -24,13 +24,17 @@
   }
 
   .sidebar-brand {
-    @apply justify-between border-b pb-5;
+    @apply flex-col items-start gap-2 border-b pb-5;
     border-color: var(--line);
   }
 
   .brand-logo {
     @apply block h-auto max-w-[180px] opacity-95;
     mix-blend-mode: multiply;
+  }
+
+  .sidebar-proprietary-tag {
+    @apply whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.06em] text-app-muted;
   }
 
   .sidebar-toggle-btn {
@@ -66,7 +70,7 @@
 
   .brand span,
   .user-card span {
-    @apply text-sm text-app-muted;
+    @apply text-xs text-app-muted;
   }
 
   nav {
@@ -135,29 +139,46 @@
 
   @media (max-width: 1100px) {
     .sidebar {
-      @apply static h-auto flex-row flex-wrap items-center justify-between gap-4 border-r-0 border-b px-6 py-4;
+      @apply static flex h-auto flex-row flex-wrap items-center justify-between gap-4 border-r-0 border-b px-6 py-4;
       width: 100%;
       max-width: 100%;
-      max-height: 999px;
+      max-height: 320px;
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+      overflow: hidden;
       transition:
         max-height 0.28s ease,
-        opacity 0.24s ease,
-        padding 0.24s ease,
-        margin 0.24s ease;
+        opacity 0.22s ease,
+        transform 0.22s ease,
+        padding 0.22s ease;
     }
 
     .user-card {
       @apply hidden;
     }
 
+    .sidebar-brand {
+      @apply hidden;
+    }
+
     .sidebar.closed {
+      @apply flex;
       width: 100%;
       max-width: 100%;
       max-height: 0;
+      transform: translateY(-8px);
       padding-top: 0;
       padding-bottom: 0;
-      margin-bottom: 0;
       border-bottom-color: transparent;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .sidebar.open {
+      @apply flex;
+      max-height: 320px;
+      transform: translateY(0);
     }
 
     nav {

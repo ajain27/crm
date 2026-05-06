@@ -1,4 +1,4 @@
-import { Menu } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import logo from "../../../assets/logo.png";
 
 function buildDisplayName(currentUser) {
@@ -23,7 +23,9 @@ function WholesaleHeader({
   currentUser,
   isSidebarOpen,
   isProfileMenuOpen,
+  theme,
   onToggleSidebar,
+  onToggleTheme,
   onToggleProfileMenu,
   onEditProfile,
   onSignOut,
@@ -51,12 +53,27 @@ function WholesaleHeader({
           alt="You Win Estates"
           className={`company-header-logo ${isSidebarOpen ? "is-hidden" : "is-visible"}`}
         />
-        <span className={`company-proprietary-tag ${isSidebarOpen ? "is-hidden" : "is-visible"}`}>
+        <span
+          className={`company-proprietary-tag ${
+            isSidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"
+          }`}
+        >
           Proprietary & Confidential
         </span>
       </div>
 
-      <div className="profile-menu-wrap" ref={profileMenuRef}>
+      <div className="header-actions">
+        <button
+          type="button"
+          className="ghost-btn header-theme-toggle"
+          onClick={onToggleTheme}
+          aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+          title={theme === "dark" ? "Light Theme" : "Dark Theme"}
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        <div className="profile-menu-wrap" ref={profileMenuRef}>
         <button
           type="button"
           className="profile-avatar-btn"
@@ -97,6 +114,7 @@ function WholesaleHeader({
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

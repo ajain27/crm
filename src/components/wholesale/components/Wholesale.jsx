@@ -701,21 +701,25 @@ function Wholesale() {
     <div
       className={`layout ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}
     >
-      <Sidebar
-        activeView={activeView}
-        setActiveView={setActiveView}
-        currentUser={currentUser}
-        isOpen={isSidebarOpen}
-        theme={theme}
-        onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
-      />
+      <div className="desktop-sidebar-slot">
+        <Sidebar
+          activeView={activeView}
+          setActiveView={setActiveView}
+          currentUser={currentUser}
+          isOpen={isSidebarOpen}
+          theme={theme}
+          onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+        />
+      </div>
 
       <main className="main">
         <WholesaleHeader
           currentUser={currentUser}
           isSidebarOpen={isSidebarOpen}
           isProfileMenuOpen={isProfileMenuOpen}
+          theme={theme}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
           onToggleProfileMenu={() => setIsProfileMenuOpen((prev) => !prev)}
           onEditProfile={() => {
             setIsProfileMenuOpen(false);
@@ -724,6 +728,16 @@ function Wholesale() {
           onSignOut={handleSignOut}
           profileMenuRef={profileMenuRef}
         />
+        <div className="mobile-sidebar-slot">
+          <Sidebar
+            activeView={activeView}
+            setActiveView={setActiveView}
+            currentUser={currentUser}
+            isOpen={isSidebarOpen}
+            theme={theme}
+            onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+          />
+        </div>
         {activeView === "dashboard" ? (
           <>
             <header className="page-header">
