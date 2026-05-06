@@ -5,10 +5,7 @@ function Sidebar({
   activeView,
   setActiveView,
   currentUser,
-  onSignOut,
-  onEditProfile,
   isOpen,
-  onToggle,
   theme,
   onToggleTheme,
 }) {
@@ -45,34 +42,30 @@ function Sidebar({
           Buyers List
         </a>
       </nav>
-      <button
-        type="button"
-        className="secondary-btn sidebar-theme-btn"
-        onClick={onToggleTheme}
-      >
-        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        {theme === "dark" ? "Light Theme" : "Dark Theme"}
-      </button>
       <div className="user-card">
-        <div className="avatar">{initials}</div>
+        <button
+          type="button"
+          className="secondary-btn sidebar-theme-btn"
+          onClick={onToggleTheme}
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          {theme === "dark" ? "Light Theme" : "Dark Theme"}
+        </button>
         <div className="user-meta">
           <div className="user-info">
+            <div className="avatar">
+              {currentUser?.profileImage ? (
+                <img
+                  src={currentUser.profileImage}
+                  alt={displayName}
+                  className="avatar-image"
+                />
+              ) : (
+                initials
+              )}
+            </div>
             <strong>{displayName}</strong>
           </div>
-          <button
-            type="button"
-            className="secondary-btn sidebar-profile-btn"
-            onClick={onEditProfile}
-          >
-            Edit Profile
-          </button>
-          <button
-            type="button"
-            className="ghost-btn sidebar-signout-btn"
-            onClick={onSignOut}
-          >
-            Sign Out
-          </button>
         </div>
       </div>
     </aside>

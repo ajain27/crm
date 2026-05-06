@@ -108,6 +108,7 @@ describe("firestoreService", () => {
       id: "u1",
       firstName: "Ankit",
       lastName: "Jain",
+      profileImage: "data:image/png;base64,abc123",
     });
 
     expect(doc).toHaveBeenCalledWith(expect.anything(), "u1");
@@ -116,6 +117,7 @@ describe("firestoreService", () => {
       {
         firstName: "Ankit",
         lastName: "Jain",
+        profileImage: "data:image/png;base64,abc123",
       },
       { merge: true },
     );

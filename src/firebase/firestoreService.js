@@ -69,6 +69,7 @@ export async function createUserAccount({
     lastName: lastName.trim(),
     username: username.trim(),
     email: normalizedEmail,
+    profileImage: "",
     passwordHash: await hashPassword(password),
   };
 
@@ -80,6 +81,7 @@ export async function createUserAccount({
     lastName: user.lastName,
     username: user.username,
     email: user.email,
+    profileImage: user.profileImage || "",
   };
 }
 
@@ -105,16 +107,18 @@ export async function signInUser({ email, password }) {
     lastName: user.lastName || "",
     username: user.username,
     email: user.email,
+    profileImage: user.profileImage || "",
   };
 }
 
-export async function updateUserProfile({ id, firstName, lastName }) {
+export async function updateUserProfile({ id, firstName, lastName, profileImage }) {
   const userRef = doc(usersCollection, id);
   await setDoc(
     userRef,
     {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      profileImage: profileImage || "",
     },
     { merge: true },
   );
@@ -123,6 +127,7 @@ export async function updateUserProfile({ id, firstName, lastName }) {
     id,
     firstName: firstName.trim(),
     lastName: lastName.trim(),
+    profileImage: profileImage || "",
   };
 }
 

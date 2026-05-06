@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { RefreshCw, Menu } from "lucide-react";
 import "../../../css/styles.css";
@@ -22,6 +22,7 @@ import AuthGate from "../../auth/AuthGate";
 import Modal from "../../modal/Modal";
 
 const SESSION_STORAGE_KEY = "crmCurrentUser";
+const MAX_PROFILE_IMAGE_SIZE = 600 * 1024;
 
 const defaultFilters = {
   state: "All",
@@ -105,10 +106,13 @@ function Wholesale() {
   const [form, setForm] = useState(emptyForm);
   const [filters, setFilters] = useState(defaultFilters);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({
     firstName: currentUser?.firstName || "",
     lastName: currentUser?.lastName || "",
+    profileImage: currentUser?.profileImage || "",
   });
+  const profileMenuRef = useRef(null);
 
   const persist = function persist(nextDeals) {
     setDeals(nextDeals);
@@ -146,6 +150,7 @@ function Wholesale() {
     setProfileForm({
       firstName: user.firstName || "",
       lastName: user.lastName || "",
+      profileImage: user.profileImage || "",
     });
   }
 
@@ -157,14 +162,16 @@ function Wholesale() {
     setFilters(defaultFilters);
     setActiveView("dashboard");
     setIsProfileModalOpen(false);
+    setIsProfileMenuOpen(false);
   }
 
   useEffect(() => {
     setProfileForm({
       firstName: currentUser?.firstName || "",
       lastName: currentUser?.lastName || "",
+      profileImage: currentUser?.profileImage || "",
     });
-  }, [currentUser?.firstName, currentUser?.lastName]);
+  }, [currentUser?.firstName, currentUser?.lastName, currentUser?.profileImage]);
 
   async function handleSaveProfile() {
     if (!currentUser?.id) return;
@@ -174,16 +181,56 @@ function Wholesale() {
         id: currentUser.id,
         firstName: profileForm.firstName,
         lastName: profileForm.lastName,
+        profileImage: profileForm.profileImage,
       });
 
       const nextUser = { ...currentUser, ...updatedNames };
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextUser));
       setCurrentUser(nextUser);
       setIsProfileModalOpen(false);
+      setIsProfileMenuOpen(false);
     } catch (error) {
       console.error("Failed to update profile", error);
       alert("Unable to update profile. Check your database connection.");
     }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (!profileMenuRef.current?.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleProfileImageChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose an image file for your profile photo.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      alert("Profile photo must be smaller than 600 KB.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProfileForm((prev) => ({
+        ...prev,
+        profileImage: typeof reader.result === "string" ? reader.result : "",
+      }));
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
   }
 
   function handleChange(event) {
@@ -688,6 +735,18 @@ function Wholesale() {
     return <AuthGate onAuthenticated={handleAuthenticated} />;
   }
 
+  const displayName =
+    [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(" ") ||
+    currentUser?.username ||
+    currentUser?.email ||
+    "CRM User";
+  const profileInitial = String(
+    currentUser?.firstName || currentUser?.username || currentUser?.email || "U",
+  )
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
   return (
     <div
       className={`layout ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}
@@ -696,17 +755,14 @@ function Wholesale() {
         activeView={activeView}
         setActiveView={setActiveView}
         currentUser={currentUser}
-        onSignOut={handleSignOut}
-        onEditProfile={() => setIsProfileModalOpen(true)}
         isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen((prev) => !prev)}
         theme={theme}
         onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
 
       <main className="main">
         <div className="company-header">
-          <div className="company-brand-header">
+          <div className={`company-brand-header ${isSidebarOpen ? "sidebar-visible" : "sidebar-hidden"}`}>
             <button
               type="button"
               className="ghost-btn sidebar-toggle-btn sidebar-toggle-btn-floating"
@@ -719,8 +775,52 @@ function Wholesale() {
             <img
               src={logo}
               alt="You Win Estates"
-              className="company-header-logo"
+              className={`company-header-logo ${isSidebarOpen ? "is-hidden" : "is-visible"}`}
             />
+          </div>
+          <div className="profile-menu-wrap" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="profile-avatar-btn"
+              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+              aria-label="Open profile menu"
+              title="Open profile menu"
+            >
+              {currentUser?.profileImage ? (
+                <img
+                  src={currentUser.profileImage}
+                  alt={currentUser.firstName || currentUser.username || "Profile"}
+                  className="profile-avatar-image"
+                />
+              ) : (
+                <span className="profile-avatar-fallback">{profileInitial}</span>
+              )}
+            </button>
+            {isProfileMenuOpen && (
+              <div className="profile-menu-dropdown">
+                <div className="profile-menu-header">
+                  <strong>{displayName}</strong>
+                  <span>{currentUser?.email}</span>
+                </div>
+                <button
+                  type="button"
+                  className="profile-menu-item"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                >
+                  Edit Profile
+                </button>
+                <button
+                  type="button"
+                  className="profile-menu-item danger"
+                  onClick={handleSignOut}
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
         {activeView === "dashboard" ? (
@@ -812,6 +912,43 @@ function Wholesale() {
         }
       >
         <div className="auth-form">
+          <label className="auth-field">
+            <span>Profile Photo</span>
+            <div className="profile-image-field">
+              <div className="profile-image-preview">
+                {profileForm.profileImage ? (
+                  <img
+                    src={profileForm.profileImage}
+                    alt="Profile preview"
+                    className="profile-image-preview-img"
+                  />
+                ) : (
+                  <span className="profile-image-preview-fallback">
+                    {String(profileForm.firstName || currentUser?.username || "U")
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+              />
+              {profileForm.profileImage && (
+                <button
+                  type="button"
+                  className="secondary-btn profile-photo-clear-btn"
+                  onClick={() =>
+                    setProfileForm((prev) => ({ ...prev, profileImage: "" }))
+                  }
+                >
+                  Remove Photo
+                </button>
+              )}
+            </div>
+          </label>
           <label className="auth-field">
             <span>First Name</span>
             <input

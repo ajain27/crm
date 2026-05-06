@@ -46,7 +46,7 @@
   }
 
   .sidebar-theme-btn {
-    @apply w-full justify-center gap-2.5 px-4 py-3 font-semibold;
+    @apply w-fit justify-center gap-2.5 self-start rounded-md px-0 py-2 text-sm font-semibold;
   }
 
   .dark .brand-logo {
@@ -85,7 +85,7 @@
   }
 
   .user-card {
-    @apply mt-auto flex items-center gap-3 rounded-xl border p-3 shadow-sm shadow-slate-900/5;
+    @apply mt-auto grid gap-3 rounded-xl border p-3 shadow-sm shadow-slate-900/5;
     border-color: var(--line);
   }
 
@@ -98,6 +98,10 @@
     @apply grid gap-3.5;
   }
 
+  .user-info {
+    @apply flex items-center gap-3;
+  }
+
   .user-info strong {
     @apply block text-app-text;
   }
@@ -107,17 +111,26 @@
     overflow-wrap: anywhere;
   }
 
-  .sidebar-signout-btn,
-  .sidebar-profile-btn {
-    @apply w-full justify-center;
+  .sidebar-theme-btn:hover,
+  .sidebar-theme-btn:hover {
+    background: color-mix(in srgb, var(--blue-light) 34%, var(--panel) 66%);
+    border: 1px solid color-mix(in srgb, var(--blue) 48%, var(--line) 52%) !important;
+    color: var(--text);
+    padding-left: 14px;
+    padding-right: 14px;
   }
 
-  .sidebar-signout-btn {
-    @apply px-3 py-2.5;
+  :root.dark .sidebar-theme-btn:hover {
+    background: color-mix(in srgb, var(--blue) 24%, var(--panel) 76%);
+    border: 1px solid color-mix(in srgb, var(--blue) 62%, var(--line) 38%) !important;
   }
 
   .avatar {
     @apply grid h-[38px] w-[38px] place-items-center rounded-full bg-app-blue font-extrabold text-white;
+  }
+
+  .avatar-image {
+    @apply h-full w-full object-cover;
   }
 
   @media (max-width: 1100px) {
