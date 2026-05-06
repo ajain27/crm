@@ -109,7 +109,8 @@ function Wholesale_filters({
             options={["All", "No", "Yes"]}
           />
           <button
-            className="secondary-btn"
+            type="button"
+            className="secondary-btn clear-filters-btn"
             onClick={() =>
               setFilters({
                 state: "All",

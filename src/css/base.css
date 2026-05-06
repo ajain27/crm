@@ -24,14 +24,45 @@
 
   h1 {
     @apply mb-2.5 text-[36px] leading-[1.1] tracking-[-1px];
+    font-family:
+      "Iowan Old Style",
+      "Palatino Linotype",
+      "Book Antiqua",
+      Georgia,
+      ui-serif,
+      serif;
+    font-weight: 700;
   }
 
   h2 {
     @apply m-0 text-xl;
+    font-family:
+      "Iowan Old Style",
+      "Palatino Linotype",
+      "Book Antiqua",
+      Georgia,
+      ui-serif,
+      serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 
   p {
     @apply m-0 text-app-muted;
+    font-family:
+      "Avenir Next",
+      "Segoe UI",
+      "Helvetica Neue",
+      Helvetica,
+      Arial,
+      ui-sans-serif,
+      sans-serif;
+    font-weight: 500;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
   }
 }
 
@@ -42,10 +73,38 @@
 
   .layout {
     @apply grid min-h-screen grid-cols-[270px_1fr];
+    transition: grid-template-columns 0.28s ease;
+  }
+
+  .layout.sidebar-collapsed {
+    grid-template-columns: 0 1fr;
   }
 
   .main {
     @apply overflow-x-hidden px-[46px] pb-14 pt-9;
+  }
+
+  .company-header {
+    @apply mb-6 flex w-full items-center justify-center px-2 py-2;
+  }
+
+  .company-brand-header {
+    @apply relative flex w-full items-center justify-center;
+  }
+
+  .company-header-logo {
+    @apply block h-14 w-auto max-w-[260px] opacity-95;
+    mix-blend-mode: multiply;
+  }
+
+  .company-header .sidebar-toggle-btn-floating {
+    @apply absolute left-0 top-1/2;
+    transform: translateY(-50%);
+  }
+
+  .dark .company-header-logo {
+    mix-blend-mode: screen;
+    filter: invert(1) hue-rotate(180deg);
   }
 
   .page-header {
@@ -54,6 +113,7 @@
 
   .page-header h1 {
     color: var(--blue);
+    letter-spacing: -0.03em;
   }
 
   .dark .page-header h1 {
@@ -72,7 +132,7 @@
   .secondary-btn,
   .ghost-btn,
   .danger-btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border-0 transition-colors;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border-0 transition-all duration-200 ease-out;
   }
 
   .primary-btn {
@@ -97,12 +157,54 @@
     @apply text-app-red;
   }
 
+  .primary-btn:hover {
+    background: color-mix(in srgb, var(--blue) 94%, white 6%);
+  }
+
+  .secondary-btn:hover,
+  .ghost-btn:hover,
+  .danger-btn:hover {
+    background: color-mix(in srgb, var(--panel) 92%, var(--blue-light) 8%);
+    border-color: color-mix(in srgb, var(--line) 72%, var(--blue) 28%);
+  }
+
   .actions {
     @apply flex gap-2;
   }
 
+  .field input,
+  .field textarea,
+  .auth-field input,
+  .editable-input,
+  .table-input,
+  .search-input-expanded,
+  .modal textarea {
+    background-image: linear-gradient(var(--blue), var(--blue));
+    background-position: left bottom;
+    background-repeat: no-repeat;
+    background-size: 0% 2px;
+    transition:
+      background-size 0.22s ease,
+      border-color 0.18s ease;
+  }
+
+  .field input:focus,
+  .field textarea:focus,
+  .auth-field input:focus,
+  .editable-input:focus,
+  .table-input:focus,
+  .search-input-expanded:focus,
+  .modal textarea:focus {
+    background-size: 100% 2px;
+  }
+
   @media (max-width: 1100px) {
     .layout {
+      @apply grid-cols-1;
+      transition: none;
+    }
+
+    .layout.sidebar-collapsed {
       @apply grid-cols-1;
     }
   }
@@ -110,6 +212,18 @@
   @media (max-width: 600px) {
     .main {
       @apply px-4 pb-10 pt-6;
+    }
+
+    .company-header {
+      @apply mb-4 px-4 py-3;
+    }
+
+    .company-header-logo {
+      @apply h-12 max-w-[220px];
+    }
+
+    .company-header .sidebar-toggle-btn-floating {
+      @apply left-0;
     }
 
     .page-header {

@@ -1,8 +1,22 @@
 @layer components {
   .sidebar {
-    @apply sticky top-0 flex h-screen flex-col gap-7 border-r px-[18px] py-7;
+    @apply sticky top-0 flex h-screen flex-col gap-7 border-r px-[18px] py-7 transition-all duration-300 ease-out;
     background: var(--panel);
     border-color: var(--line);
+    width: 270px;
+    max-width: 270px;
+    opacity: 1;
+    overflow: hidden;
+  }
+
+  .sidebar.closed {
+    width: 0;
+    max-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-right-color: transparent;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .brand {
@@ -10,13 +24,29 @@
   }
 
   .sidebar-brand {
-    @apply justify-center border-b pb-5;
+    @apply justify-between border-b pb-5;
     border-color: var(--line);
   }
 
   .brand-logo {
-    @apply block h-auto w-full opacity-95;
+    @apply block h-auto max-w-[180px] opacity-95;
     mix-blend-mode: multiply;
+  }
+
+  .sidebar-toggle-btn {
+    @apply shrink-0;
+  }
+
+  .sidebar-toggle-btn-inline {
+    @apply h-10 w-10;
+  }
+
+  .sidebar-toggle-btn-floating {
+    @apply h-10 w-10;
+  }
+
+  .sidebar-theme-btn {
+    @apply w-full justify-center gap-2.5 px-4 py-3 font-semibold;
   }
 
   .dark .brand-logo {
@@ -93,10 +123,28 @@
   @media (max-width: 1100px) {
     .sidebar {
       @apply static h-auto flex-row flex-wrap items-center justify-between gap-4 border-r-0 border-b px-6 py-4;
+      width: 100%;
+      max-width: 100%;
+      max-height: 999px;
+      transition:
+        max-height 0.28s ease,
+        opacity 0.24s ease,
+        padding 0.24s ease,
+        margin 0.24s ease;
     }
 
     .user-card {
       @apply hidden;
+    }
+
+    .sidebar.closed {
+      width: 100%;
+      max-width: 100%;
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-bottom: 0;
+      border-bottom-color: transparent;
     }
 
     nav {
@@ -114,7 +162,7 @@
     }
 
     .brand {
-      @apply justify-center;
+      @apply justify-between;
     }
 
     nav {

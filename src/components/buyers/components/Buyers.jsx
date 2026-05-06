@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, Users, Sun, Moon } from "lucide-react";
+import { RefreshCw, Users } from "lucide-react";
 import {
   fetchBuyers,
   saveBuyer,
@@ -201,13 +201,6 @@ function Buyers({ theme, setTheme, currentUser = { id: "" } }) {
             Manage your network of cash buyers and real estate investors.
           </span>
         </div>
-        <button
-          className="theme-toggle ghost-btn"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          title="Toggle Theme"
-        >
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
       </header>
 
       <section className="stats-grid">

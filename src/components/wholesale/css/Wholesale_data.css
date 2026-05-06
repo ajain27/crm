@@ -50,6 +50,18 @@
     border-bottom: 1px solid var(--line);
   }
 
+  tbody tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--panel) 96%, var(--blue-light) 4%);
+  }
+
+  tbody tr {
+    @apply transition-colors duration-200 ease-out;
+  }
+
+  tbody tr:hover td {
+    background: color-mix(in srgb, var(--panel) 88%, var(--blue-light) 12%);
+  }
+
   .compact-table th {
     @apply px-[14px] py-3;
   }

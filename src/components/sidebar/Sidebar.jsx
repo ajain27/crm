@@ -1,4 +1,4 @@
-import { Home, Users } from "lucide-react";
+import { Home, Moon, Sun, Users } from "lucide-react";
 import logo from "../../assets/logo.png";
 
 function Sidebar({
@@ -7,6 +7,10 @@ function Sidebar({
   currentUser,
   onSignOut,
   onEditProfile,
+  isOpen,
+  onToggle,
+  theme,
+  onToggleTheme,
 }) {
   const fullName = [currentUser?.firstName, currentUser?.lastName]
     .filter(Boolean)
@@ -21,7 +25,7 @@ function Sidebar({
     .toUpperCase();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="brand sidebar-brand">
         <img src={logo} alt="You Win Estates" className="brand-logo" />
       </div>
@@ -41,6 +45,14 @@ function Sidebar({
           Buyers List
         </a>
       </nav>
+      <button
+        type="button"
+        className="secondary-btn sidebar-theme-btn"
+        onClick={onToggleTheme}
+      >
+        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        {theme === "dark" ? "Light Theme" : "Dark Theme"}
+      </button>
       <div className="user-card">
         <div className="avatar">{initials}</div>
         <div className="user-meta">

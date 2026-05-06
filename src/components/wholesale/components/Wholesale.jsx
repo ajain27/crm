@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { RefreshCw, Moon, Sun } from "lucide-react";
+import { RefreshCw, Menu } from "lucide-react";
 import "../../../css/styles.css";
+import logo from "../../../assets/logo.png";
 import {
   fetchDeals,
   fetchBuyers,
@@ -73,6 +74,10 @@ function Wholesale() {
     }
   });
   const [activeView, setActiveView] = useState("dashboard");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth > 1100;
+  });
 
   useEffect(() => {
     localStorage.setItem("crmTheme", theme);
@@ -82,6 +87,17 @@ function Wholesale() {
       document.documentElement.classList.remove("dark");
     }
   }, [theme]);
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth > 1100) {
+        setIsSidebarOpen(true);
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const [deals, setDeals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
@@ -673,16 +689,40 @@ function Wholesale() {
   }
 
   return (
-    <div className="layout">
+    <div
+      className={`layout ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}
+    >
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
         currentUser={currentUser}
         onSignOut={handleSignOut}
         onEditProfile={() => setIsProfileModalOpen(true)}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen((prev) => !prev)}
+        theme={theme}
+        onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
 
       <main className="main">
+        <div className="company-header">
+          <div className="company-brand-header">
+            <button
+              type="button"
+              className="ghost-btn sidebar-toggle-btn sidebar-toggle-btn-floating"
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              aria-label={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            >
+              <Menu size={18} />
+            </button>
+            <img
+              src={logo}
+              alt="You Win Estates"
+              className="company-header-logo"
+            />
+          </div>
+        </div>
         {activeView === "dashboard" ? (
           <>
             <header className="page-header">
@@ -692,13 +732,6 @@ function Wholesale() {
                   Track and manage your real estate leads and deals locally.
                 </span>
               </div>
-              <button
-                className="theme-toggle ghost-btn"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                title="Toggle Theme"
-              >
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
             </header>
 
             {errorMessage && <div className="error-banner">{errorMessage}</div>}
