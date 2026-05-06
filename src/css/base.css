@@ -105,6 +105,19 @@
     @apply opacity-95;
   }
 
+  .company-proprietary-tag {
+    @apply rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-app-muted transition-all duration-200 ease-out;
+    background: color-mix(in srgb, var(--blue-light) 22%, transparent 78%);
+  }
+
+  .company-proprietary-tag.is-hidden {
+    @apply pointer-events-none max-w-0 overflow-hidden px-0 opacity-0;
+  }
+
+  .company-proprietary-tag.is-visible {
+    @apply opacity-100;
+  }
+
   .company-header .sidebar-toggle-btn-floating {
     @apply static shrink-0;
     transform: none;
@@ -172,6 +185,11 @@
 
   .page-header {
     @apply mb-[26px] flex items-start justify-between gap-4;
+  }
+
+  .app-footer {
+    @apply mt-10 flex items-center justify-between gap-4 border-t pt-4 pb-4 text-sm text-app-muted;
+    border-color: color-mix(in srgb, var(--line) 70%, transparent 30%);
   }
 
   .page-header h1 {
@@ -359,12 +377,20 @@
       @apply h-12 max-w-[220px];
     }
 
+    .company-proprietary-tag {
+      @apply hidden;
+    }
+
     .profile-avatar-btn {
       @apply h-10 w-10;
     }
 
     .page-header {
       @apply gap-3;
+    }
+
+    .app-footer {
+      @apply mt-8 flex-col items-start gap-1 text-xs;
     }
 
     .page-header button:not(.theme-toggle) {

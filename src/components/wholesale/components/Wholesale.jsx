@@ -790,6 +790,10 @@ function Wholesale() {
             currentUser={currentUser}
           />
         )}
+        <footer className="app-footer">
+          <span>© 2026 You Win Estates</span>
+          <span>Proprietary CRM</span>
+        </footer>
       </main>
       <ProfileModal
         currentUser={currentUser}

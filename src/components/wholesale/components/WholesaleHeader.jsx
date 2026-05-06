@@ -51,6 +51,9 @@ function WholesaleHeader({
           alt="You Win Estates"
           className={`company-header-logo ${isSidebarOpen ? "is-hidden" : "is-visible"}`}
         />
+        <span className={`company-proprietary-tag ${isSidebarOpen ? "is-hidden" : "is-visible"}`}>
+          Proprietary & Confidential
+        </span>
       </div>
 
       <div className="profile-menu-wrap" ref={profileMenuRef}>
