@@ -139,7 +139,11 @@ function Wholesale() {
 
   useEffect(() => {
     setProfileForm(createProfileForm(currentUser));
-  }, [currentUser?.firstName, currentUser?.lastName, currentUser?.profileImage]);
+  }, [
+    currentUser?.firstName,
+    currentUser?.lastName,
+    currentUser?.profileImage,
+  ]);
 
   async function handleSaveProfile() {
     if (!currentUser?.id) return;
@@ -691,7 +695,10 @@ function Wholesale() {
     currentUser?.email ||
     "CRM User";
   const profileInitial = String(
-    currentUser?.firstName || currentUser?.username || currentUser?.email || "U",
+    currentUser?.firstName ||
+      currentUser?.username ||
+      currentUser?.email ||
+      "U",
   )
     .trim()
     .charAt(0)
@@ -743,9 +750,6 @@ function Wholesale() {
             <header className="page-header">
               <div>
                 <h1>Lead Pipeline</h1>
-                <span>
-                  Track and manage your real estate leads and deals locally.
-                </span>
               </div>
             </header>
 
@@ -798,11 +802,7 @@ function Wholesale() {
             </LoadingScreen>
           </>
         ) : (
-          <Buyers
-            theme={theme}
-            setTheme={setTheme}
-            currentUser={currentUser}
-          />
+          <Buyers theme={theme} setTheme={setTheme} currentUser={currentUser} />
         )}
         <footer className="app-footer">
           <span>© 2026 You Win Estates</span>
