@@ -13,7 +13,7 @@
     @apply pointer-events-none absolute left-1/2 top-1/2 h-3 w-3 rounded-full opacity-0;
     background: radial-gradient(
       circle,
-      rgba(255, 255, 255, 0.42) 0%,
+      var(--ripple-soft) 0%,
       transparent 72%
     );
     transform: translate(-50%, -50%) scale(1);

@@ -197,9 +197,6 @@ function Buyers({ currentUser = { id: "" } }) {
       <header className="page-header" data-reveal="left">
         <div>
           <h1>Buyers List</h1>
-          <span>
-            Manage your network of cash buyers and real estate investors.
-          </span>
         </div>
       </header>
 

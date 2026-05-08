@@ -98,6 +98,14 @@ function WholesaleHeader({
             </div>
             <button
               type="button"
+              className="profile-menu-item profile-menu-theme-item"
+              onClick={onToggleTheme}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === "dark" ? "Light Theme" : "Dark Theme"}
+            </button>
+            <button
+              type="button"
               className="profile-menu-item"
               onClick={onEditProfile}
             >

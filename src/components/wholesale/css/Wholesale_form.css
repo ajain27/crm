@@ -8,6 +8,15 @@
     @apply flex items-start justify-between px-6 pb-0 pt-[22px];
   }
 
+  .panel-header h2 {
+    color: var(--blue);
+    letter-spacing: -0.03em;
+  }
+
+  .dark .panel-header h2 {
+    @apply text-white;
+  }
+
   .add-form {
     @apply grid items-end gap-y-6 gap-x-4 px-6 pb-6 pt-[22px];
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

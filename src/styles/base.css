@@ -214,8 +214,9 @@
   }
 
   .company-header .sidebar-toggle-btn-floating {
-    @apply static shrink-0;
+    @apply relative shrink-0 overflow-hidden;
     transform: none;
+    isolation: isolate;
   }
 
   .header-actions {
@@ -267,6 +268,10 @@
     @apply mt-1 flex w-full cursor-pointer items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium text-app-text transition-colors duration-200 ease-out;
     background: transparent;
     border: none;
+  }
+
+  .profile-menu-theme-item {
+    @apply hidden gap-2;
   }
 
   .profile-menu-item:hover {
@@ -331,7 +336,7 @@
     @apply pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 rounded-full opacity-0;
     background: radial-gradient(
       circle,
-      color-mix(in srgb, white 52%, transparent 48%) 0%,
+      var(--ripple-strong) 0%,
       transparent 72%
     );
     transform: translate(-50%, -50%) scale(1);
@@ -572,11 +577,31 @@
       display: none !important;
     }
 
+    .profile-menu-theme-item {
+      display: none !important;
+    }
+
   }
 
   @media (min-width: 601px) and (max-width: 1100px) {
     .header-theme-toggle {
       display: none !important;
+    }
+
+    .profile-menu-theme-item {
+      @apply flex;
+    }
+
+    .profile-menu-wrap {
+      @apply ml-2 self-start;
+    }
+
+    .header-actions {
+      @apply self-start;
+    }
+
+    .profile-avatar-btn {
+      @apply ml-2 h-10 w-10;
     }
   }
 
@@ -590,58 +615,26 @@
     }
 
     .company-header {
-      @apply min-h-0 items-start;
+      @apply min-h-[118px] items-start;
     }
 
     .company-brand-header {
-      @apply grid items-center justify-start gap-x-2 gap-y-1;
-      grid-template-columns: auto 1fr;
-    }
-
-    .company-brand-header.sidebar-hidden {
-      display: block;
+      @apply flex-1;
     }
 
     .company-header-logo {
-      @apply h-12 max-w-[220px];
-      grid-column: 2;
-      grid-row: 1;
-      justify-self: start;
+      @apply absolute left-1/2 top-4 h-12 max-w-[220px];
+      transform: translateX(-50%);
     }
 
     .company-proprietary-tag {
-      @apply block px-0 py-0 text-[10px];
-      grid-column: 2;
-      grid-row: 2;
-      justify-self: start;
+      @apply absolute left-1/2 top-[72px] block px-0 py-0 text-[10px];
+      transform: translateX(-50%);
+      background: transparent;
     }
 
     .company-header .sidebar-toggle-btn-floating {
-      @apply mr-1 mt-2;
-      grid-column: 1;
-      grid-row: 1 / span 2;
-      align-self: start;
-    }
-
-    .company-brand-header.sidebar-hidden .sidebar-toggle-btn-floating {
-      @apply left-0 top-0 mr-0 mt-0;
-      grid-column: auto;
-      grid-row: auto;
-      align-self: auto;
-    }
-
-    .company-brand-header.sidebar-hidden .company-header-logo {
-      @apply left-1/2 top-0 h-12 max-w-[220px];
-      grid-column: auto;
-      grid-row: auto;
-      justify-self: auto;
-    }
-
-    .company-brand-header.sidebar-hidden .company-proprietary-tag {
-      @apply left-1/2 top-[56px] text-[10px];
-      grid-column: auto;
-      grid-row: auto;
-      justify-self: auto;
+      @apply left-0 top-4 mr-0 mt-0;
     }
 
     .profile-avatar-btn {
@@ -649,15 +642,19 @@
     }
 
     .header-theme-toggle {
-      @apply mt-1 flex h-10 w-10 shrink-0;
+      display: none !important;
+    }
+
+    .profile-menu-theme-item {
+      @apply flex;
     }
 
     .profile-menu-wrap {
-      @apply mt-2 ml-2 self-start;
+      @apply ml-2 self-start;
     }
 
     .header-actions {
-      @apply mt-2 self-start;
+      @apply self-start;
     }
 
     .profile-avatar-btn {

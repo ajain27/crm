@@ -28,6 +28,8 @@
     --bg-purple-light: #f1e9ff;
     --bg-orange-light: #fff3dc;
     --bg-red-light: #fdecec;
+    --ripple-soft: rgba(23, 105, 232, 0.2);
+    --ripple-strong: rgba(23, 105, 232, 0.3);
   }
 
   :root.dark {
@@ -59,5 +61,7 @@
     --bg-purple-light: rgba(139, 92, 246, 0.15);
     --bg-orange-light: rgba(245, 158, 11, 0.15);
     --bg-red-light: rgba(239, 68, 68, 0.15);
+    --ripple-soft: rgba(255, 255, 255, 0.18);
+    --ripple-strong: rgba(255, 255, 255, 0.34);
   }
 }

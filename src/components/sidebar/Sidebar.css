@@ -88,7 +88,7 @@
     @apply pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 rounded-full opacity-0;
     background: radial-gradient(
       circle,
-      color-mix(in srgb, white 52%, transparent 48%) 0%,
+      var(--ripple-strong) 0%,
       transparent 72%
     );
     transform: translate(-50%, -50%) scale(1);
@@ -105,6 +105,11 @@
 
   nav a.active {
     @apply font-bold;
+    background: var(--blue-light);
+    color: var(--blue);
+  }
+
+  :root:not(.dark) nav a:hover {
     background: var(--blue-light);
     color: var(--blue);
   }
