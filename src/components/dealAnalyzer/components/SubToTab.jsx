@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Field } from "../../elements/elements";
+import { Field, Select } from "../../elements/elements";
 
 const initialSubToForm = {
   propertyValue: "",
   entryFee: "",
   rehabCost: "",
   mortgageBalance: "",
+  hasArrears: "No",
+  arrearsAmount: "",
   interest: "",
   termYears: "",
   insurance: "",
@@ -16,26 +18,32 @@ const initialSubToForm = {
 
 function SubToTab({ tab }) {
   const [form, setForm] = useState(initialSubToForm);
+  const [analysisSummary, setAnalysisSummary] = useState(null);
   const currencyFields = [
     "propertyValue",
     "entryFee",
     "rehabCost",
     "mortgageBalance",
+    "arrearsAmount",
     "insurance",
     "tax",
     "rentEstimate",
   ];
   const requiredValues = [
+    form.propertyValue,
+    form.entryFee,
+    form.rehabCost,
     form.rentEstimate,
     form.mortgageBalance,
+    form.hasArrears,
     form.termYears,
     form.insurance,
     form.tax,
     form.interest,
   ];
-  const isReadyToCalculate = requiredValues.every((value) =>
-    String(value || "").trim(),
-  );
+  const isFormComplete =
+    requiredValues.every((value) => String(value || "").trim()) &&
+    (form.hasArrears !== "Yes" || Boolean(form.arrearsAmount?.trim()));
 
   function parseAmount(value) {
     const normalized = String(value || "").replace(/[^0-9.-]/g, "");
@@ -49,6 +57,15 @@ function SubToTab({ tab }) {
       currency: "USD",
       maximumFractionDigits: 2,
     }).format(value);
+  }
+
+  function formatCurrencyInput(value) {
+    const numericValue = String(value || "").replace(/[^0-9]/g, "");
+    if (!numericValue) {
+      return "";
+    }
+
+    return "$" + Number.parseInt(numericValue, 10).toLocaleString("en-US");
   }
 
   function calculateMonthlyPayment(
@@ -74,10 +91,10 @@ function SubToTab({ tab }) {
 
   function handleChange(event) {
     const { name, value } = event.target;
+    setAnalysisSummary(null);
 
     if (currencyFields.includes(name)) {
-      const cleaned = value.replace(/[^0-9$,]/g, "");
-      setForm((prev) => ({ ...prev, [name]: cleaned }));
+      setForm((prev) => ({ ...prev, [name]: formatCurrencyInput(value) }));
       return;
     }
 
@@ -90,6 +107,15 @@ function SubToTab({ tab }) {
     if (name === "termYears") {
       const cleaned = value.replace(/[^0-9]/g, "");
       setForm((prev) => ({ ...prev, [name]: cleaned }));
+      return;
+    }
+
+    if (name === "hasArrears") {
+      setForm((prev) => ({
+        ...prev,
+        hasArrears: value,
+        arrearsAmount: value === "Yes" ? prev.arrearsAmount : "",
+      }));
       return;
     }
 
@@ -116,19 +142,12 @@ function SubToTab({ tab }) {
     if (!currencyFields.includes(name) || !value) {
       return;
     }
-
-    const numericValue = value.replace(/[^0-9]/g, "");
-    if (!numericValue) {
-      return;
-    }
-
-    const formatted =
-      "$" + Number.parseInt(numericValue, 10).toLocaleString("en-US");
-    setForm((prev) => ({ ...prev, [name]: formatted }));
   }
 
   const mortgageBalanceAmount = parseAmount(form.mortgageBalance);
   const entryFeeAmount = parseAmount(form.entryFee);
+  const rehabCostAmount = parseAmount(form.rehabCost);
+  const arrearsAmount = parseAmount(form.arrearsAmount);
   const termYearsAmount = parseAmount(form.termYears);
   const insuranceAmount = parseAmount(form.insurance);
   const taxAmount = parseAmount(form.tax);
@@ -148,39 +167,31 @@ function SubToTab({ tab }) {
     amortizedMonthlyPayment - monthlyInterestAmount,
     0,
   );
-  const livePrincipalValue =
+  const calculatedPrincipalValue =
     mortgageBalanceAmount > 0 && annualInterestRate >= 0 && totalPayments > 0
       ? formatAmount(amortizedMonthlyPayment)
       : "";
-  const principalBreakdownValue = livePrincipalValue
+  const principalBreakdownValue = calculatedPrincipalValue
     ? `(${formatAmount(monthlyPrincipalAmount)} + ${formatAmount(monthlyInterestAmount)})`
     : "";
   const termMonthsValue = totalPayments > 0 ? `(${totalPayments})` : "";
   const calculatedCashFlow =
     monthlyRentAmount - (amortizedMonthlyPayment + taxAmount + insuranceAmount);
-  const liveCashFlowValue = isReadyToCalculate
+  const liveCashFlowValue = isFormComplete
     ? formatAmount(calculatedCashFlow)
     : "";
-  const cashOnCashReturn =
-    isReadyToCalculate && entryFeeAmount > 0
-      ? (calculatedCashFlow * 12 * 100) / entryFeeAmount
-      : null;
-  const liveCashOnCashValue =
-    cashOnCashReturn !== null
-      ? `${cashOnCashReturn.toFixed(2)}%`
-      : "";
-  const cashFlowToneClass = isReadyToCalculate
+  const cashFlowToneClass = isFormComplete
     ? calculatedCashFlow < 0
       ? "deal-analyzer-output-negative"
       : "deal-analyzer-output-positive"
     : "";
   const cashOnCashToneClass =
-    cashOnCashReturn === null
+    analysisSummary?.cashOnCashReturn == null
       ? ""
-      : cashOnCashReturn < 8
+      : analysisSummary.cashOnCashReturn < 8
         ? "deal-analyzer-output-negative"
         : "deal-analyzer-output-positive";
-  const cashFlowBreakdown = isReadyToCalculate
+  const cashFlowBreakdown = isFormComplete
     ? `${formatAmount(monthlyRentAmount)} - (${formatAmount(amortizedMonthlyPayment)} + ${formatAmount(taxAmount)} + ${formatAmount(insuranceAmount)}) = ${liveCashFlowValue}`
     : "";
 
@@ -189,14 +200,48 @@ function SubToTab({ tab }) {
   }
 
   function handleCalculate() {
-    if (!isReadyToCalculate) {
+    if (!isFormComplete) {
       return;
     }
+
+    const totalCashInDeal =
+      entryFeeAmount + rehabCostAmount + (form.hasArrears === "Yes" ? arrearsAmount : 0);
+    const calculatedCashOnCashReturn =
+      totalCashInDeal > 0 ? (calculatedCashFlow * 12 * 100) / totalCashInDeal : null;
+    const isDeal =
+      calculatedCashFlow > 0 &&
+      calculatedCashOnCashReturn !== null &&
+      calculatedCashOnCashReturn >= 8;
 
     setForm((prev) => ({
       ...prev,
       cashFlow: liveCashFlowValue,
     }));
+    setAnalysisSummary({
+      propertyValue: formatAmount(parseAmount(form.propertyValue)),
+      entryFee: formatAmount(entryFeeAmount),
+      rehabCost: formatAmount(rehabCostAmount),
+      mortgageBalance: formatAmount(mortgageBalanceAmount),
+      hasArrears: form.hasArrears,
+      arrearsAmount:
+        form.hasArrears === "Yes" ? formatAmount(arrearsAmount) : "--",
+      interest: form.interest,
+      termYears: form.termYears,
+      totalMonths: totalPayments,
+      principalAndInterest: calculatedPrincipalValue,
+      principalBreakdown: principalBreakdownValue,
+      tax: formatAmount(taxAmount),
+      insurance: formatAmount(insuranceAmount),
+      rentEstimate: formatAmount(monthlyRentAmount),
+      cashFlow: liveCashFlowValue,
+      totalCashInDeal: formatAmount(totalCashInDeal),
+      cashOnCashReturn: calculatedCashOnCashReturn,
+      cashOnCashValue:
+        calculatedCashOnCashReturn !== null
+          ? `${calculatedCashOnCashReturn.toFixed(2)}%`
+          : "--",
+      verdict: isDeal ? "DEAL" : "NO DEAL",
+    });
   }
 
   return (
@@ -242,6 +287,7 @@ function SubToTab({ tab }) {
             value={form.propertyValue}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
           <Field
             label="Entry Fee"
@@ -249,6 +295,7 @@ function SubToTab({ tab }) {
             value={form.entryFee}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
           <Field
             label="Rehab Cost"
@@ -256,6 +303,7 @@ function SubToTab({ tab }) {
             value={form.rehabCost}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
           <Field
             label="Mortgage Balance"
@@ -263,7 +311,26 @@ function SubToTab({ tab }) {
             value={form.mortgageBalance}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
+          <Select
+            label="Any Arrears"
+            name="hasArrears"
+            value={form.hasArrears}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+            required
+          />
+          {form.hasArrears === "Yes" ? (
+            <Field
+              label="Arrears Amount"
+              name="arrearsAmount"
+              value={form.arrearsAmount}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              required
+            />
+          ) : null}
 
           <Field
             label="Interest"
@@ -271,9 +338,13 @@ function SubToTab({ tab }) {
             value={form.interest}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
           <label className="field deal-analyzer-term-field">
-            <span>Term in Years</span>
+            <span>
+              Term in Years
+              <span className="required-marker">*</span>
+            </span>
             <div className="deal-analyzer-term-shell">
               <input
                 id="termYears"
@@ -282,6 +353,7 @@ function SubToTab({ tab }) {
                 onChange={handleChange}
                 inputMode="numeric"
                 className="deal-analyzer-term-input"
+                required
               />
               {termMonthsValue ? (
                 <span className="deal-analyzer-term-suffix" aria-hidden="true">
@@ -293,33 +365,13 @@ function SubToTab({ tab }) {
               ) : null}
             </div>
           </label>
-          <label className="field deal-analyzer-principal-field">
-            <span>Principal + Interest</span>
-            <div className="deal-analyzer-principal-shell deal-analyzer-output">
-              <input
-                id="principal"
-                name="principal"
-                value={livePrincipalValue}
-                readOnly
-                className="deal-analyzer-principal-input"
-              />
-              {principalBreakdownValue ? (
-                <span
-                  className="deal-analyzer-principal-suffix"
-                  aria-hidden="true"
-                >
-                  {principalBreakdownValue}
-                </span>
-              ) : null}
-            </div>
-          </label>
-
           <Field
             label="Tax"
             name="tax"
             value={form.tax}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
           <Field
             label="Insurance"
@@ -327,6 +379,7 @@ function SubToTab({ tab }) {
             value={form.insurance}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
 
           <Field
@@ -335,6 +388,7 @@ function SubToTab({ tab }) {
             value={form.rentEstimate}
             onChange={handleChange}
             onBlur={handleBlur}
+            required
           />
           <Field
             label="Cash Flow"
@@ -343,22 +397,15 @@ function SubToTab({ tab }) {
             readOnly
             wrapperClassName={`deal-analyzer-output ${cashFlowToneClass}`.trim()}
           />
-          <Field
-            label="Cash on Cash Return"
-            name="cashOnCashReturn"
-            value={liveCashOnCashValue}
-            readOnly
-            wrapperClassName={`deal-analyzer-output ${cashOnCashToneClass}`.trim()}
-          />
           {cashFlowBreakdown ? (
             <div className="deal-analyzer-calculation">
               Cash Flow = Monthly Rent - (Monthly Principal + Interest Payment +
               Tax + Insurance)
               <span>{cashFlowBreakdown}</span>
-              {cashOnCashReturn !== null ? (
+              {analysisSummary?.cashOnCashReturn != null ? (
                 <span>
                   Cash on Cash Return = ({liveCashFlowValue} x 12) /{" "}
-                  {formatAmount(entryFeeAmount)} = {liveCashOnCashValue}
+                  {analysisSummary.totalCashInDeal} = {analysisSummary.cashOnCashValue}
                 </span>
               ) : null}
               <span>
@@ -374,11 +421,51 @@ function SubToTab({ tab }) {
             className="primary-btn form-btn"
             type="button"
             onClick={handleCalculate}
-            disabled={!isReadyToCalculate}
+            disabled={!isFormComplete}
           >
             Calculate
           </button>
         </div>
+        {analysisSummary ? (
+          <div className="deal-analyzer-summary">
+            <div className="deal-analyzer-summary-grid">
+              <div><span>Property Value</span><strong>{analysisSummary.propertyValue}</strong></div>
+              <div><span>Entry Fee</span><strong>{analysisSummary.entryFee}</strong></div>
+              <div><span>Rehab Cost</span><strong>{analysisSummary.rehabCost}</strong></div>
+              <div><span>Mortgage Balance</span><strong>{analysisSummary.mortgageBalance}</strong></div>
+              <div><span>Any Arrears</span><strong>{analysisSummary.hasArrears}</strong></div>
+              <div><span>Arrears Amount</span><strong>{analysisSummary.arrearsAmount}</strong></div>
+              <div><span>Interest</span><strong>{analysisSummary.interest}</strong></div>
+              <div><span>Term</span><strong>{analysisSummary.termYears} years ({analysisSummary.totalMonths} months)</strong></div>
+              <div><span>Principal + Interest</span><strong>{analysisSummary.principalAndInterest}</strong></div>
+              <div><span>Principal / Interest Split</span><strong>{analysisSummary.principalBreakdown || "--"}</strong></div>
+              <div><span>Tax</span><strong>{analysisSummary.tax}</strong></div>
+              <div><span>Insurance</span><strong>{analysisSummary.insurance}</strong></div>
+              <div><span>Rent Estimate</span><strong>{analysisSummary.rentEstimate}</strong></div>
+              <div><span>Cash Flow</span><strong>{analysisSummary.cashFlow}</strong></div>
+              <div><span>Total Cash In Deal</span><strong>{analysisSummary.totalCashInDeal}</strong></div>
+              <div>
+                <span>Cash on Cash Return</span>
+                <strong
+                  className={
+                    analysisSummary.cashOnCashReturn != null &&
+                    analysisSummary.cashOnCashReturn < 8
+                      ? "deal-analyzer-return-negative"
+                      : "deal-analyzer-return-positive"
+                  }
+                >
+                  {analysisSummary.cashOnCashValue}
+                </strong>
+              </div>
+            </div>
+            <div
+              className={`deal-analyzer-verdict ${analysisSummary.verdict === "DEAL" ? "deal-analyzer-verdict-positive" : "deal-analyzer-verdict-negative"}`}
+            >
+              <span>Final Verdict</span>
+              <strong>{analysisSummary.verdict}</strong>
+            </div>
+          </div>
+        ) : null}
       </section>
     </>
   );

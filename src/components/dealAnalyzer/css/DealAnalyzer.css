@@ -152,8 +152,89 @@
     word-break: break-word;
   }
 
+  .deal-analyzer-metric {
+    @apply flex items-center gap-3 self-end px-0 py-0;
+    min-height: 44px;
+  }
+
+  .deal-analyzer-metric > span {
+    @apply m-0 text-sm font-semibold;
+    color: var(--text);
+  }
+
+  .deal-analyzer-metric strong {
+    @apply m-0 block text-2xl font-semibold;
+    color: var(--text);
+  }
+
+  .deal-analyzer-metric.deal-analyzer-output-positive strong {
+    color: #16a34a;
+  }
+
+  .deal-analyzer-metric.deal-analyzer-output-negative strong {
+    color: #dc2626;
+  }
+
   .deal-analyzer-actions {
     @apply px-6 pb-6;
+  }
+
+  .deal-analyzer-summary {
+    @apply border-t px-6 pb-6 pt-6;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  .deal-analyzer-summary-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .deal-analyzer-summary-grid div {
+    @apply rounded-[18px] border px-4 py-3;
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  .deal-analyzer-summary-grid span {
+    @apply block text-sm font-semibold;
+    color: var(--muted);
+  }
+
+  .deal-analyzer-summary-grid strong {
+    @apply mt-2 block text-lg font-semibold;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .deal-analyzer-summary-grid strong.deal-analyzer-return-positive {
+    color: #16a34a;
+  }
+
+  .deal-analyzer-summary-grid strong.deal-analyzer-return-negative {
+    color: #dc2626;
+  }
+
+  .deal-analyzer-verdict {
+    @apply mt-5 flex items-center justify-between rounded-[20px] border px-5 py-4;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+  }
+
+  .deal-analyzer-verdict span {
+    @apply text-sm font-semibold;
+    color: var(--muted);
+  }
+
+  .deal-analyzer-verdict strong {
+    @apply text-2xl font-semibold;
+  }
+
+  .deal-analyzer-verdict-positive strong {
+    color: #16a34a;
+  }
+
+  .deal-analyzer-verdict-negative strong {
+    color: #dc2626;
   }
 
   .deal-analyzer-output input:disabled,
