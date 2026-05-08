@@ -1,5 +1,4 @@
 import { Home, Moon, Sun, Users } from "lucide-react";
-import logo from "../../assets/logo.png";
 
 function Sidebar({
   activeView,
@@ -23,12 +22,6 @@ function Sidebar({
 
   return (
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
-      <div className="brand sidebar-brand">
-        <img src={logo} alt="You Win Estates" className="brand-logo" />
-        <span className="sidebar-proprietary-tag">
-          Proprietary & Confidential
-        </span>
-      </div>
       <nav>
         <a
           className={activeView === "dashboard" ? "active" : ""}

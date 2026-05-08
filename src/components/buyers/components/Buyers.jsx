@@ -8,7 +8,7 @@ import {
 import BuyerForm from "./BuyerForm";
 import BuyerFilters from "./BuyerFilters";
 import BuyerData from "./BuyerData";
-import { SimpleStat } from "../../elements";
+import { SimpleStat } from "../../elements/elements";
 
 const emptyBuyerForm = {
   fullName: "",
@@ -19,7 +19,7 @@ const emptyBuyerForm = {
   realEstateType: "Single Family",
 };
 
-function Buyers({ theme, setTheme, currentUser = { id: "" } }) {
+function Buyers({ currentUser = { id: "" } }) {
   const [buyers, setBuyers] = useState([]);
   const [form, setForm] = useState(emptyBuyerForm);
   const [filters, setFilters] = useState({
@@ -194,7 +194,7 @@ function Buyers({ theme, setTheme, currentUser = { id: "" } }) {
 
   return (
     <>
-      <header className="page-header">
+      <header className="page-header" data-reveal="left">
         <div>
           <h1>Buyers List</h1>
           <span>
@@ -203,7 +203,11 @@ function Buyers({ theme, setTheme, currentUser = { id: "" } }) {
         </div>
       </header>
 
-      <section className="stats-grid">
+      <section
+        className="stats-grid"
+        data-reveal-group
+        style={{ "--reveal-delay": "60ms" }}
+      >
         <SimpleStat
           icon={<Users size={20} />}
           label={

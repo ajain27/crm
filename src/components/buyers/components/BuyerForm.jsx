@@ -1,8 +1,13 @@
-import { Field } from "../../elements";
+import { Field } from "../../elements/elements";
 
 function BuyerForm({ addBuyer, form, handleChange }) {
   return (
-    <section className="panel" id="add-buyer">
+    <section
+      className="panel"
+      id="add-buyer"
+      data-reveal="left"
+      style={{ "--reveal-delay": "120ms" }}
+    >
       <div>
         <div className="panel-header">
           <div>

@@ -1,15 +1,15 @@
-import { SimpleStat, GaugeStat } from "../elements";
+import { SimpleStat, GaugeStat } from "../elements/elements";
 import { ClipboardList, DollarSign } from "lucide-react";
 import { currency, monthKey } from "../../utils/utils";
 
 export default function StatsGrid({ deals, filteredDeals, filters }) {
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const currentClosedMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const currentMonthLabel = new Intl.DateTimeFormat("en-US", {
     month: "short",
-  }).format(new Date());
+  }).format(now);
   const getClosedMonth = (deal) =>
-    deal.closedDate ? deal.closedDate.slice(5, 7) : deal.closedInMonth || "";
+    deal.closedDate ? monthKey(deal.closedDate) : "";
   const offersThisMonth = filteredDeals.filter(
     (deal) => deal.offerDate && monthKey(deal.offerDate) === currentMonth,
   ).length;
@@ -34,7 +34,7 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
   );
 
   const currentMonthGrossRevenue = revenueEligibleDeals
-    .filter((deal) => getClosedMonth(deal) === currentClosedMonth)
+    .filter((deal) => getClosedMonth(deal) === currentMonth)
     .reduce(
       (total, deal) =>
         total +
@@ -87,7 +87,11 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
   }
 
   return (
-    <section className="stats-grid">
+    <section
+      className="stats-grid"
+      data-reveal-group
+      style={{ "--reveal-delay": "60ms" }}
+    >
       <SimpleStat
         icon={<ClipboardList size={20} />}
         label="Total Deals"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ReadOnlyCell } from "../../elements";
+import { ReadOnlyCell } from "../../elements/elements";
 import { Trash2, Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 
@@ -32,7 +32,7 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
   }
 
   return (
-    <>
+    <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
       <div className="table-wrap">
         <table className="compact-table">
           <thead>
@@ -46,8 +46,12 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
             </tr>
           </thead>
           <tbody>
-            {paginatedBuyers.map((buyer) => (
-              <tr key={buyer.id}>
+            {paginatedBuyers.map((buyer, index) => (
+              <tr
+                key={buyer.id}
+                data-reveal
+                style={{ "--reveal-delay": `${index * 35}ms` }}
+              >
                 <ReadOnlyCell value={buyer.fullName} wide />
                 <td>
                   {editingBuyerId === buyer.id && editingField === "email" ? (
@@ -152,7 +156,7 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
           of {filteredBuyers.length} results (Total Buyers: {buyers.length})
         </div>
       </Pagination>
-    </>
+    </div>
   );
 }
 

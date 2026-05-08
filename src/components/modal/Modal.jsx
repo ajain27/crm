@@ -1,10 +1,11 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 function Modal({ isOpen, onClose, title, children, actions }) {
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -18,6 +19,10 @@ function Modal({ isOpen, onClose, title, children, actions }) {
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return modalContent;
+
+  return createPortal(modalContent, document.body);
 }
 
 export default Modal;

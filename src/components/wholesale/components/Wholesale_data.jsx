@@ -1,4 +1,4 @@
-import { ReadOnlyCell } from "../../elements";
+import { ReadOnlyCell } from "../../elements/elements";
 import { Trash2, FileText, Edit2, Check } from "lucide-react";
 import { currency } from "../../../utils/utils";
 import { useState, useEffect, useMemo } from "react";
@@ -78,8 +78,7 @@ function Wholesale_data({
   function handleSort(key) {
     setSortConfig((prev) => ({
       key,
-      direction:
-        prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   }
 
@@ -90,7 +89,11 @@ function Wholesale_data({
 
   function renderSortableHeader(label, key) {
     const isActive = sortConfig.key === key;
-    const indicator = !isActive ? " ↕" : sortConfig.direction === "asc" ? " ↑" : " ↓";
+    const indicator = !isActive
+      ? " ↕"
+      : sortConfig.direction === "asc"
+        ? " ↑"
+        : " ↓";
 
     return (
       <th aria-sort={getAriaSort(key)}>
@@ -195,7 +198,7 @@ function Wholesale_data({
       return nextDeal;
     });
 
-        const updatedDeal = nextDeals.find((deal) => deal.id === id);
+    const updatedDeal = nextDeals.find((deal) => deal.id === id);
     try {
       await saveDeal(updatedDeal);
       persist(nextDeals);
@@ -258,7 +261,7 @@ function Wholesale_data({
   }
 
   return (
-    <>
+    <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
       <div className="table-wrap">
         <table>
           <thead>
@@ -287,10 +290,12 @@ function Wholesale_data({
             </tr>
           </thead>
           <tbody>
-            {currentDeals.map((deal) => (
+            {currentDeals.map((deal, index) => (
               <tr
                 key={deal.id}
                 data-deal-id={deal.id}
+                data-reveal
+                style={{ "--reveal-delay": `${index * 35}ms` }}
                 className={deal.closed === "Yes" ? "closed-row" : ""}
               >
                 <td className="text-center">
@@ -377,7 +382,9 @@ function Wholesale_data({
                       disabled={deal.closed === "Yes"}
                       onFocus={(e) => {
                         const numericValue = parseCurrencyInput(e.target.value);
-                        e.target.value = numericValue ? String(numericValue) : "";
+                        e.target.value = numericValue
+                          ? String(numericValue)
+                          : "";
                       }}
                       onBlur={(e) => {
                         const val = parseCurrencyInput(e.target.value);
@@ -423,7 +430,9 @@ function Wholesale_data({
                       disabled={deal.closed === "Yes"}
                       onFocus={(e) => {
                         const numericValue = parseCurrencyInput(e.target.value);
-                        e.target.value = numericValue ? String(numericValue) : "";
+                        e.target.value = numericValue
+                          ? String(numericValue)
+                          : "";
                       }}
                       onBlur={(e) => {
                         const val = parseCurrencyInput(e.target.value);
@@ -630,7 +639,7 @@ function Wholesale_data({
           placeholder="Add your notes here..."
         />
       </Modal>
-    </>
+    </div>
   );
 }
 

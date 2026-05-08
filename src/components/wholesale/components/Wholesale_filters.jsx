@@ -1,5 +1,5 @@
 import { Search, Plus } from "lucide-react";
-import { Select } from "../../elements";
+import { Select } from "../../elements/elements";
 import { useState } from "react";
 
 function Wholesale_filters({
@@ -14,7 +14,11 @@ function Wholesale_filters({
   const [searchExpanded, setSearchExpanded] = useState(false);
   return (
     <div>
-      <section className="panel board-panel">
+      <section
+        className="panel board-panel"
+        data-reveal="right"
+        style={{ "--reveal-delay": "180ms" }}
+      >
         <div className="panel-header">
           <div>
             <h2>Filter Lead</h2>

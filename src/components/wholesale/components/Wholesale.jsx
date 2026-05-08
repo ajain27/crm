@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { RefreshCw } from "lucide-react";
-import "../../../css/styles.css";
+import "../../../styles/styles.css";
 import {
   fetchDeals,
   fetchBuyers,
@@ -20,7 +20,9 @@ import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
 import ProfileModal from "./ProfileModal";
 import WholesaleHeader from "./WholesaleHeader";
-import useIdleLogout from "./useIdleLogout";
+import useIdleLogout from "../../../hooks/useIdleLogout";
+import useScrollReveal from "../../../hooks/useScrollReveal";
+import useTheme from "../../../hooks/useTheme";
 import {
   SESSION_STORAGE_KEY,
   MAX_PROFILE_IMAGE_SIZE,
@@ -32,9 +34,7 @@ import {
 } from "./wholesaleConfig";
 
 function Wholesale() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("crmTheme") || "light",
-  );
+  const { theme, toggleTheme } = useTheme();
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -48,15 +48,6 @@ function Wholesale() {
     if (typeof window === "undefined") return true;
     return window.innerWidth > 1100;
   });
-
-  useEffect(() => {
-    localStorage.setItem("crmTheme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [theme]);
 
   useEffect(() => {
     function handleResize() {
@@ -80,6 +71,8 @@ function Wholesale() {
     createProfileForm(currentUser),
   );
   const profileMenuRef = useRef(null);
+
+  useScrollReveal([activeView, isLoading, tableLoading, deals.length]);
 
   const persist = function persist(nextDeals) {
     setDeals(nextDeals);
@@ -715,7 +708,7 @@ function Wholesale() {
           currentUser={currentUser}
           isOpen={isSidebarOpen}
           theme={theme}
-          onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onToggleTheme={toggleTheme}
         />
       </div>
 
@@ -726,7 +719,7 @@ function Wholesale() {
           isProfileMenuOpen={isProfileMenuOpen}
           theme={theme}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-          onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onToggleTheme={toggleTheme}
           onToggleProfileMenu={() => setIsProfileMenuOpen((prev) => !prev)}
           onEditProfile={() => {
             setIsProfileMenuOpen(false);
@@ -742,18 +735,26 @@ function Wholesale() {
             currentUser={currentUser}
             isOpen={isSidebarOpen}
             theme={theme}
-            onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onToggleTheme={toggleTheme}
           />
         </div>
         {activeView === "dashboard" ? (
           <>
-            <header className="page-header">
+            <header className="page-header" data-reveal="left">
               <div>
                 <h1>Lead Pipeline</h1>
               </div>
             </header>
 
-            {errorMessage && <div className="error-banner">{errorMessage}</div>}
+            {errorMessage && (
+              <div
+                className="error-banner"
+                data-reveal
+                style={{ "--reveal-delay": "40ms" }}
+              >
+                {errorMessage}
+              </div>
+            )}
 
             <StatsGrid
               deals={deals}
@@ -802,9 +803,13 @@ function Wholesale() {
             </LoadingScreen>
           </>
         ) : (
-          <Buyers theme={theme} setTheme={setTheme} currentUser={currentUser} />
+          <Buyers theme={theme} currentUser={currentUser} />
         )}
-        <footer className="app-footer">
+        <footer
+          className="app-footer"
+          data-reveal="zoom"
+          style={{ "--reveal-delay": "300ms" }}
+        >
           <span>© 2026 You Win Estates</span>
           <span>Proprietary CRM</span>
         </footer>

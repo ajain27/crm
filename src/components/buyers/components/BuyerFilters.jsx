@@ -1,5 +1,5 @@
 import { Search, RefreshCw } from "lucide-react";
-import { Select } from "../../elements";
+import { Select } from "../../elements/elements";
 import { useEffect, useRef, useState } from "react";
 
 function BuyerFilters({ filters, states, setFilters }) {
@@ -25,7 +25,11 @@ function BuyerFilters({ filters, states, setFilters }) {
   };
 
   return (
-    <section className="panel">
+    <section
+      className="panel"
+      data-reveal="right"
+      style={{ "--reveal-delay": "180ms" }}
+    >
       <div className="panel-header">
         <div>
           <h2>Filter Buyer</h2>

@@ -35,7 +35,9 @@ function WholesaleHeader({
   const profileInitial = buildProfileInitial(currentUser);
 
   return (
-    <div className="company-header">
+    <div
+      className={`company-header ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
+    >
       <div
         className={`company-brand-header ${isSidebarOpen ? "sidebar-visible" : "sidebar-hidden"}`}
       >
@@ -51,13 +53,9 @@ function WholesaleHeader({
         <img
           src={logo}
           alt="You Win Estates"
-          className={`company-header-logo ${isSidebarOpen ? "is-hidden" : "is-visible"}`}
+          className="company-header-logo is-visible"
         />
-        <span
-          className={`company-proprietary-tag ${
-            isSidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"
-          }`}
-        >
+        <span className="company-proprietary-tag">
           Proprietary & Confidential
         </span>
       </div>

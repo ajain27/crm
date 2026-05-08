@@ -1,4 +1,4 @@
-import { Field, Select } from "../../elements";
+import { Field, Select } from "../../elements/elements";
 
 function Wholesale_form({
   addDeal,
@@ -10,7 +10,12 @@ function Wholesale_form({
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <section className="panel" id="add-property">
+    <section
+      className="panel"
+      id="add-property"
+      data-reveal="left"
+      style={{ "--reveal-delay": "120ms" }}
+    >
       <div>
         <div className="panel-header">
           <div>
