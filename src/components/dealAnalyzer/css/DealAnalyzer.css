@@ -103,13 +103,85 @@
     grid-column: span 2;
   }
 
+  .deal-analyzer-term-shell {
+    @apply relative;
+  }
+
+  .deal-analyzer-term-input {
+    padding-right: 6rem;
+  }
+
+  .deal-analyzer-principal-shell {
+    @apply relative;
+  }
+
+  .deal-analyzer-principal-input {
+    padding-right: 13rem;
+  }
+
+  .deal-analyzer-principal-suffix {
+    @apply pointer-events-none absolute right-3 top-1/2 text-xs font-normal;
+    transform: translateY(-50%);
+    color: color-mix(in srgb, var(--muted) 78%, white 22%) !important;
+    opacity: 0.78;
+  }
+
+  .deal-analyzer-term-suffix {
+    @apply pointer-events-none absolute right-3 top-1/2 text-xs font-normal;
+    transform: translateY(-50%);
+    color: color-mix(in srgb, var(--muted) 78%, white 22%) !important;
+    opacity: 0.78;
+  }
+
+  .deal-analyzer-term-suffix-label {
+    @apply mr-1 text-xs font-normal tracking-normal;
+    color: inherit !important;
+  }
+
+  .deal-analyzer-calculation {
+    @apply rounded-[18px] border px-4 py-3 text-sm leading-6;
+    grid-column: 1 / -1;
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    color: var(--muted);
+  }
+
+  .deal-analyzer-calculation span {
+    @apply mt-1 block font-semibold;
+    color: var(--text);
+    word-break: break-word;
+  }
+
   .deal-analyzer-actions {
     @apply px-6 pb-6;
+  }
+
+  .deal-analyzer-output input:disabled,
+  .deal-analyzer-output input[readonly] {
+    opacity: 1;
+    color: var(--text);
+    -webkit-text-fill-color: var(--text);
+    background: color-mix(in srgb, var(--panel) 90%, var(--blue-light) 10%);
+    cursor: default;
+  }
+
+  .deal-analyzer-output-positive input[readonly] {
+    color: #16a34a;
+    -webkit-text-fill-color: #16a34a;
+  }
+
+  .deal-analyzer-output-negative input[readonly] {
+    color: #dc2626;
+    -webkit-text-fill-color: #dc2626;
   }
 
   @media (max-width: 600px) {
     .deal-analyzer-address {
       grid-column: span 1;
+    }
+
+    .deal-analyzer-principal-input {
+      padding-right: 9rem;
     }
   }
 }
