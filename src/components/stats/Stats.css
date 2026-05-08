@@ -5,6 +5,36 @@
 
   .stat-card {
     @apply relative flex-[1_1_200px] overflow-hidden rounded-xl p-5 shadow-md shadow-black/5;
+    isolation: isolate;
+  }
+
+  .stat-card::after {
+    content: "";
+    @apply pointer-events-none absolute left-1/2 top-1/2 h-3 w-3 rounded-full opacity-0;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.42) 0%,
+      transparent 72%
+    );
+    transform: translate(-50%, -50%) scale(1);
+    transition:
+      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.34s ease;
+    z-index: 0;
+  }
+
+  .stat-card:hover::after {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(28);
+  }
+
+  .stat-card.no-ripple::after {
+    display: none;
+  }
+
+  .stat-card > * {
+    position: relative;
+    z-index: 1;
   }
 
   .simple-stat {

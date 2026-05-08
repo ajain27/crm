@@ -78,8 +78,29 @@
   }
 
   nav a {
-    @apply flex cursor-pointer items-center gap-3.5 rounded-[10px] px-4 py-[15px] no-underline transition-colors;
+    @apply relative flex cursor-pointer items-center gap-3.5 overflow-hidden rounded-[10px] px-4 py-[15px] no-underline transition-colors;
     color: var(--nav-text);
+    isolation: isolate;
+  }
+
+  nav a::after {
+    content: "";
+    @apply pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 rounded-full opacity-0;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, white 52%, transparent 48%) 0%,
+      transparent 72%
+    );
+    transform: translate(-50%, -50%) scale(1);
+    transition:
+      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.32s ease;
+    z-index: 0;
+  }
+
+  nav a > * {
+    position: relative;
+    z-index: 1;
   }
 
   nav a.active {

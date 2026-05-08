@@ -209,6 +209,7 @@ function Buyers({ currentUser = { id: "" } }) {
         style={{ "--reveal-delay": "60ms" }}
       >
         <SimpleStat
+          className="no-ripple"
           icon={<Users size={20} />}
           label={
             filters.state === "All"

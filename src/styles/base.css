@@ -316,7 +316,66 @@
   .secondary-btn,
   .ghost-btn,
   .danger-btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border-0 transition-all duration-200 ease-out;
+    @apply relative inline-flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg border-0 transition-all duration-200 ease-out;
+    isolation: isolate;
+  }
+
+  .primary-btn::after,
+  .secondary-btn::after,
+  .ghost-btn::after,
+  .danger-btn::after,
+  .profile-avatar-btn::after,
+  .search-icon-btn::after,
+  .sidebar-theme-btn::after {
+    content: "";
+    @apply pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 rounded-full opacity-0;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, white 52%, transparent 48%) 0%,
+      transparent 72%
+    );
+    transform: translate(-50%, -50%) scale(1);
+    transition:
+      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.32s ease;
+    z-index: 0;
+  }
+
+  .primary-btn > *,
+  .secondary-btn > *,
+  .ghost-btn > *,
+  .danger-btn > *,
+  .profile-menu-item > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .primary-btn:hover::after,
+  .secondary-btn:hover::after,
+  .ghost-btn:hover::after,
+  .danger-btn:hover::after,
+  .profile-avatar-btn:hover::after,
+  .search-icon-btn:hover::after,
+  .sidebar-theme-btn:hover::after,
+  nav a:hover::after {
+    opacity: 0.42;
+    transform: translate(-50%, -50%) scale(26);
+  }
+
+  .primary-btn:disabled,
+  .secondary-btn:disabled,
+  .ghost-btn:disabled,
+  .danger-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+  }
+
+  .primary-btn:disabled::after,
+  .secondary-btn:disabled::after,
+  .ghost-btn:disabled::after,
+  .danger-btn:disabled::after {
+    display: none;
   }
 
   .primary-btn {

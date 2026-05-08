@@ -8,6 +8,31 @@ function Wholesale_form({
   checkDuplicateAddress,
 }) {
   const today = new Date().toISOString().slice(0, 10);
+  const isFormComplete =
+    Boolean(form.address?.trim()) &&
+    Boolean(form.city?.trim()) &&
+    Boolean(form.zipCode?.trim()) &&
+    Boolean(form.state?.trim()) &&
+    Boolean(form.propertyType?.trim()) &&
+    Boolean(form.arv?.trim()) &&
+    Boolean(form.rehabCost?.trim()) &&
+    Boolean(form.desiredProfit?.trim()) &&
+    Boolean(form.mao?.trim()) &&
+    Boolean(form.onMarket?.trim()) &&
+    (form.onMarket !== "Yes" || Boolean(form.listedPrice?.trim())) &&
+    Boolean(form.offerStatus?.trim()) &&
+    (form.offerStatus !== "Offer Sent" || Boolean(form.offerDate?.trim())) &&
+    (form.offerStatus === "Not Sent" || Boolean(form.contractPrice?.trim())) &&
+    (form.offerStatus === "Not Sent" || Boolean(form.sellerAccepted?.trim())) &&
+    (form.sellerAccepted === "No" ||
+      form.sellerAccepted === "Waiting" ||
+      Boolean(form.assigned?.trim())) &&
+    (form.assigned !== "Yes" ||
+      (Boolean(form.assignedPrice?.trim()) &&
+        Boolean(form.buyerName?.trim()) &&
+        Boolean(form.buyerEmail?.trim()))) &&
+    Boolean(form.notes?.trim()) &&
+    (form.closed !== "Yes" || Boolean(form.closedDate?.trim()));
 
   return (
     <section
@@ -211,21 +236,6 @@ function Wholesale_form({
               />
             </>
           )}
-          <div className="form-row-break" aria-hidden="true" />
-          <label className="field notes-field">
-            <span>
-              Notes
-              <span className="required-marker">*</span>
-            </span>
-            <textarea
-              required
-              id="notes"
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows="4"
-            />
-          </label>
           {form.sellerAccepted === "Yes" && form.assigned === "Yes" && (
             <>
               <Select
@@ -248,7 +258,26 @@ function Wholesale_form({
               )}
             </>
           )}
-          <button className="primary-btn form-btn" type="submit">
+          <div className="form-row-break" aria-hidden="true" />
+          <label className="field notes-field">
+            <span>
+              Notes
+              <span className="required-marker">*</span>
+            </span>
+            <textarea
+              required
+              id="notes"
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              rows="4"
+            />
+          </label>
+          <button
+            className="primary-btn form-btn"
+            type="submit"
+            disabled={!isFormComplete}
+          >
             Save
           </button>
         </form>

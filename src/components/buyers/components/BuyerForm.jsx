@@ -1,6 +1,11 @@
 import { Field } from "../../elements/elements";
 
 function BuyerForm({ addBuyer, form, handleChange }) {
+  const isFormComplete =
+    Boolean(form.fullName?.trim()) &&
+    Boolean(form.email?.trim()) &&
+    Boolean(form.state?.trim());
+
   return (
     <section
       className="panel"
@@ -51,7 +56,11 @@ function BuyerForm({ addBuyer, form, handleChange }) {
             maxLength="2"
             required
           />
-          <button className="primary-btn form-btn" type="submit">
+          <button
+            className="primary-btn form-btn"
+            type="submit"
+            disabled={!isFormComplete}
+          >
             Save Buyer
           </button>
         </form>
