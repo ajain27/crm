@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Field } from "../../elements/elements";
 
 const initialSubToForm = {
-  purchasePrice: "",
+  propertyValue: "",
   entryFee: "",
   rehabCost: "",
   mortgageBalance: "",
@@ -17,7 +17,7 @@ const initialSubToForm = {
 function SubToTab({ tab }) {
   const [form, setForm] = useState(initialSubToForm);
   const currencyFields = [
-    "purchasePrice",
+    "propertyValue",
     "entryFee",
     "rehabCost",
     "mortgageBalance",
@@ -128,6 +128,7 @@ function SubToTab({ tab }) {
   }
 
   const mortgageBalanceAmount = parseAmount(form.mortgageBalance);
+  const entryFeeAmount = parseAmount(form.entryFee);
   const termYearsAmount = parseAmount(form.termYears);
   const insuranceAmount = parseAmount(form.insurance);
   const taxAmount = parseAmount(form.tax);
@@ -160,11 +161,25 @@ function SubToTab({ tab }) {
   const liveCashFlowValue = isReadyToCalculate
     ? formatAmount(calculatedCashFlow)
     : "";
+  const cashOnCashReturn =
+    isReadyToCalculate && entryFeeAmount > 0
+      ? (calculatedCashFlow * 12 * 100) / entryFeeAmount
+      : null;
+  const liveCashOnCashValue =
+    cashOnCashReturn !== null
+      ? `${cashOnCashReturn.toFixed(2)}%`
+      : "";
   const cashFlowToneClass = isReadyToCalculate
     ? calculatedCashFlow < 0
       ? "deal-analyzer-output-negative"
       : "deal-analyzer-output-positive"
     : "";
+  const cashOnCashToneClass =
+    cashOnCashReturn === null
+      ? ""
+      : cashOnCashReturn < 8
+        ? "deal-analyzer-output-negative"
+        : "deal-analyzer-output-positive";
   const cashFlowBreakdown = isReadyToCalculate
     ? `${formatAmount(monthlyRentAmount)} - (${formatAmount(amortizedMonthlyPayment)} + ${formatAmount(taxAmount)} + ${formatAmount(insuranceAmount)}) = ${liveCashFlowValue}`
     : "";
@@ -222,9 +237,9 @@ function SubToTab({ tab }) {
 
         <div className="deal-analyzer-form-grid">
           <Field
-            label="Purchase Price"
-            name="purchasePrice"
-            value={form.purchasePrice}
+            label="Property Value"
+            name="propertyValue"
+            value={form.propertyValue}
             onChange={handleChange}
             onBlur={handleBlur}
           />
@@ -328,11 +343,24 @@ function SubToTab({ tab }) {
             readOnly
             wrapperClassName={`deal-analyzer-output ${cashFlowToneClass}`.trim()}
           />
+          <Field
+            label="Cash on Cash Return"
+            name="cashOnCashReturn"
+            value={liveCashOnCashValue}
+            readOnly
+            wrapperClassName={`deal-analyzer-output ${cashOnCashToneClass}`.trim()}
+          />
           {cashFlowBreakdown ? (
             <div className="deal-analyzer-calculation">
               Cash Flow = Monthly Rent - (Monthly Principal + Interest Payment +
               Tax + Insurance)
               <span>{cashFlowBreakdown}</span>
+              {cashOnCashReturn !== null ? (
+                <span>
+                  Cash on Cash Return = ({liveCashFlowValue} x 12) /{" "}
+                  {formatAmount(entryFeeAmount)} = {liveCashOnCashValue}
+                </span>
+              ) : null}
               <span>
                 Monthly principal + interest is calculated from Mortgage Balance
                 using `M = P x [r(1 + r)^n / ((1 + r)^n - 1)]`, where `r =

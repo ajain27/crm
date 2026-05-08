@@ -120,21 +120,21 @@
   }
 
   .deal-analyzer-principal-suffix {
-    @apply pointer-events-none absolute right-3 top-1/2 text-xs font-normal;
+    @apply pointer-events-none absolute right-3 top-1/2 text-[9px] font-normal;
     transform: translateY(-50%);
     color: color-mix(in srgb, var(--muted) 78%, white 22%) !important;
-    opacity: 0.78;
+    opacity: 0.62;
   }
 
   .deal-analyzer-term-suffix {
-    @apply pointer-events-none absolute right-3 top-1/2 text-xs font-normal;
+    @apply pointer-events-none absolute right-3 top-1/2 text-[9px] font-normal;
     transform: translateY(-50%);
     color: color-mix(in srgb, var(--muted) 78%, white 22%) !important;
-    opacity: 0.78;
+    opacity: 0.62;
   }
 
   .deal-analyzer-term-suffix-label {
-    @apply mr-1 text-xs font-normal tracking-normal;
+    @apply mr-1 text-[9px] font-normal tracking-normal;
     color: inherit !important;
   }
 
