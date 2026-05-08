@@ -1,0 +1,115 @@
+@layer components {
+  .deal-analyzer-panel {
+    @apply p-6;
+  }
+
+  .deal-analyzer-tabs {
+    @apply mb-6 flex flex-wrap gap-3;
+  }
+
+  .deal-analyzer-tab {
+    @apply rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 ease-out;
+    background: var(--panel);
+    border-color: var(--line);
+    color: var(--nav-text);
+  }
+
+  .deal-analyzer-tab.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+    box-shadow: 0 16px 32px color-mix(in srgb, var(--blue) 26%, transparent 74%);
+  }
+
+  .deal-analyzer-content {
+    @apply grid gap-5;
+  }
+
+  .deal-analyzer-hero {
+    @apply rounded-[24px] border p-6;
+    background:
+      radial-gradient(
+        circle at top right,
+        color-mix(in srgb, var(--blue-light) 60%, transparent 40%) 0%,
+        transparent 35%
+      ),
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--panel) 92%, var(--blue-light) 8%) 0%,
+        var(--panel) 100%
+      );
+    border-color: color-mix(in srgb, var(--line) 70%, transparent 30%);
+  }
+
+  .deal-analyzer-eyebrow {
+    @apply mb-2 inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em];
+    background: color-mix(in srgb, var(--blue-light) 75%, transparent 25%);
+    color: var(--blue);
+  }
+
+  .deal-analyzer-hero h2 {
+    @apply mb-3;
+    color: var(--blue);
+    letter-spacing: -0.03em;
+  }
+
+  .dark .deal-analyzer-hero h2 {
+    @apply text-white;
+  }
+
+  .deal-analyzer-cards {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .deal-analyzer-card {
+    @apply rounded-[20px] border p-5;
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  .deal-analyzer-card strong {
+    @apply mb-2 block text-sm font-semibold text-app-text;
+  }
+
+  .deal-analyzer-card p {
+    @apply leading-6;
+  }
+
+  .deal-analyzer-form {
+    @apply rounded-[24px] border bg-app-panel;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  .deal-analyzer-form-header {
+    @apply pb-4;
+  }
+
+  .deal-analyzer-form-header h2 {
+    color: var(--blue);
+    letter-spacing: -0.03em;
+  }
+
+  .dark .deal-analyzer-form-header h2 {
+    @apply text-white;
+  }
+
+  .deal-analyzer-form-grid {
+    @apply grid gap-x-4 gap-y-6 px-6 pb-6;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .deal-analyzer-address {
+    grid-column: span 2;
+  }
+
+  .deal-analyzer-actions {
+    @apply px-6 pb-6;
+  }
+
+  @media (max-width: 600px) {
+    .deal-analyzer-address {
+      grid-column: span 1;
+    }
+  }
+}
