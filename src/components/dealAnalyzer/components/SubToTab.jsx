@@ -145,6 +145,7 @@ function SubToTab({ tab }) {
   }
 
   const mortgageBalanceAmount = parseAmount(form.mortgageBalance);
+  const propertyValueAmount = parseAmount(form.propertyValue);
   const entryFeeAmount = parseAmount(form.entryFee);
   const rehabCostAmount = parseAmount(form.rehabCost);
   const arrearsAmount = parseAmount(form.arrearsAmount);
@@ -153,6 +154,10 @@ function SubToTab({ tab }) {
   const taxAmount = parseAmount(form.tax);
   const monthlyRentAmount = parseAmount(form.rentEstimate);
   const annualInterestRate = parseAmount(form.interest) / 100;
+  const interestRatePercent = parseAmount(form.interest);
+  const isEntryFeeHigh =
+    propertyValueAmount > 0 && entryFeeAmount > propertyValueAmount * 0.1;
+  const isInterestHigh = interestRatePercent > 5;
   const totalPayments = termYearsAmount * 12;
   const amortizedMonthlyPayment = calculateMonthlyPayment(
     mortgageBalanceAmount,
@@ -295,6 +300,7 @@ function SubToTab({ tab }) {
             value={form.entryFee}
             onChange={handleChange}
             onBlur={handleBlur}
+            wrapperClassName={isEntryFeeHigh ? "deal-analyzer-warning" : ""}
             required
           />
           <Field
@@ -338,6 +344,7 @@ function SubToTab({ tab }) {
             value={form.interest}
             onChange={handleChange}
             onBlur={handleBlur}
+            wrapperClassName={isInterestHigh ? "deal-analyzer-warning" : ""}
             required
           />
           <label className="field deal-analyzer-term-field">

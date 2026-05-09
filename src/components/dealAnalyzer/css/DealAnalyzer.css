@@ -256,6 +256,16 @@
     -webkit-text-fill-color: #dc2626;
   }
 
+  .deal-analyzer-warning > span {
+    color: #dc2626;
+  }
+
+  .deal-analyzer-warning input {
+    color: #dc2626;
+    -webkit-text-fill-color: #dc2626;
+    border-color: color-mix(in srgb, #dc2626 56%, var(--input-border) 44%);
+  }
+
   @media (max-width: 600px) {
     .deal-analyzer-address {
       grid-column: span 1;
