@@ -107,12 +107,52 @@ describe("SubToTab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
 
-    expect(screen.getByText("Total Cash In Deal")).toBeInTheDocument();
+    expect(screen.getByText("Total Entry")).toBeInTheDocument();
     expect(screen.getByText("$60,000.00")).toBeInTheDocument();
 
     const cashOnCashLabel = screen.getByText("Cash on Cash Return");
     const cashOnCashValue = cashOnCashLabel.parentElement.querySelector("strong");
     expect(cashOnCashValue).toHaveTextContent("13.39%");
     expect(cashOnCashValue).toHaveClass("deal-analyzer-return-positive");
+  });
+
+  it("shows total entry in red when the final verdict is no deal", () => {
+    render(<SubToTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Property Value/i), {
+      target: { value: "500000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Entry Fee/i), {
+      target: { value: "57000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Rehab Cost/i), {
+      target: { value: "2000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Mortgage Balance/i), {
+      target: { value: "450000" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Interest/i), {
+      target: { value: "5" },
+    });
+    fireEvent.blur(screen.getByLabelText(/^Interest/i));
+    fireEvent.change(screen.getByLabelText(/Term in Years/i), {
+      target: { value: "30" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Tax/i), {
+      target: { value: "345" },
+    });
+    fireEvent.change(screen.getByLabelText(/Insurance/i), {
+      target: { value: "70" },
+    });
+    fireEvent.change(screen.getByLabelText(/Rent Estimate/i), {
+      target: { value: "1500" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    const totalEntryLabel = screen.getByText("Total Entry");
+    const totalEntryValue = totalEntryLabel.parentElement.querySelector("strong");
+    expect(totalEntryValue).toHaveTextContent("$59,000.00");
+    expect(totalEntryValue).toHaveClass("deal-analyzer-return-negative");
   });
 });

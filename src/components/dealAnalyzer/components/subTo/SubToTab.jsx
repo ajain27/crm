@@ -209,10 +209,10 @@ function SubToTab({ tab }) {
       return;
     }
 
-    const totalCashInDeal =
+    const totalEntryAmount =
       entryFeeAmount + rehabCostAmount + (form.hasArrears === "Yes" ? arrearsAmount : 0);
     const calculatedCashOnCashReturn =
-      totalCashInDeal > 0 ? (calculatedCashFlow * 12 * 100) / totalCashInDeal : null;
+      totalEntryAmount > 0 ? (calculatedCashFlow * 12 * 100) / totalEntryAmount : null;
     const isDeal =
       calculatedCashFlow > 0 &&
       calculatedCashOnCashReturn !== null &&
@@ -239,7 +239,7 @@ function SubToTab({ tab }) {
       insurance: formatAmount(insuranceAmount),
       rentEstimate: formatAmount(monthlyRentAmount),
       cashFlow: liveCashFlowValue,
-      totalCashInDeal: formatAmount(totalCashInDeal),
+      totalEntryAmount: formatAmount(totalEntryAmount),
       cashOnCashReturn: calculatedCashOnCashReturn,
       cashOnCashValue:
         calculatedCashOnCashReturn !== null
@@ -412,7 +412,7 @@ function SubToTab({ tab }) {
               {analysisSummary?.cashOnCashReturn != null ? (
                 <span>
                   Cash on Cash Return = ({liveCashFlowValue} x 12) /{" "}
-                  {analysisSummary.totalCashInDeal} = {analysisSummary.cashOnCashValue}
+                  {analysisSummary.totalEntryAmount} = {analysisSummary.cashOnCashValue}
                 </span>
               ) : null}
               <span>
@@ -450,7 +450,18 @@ function SubToTab({ tab }) {
               <div><span>Insurance</span><strong>{analysisSummary.insurance}</strong></div>
               <div><span>Rent Estimate</span><strong>{analysisSummary.rentEstimate}</strong></div>
               <div><span>Cash Flow</span><strong>{analysisSummary.cashFlow}</strong></div>
-              <div><span>Total Cash In Deal</span><strong>{analysisSummary.totalCashInDeal}</strong></div>
+              <div>
+                <span>Total Entry</span>
+                <strong
+                  className={
+                    analysisSummary.verdict === "NO DEAL"
+                      ? "deal-analyzer-return-negative"
+                      : ""
+                  }
+                >
+                  {analysisSummary.totalEntryAmount}
+                </strong>
+              </div>
               <div>
                 <span>Cash on Cash Return</span>
                 <strong
