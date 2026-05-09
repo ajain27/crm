@@ -1,7 +1,7 @@
 import { useState } from "react";
-import FixAndFlipTab from "./FixAndFlipTab";
-import SellerFinanceTab from "./SellerFinanceTab";
-import SubToTab from "./SubToTab";
+import FixAndFlipTab from "./fixAndFlip/FixAndFlipTab";
+import SellerFinanceTab from "./sellerFinance/SellerFinanceTab";
+import SubToTab from "./subTo/SubToTab";
 
 const analyzerTabs = [
   {
