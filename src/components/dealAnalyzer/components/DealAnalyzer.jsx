@@ -1,6 +1,5 @@
 import { useState } from "react";
 import FixAndFlipTab from "./fixAndFlip/FixAndFlipTab";
-import SellerFinanceTab from "./sellerFinance/SellerFinanceTab";
 import SubToTab from "./subTo/SubToTab";
 
 const analyzerTabs = [
@@ -30,19 +29,6 @@ const analyzerTabs = [
       "Holding costs, closing costs, and target margin",
     ],
   },
-  {
-    id: "seller-finance",
-    label: "Seller Finance",
-    eyebrow: "Structured Terms",
-    title: "Owner-finance offer builder",
-    description:
-      "Map the terms package that keeps the seller comfortable while preserving your monthly spread and long-term equity position.",
-    prompts: [
-      "Down payment, interest rate, balloon, and amortization",
-      "Monthly payment target versus rent or resale strategy",
-      "Risk review: taxes, insurance, and servicing structure",
-    ],
-  },
 ];
 
 function DealAnalyzer() {
@@ -56,8 +42,8 @@ function DealAnalyzer() {
         <div>
           <h1>Deal Analyzer</h1>
           <span>
-            Review different deal structures and pressure-test the numbers before
-            you make an offer.
+            Review different deal structures and pressure-test the numbers
+            before you make an offer.
           </span>
         </div>
       </header>
@@ -67,7 +53,11 @@ function DealAnalyzer() {
         data-reveal="left"
         style={{ "--reveal-delay": "80ms" }}
       >
-        <div className="deal-analyzer-tabs" role="tablist" aria-label="Deal types">
+        <div
+          className="deal-analyzer-tabs"
+          role="tablist"
+          aria-label="Deal types"
+        >
           {analyzerTabs.map((tab) => (
             <button
               key={tab.id}
@@ -85,9 +75,6 @@ function DealAnalyzer() {
         <div className="deal-analyzer-content">
           {activeTab === "subto" && <SubToTab tab={currentTab} />}
           {activeTab === "fix-flip" && <FixAndFlipTab tab={currentTab} />}
-          {activeTab === "seller-finance" && (
-            <SellerFinanceTab tab={currentTab} />
-          )}
         </div>
       </section>
     </>
