@@ -214,6 +214,15 @@
     color: #dc2626;
   }
 
+  .deal-analyzer-highlight-value {
+    color: #2563eb !important;
+    text-shadow: 0 14px 32px color-mix(in srgb, #2563eb 28%, transparent 72%);
+  }
+
+  .dark .deal-analyzer-highlight-value {
+    color: #60a5fa !important;
+  }
+
   .deal-analyzer-verdict {
     @apply mt-5 flex items-center justify-between rounded-[20px] border px-5 py-4;
     border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
