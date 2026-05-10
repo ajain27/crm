@@ -1,14 +1,11 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { RefreshCw } from "lucide-react";
 import "../../../styles/styles.css";
 import {
-  fetchDeals,
   fetchBuyers,
   saveDeal,
   saveBuyer,
-  deleteDealById,
-  updateUserProfile,
   saveContractVersion,
   fetchContractVersion,
   deleteContractById,
@@ -29,15 +26,15 @@ import useScrollReveal from "../../../hooks/useScrollReveal";
 import useTheme from "../../../hooks/useTheme";
 import {
   SESSION_STORAGE_KEY,
-  MAX_PROFILE_IMAGE_SIZE,
-  MAX_CONTRACT_FILE_SIZE,
   IDLE_LOGOUT_MS,
   months,
   createDefaultFilters,
-  createEmptyDealForm,
   createProfileForm,
-  createContractVersion,
 } from "./wholesaleConfig";
+import { useDealsData } from "./hooks/useDealsData";
+import { useDealsFilter } from "./hooks/useDealsFilter";
+import { useDealForm } from "./hooks/useDealForm";
+import { useProfileManager } from "./hooks/useProfileManager";
 
 function Wholesale() {
   const { theme, toggleTheme } = useTheme();
@@ -61,54 +58,54 @@ function Wholesale() {
         setIsSidebarOpen(true);
       }
     }
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  const [deals, setDeals] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [tableLoading, setTableLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [form, setForm] = useState(createEmptyDealForm);
-  const [filters, setFilters] = useState(createDefaultFilters);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [profileForm, setProfileForm] = useState(() =>
-    createProfileForm(currentUser),
-  );
-  const profileMenuRef = useRef(null);
+
+  const { deals, setDeals, isLoading, errorMessage, deleteDeal, persist } =
+    useDealsData({ currentUser });
+
+  const { filters, setFilters, states, propertyTypes, years, filteredDeals } =
+    useDealsFilter({ deals });
+
+  const {
+    form,
+    tableLoading,
+    resetForm,
+    handleChange,
+    handleBlur,
+    handleContractFileChange,
+    clearContractFile,
+    checkDuplicateAddress,
+    addDeal,
+  } = useDealForm({
+    deals,
+    currentUser,
+    saveDeal,
+    saveBuyer,
+    fetchBuyers,
+    saveContractVersion,
+    setDeals,
+    setFilters,
+  });
+
+  const {
+    profileForm,
+    setProfileForm,
+    isProfileModalOpen,
+    setIsProfileModalOpen,
+    isProfileMenuOpen,
+    setIsProfileMenuOpen,
+    profileMenuRef,
+    handleSaveProfile,
+    handleProfileImageChange,
+  } = useProfileManager({
+    currentUser,
+    setCurrentUser,
+    sessionStorageKey: SESSION_STORAGE_KEY,
+  });
 
   useScrollReveal([activeView, isLoading, tableLoading, deals.length]);
-
-  const persist = function persist(nextDeals) {
-    setDeals(nextDeals);
-  };
-
-  async function loadDeals() {
-    if (!currentUser?.id) {
-      setDeals([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
-      const data = await fetchDeals(currentUser.id);
-      setDeals(data);
-    } catch (error) {
-      console.error("Failed to load deals", error);
-      setErrorMessage(
-        "Unable to load deals. Check your Firebase connection and Firestore rules.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadDeals();
-  }, [currentUser?.id]);
 
   function handleAuthenticated(user) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
@@ -120,7 +117,7 @@ function Wholesale() {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     setCurrentUser(null);
     setDeals([]);
-    setForm(createEmptyDealForm());
+    resetForm();
     setFilters(createDefaultFilters());
     setActiveView("dashboard");
     setIsProfileModalOpen(false);
@@ -135,648 +132,6 @@ function Wholesale() {
       handleSignOut();
     },
   });
-
-  useEffect(() => {
-    setProfileForm(createProfileForm(currentUser));
-  }, [
-    currentUser?.firstName,
-    currentUser?.lastName,
-    currentUser?.profileImage,
-  ]);
-
-  async function handleSaveProfile() {
-    if (!currentUser?.id) return;
-
-    try {
-      const updatedNames = await updateUserProfile({
-        id: currentUser.id,
-        firstName: profileForm.firstName,
-        lastName: profileForm.lastName,
-        profileImage: profileForm.profileImage,
-      });
-
-      const nextUser = { ...currentUser, ...updatedNames };
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextUser));
-      setCurrentUser(nextUser);
-      setIsProfileModalOpen(false);
-      setIsProfileMenuOpen(false);
-    } catch (error) {
-      console.error("Failed to update profile", error);
-      alert("Unable to update profile. Check your database connection.");
-    }
-  }
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (!profileMenuRef.current?.contains(event.target)) {
-        setIsProfileMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  function handleProfileImageChange(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      alert("Please choose an image file for your profile photo.");
-      event.target.value = "";
-      return;
-    }
-
-    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
-      alert("Profile photo must be smaller than 600 KB.");
-      event.target.value = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setProfileForm((prev) => ({
-        ...prev,
-        profileImage: typeof reader.result === "string" ? reader.result : "",
-      }));
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  }
-
-  function handleContractFileChange(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const isSupportedType =
-      file.type === "application/pdf" ||
-      file.type === "application/vnd.oasis.opendocument.text" ||
-      file.type === "application/vnd.oasis.opendocument.formula" ||
-      file.type.startsWith("image/") ||
-      /\.odt$/i.test(file.name) ||
-      /\.odf$/i.test(file.name);
-
-    if (!isSupportedType) {
-      alert("Please choose a PDF, ODF/ODT, or image file for the contract.");
-      event.target.value = "";
-      return;
-    }
-
-    if (file.size > MAX_CONTRACT_FILE_SIZE) {
-      alert("Contract file must be smaller than 700 KB.");
-      event.target.value = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm((prev) => ({
-        ...prev,
-        contractFileName: file.name,
-        contractFileType: file.type,
-        contractFileData:
-          typeof reader.result === "string" ? reader.result : "",
-        contractVersions:
-          typeof reader.result === "string"
-            ? [
-                createContractVersion({
-                  name: file.name,
-                  type: file.type,
-                  data: reader.result,
-                }),
-              ]
-            : [],
-      }));
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  }
-
-  function clearContractFile() {
-    setForm((prev) => ({
-      ...prev,
-      contractVersions: [],
-      contractFileName: "",
-      contractFileType: "",
-      contractFileData: "",
-    }));
-  }
-
-  function handleChange(event) {
-    const { name, value } = event.target;
-
-    if (name === "city" && /\d/.test(value)) return;
-    if (name === "zipCode" && /[^0-9]/.test(value)) return;
-    if (name === "state" && /[^a-zA-Z]/.test(value)) return;
-
-    if (name === "closed" && value === "Yes") {
-      const isReady = form.sellerAccepted === "Yes" && form.assigned === "Yes";
-
-      if (!isReady) {
-        alert(
-          "Cannot close: Offer must be 'Accepted', and 'Assigned' must be 'Yes'.",
-        );
-        return; // Block the change
-      }
-    }
-
-    if (name === "closed") {
-      setForm((prev) => ({
-        ...prev,
-        closed: value,
-        ...(value === "No" ? { closedDate: "", closedInMonth: "" } : {}),
-      }));
-      return;
-    }
-
-    if (name === "offerStatus") {
-      setForm((prev) => ({
-        ...prev,
-        offerStatus: value,
-        ...(value === "Not Sent"
-          ? {
-              offerDate: "",
-              contractVersions: [],
-              contractFileName: "",
-              contractFileData: "",
-              contractFileType: "",
-              sellerAccepted: "No",
-              contractPrice: "",
-              assigned: "No",
-              assignedPrice: "",
-              buyerName: "",
-              buyerEmail: "",
-              closed: "No",
-              closedDate: "",
-              closedInMonth: "",
-            }
-          : {}),
-      }));
-      return;
-    }
-
-    if (name === "onMarket") {
-      setForm((prev) => ({
-        ...prev,
-        onMarket: value,
-        ...(value !== "Yes" ? { listedPrice: "" } : {}),
-      }));
-      return;
-    }
-
-    if (name === "sellerAccepted") {
-      setForm((prev) => ({
-        ...prev,
-        sellerAccepted: value,
-        ...(value !== "Yes"
-          ? {
-              assigned: "No",
-              assignedPrice: "",
-              buyerName: "",
-              buyerEmail: "",
-              closed: "No",
-              closedDate: "",
-              closedInMonth: "",
-            }
-          : {}),
-      }));
-      return;
-    }
-
-    if (name === "assigned") {
-      setForm((prev) => ({
-        ...prev,
-        assigned: value,
-        ...(value !== "Yes"
-          ? {
-              assignedPrice: "",
-              buyerName: "",
-              buyerEmail: "",
-              closed: "No",
-              closedDate: "",
-              closedInMonth: "",
-            }
-          : {}),
-      }));
-      return;
-    }
-
-    const currencyFields = [
-      "arv",
-      "listedPrice",
-      "rehabCost",
-      "desiredProfit",
-      "mao",
-      "contractPrice",
-      "assignedPrice",
-    ];
-    if (currencyFields.includes(name)) {
-      const numericValue = String(value || "").replace(/[^0-9]/g, "");
-      const formatted = numericValue
-        ? "$" + Number.parseInt(numericValue, 10).toLocaleString("en-US")
-        : "";
-      setForm((prev) => ({ ...prev, [name]: formatted }));
-      return;
-    }
-
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function handleBlur(event) {
-    const { name, value } = event.target;
-    const currencyFields = [
-      "arv",
-      "listedPrice",
-      "rehabCost",
-      "desiredProfit",
-      "mao",
-      "contractPrice",
-      "assignedPrice",
-    ];
-    if (currencyFields.includes(name) && value) {
-      const numericValue = value.replace(/[^0-9]/g, "");
-      if (numericValue) {
-        const numVal = parseInt(numericValue, 10);
-
-        const parseNumber = (val) =>
-          Number(String(val || "0").replace(/[^0-9]/g, ""));
-        const currentVals = {
-          arv: parseNumber(form.arv),
-          rehabCost: parseNumber(form.rehabCost),
-          mao: parseNumber(form.mao),
-          contractPrice: parseNumber(form.contractPrice),
-          assignedPrice: parseNumber(form.assignedPrice),
-        };
-        currentVals[name] = numVal;
-
-        // Validations
-        if (currentVals.arv > 0) {
-          if (currentVals.rehabCost > currentVals.arv) {
-            alert("Rehab cost cannot be more than ARV.");
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-          if (currentVals.mao > currentVals.arv) {
-            alert("MAO cannot be more than ARV.");
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-          if (currentVals.contractPrice > currentVals.arv) {
-            alert("Contract price cannot be more than ARV.");
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-          if (currentVals.mao > 0 && currentVals.rehabCost > currentVals.mao) {
-            alert("Rehab cost cannot be more than MAO.");
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-          if (
-            currentVals.contractPrice > 0 &&
-            currentVals.assignedPrice > 0 &&
-            currentVals.assignedPrice < currentVals.contractPrice
-          ) {
-            alert(
-              "Assigned price needs to be more than or equal to contract price.",
-            );
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-        }
-
-        const formatted = "$" + numVal.toLocaleString("en-US");
-        setForm((prev) => ({ ...prev, [name]: formatted }));
-      }
-    }
-  }
-
-  function checkDuplicateAddress(address) {
-    if (!address.trim()) return;
-
-    const existingDeal = deals.find(
-      (deal) => deal.address.toLowerCase() === address.trim().toLowerCase(),
-    );
-    if (existingDeal) {
-      alert("A property with this address already exists.");
-      // Filter to show only the existing deal
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        search: existingDeal.address,
-      }));
-      // Scroll to the deal after a short delay to allow filtering
-      setTimeout(() => {
-        const rowElement = document.querySelector(
-          `[data-deal-id="${existingDeal.id}"]`,
-        );
-        if (rowElement) {
-          rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 100);
-    }
-  }
-
-  async function addDeal(event) {
-    event.preventDefault();
-
-    // Basic Validation
-    if (
-      !form.address.trim() ||
-      !form.city.trim() ||
-      !form.zipCode.trim() ||
-      !form.state.trim()
-    ) {
-      alert("Please fill out the required address fields.");
-      return;
-    }
-
-    // Check for duplicate address
-    const existingDeal = deals.find(
-      (deal) =>
-        deal.address.toLowerCase() === form.address.trim().toLowerCase(),
-    );
-    if (existingDeal) {
-      alert("A property with this address already exists.");
-      // Filter to show only the existing deal
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        search: existingDeal.address,
-      }));
-      // Scroll to the deal after a short delay to allow filtering
-      setTimeout(() => {
-        const rowElement = document.querySelector(
-          `[data-deal-id="${existingDeal.id}"]`,
-        );
-        if (rowElement) {
-          rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 100);
-      return;
-    }
-
-    const parseNumber = (val) => Number(String(val).replace(/[^0-9]/g, ""));
-
-    if (form.offerStatus === "Offer Sent" && !form.contractPrice.trim()) {
-      alert("Please fill out Contract Price when the offer is sent.");
-      return;
-    }
-
-    if (form.closed === "Yes" && !form.closedDate) {
-      alert("Please select the close date for a closed deal.");
-      return;
-    }
-
-    const arvNum = parseNumber(form.arv);
-    const maoNum = parseNumber(form.mao);
-    const contractNum = parseNumber(form.contractPrice);
-    const assignedNum = parseNumber(form.assignedPrice);
-    const rehabNum = parseNumber(form.rehabCost);
-
-    if (arvNum > 0) {
-      if (rehabNum > arvNum) {
-        alert("Rehab cost cannot be more than ARV.");
-        return;
-      }
-      if (maoNum > arvNum) {
-        alert("MAO cannot be more than ARV.");
-        return;
-      }
-      if (contractNum > arvNum) {
-        alert("Contract price cannot be more than ARV.");
-        return;
-      }
-    }
-    if (maoNum > 0 && rehabNum > maoNum) {
-      alert("Rehab cost cannot be more than MAO.");
-      return;
-    }
-    if (contractNum > 0 && assignedNum > 0 && assignedNum < contractNum) {
-      alert("Assigned price needs to be more than or equal to contract price.");
-      return;
-    }
-
-    const profitNum =
-      assignedNum > 0 && contractNum > 0 ? assignedNum - contractNum : 0;
-
-    const { desiredProfit, ...formWithoutProfit } = form;
-
-    const newDeal = {
-      ...formWithoutProfit,
-      id: crypto.randomUUID(),
-      userId: currentUser.id,
-      state: form.state.trim().toUpperCase(),
-      zipCode: form.zipCode.trim(),
-      arv: parseNumber(form.arv),
-      listedPrice: parseNumber(form.listedPrice),
-      rehabCost: parseNumber(form.rehabCost),
-      mao: parseNumber(form.mao),
-      contractPrice: parseNumber(form.contractPrice),
-      assignedPrice: parseNumber(form.assignedPrice),
-      profit: profitNum,
-      contractVersions: form.contractVersions?.length
-        ? form.contractVersions
-        : form.contractFileData
-          ? [
-              createContractVersion({
-                name: form.contractFileName || "Contract",
-                type: form.contractFileType || "application/octet-stream",
-                data: form.contractFileData,
-              }),
-            ]
-          : [],
-      contractFileName: form.contractFileName || "",
-      contractFileData: form.contractFileData || "",
-      contractFileType: form.contractFileType || "",
-      buyerName: form.buyerName?.trim() || "",
-      buyerEmail: form.buyerEmail?.trim().toLowerCase() || "",
-      closedDate: form.closed === "Yes" ? form.closedDate : "",
-      closedInMonth:
-        form.closed === "Yes" && form.closedDate
-          ? form.closedDate.slice(5, 7)
-          : "",
-    };
-
-    try {
-      setTableLoading(true);
-
-      if (
-        form.assigned === "Yes" &&
-        form.buyerEmail?.trim() &&
-        form.buyerName?.trim()
-      ) {
-        const existingBuyers = await fetchBuyers(currentUser.id);
-        const newEmail = form.buyerEmail.trim().toLowerCase();
-        const isDuplicate = existingBuyers.some(
-          (b) => b.email?.toLowerCase() === newEmail,
-        );
-        if (!isDuplicate) {
-          const newBuyer = {
-            id: crypto.randomUUID(),
-            userId: currentUser.id,
-            fullName: form.buyerName.trim(),
-            email: newEmail,
-            phone: "",
-            city: form.city.trim(),
-            state: form.state.trim().toUpperCase(),
-            realEstateType: "Single Family",
-          };
-          await saveBuyer(newBuyer);
-        }
-      }
-
-      const versionsWithData = (newDeal.contractVersions || []).filter((v) => v.data);
-      await Promise.all(
-        versionsWithData.map((v) =>
-          saveContractVersion({
-            id: v.id,
-            dealId: newDeal.id,
-            userId: currentUser.id,
-            name: v.name,
-            type: v.type,
-            data: v.data,
-            uploadedAt: v.uploadedAt,
-          }),
-        ),
-      );
-
-      const savedDeal = (await saveDeal(newDeal)) || newDeal;
-      setDeals((prevDeals) => [...prevDeals, savedDeal]);
-      setForm(createEmptyDealForm());
-      if (newDeal.offerDate || newDeal.closedDate) {
-        setFilters(createDefaultFilters());
-      }
-    } catch (error) {
-      console.error("Failed to save property", error);
-      alert("Unable to save property. Check your database connection.");
-    } finally {
-      setTableLoading(false);
-    }
-  }
-
-  async function deleteDeal(id) {
-    const deal = deals.find((item) => item.id === id);
-    if (!window.confirm(`Delete ${deal?.address || "this deal"}?`)) return;
-
-    try {
-      await deleteDealById(id);
-      setDeals((prevDeals) => prevDeals.filter((deal) => deal.id !== id));
-    } catch (error) {
-      console.error("Failed to delete property", error);
-      alert("Unable to delete property. Check your database connection.");
-    }
-  }
-
-  const states = useMemo(
-    () => [
-      "All",
-      ...new Set(
-        deals
-          .map((d) => d.state)
-          .filter(Boolean)
-          .sort(),
-      ),
-    ],
-    [deals],
-  );
-  const propertyTypes = useMemo(
-    () => [
-      "All",
-      ...new Set(
-        deals
-          .map((d) => d.propertyType)
-          .filter(Boolean)
-          .sort(),
-      ),
-    ],
-    [deals],
-  );
-  const years = useMemo(
-    () => [
-      "All",
-      ...new Set(
-        deals
-          .map((d) => (d.offerDate ? d.offerDate.substring(0, 4) : null))
-          .filter(Boolean)
-          .sort(),
-      ),
-    ],
-    [deals],
-  );
-
-  const filteredDeals = useMemo(() => {
-    const query = filters.search.toLowerCase();
-    return deals.filter((deal) => {
-      const matchesState =
-        filters.state === "All" || deal.state === filters.state;
-      const matchesPropertyType =
-        filters.propertyType === "All" ||
-        deal.propertyType === filters.propertyType;
-      const matchesAccepted =
-        filters.offerAccepted === "All" ||
-        deal.sellerAccepted === filters.offerAccepted;
-      const matchesAssigned =
-        filters.assigned === "All" || deal.assigned === filters.assigned;
-      const matchesClosed =
-        filters.closed === "All" || deal.closed === filters.closed;
-      const matchesSearch =
-        !query ||
-        (() => {
-          const searchText = [
-            deal.address,
-            deal.city,
-            deal.zipCode,
-            deal.state,
-            deal.offerStatus,
-            deal.notes,
-            deal.closed,
-            deal.arv ? "$" + deal.arv.toLocaleString("en-US") : "",
-            deal.rehabCost ? "$" + deal.rehabCost.toLocaleString("en-US") : "",
-            deal.mao ? "$" + deal.mao.toLocaleString("en-US") : "",
-            deal.contractPrice
-              ? "$" + deal.contractPrice.toLocaleString("en-US")
-              : "",
-            deal.assignedPrice
-              ? "$" + deal.assignedPrice.toLocaleString("en-US")
-              : "",
-          ]
-            .join(" ")
-            .toLowerCase()
-            .replace(/,/g, "");
-          const searchTerms = query
-            .split(/\s+/)
-            .filter(Boolean)
-            .map((term) => term.replace(/,/g, ""));
-          return searchTerms.every((term) => searchText.includes(term));
-        })();
-
-      const dealYear = deal.offerDate ? deal.offerDate.substring(0, 4) : "";
-      const matchesYear = filters.year === "All" || dealYear === filters.year;
-
-      const dealOfferMonth = deal.offerDate
-        ? deal.offerDate.substring(5, 7)
-        : "";
-      const matchesOfferMonth =
-        filters.offerMonth === "All" || dealOfferMonth === filters.offerMonth;
-
-      const dealClosedMonth = deal.closedDate
-        ? deal.closedDate.substring(5, 7)
-        : deal.closedInMonth || "";
-      const matchesClosedMonth =
-        filters.closedMonth === "All" ||
-        dealClosedMonth === filters.closedMonth;
-
-      return (
-        matchesState &&
-        matchesPropertyType &&
-        matchesAccepted &&
-        matchesAssigned &&
-        matchesSearch &&
-        matchesClosed &&
-        matchesYear &&
-        matchesOfferMonth &&
-        matchesClosedMonth
-      );
-    });
-  }, [deals, filters]);
 
   if (!currentUser) {
     return <AuthGate onAuthenticated={handleAuthenticated} />;
