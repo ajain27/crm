@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ReadOnlyCell } from "../../elements/elements";
+import { formatPhone } from "../../../utils/utils";
 import { Trash2, Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 
@@ -100,7 +101,8 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
                         id={`edit-phone-${buyer.id}`}
                         className="editable-input narrow"
                         value={editFieldValue}
-                        onChange={(e) => setEditFieldValue(e.target.value)}
+                        onChange={(e) => setEditFieldValue(formatPhone(e.target.value))}
+                        maxLength={12}
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === "Enter") saveField(buyer.id);

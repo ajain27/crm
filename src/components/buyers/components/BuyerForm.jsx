@@ -1,6 +1,12 @@
 import { Field } from "../../elements/elements";
+import { formatPhone } from "../../../utils/utils";
 
 function BuyerForm({ addBuyer, form, handleChange }) {
+  function handlePhoneChange(e) {
+    handleChange({
+      target: { name: "phone", value: formatPhone(e.target.value) },
+    });
+  }
   const isFormComplete =
     Boolean(form.fullName?.trim()) &&
     Boolean(form.email?.trim()) &&
@@ -40,7 +46,8 @@ function BuyerForm({ addBuyer, form, handleChange }) {
             label="Phone Number"
             name="phone"
             value={form.phone}
-            onChange={handleChange}
+            onChange={handlePhoneChange}
+            maxLength="12"
           />
           <Field
             label="City (They buy in)"

@@ -7,7 +7,7 @@ const buyers = [
     id: "b1",
     fullName: "Jane Doe",
     email: "jane@example.com",
-    phone: "1234567890",
+    phone: "123-456-7890",
     city: "Austin",
     state: "TX",
   },
@@ -57,12 +57,12 @@ describe("BuyerData", () => {
     const editPhoneButton = within(row).getByTitle("Edit Phone");
     fireEvent.click(editPhoneButton);
 
-    const input = within(row).getByDisplayValue("1234567890");
+    const input = within(row).getByDisplayValue("123-456-7890");
     fireEvent.change(input, { target: { value: "0987654321" } });
 
     const saveButton = within(row).getByTitle("Save");
     fireEvent.click(saveButton);
 
-    expect(updateBuyer).toHaveBeenCalledWith("b1", "phone", "0987654321");
+    expect(updateBuyer).toHaveBeenCalledWith("b1", "phone", "098-765-4321");
   });
 });
