@@ -10,6 +10,7 @@ vi.mock("firebase/firestore", () => {
   const mockGetDocs = vi.fn();
   const mockSetDoc = vi.fn();
   const mockDeleteDoc = vi.fn();
+  const mockGetDoc = vi.fn();
   const mockGetFirestore = vi.fn(() => ({ firestore: true }));
   const mockQuery = vi.fn((...args) => ({ queryRef: args }));
   const mockWhere = vi.fn((...args) => ({ whereRef: args }));
@@ -18,6 +19,7 @@ vi.mock("firebase/firestore", () => {
   return {
     collection: mockCollection,
     doc: mockDoc,
+    getDoc: mockGetDoc,
     getDocs: mockGetDocs,
     setDoc: mockSetDoc,
     deleteDoc: mockDeleteDoc,
@@ -37,7 +39,7 @@ const {
   deleteBuyerById,
   updateUserProfile,
 } = await import("./firestoreService");
-const { getDocs, setDoc, deleteDoc, collection, doc } =
+const { getDocs, setDoc, deleteDoc, doc } =
   await import("firebase/firestore");
 
 beforeEach(() => {
@@ -64,14 +66,61 @@ describe("firestoreService", () => {
     await saveDeal(property);
 
     expect(doc).toHaveBeenCalledWith(expect.anything(), "1");
-    expect(setDoc).toHaveBeenCalledWith(expect.anything(), property);
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        id: "1",
+        address: "123 Main",
+        contractVersions: [],
+        contractFileData: "",
+      }),
+    );
   });
 
-  it("deletes a property document by id", async () => {
+  it("strips contract file data from deal before saving to Firestore", async () => {
+    const property = {
+      id: "1",
+      address: "123 Main",
+      contractVersions: [
+        {
+          id: "cv1",
+          name: "contract.pdf",
+          type: "application/pdf",
+          data: "data:application/pdf;base64,ZmFrZQ==",
+          uploadedAt: "2026-05-09T10:00:00.000Z",
+        },
+      ],
+    };
+
+    await saveDeal(property);
+
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        contractVersions: [
+          expect.objectContaining({
+            id: "cv1",
+            name: "contract.pdf",
+            type: "application/pdf",
+          }),
+        ],
+        contractFileData: "",
+      }),
+    );
+    const savedArg = setDoc.mock.calls[0][1];
+    expect(savedArg.contractVersions[0]).not.toHaveProperty("data");
+  });
+
+  it("deletes contract subcollection documents before deleting the property", async () => {
+    const mockContractDoc = { ref: { contractDocRef: true } };
+    getDocs.mockResolvedValue({ docs: [mockContractDoc] });
+
     await deleteDealById("1");
 
+    expect(getDocs).toHaveBeenCalledTimes(1);
+    expect(deleteDoc).toHaveBeenCalledWith(mockContractDoc.ref);
     expect(doc).toHaveBeenCalledWith(expect.anything(), "1");
-    expect(deleteDoc).toHaveBeenCalledWith(expect.anything());
+    expect(deleteDoc).toHaveBeenCalledTimes(2);
   });
 
   it("fetches buyers from the buyers collection", async () => {

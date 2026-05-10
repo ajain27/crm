@@ -9,6 +9,9 @@ import {
   saveBuyer,
   deleteDealById,
   updateUserProfile,
+  saveContractVersion,
+  fetchContractVersion,
+  deleteContractById,
 } from "../../../firebase/firestoreService";
 import Wholesale_filters from "./filters/Wholesale_filters";
 import Wholesale_form from "./forms/wholesale_form";
@@ -27,11 +30,13 @@ import useTheme from "../../../hooks/useTheme";
 import {
   SESSION_STORAGE_KEY,
   MAX_PROFILE_IMAGE_SIZE,
+  MAX_CONTRACT_FILE_SIZE,
   IDLE_LOGOUT_MS,
   months,
   createDefaultFilters,
   createEmptyDealForm,
   createProfileForm,
+  createContractVersion,
 } from "./wholesaleConfig";
 
 function Wholesale() {
@@ -199,6 +204,64 @@ function Wholesale() {
     event.target.value = "";
   }
 
+  function handleContractFileChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const isSupportedType =
+      file.type === "application/pdf" ||
+      file.type === "application/vnd.oasis.opendocument.text" ||
+      file.type === "application/vnd.oasis.opendocument.formula" ||
+      file.type.startsWith("image/") ||
+      /\.odt$/i.test(file.name) ||
+      /\.odf$/i.test(file.name);
+
+    if (!isSupportedType) {
+      alert("Please choose a PDF, ODF/ODT, or image file for the contract.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_CONTRACT_FILE_SIZE) {
+      alert("Contract file must be smaller than 700 KB.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((prev) => ({
+        ...prev,
+        contractFileName: file.name,
+        contractFileType: file.type,
+        contractFileData:
+          typeof reader.result === "string" ? reader.result : "",
+        contractVersions:
+          typeof reader.result === "string"
+            ? [
+                createContractVersion({
+                  name: file.name,
+                  type: file.type,
+                  data: reader.result,
+                }),
+              ]
+            : [],
+      }));
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  }
+
+  function clearContractFile() {
+    setForm((prev) => ({
+      ...prev,
+      contractVersions: [],
+      contractFileName: "",
+      contractFileType: "",
+      contractFileData: "",
+    }));
+  }
+
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -233,6 +296,10 @@ function Wholesale() {
         ...(value === "Not Sent"
           ? {
               offerDate: "",
+              contractVersions: [],
+              contractFileName: "",
+              contractFileData: "",
+              contractFileType: "",
               sellerAccepted: "No",
               contractPrice: "",
               assigned: "No",
@@ -304,8 +371,11 @@ function Wholesale() {
       "assignedPrice",
     ];
     if (currencyFields.includes(name)) {
-      const cleaned = value.replace(/[^0-9$,]/g, "");
-      setForm((prev) => ({ ...prev, [name]: cleaned }));
+      const numericValue = String(value || "").replace(/[^0-9]/g, "");
+      const formatted = numericValue
+        ? "$" + Number.parseInt(numericValue, 10).toLocaleString("en-US")
+        : "";
+      setForm((prev) => ({ ...prev, [name]: formatted }));
       return;
     }
 
@@ -502,6 +572,20 @@ function Wholesale() {
       contractPrice: parseNumber(form.contractPrice),
       assignedPrice: parseNumber(form.assignedPrice),
       profit: profitNum,
+      contractVersions: form.contractVersions?.length
+        ? form.contractVersions
+        : form.contractFileData
+          ? [
+              createContractVersion({
+                name: form.contractFileName || "Contract",
+                type: form.contractFileType || "application/octet-stream",
+                data: form.contractFileData,
+              }),
+            ]
+          : [],
+      contractFileName: form.contractFileName || "",
+      contractFileData: form.contractFileData || "",
+      contractFileType: form.contractFileType || "",
       buyerName: form.buyerName?.trim() || "",
       buyerEmail: form.buyerEmail?.trim().toLowerCase() || "",
       closedDate: form.closed === "Yes" ? form.closedDate : "",
@@ -539,8 +623,23 @@ function Wholesale() {
         }
       }
 
-      await saveDeal(newDeal);
-      setDeals((prevDeals) => [...prevDeals, newDeal]);
+      const versionsWithData = (newDeal.contractVersions || []).filter((v) => v.data);
+      await Promise.all(
+        versionsWithData.map((v) =>
+          saveContractVersion({
+            id: v.id,
+            dealId: newDeal.id,
+            userId: currentUser.id,
+            name: v.name,
+            type: v.type,
+            data: v.data,
+            uploadedAt: v.uploadedAt,
+          }),
+        ),
+      );
+
+      const savedDeal = (await saveDeal(newDeal)) || newDeal;
+      setDeals((prevDeals) => [...prevDeals, savedDeal]);
       setForm(createEmptyDealForm());
       if (newDeal.offerDate || newDeal.closedDate) {
         setFilters(createDefaultFilters());
@@ -683,21 +782,6 @@ function Wholesale() {
     return <AuthGate onAuthenticated={handleAuthenticated} />;
   }
 
-  const displayName =
-    [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(" ") ||
-    currentUser?.username ||
-    currentUser?.email ||
-    "CRM User";
-  const profileInitial = String(
-    currentUser?.firstName ||
-      currentUser?.username ||
-      currentUser?.email ||
-      "U",
-  )
-    .trim()
-    .charAt(0)
-    .toUpperCase();
-
   return (
     <div
       className={`layout ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}
@@ -769,6 +853,8 @@ function Wholesale() {
               handleChange={handleChange}
               handleBlur={handleBlur}
               checkDuplicateAddress={checkDuplicateAddress}
+              handleContractFileChange={handleContractFileChange}
+              clearContractFile={clearContractFile}
             />
 
             <Wholesale_filters
@@ -800,6 +886,10 @@ function Wholesale() {
                 fetchBuyers={(userId = currentUser.id) => fetchBuyers(userId)}
                 saveBuyer={saveBuyer}
                 setFilters={setFilters}
+                saveContractVersion={saveContractVersion}
+                fetchContractVersion={fetchContractVersion}
+                deleteContractById={deleteContractById}
+                currentUserId={currentUser.id}
               />
             </LoadingScreen>
           </>

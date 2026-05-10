@@ -76,7 +76,8 @@ function FixAndFlipTab({ tab }) {
   const financingFeesAmount = arvAmount * 0.06;
   const closingCostAmount = arvAmount * 0.09;
   const adjustedDiscountPercent = 0.15 + desiredProfitPercent / 100;
-  const calculatedMao = arvAmount - arvAmount * adjustedDiscountPercent - rehabCostAmount;
+  const calculatedMao =
+    arvAmount - arvAmount * adjustedDiscountPercent - rehabCostAmount;
   const liveMaoValue = isFormComplete ? formatAmount(calculatedMao) : "";
 
   function handleCalculate() {
@@ -140,7 +141,7 @@ function FixAndFlipTab({ tab }) {
             required
           />
           <Field
-            label="Desired Profit"
+            label="Desired Profit (%)"
             name="desiredProfit"
             value={form.desiredProfit}
             onChange={handleChange}
@@ -198,8 +199,8 @@ function FixAndFlipTab({ tab }) {
             <div className="deal-analyzer-calculation">
               MAO = ARV - ((15% + Desired Profit%) x ARV) - Rehab Cost
               <span>
-                {analysisSummary.arv} - ((15% + {analysisSummary.desiredProfit}) x{" "}
-                {analysisSummary.arv}) - {analysisSummary.rehabCost} ={" "}
+                {analysisSummary.arv} - ((15% + {analysisSummary.desiredProfit})
+                x {analysisSummary.arv}) - {analysisSummary.rehabCost} ={" "}
                 {analysisSummary.mao}
               </span>
             </div>

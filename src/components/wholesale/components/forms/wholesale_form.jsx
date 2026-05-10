@@ -1,4 +1,5 @@
 import { Field, Select } from "../../../elements/elements";
+import { X } from "lucide-react";
 
 function Wholesale_form({
   addDeal,
@@ -6,6 +7,8 @@ function Wholesale_form({
   handleChange,
   handleBlur,
   checkDuplicateAddress,
+  handleContractFileChange,
+  clearContractFile,
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const isFormComplete =
@@ -167,15 +170,52 @@ function Wholesale_form({
             required
           />
           {form.offerStatus === "Offer Sent" && (
-            <Field
-              label="Offer Date"
-              name="offerDate"
-              type="date"
-              value={form.offerDate}
-              max={today}
-              onChange={handleChange}
-              required
-            />
+            <>
+              <Field
+                label="Offer Date"
+                name="offerDate"
+                type="date"
+                value={form.offerDate}
+                max={today}
+                onChange={handleChange}
+                required
+              />
+              <label className="field">
+                <span>Contract Upload</span>
+                {form.contractFileName ? (
+                  <div className="file-upload-status">
+                    <span className="file-upload-name" title={form.contractFileName}>
+                      {form.contractFileName}
+                    </span>
+                    <button
+                      type="button"
+                      className="file-upload-remove-btn"
+                      onClick={clearContractFile}
+                      title="Remove contract"
+                      aria-label="Remove contract"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="file-upload-field">
+                    <label
+                      htmlFor="contractUpload"
+                      className="secondary-btn file-upload-trigger"
+                    >
+                      Choose Contract
+                    </label>
+                    <input
+                      id="contractUpload"
+                      className="file-upload-input"
+                      type="file"
+                      accept="application/pdf,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.formula,.odt,.odf,image/*"
+                      onChange={handleContractFileChange}
+                    />
+                  </div>
+                )}
+              </label>
+            </>
           )}
           {form.offerStatus !== "Not Sent" && (
             <Field

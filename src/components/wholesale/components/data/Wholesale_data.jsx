@@ -1,9 +1,14 @@
 import { ReadOnlyCell } from "../../../elements/elements";
-import { Trash2, FileText, Edit2, Check } from "lucide-react";
+import { Trash2, FileText, Edit2, Check, Eye, Upload, Loader2 } from "lucide-react";
 import { currency } from "../../../../utils/utils";
 import { useState, useEffect, useMemo } from "react";
 import Pagination from "../../../pagination/Pagination";
 import Modal from "../../../modal/Modal";
+import {
+  MAX_CONTRACT_FILE_SIZE,
+  createContractVersion,
+  getContractVersions,
+} from "../wholesaleConfig";
 
 function Wholesale_data({
   filteredDeals,
@@ -14,13 +19,22 @@ function Wholesale_data({
   fetchBuyers,
   saveBuyer,
   setFilters = () => {},
+  saveContractVersion,
+  fetchContractVersion,
+  deleteContractById,
+  currentUserId,
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const [selectedContractDealId, setSelectedContractDealId] = useState(null);
+  const [selectedContractVersionId, setSelectedContractVersionId] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [editingBuyerId, setEditingBuyerId] = useState(null);
   const [editingBuyerField, setEditingBuyerField] = useState(null);
   const [editBuyerValue, setEditBuyerValue] = useState("");
+  const [uploadingDealId, setUploadingDealId] = useState(null);
+  const [contractDataCache, setContractDataCache] = useState({});
+  const [isFetchingContract, setIsFetchingContract] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     key: "closedDate",
@@ -111,6 +125,166 @@ function Wholesale_data({
     );
   }
 
+  async function openContract(deal) {
+    const versions = getContractVersions(deal);
+    if (versions.length === 0) return;
+    setSelectedContractDealId(deal.id);
+    setSelectedContractVersionId(versions[0].id);
+
+    const uncached = versions.filter((v) => !contractDataCache[v.id]);
+    if (uncached.length === 0) return;
+
+    setIsFetchingContract(true);
+    try {
+      const fetched = await Promise.all(
+        uncached.map((v) => fetchContractVersion(deal.id, v.id)),
+      );
+      setContractDataCache((prev) => {
+        const next = { ...prev };
+        fetched.forEach((doc) => {
+          if (doc?.id) next[doc.id] = doc.data || "";
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to load contract", error);
+    } finally {
+      setIsFetchingContract(false);
+    }
+  }
+
+  function updateDealPatch(id, patch) {
+    const nextDeals = deals.map((dealItem) =>
+      dealItem.id === id ? { ...dealItem, ...patch } : dealItem,
+    );
+    const updatedDeal = nextDeals.find((deal) => deal.id === id);
+
+    return saveDeal(updatedDeal)
+      .then((savedDeal) => {
+        const persistedDeals = nextDeals.map((dealItem) =>
+          dealItem.id === id ? savedDeal || updatedDeal : dealItem,
+        );
+        persist(persistedDeals);
+      })
+      .catch((error) => {
+        console.error("Failed to update property", error);
+        const detail = error?.message ? `\n\n${error.message}` : "";
+        alert(`Unable to save contract. Check your database connection.${detail}`);
+      });
+  }
+
+  function buildContractPatch(versions) {
+    const latestVersion = versions[0];
+    return {
+      contractVersions: versions.map(({ data, ...rest }) => rest),
+      contractFileName: latestVersion?.name || "",
+      contractFileType: latestVersion?.type || "",
+      contractFileData: "",
+    };
+  }
+
+  function handleContractUpload(deal, event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const isSupportedType =
+      file.type === "application/pdf" ||
+      file.type === "application/vnd.oasis.opendocument.text" ||
+      file.type === "application/vnd.oasis.opendocument.formula" ||
+      file.type.startsWith("image/") ||
+      /\.odt$/i.test(file.name) ||
+      /\.odf$/i.test(file.name);
+
+    if (!isSupportedType) {
+      alert("Please choose a PDF, ODF/ODT, or image file for the contract.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_CONTRACT_FILE_SIZE) {
+      alert("Contract file must be smaller than 700 KB.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const encodedFile =
+        typeof reader.result === "string" ? reader.result : "";
+      const newVersion = createContractVersion({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        data: encodedFile,
+      });
+      const existingVersions = getContractVersions(deal);
+      const nextVersions = [newVersion, ...existingVersions];
+
+      setUploadingDealId(deal.id);
+      try {
+        await saveContractVersion({
+          id: newVersion.id,
+          dealId: deal.id,
+          userId: currentUserId,
+          name: newVersion.name,
+          type: newVersion.type,
+          data: encodedFile,
+          uploadedAt: newVersion.uploadedAt,
+        });
+        setContractDataCache((prev) => ({
+          ...prev,
+          [newVersion.id]: encodedFile,
+        }));
+        await updateDealPatch(deal.id, buildContractPatch(nextVersions));
+      } catch (error) {
+        console.error("Failed to upload contract", error);
+        const detail = error?.message ? `\n\n${error.message}` : "";
+        alert(`Unable to upload contract. Check your database connection.${detail}`);
+      } finally {
+        setUploadingDealId(null);
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  }
+
+  async function handleDeleteContractVersion(deal, versionId) {
+    const versions = getContractVersions(deal);
+    const versionToDelete = versions.find((version) => version.id === versionId);
+    if (!versionToDelete) return;
+    if (
+      !window.confirm(
+        `Delete contract${versionToDelete?.name ? ` (${versionToDelete.name})` : ""} for ${deal.address}?`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteContractById(deal.id, versionId);
+      setContractDataCache((prev) => {
+        const next = { ...prev };
+        delete next[versionId];
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to delete contract", error);
+    }
+
+    const nextVersions = versions.filter((version) => version.id !== versionId);
+    await updateDealPatch(deal.id, buildContractPatch(nextVersions));
+
+    if (selectedContractDealId === deal.id) {
+      if (nextVersions.length > 0) {
+        setSelectedContractVersionId((currentId) =>
+          currentId === versionId ? nextVersions[0].id : currentId,
+        );
+      } else {
+        setSelectedContractDealId(null);
+        setSelectedContractVersionId(null);
+      }
+    }
+  }
+
   function toEditableCurrency(value) {
     const amount = Number(value || 0);
     return amount > 0 ? currency(amount) : "";
@@ -149,6 +323,27 @@ function Wholesale_data({
       setSelectedDeal(null);
     }
   };
+
+  const selectedContractDeal = deals.find(
+    (deal) => deal.id === selectedContractDealId,
+  );
+  const contractVersions = selectedContractDeal
+    ? getContractVersions(selectedContractDeal)
+    : [];
+  const selectedContractVersion =
+    contractVersions.find((version) => version.id === selectedContractVersionId) ||
+    contractVersions[0] ||
+    null;
+  const selectedContractData =
+    contractDataCache[selectedContractVersion?.id] ||
+    selectedContractVersion?.data ||
+    "";
+  const contractMimeType = selectedContractVersion?.type || "";
+  const isImageContract = contractMimeType.startsWith("image/");
+  const isPdfContract = contractMimeType === "application/pdf";
+  const contractPreviewTitle = selectedContractDeal?.address
+    ? `Contract for ${selectedContractDeal.address}`
+    : "Contract Preview";
 
   async function updateDeal(id, field, value) {
     const deal = deals.find((d) => d.id === id);
@@ -200,11 +395,14 @@ function Wholesale_data({
 
     const updatedDeal = nextDeals.find((deal) => deal.id === id);
     try {
-      await saveDeal(updatedDeal);
-      persist(nextDeals);
+      const savedDeal = (await saveDeal(updatedDeal)) || updatedDeal;
+      const persistedDeals = nextDeals.map((dealItem) =>
+        dealItem.id === id ? savedDeal : dealItem,
+      );
+      persist(persistedDeals);
       if (
         field === "offerDate" ||
-        (field === "closed" && value === "Yes" && updatedDeal.closedDate)
+        (field === "closed" && value === "Yes" && savedDeal.closedDate)
       ) {
         setFilters({
           state: "All",
@@ -222,12 +420,12 @@ function Wholesale_data({
       // Sync buyer info to buyers list if assigned and buyer details provided
       if (
         (field === "buyerName" || field === "buyerEmail") &&
-        updatedDeal.assigned === "Yes" &&
-        updatedDeal.buyerEmail?.trim() &&
-        updatedDeal.buyerName?.trim()
+        savedDeal.assigned === "Yes" &&
+        savedDeal.buyerEmail?.trim() &&
+        savedDeal.buyerName?.trim()
       ) {
         const existingBuyers = await fetchBuyers();
-        const buyerEmail = updatedDeal.buyerEmail.trim().toLowerCase();
+        const buyerEmail = savedDeal.buyerEmail.trim().toLowerCase();
         const existingBuyer = existingBuyers.find(
           (b) => b.email?.toLowerCase() === buyerEmail,
         );
@@ -236,19 +434,19 @@ function Wholesale_data({
           // Update existing buyer
           const updatedBuyer = {
             ...existingBuyer,
-            fullName: updatedDeal.buyerName.trim(),
+            fullName: savedDeal.buyerName.trim(),
           };
           await saveBuyer(updatedBuyer);
         } else {
           // Add new buyer
           const newBuyer = {
             id: crypto.randomUUID(),
-            userId: updatedDeal.userId,
-            fullName: updatedDeal.buyerName.trim(),
+            userId: savedDeal.userId,
+            fullName: savedDeal.buyerName.trim(),
             email: buyerEmail,
             phone: "",
-            city: updatedDeal.city.trim(),
-            state: updatedDeal.state.trim().toUpperCase(),
+            city: savedDeal.city.trim(),
+            state: savedDeal.state.trim().toUpperCase(),
             realEstateType: "Single Family",
           };
           await saveBuyer(newBuyer);
@@ -280,6 +478,7 @@ function Wholesale_data({
               <th>Offer Status</th>
               {renderSortableHeader("Offer Date", "offerDate")}
               <th>Accepted</th>
+              <th>Contract</th>
               {renderSortableHeader("Contract Price", "contractPrice")}
               <th>Assigned</th>
               {renderSortableHeader("Assigned Price", "assignedPrice")}
@@ -298,6 +497,12 @@ function Wholesale_data({
                 style={{ "--reveal-delay": `${index * 35}ms` }}
                 className={deal.closed === "Yes" ? "closed-row" : ""}
               >
+                {(() => {
+                  const contractVersions = getContractVersions(deal);
+                  const latestContractVersion = contractVersions[0];
+
+                  return (
+                    <>
                 <td className="text-center">
                   <button
                     className="secondary-btn note-btn"
@@ -368,6 +573,65 @@ function Wholesale_data({
                       <option value="Waiting">Waiting</option>
                       <option value="Yes">Yes</option>
                     </select>
+                  )}
+                </td>
+                <td>
+                  {deal.offerStatus === "Not Sent" ? (
+                    <span className="placeholder-dash">—</span>
+                  ) : (
+                    <div className="contract-actions">
+                      {latestContractVersion ? (
+                        <button
+                          type="button"
+                          className="secondary-btn contract-action-btn"
+                          onClick={() => openContract(deal)}
+                          title={
+                            latestContractVersion.name || "View latest uploaded contract"
+                          }
+                          aria-label={`View contract for ${deal.address}`}
+                        >
+                          <Eye size={16} />
+                        </button>
+                      ) : null}
+                      <label
+                        htmlFor={`contract-upload-${deal.id}`}
+                        className="secondary-btn contract-action-btn"
+                        title={
+                          uploadingDealId === deal.id
+                            ? "Uploading…"
+                            : latestContractVersion
+                              ? "Replace uploaded contract"
+                              : "Upload contract"
+                        }
+                        aria-label={
+                          uploadingDealId === deal.id
+                            ? "Uploading contract…"
+                            : latestContractVersion
+                              ? `Replace contract for ${deal.address}`
+                              : `Upload contract for ${deal.address}`
+                        }
+                        aria-disabled={deal.closed === "Yes" || uploadingDealId === deal.id}
+                        style={
+                          deal.closed === "Yes" || uploadingDealId === deal.id
+                            ? { opacity: 0.5, pointerEvents: "none" }
+                            : undefined
+                        }
+                      >
+                        {uploadingDealId === deal.id ? (
+                          <Loader2 size={16} className="spin" />
+                        ) : (
+                          <Upload size={16} />
+                        )}
+                      </label>
+                      <input
+                        id={`contract-upload-${deal.id}`}
+                        className="contract-upload-input"
+                        type="file"
+                        accept="application/pdf,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.formula,.odt,.odf,image/*"
+                        disabled={deal.closed === "Yes" || uploadingDealId === deal.id}
+                        onChange={(event) => handleContractUpload(deal, event)}
+                      />
+                    </div>
                   )}
                 </td>
                 <td>
@@ -598,6 +862,9 @@ function Wholesale_data({
                     <Trash2 size={16} />
                   </button>
                 </td>
+                    </>
+                  );
+                })()}
               </tr>
             ))}
           </tbody>
@@ -638,6 +905,97 @@ function Wholesale_data({
           rows="6"
           placeholder="Add your notes here..."
         />
+      </Modal>
+
+      <Modal
+        isOpen={!!selectedContractDeal}
+        onClose={() => {
+          setSelectedContractDealId(null);
+          setSelectedContractVersionId(null);
+        }}
+        title={contractPreviewTitle}
+        className="contract-preview-dialog"
+      >
+        <div className="contract-preview-modal">
+          {contractVersions.length > 0 ? (
+            <div className="contract-version-list">
+              {contractVersions.map((version) => (
+                <div
+                  key={version.id}
+                  className={`contract-version-item ${
+                    selectedContractVersion?.id === version.id ? "active" : ""
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="contract-version-select"
+                    onClick={() => setSelectedContractVersionId(version.id)}
+                  >
+                    <div className="contract-version-copy">
+                      <strong>{version.name}</strong>
+                      <span>
+                        {version.uploadedAt
+                          ? new Date(version.uploadedAt).toLocaleString()
+                          : "Uploaded contract"}
+                      </span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-btn contract-version-delete"
+                    onClick={() => {
+                      handleDeleteContractVersion(selectedContractDeal, version.id);
+                    }}
+                    aria-label={`Delete ${version.name}`}
+                    title={`Delete ${version.name}`}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {selectedContractVersion?.name ? (
+            <div className="contract-preview-meta">
+              {selectedContractVersion.name}
+            </div>
+          ) : null}
+          {isFetchingContract ? (
+            <div className="contract-preview-fallback">
+              <Loader2 size={20} className="spin" /> Loading contract…
+            </div>
+          ) : selectedContractData ? (
+            isImageContract ? (
+              <img
+                src={selectedContractData}
+                alt={selectedContractVersion.name || "Contract preview"}
+                className="contract-preview-image"
+              />
+            ) : isPdfContract ? (
+              <iframe
+                title={selectedContractVersion.name || "Contract preview"}
+                src={selectedContractData}
+                className="contract-preview-frame"
+              />
+            ) : (
+              <object
+                data={selectedContractData}
+                type={selectedContractVersion.type || "application/octet-stream"}
+                className="contract-preview-frame"
+              >
+                <div className="contract-preview-fallback">
+                  Preview is limited for this file type.
+                </div>
+              </object>
+            )
+          ) : (
+            <div className="contract-preview-fallback">
+              {contractVersions.length > 0
+                ? "Contract data could not be loaded. Delete this version and re-upload the file."
+                : "No contract file has been uploaded for this deal."}
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

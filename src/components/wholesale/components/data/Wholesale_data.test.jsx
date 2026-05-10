@@ -19,6 +19,10 @@ const deal = {
   sellerAccepted: "No",
   assigned: "No",
   contractPrice: 0,
+  contractFileName: "",
+  contractFileData: "",
+  contractFileType: "",
+  contractVersions: [],
   assignedPrice: 0,
   buyerName: "",
   buyerEmail: "",
@@ -270,5 +274,284 @@ describe("Wholesale_data", () => {
 
     fireEvent.click(offerDateSortButton);
     expect(getRenderedDealIds(container)).toEqual(["d1", "d2"]);
+  });
+
+  it("shows a view contract action when a contract file is stored on the deal", async () => {
+    render(
+      <Wholesale_data
+        filteredDeals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+            contractFileName: "purchase-contract.pdf",
+            contractFileType: "application/pdf",
+            contractFileData: "data:application/pdf;base64,ZmFrZQ==",
+            contractVersions: [
+              {
+                id: "c1",
+                name: "purchase-contract.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,ZmFrZQ==",
+                uploadedAt: "2026-05-09T10:00:00.000Z",
+              },
+            ],
+          },
+        ]}
+        deals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+            contractFileName: "purchase-contract.pdf",
+            contractFileType: "application/pdf",
+            contractFileData: "data:application/pdf;base64,ZmFrZQ==",
+            contractVersions: [
+              {
+                id: "c1",
+                name: "purchase-contract.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,ZmFrZQ==",
+                uploadedAt: "2026-05-09T10:00:00.000Z",
+              },
+            ],
+          },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+        fetchContractVersion={vi.fn().mockResolvedValue(null)}
+        currentUserId="u1"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /View contract for 123 Main St/i }),
+    );
+
+    expect(screen.getByText("Contract for 123 Main St")).toBeInTheDocument();
+    expect(
+      document.querySelector(".contract-preview-meta"),
+    ).toHaveTextContent("purchase-contract.pdf");
+    await waitFor(() => {
+      expect(
+        document.querySelector('iframe[title="purchase-contract.pdf"]'),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("lists the most recent uploaded contract first in the preview modal", () => {
+    render(
+      <Wholesale_data
+        filteredDeals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+            contractVersions: [
+              {
+                id: "older",
+                name: "extension-1.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,b2xkZXI=",
+                uploadedAt: "2026-05-08T10:00:00.000Z",
+              },
+              {
+                id: "latest",
+                name: "extension-2.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,bGF0ZXN0",
+                uploadedAt: "2026-05-09T10:00:00.000Z",
+              },
+            ],
+            contractFileName: "extension-2.pdf",
+            contractFileType: "application/pdf",
+            contractFileData: "data:application/pdf;base64,bGF0ZXN0",
+          },
+        ]}
+        deals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+            contractVersions: [
+              {
+                id: "older",
+                name: "extension-1.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,b2xkZXI=",
+                uploadedAt: "2026-05-08T10:00:00.000Z",
+              },
+              {
+                id: "latest",
+                name: "extension-2.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,bGF0ZXN0",
+                uploadedAt: "2026-05-09T10:00:00.000Z",
+              },
+            ],
+            contractFileName: "extension-2.pdf",
+            contractFileType: "application/pdf",
+            contractFileData: "data:application/pdf;base64,bGF0ZXN0",
+          },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+        fetchContractVersion={vi.fn().mockResolvedValue(null)}
+        currentUserId="u1"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /View contract for 123 Main St/i }),
+    );
+
+    const versionButtons = Array.from(
+      document.querySelectorAll(".contract-version-select"),
+    );
+
+    expect(versionButtons[0]).toHaveTextContent("extension-2.pdf");
+    expect(versionButtons[1]).toHaveTextContent("extension-1.pdf");
+  });
+
+  it("allows uploading an odt contract from the table when the offer is sent", async () => {
+    const saveDeal = vi.fn().mockResolvedValue(undefined);
+    const persist = vi.fn();
+    class MockFileReader {
+      constructor() {
+        this.result =
+          "data:application/vnd.oasis.opendocument.text;base64,dXBsb2FkZWQ=";
+        this.onload = null;
+      }
+
+      readAsDataURL() {
+        if (typeof this.onload === "function") {
+          this.onload();
+        }
+      }
+    }
+
+    vi.stubGlobal("FileReader", MockFileReader);
+
+    render(
+      <Wholesale_data
+        filteredDeals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+          },
+        ]}
+        deals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+          },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={persist}
+        saveDeal={saveDeal}
+        saveContractVersion={vi.fn().mockResolvedValue(undefined)}
+        fetchContractVersion={vi.fn().mockResolvedValue(null)}
+        deleteContractById={vi.fn().mockResolvedValue(undefined)}
+        currentUserId="u1"
+      />,
+    );
+
+    const uploadInput = document.getElementById("contract-upload-d1");
+    const contractFile = new File(["contract"], "contract.odt", {
+      type: "application/vnd.oasis.opendocument.text",
+    });
+
+    fireEvent.change(uploadInput, {
+      target: { files: [contractFile] },
+    });
+
+    await waitFor(() => {
+      expect(saveDeal).toHaveBeenCalledWith({
+        ...deal,
+        offerStatus: "Offer Sent",
+        contractVersions: [
+          expect.objectContaining({
+            name: "contract.odt",
+            type: "application/vnd.oasis.opendocument.text",
+          }),
+        ],
+        contractFileName: "contract.odt",
+        contractFileType: "application/vnd.oasis.opendocument.text",
+        contractFileData: "",
+      });
+    });
+
+    expect(persist).toHaveBeenCalled();
+  });
+
+  it("allows deleting a stored contract from the table", async () => {
+    const saveDeal = vi.fn().mockResolvedValue(undefined);
+    const persist = vi.fn();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(
+      <Wholesale_data
+        filteredDeals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+            contractFileName: "purchase-contract.pdf",
+            contractFileType: "application/pdf",
+            contractFileData: "data:application/pdf;base64,ZmFrZQ==",
+            contractVersions: [
+              {
+                id: "c1",
+                name: "purchase-contract.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,ZmFrZQ==",
+                uploadedAt: "2026-05-09T10:00:00.000Z",
+              },
+            ],
+          },
+        ]}
+        deals={[
+          {
+            ...deal,
+            offerStatus: "Offer Sent",
+            contractFileName: "purchase-contract.pdf",
+            contractFileType: "application/pdf",
+            contractFileData: "data:application/pdf;base64,ZmFrZQ==",
+            contractVersions: [
+              {
+                id: "c1",
+                name: "purchase-contract.pdf",
+                type: "application/pdf",
+                data: "data:application/pdf;base64,ZmFrZQ==",
+                uploadedAt: "2026-05-09T10:00:00.000Z",
+              },
+            ],
+          },
+        ]}
+        deleteDeal={vi.fn()}
+        persist={persist}
+        saveDeal={saveDeal}
+        fetchContractVersion={vi.fn().mockResolvedValue(null)}
+        deleteContractById={vi.fn().mockResolvedValue(undefined)}
+        currentUserId="u1"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /View contract for 123 Main St/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Delete purchase-contract\.pdf/i }),
+    );
+
+    await waitFor(() => {
+      expect(saveDeal).toHaveBeenCalledWith({
+        ...deal,
+        offerStatus: "Offer Sent",
+        contractVersions: [],
+        contractFileName: "",
+        contractFileType: "",
+        contractFileData: "",
+      });
+    });
+
+    expect(persist).toHaveBeenCalled();
   });
 });

@@ -2,12 +2,12 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-function Modal({ isOpen, onClose, title, children, actions }) {
+function Modal({ isOpen, onClose, title, children, actions, className = "" }) {
   if (!isOpen) return null;
 
   const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal ${className}`.trim()} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>
           <button className="danger-btn modal-close" onClick={onClose}>

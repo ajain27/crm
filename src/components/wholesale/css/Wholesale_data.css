@@ -98,6 +98,100 @@
     @apply min-w-0 px-2 py-1.5;
   }
 
+  .contract-actions {
+    @apply flex flex-nowrap items-center gap-2;
+  }
+
+  .contract-action-btn {
+    @apply inline-flex h-9 w-9 min-w-9 items-center justify-center rounded-lg p-0;
+  }
+
+  .contract-delete-btn {
+    color: var(--red);
+  }
+
+  .contract-upload-input {
+    @apply sr-only;
+  }
+
+  .spin {
+    animation: spin 0.8s linear infinite;
+  }
+
+  .contract-preview-modal {
+    @apply grid gap-3;
+  }
+
+  .contract-preview-dialog {
+    width: min(96vw, 1320px);
+    max-width: 1320px;
+  }
+
+  .contract-version-list {
+    @apply grid gap-2;
+  }
+
+  .contract-version-item {
+    @apply flex w-full items-start justify-between gap-3 rounded-xl border px-4 py-3 transition-colors duration-200 ease-out;
+    border-color: var(--input-border);
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+  }
+
+  .contract-version-item:hover,
+  .contract-version-item.active {
+    background: color-mix(in srgb, var(--panel) 84%, var(--blue-light) 16%);
+  }
+
+  .contract-version-item strong {
+    @apply block text-sm font-semibold;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .contract-version-select {
+    @apply flex-1 border-0 bg-transparent p-0 text-left;
+  }
+
+  .contract-version-copy {
+    @apply min-w-0;
+  }
+
+  .contract-version-item span {
+    @apply block text-xs;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .contract-version-delete {
+    @apply inline-flex h-8 w-8 min-w-8 items-center justify-center rounded-lg p-0;
+    color: var(--red);
+  }
+
+  .contract-preview-meta {
+    @apply text-sm font-medium;
+    color: var(--muted);
+    word-break: break-word;
+  }
+
+  .contract-preview-image,
+  .contract-preview-frame {
+    @apply w-full rounded-xl border bg-app-panel;
+    border-color: var(--input-border);
+    min-height: 70vh;
+  }
+
+  .contract-preview-image {
+    @apply object-contain;
+    max-height: 75vh;
+  }
+
+  .contract-preview-fallback {
+    @apply rounded-xl border px-4 py-4 text-sm;
+    border-color: var(--input-border);
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    color: var(--muted);
+  }
+
   .table-input {
     @apply w-full border px-3 text-app-input-text;
     background: var(--input-bg);

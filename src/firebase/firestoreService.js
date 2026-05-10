@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import {
   collection,
+  getDoc,
   deleteDoc,
   doc,
   getDocs,
@@ -29,6 +30,10 @@ const propertiesCollection = collection(db, "properties");
 const buyersCollection = collection(db, "buyers");
 const usersCollection = collection(db, "users");
 
+function contractsSubcollection(dealId) {
+  return collection(db, "properties", dealId, "contracts");
+}
+
 function mapSnapshot(snapshot) {
   return snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
@@ -45,6 +50,11 @@ async function hashPassword(password) {
   return Array.from(new Uint8Array(buffer))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function stripContractData(versions) {
+  if (!Array.isArray(versions)) return [];
+  return versions.map(({ data, downloadURL, storagePath, ...rest }) => rest);
 }
 
 export async function createUserAccount({
@@ -140,12 +150,41 @@ export async function fetchDeals(userId) {
 
 export async function saveDeal(property) {
   const propertyRef = doc(propertiesCollection, property.id);
-  await setDoc(propertyRef, property);
+  const normalized = {
+    ...property,
+    contractVersions: stripContractData(property.contractVersions),
+    contractFileData: "",
+  };
+  await setDoc(propertyRef, normalized);
+  return normalized;
 }
 
 export async function deleteDealById(id) {
-  const propertyRef = doc(propertiesCollection, id);
-  await deleteDoc(propertyRef);
+  const contractsSnapshot = await getDocs(contractsSubcollection(id));
+  await Promise.all(contractsSnapshot.docs.map((d) => deleteDoc(d.ref)));
+  await deleteDoc(doc(propertiesCollection, id));
+}
+
+export async function saveContractVersion({ id, dealId, userId, name, type, data, uploadedAt }) {
+  await setDoc(doc(contractsSubcollection(dealId), id), {
+    id,
+    dealId,
+    userId,
+    name,
+    type,
+    data,
+    uploadedAt,
+  });
+}
+
+export async function fetchContractVersion(dealId, id) {
+  const snapshot = await getDoc(doc(contractsSubcollection(dealId), id));
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() };
+}
+
+export async function deleteContractById(dealId, id) {
+  await deleteDoc(doc(contractsSubcollection(dealId), id));
 }
 
 export async function fetchBuyers(userId) {
