@@ -20,15 +20,15 @@ vi.mock("../../../firebase/firestoreService", () => ({
   }),
 }));
 
-vi.mock("./Wholesale_filters", () => ({
+vi.mock("./filters/Wholesale_filters", () => ({
   default: () => <div>Filters</div>,
 }));
 
-vi.mock("./wholesale_form", () => ({
+vi.mock("./forms/wholesale_form", () => ({
   default: () => <div>Add Property Form</div>,
 }));
 
-vi.mock("./Wholesale_data", () => ({
+vi.mock("./data/Wholesale_data", () => ({
   default: () => <div>Deals Table</div>,
 }));
 

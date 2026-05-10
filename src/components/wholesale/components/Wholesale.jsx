@@ -10,9 +10,9 @@ import {
   deleteDealById,
   updateUserProfile,
 } from "../../../firebase/firestoreService";
-import Wholesale_filters from "./Wholesale_filters";
-import Wholesale_form from "./wholesale_form";
-import Wholesale_data from "./Wholesale_data";
+import Wholesale_filters from "./filters/Wholesale_filters";
+import Wholesale_form from "./forms/wholesale_form";
+import Wholesale_data from "./data/Wholesale_data";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import Buyers from "../../buyers/components/Buyers";
 import Sidebar from "../../sidebar/Sidebar";

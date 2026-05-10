@@ -1,9 +1,9 @@
-import { ReadOnlyCell } from "../../elements/elements";
+import { ReadOnlyCell } from "../../../elements/elements";
 import { Trash2, FileText, Edit2, Check } from "lucide-react";
-import { currency } from "../../../utils/utils";
+import { currency } from "../../../../utils/utils";
 import { useState, useEffect, useMemo } from "react";
-import Pagination from "../../pagination/Pagination";
-import Modal from "../../modal/Modal";
+import Pagination from "../../../pagination/Pagination";
+import Modal from "../../../modal/Modal";
 
 function Wholesale_data({
   filteredDeals,

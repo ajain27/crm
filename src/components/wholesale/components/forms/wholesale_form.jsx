@@ -1,4 +1,4 @@
-import { Field, Select } from "../../elements/elements";
+import { Field, Select } from "../../../elements/elements";
 
 function Wholesale_form({
   addDeal,
