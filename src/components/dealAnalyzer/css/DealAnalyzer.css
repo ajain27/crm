@@ -94,6 +94,12 @@
     @apply text-white;
   }
 
+  .deal-analyzer-section-label {
+    @apply px-6 pb-2 pt-1 text-sm font-semibold;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
   .deal-analyzer-form-grid {
     @apply grid gap-x-4 gap-y-6 px-6 pb-6;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -227,6 +233,31 @@
     @apply mt-5 flex items-center justify-between rounded-[20px] border px-5 py-4;
     border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
     background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+  }
+
+  .deal-analyzer-final-verdict {
+    @apply mt-5 flex items-center justify-between rounded-[20px] border px-6 py-5;
+  }
+
+  .deal-analyzer-final-verdict span {
+    @apply text-sm font-semibold;
+    color: var(--muted);
+  }
+
+  .deal-analyzer-final-verdict strong {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  .deal-analyzer-verdict-positive .deal-analyzer-final-verdict,
+  .deal-analyzer-final-verdict.deal-analyzer-verdict-positive {
+    border-color: color-mix(in srgb, #16a34a 40%, transparent 60%);
+    background: color-mix(in srgb, #16a34a 8%, var(--panel) 92%);
+  }
+
+  .deal-analyzer-verdict-negative .deal-analyzer-final-verdict,
+  .deal-analyzer-final-verdict.deal-analyzer-verdict-negative {
+    border-color: color-mix(in srgb, #dc2626 40%, transparent 60%);
+    background: color-mix(in srgb, #dc2626 8%, var(--panel) 92%);
   }
 
   .deal-analyzer-verdict span {

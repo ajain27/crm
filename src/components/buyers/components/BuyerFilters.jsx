@@ -20,6 +20,7 @@ function BuyerFilters({ filters, states, setFilters }) {
   const clearFilters = () => {
     setFilters({
       state: "All",
+      realEstateType: "All",
       search: "",
     });
   };
