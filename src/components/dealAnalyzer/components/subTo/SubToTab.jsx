@@ -200,10 +200,6 @@ function SubToTab({ tab }) {
     ? `${formatAmount(monthlyRentAmount)} - (${formatAmount(amortizedMonthlyPayment)} + ${formatAmount(taxAmount)} + ${formatAmount(insuranceAmount)}) = ${liveCashFlowValue}`
     : "";
 
-  function calculateCashFlow() {
-    return calculatedCashFlow;
-  }
-
   function handleCalculate() {
     if (!isFormComplete) {
       return;
@@ -388,6 +384,17 @@ function SubToTab({ tab }) {
             onBlur={handleBlur}
             required
           />
+
+          <div style={{ gridColumn: "1 / -1" }}>
+            <a
+              href="https://app.rentcast.io/app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="deal-analyzer-rent-estimate-btn"
+            >
+              Get Rent Estimate ↗
+            </a>
+          </div>
 
           <Field
             label="Rent Estimate"

@@ -313,6 +313,23 @@
     border-color: color-mix(in srgb, #dc2626 56%, var(--input-border) 44%);
   }
 
+  /* ── Rent Estimator ────────────────────────────────────────────── */
+
+  .deal-analyzer-rent-estimate-btn {
+    @apply inline-flex items-center gap-2 rounded-[14px] border-2 px-5 py-3 text-sm font-semibold transition-all duration-200;
+    border-color: var(--blue);
+    color: var(--blue);
+    background: color-mix(in srgb, var(--blue-light) 60%, transparent 40%);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+  }
+
+  .deal-analyzer-rent-estimate-btn:hover {
+    background: var(--blue);
+    color: white;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--blue) 30%, transparent 70%);
+  }
+
   /* ── Pie / Donut Chart ─────────────────────────────────────────── */
 
   .deal-analyzer-pie-wrap {
