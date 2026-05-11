@@ -1,73 +1,16 @@
 import { useState } from "react";
 import { Field } from "../../../elements/elements";
-
-// Rehab cost lookup: [under 1500 sqft, 1500–2500, 2500–3500]
-const REHAB_LOOKUP = {
-  light:   [30000,  40000,  55000],
-  average: [55000,  70000,  85000],
-  heavy:   [90000, 125000, 150000],
-};
-
-const REHAB_OPTIONS = [
-  { value: "",        label: "Select One..." },
-  { value: "light",   label: "Light Rehab (carpet and paint)" },
-  { value: "average", label: "Average Rehab (carpet/paint/kitchen/baths)" },
-  { value: "heavy",   label: "Heavy Rehab (gut job - carpet/paint/roof/siding/windows, etc)" },
-];
-
-function getAutoRehabCost(rehabType, sqft) {
-  if (!rehabType || sqft <= 0 || sqft > 3500) return null;
-  const tier = sqft < 1500 ? 0 : sqft <= 2500 ? 1 : 2;
-  return REHAB_LOOKUP[rehabType]?.[tier] ?? null;
-}
-
-const initialForm = {
-  arv: "",
-  purchasePrice: "",
-  rehabType: "",
-  squareFootage: "",
-  rehabCost: "",
-  durationMonths: "",
-  points: "",
-  interestRate: "",
-  originationFees: "",
-  legalFees: "",
-  appraisalFees: "",
-};
-
-const CURRENCY_FIELDS = new Set([
-  "arv",
-  "purchasePrice",
-  "rehabCost",
-  "originationFees",
-  "legalFees",
-  "appraisalFees",
-]);
-
-const PERCENT_FIELDS = new Set(["points", "interestRate"]);
-
-function parseCurrency(value) {
-  const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function parsePercent(value) {
-  const n = parseFloat(String(value || "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function fmt(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function fmtCurrencyInput(value) {
-  const numeric = String(value || "").replace(/[^0-9]/g, "");
-  return numeric ? "$" + parseInt(numeric, 10).toLocaleString("en-US") : "";
-}
+import {
+  REHAB_OPTIONS,
+  initialForm,
+  CURRENCY_FIELDS,
+  PERCENT_FIELDS,
+  getAutoRehabCost,
+  parseCurrency,
+  parsePercent,
+  fmt,
+  fmtCurrencyInput,
+} from "./fixAndFlipConfig";
 
 function FixAndFlipTab({ tab }) {
   const [form, setForm] = useState(initialForm);
@@ -105,7 +48,10 @@ function FixAndFlipTab({ tab }) {
   const purchasePrice = parseCurrency(form.purchasePrice);
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
   const autoRehabCost = getAutoRehabCost(form.rehabType, sqft);
-  const rehabCost = autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
+  const rehabCost =
+    autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
+  const additionalRehab = parseCurrency(form.additionalRehabCost);
+  const totalRehab = rehabCost + additionalRehab;
   const duration = parseInt(form.durationMonths || "0", 10) || 0;
   const pointsPct = parsePercent(form.points);
   const interestRatePct = parsePercent(form.interestRate);
@@ -113,7 +59,7 @@ function FixAndFlipTab({ tab }) {
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
 
-  const totalCapital = purchasePrice + rehabCost;
+  const totalCapital = purchasePrice + totalRehab;
   const miscFees = originationFees + legalFees + appraisalFees;
   const ltvPct = arv > 0 ? (purchasePrice / arv) * 100 : 0;
   const ltvQualifies = arv > 0 && purchasePrice > 0 && ltvPct <= 70;
@@ -123,7 +69,7 @@ function FixAndFlipTab({ tab }) {
   const totalInterest = monthlyInterest * duration;
   const totalFinancingCost = pointsCost + totalInterest + miscFees;
   const outOfPocket = totalCapital - lenderFunds + totalFinancingCost;
-  const netProfit = arv - purchasePrice - rehabCost - totalFinancingCost;
+  const netProfit = arv - purchasePrice - totalRehab - totalFinancingCost;
   const roi = totalCapital > 0 ? (netProfit / totalCapital) * 100 : 0;
   const isDeal = ltvQualifies && netProfit > 0;
 
@@ -148,6 +94,8 @@ function FixAndFlipTab({ tab }) {
       rehabType: form.rehabType,
       sqft,
       rehabCost,
+      additionalRehab,
+      totalRehab,
       totalCapital,
       ltvPct,
       ltvQualifies,
@@ -250,11 +198,11 @@ function FixAndFlipTab({ tab }) {
             placeholder="e.g. 1,800"
           />
 
-          {/* Rehab Cost — readonly when auto-computed, editable when manual */}
+          {/* Min Rehab Cost — readonly when auto-computed, editable when manual */}
           {autoRehabCost !== null ? (
             <label className="field deal-analyzer-output">
               <span>
-                Rehab Cost
+                Min Rehab Cost
                 <span className="deal-analyzer-auto-badge">auto</span>
               </span>
               <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
@@ -263,8 +211,8 @@ function FixAndFlipTab({ tab }) {
             <Field
               label={
                 isManualRehab && form.rehabType && sqft > 3500
-                  ? "Rehab Cost (manual — sq ft > 3,500)"
-                  : "Rehab Cost"
+                  ? "Min Rehab Cost (manual — sq ft > 3,500)"
+                  : "Min Rehab Cost"
               }
               name="rehabCost"
               value={form.rehabCost}
@@ -273,6 +221,23 @@ function FixAndFlipTab({ tab }) {
               required
             />
           )}
+
+          <Field
+            label="Additional Rehab Cost"
+            name="additionalRehabCost"
+            value={form.additionalRehabCost}
+            onChange={handleChange}
+            placeholder="e.g. $5,000"
+          />
+
+          <label className="field deal-analyzer-output">
+            <span>Total Rehab Cost</span>
+            <input
+              value={totalRehab > 0 ? fmt(totalRehab) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
 
           <Field
             label="Duration (Months)"
@@ -393,8 +358,21 @@ function FixAndFlipTab({ tab }) {
                 <strong>{fmt(summary.purchasePrice)}</strong>
               </div>
               <div>
-                <span>Rehab Cost{summary.sqft > 0 && summary.sqft <= 3500 && summary.rehabType ? ` (${summary.sqft.toLocaleString()} sq ft)` : ""}</span>
+                <span>
+                  Min Rehab Cost
+                  {summary.sqft > 0 && summary.sqft <= 3500 && summary.rehabType
+                    ? ` (${summary.sqft.toLocaleString()} sq ft)`
+                    : ""}
+                </span>
                 <strong>{fmt(summary.rehabCost)}</strong>
+              </div>
+              <div>
+                <span>Additional Rehab Cost</span>
+                <strong>{fmt(summary.additionalRehab)}</strong>
+              </div>
+              <div>
+                <span>Total Rehab Cost</span>
+                <strong>{fmt(summary.totalRehab)}</strong>
               </div>
               <div>
                 <span>Total Capital Needed</span>
@@ -472,11 +450,11 @@ function FixAndFlipTab({ tab }) {
               className="deal-analyzer-calculation"
               style={{ marginTop: "1rem" }}
             >
-              Net Profit = ARV − Purchase Price − Rehab Cost − Total Financing
-              Cost
+              Net Profit = ARV − Purchase Price − Total Rehab Cost − Total
+              Financing Cost
               <span>
                 {fmt(summary.arv)} − {fmt(summary.purchasePrice)} −{" "}
-                {fmt(summary.rehabCost)} − {fmt(summary.totalFinancingCost)} ={" "}
+                {fmt(summary.totalRehab)} − {fmt(summary.totalFinancingCost)} ={" "}
                 {fmt(summary.netProfit)}
               </span>
             </div>
