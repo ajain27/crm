@@ -1,4 +1,4 @@
-import { BarChart3, Home, Moon, Sun, Users } from "lucide-react";
+import { BarChart3, Calculator, Home, Moon, Sun, Users } from "lucide-react";
 
 function Sidebar({
   activeView,
@@ -43,6 +43,13 @@ function Sidebar({
         >
           <BarChart3 size={18} />
           Deal Analyzer
+        </a>
+        <a
+          className={activeView === "mortgage" ? "active" : ""}
+          onClick={() => setActiveView("mortgage")}
+        >
+          <Calculator size={18} />
+          Mortgage Calculator
         </a>
       </nav>
       <div className="user-card">

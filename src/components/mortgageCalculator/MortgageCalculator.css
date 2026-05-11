@@ -1,0 +1,133 @@
+@layer components {
+  .mc-panel {
+    @apply p-0;
+  }
+
+  .mc-panel .panel-header {
+    @apply px-6 pb-4 pt-6;
+  }
+
+  .mc-panel .panel-header h2 {
+    color: var(--blue);
+    letter-spacing: -0.03em;
+  }
+
+  .dark .mc-panel .panel-header h2 {
+    @apply text-white;
+  }
+
+  .mc-section-label {
+    @apply px-6 pb-2 text-sm font-semibold;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .mc-form-grid {
+    @apply grid gap-x-4 gap-y-6 px-6 pb-6;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .mc-field-hint {
+    @apply ml-1 font-normal;
+    color: var(--blue);
+  }
+
+  .mc-actions {
+    @apply flex flex-wrap items-center gap-4 px-6 pb-6;
+  }
+
+  .mc-error {
+    @apply text-sm font-medium;
+    color: #dc2626;
+  }
+
+  /* ── Results ─────────────────────────────────────────────────────── */
+
+  .mc-results {
+    @apply border-t px-6 pb-6;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  /* Monthly payment banner */
+  .mc-summary-banner {
+    @apply mt-6 flex flex-wrap items-end justify-between gap-3 rounded-[20px] border px-6 py-5;
+    background: color-mix(in srgb, var(--blue-light) 55%, var(--panel) 45%);
+    border-color: color-mix(in srgb, var(--blue) 30%, transparent 70%);
+  }
+
+  .mc-summary-banner > div > span {
+    @apply block text-sm font-semibold;
+    color: var(--blue);
+  }
+
+  .dark .mc-summary-banner > div > span {
+    color: #93c5fd;
+  }
+
+  .mc-summary-banner > div > strong {
+    @apply mt-1 block text-4xl font-bold tracking-tight;
+    color: var(--blue);
+    letter-spacing: -0.03em;
+  }
+
+  .dark .mc-summary-banner > div > strong {
+    @apply text-white;
+  }
+
+  .mc-banner-meta {
+    @apply flex items-center gap-2 text-sm font-semibold;
+    color: var(--muted);
+  }
+
+  /* Breakdown cards */
+  .mc-breakdown-grid {
+    @apply grid gap-3;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .mc-breakdown-card {
+    @apply flex flex-col gap-2 rounded-[18px] border px-4 py-3;
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  .mc-breakdown-card > span {
+    @apply text-sm font-semibold;
+    color: var(--muted);
+  }
+
+  .mc-breakdown-card > strong {
+    @apply text-lg font-semibold;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  /* Monthly table */
+  .mc-table {
+    @apply mt-5 overflow-hidden rounded-[18px] border;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+  }
+
+  .mc-table-header {
+    @apply flex items-center justify-between px-5 py-3.5 text-sm font-bold;
+    background: var(--blue);
+    color: white;
+  }
+
+  .mc-table-row {
+    @apply flex items-center justify-between border-t px-5 py-3.5 text-sm;
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    color: var(--text);
+  }
+
+  .mc-table-total {
+    @apply font-bold;
+    background: color-mix(in srgb, var(--blue-light) 40%, var(--panel) 60%);
+    color: var(--blue);
+  }
+
+  .dark .mc-table-total {
+    color: #93c5fd;
+  }
+}

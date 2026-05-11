@@ -14,6 +14,7 @@ import Wholesale_filters from "./filters/Wholesale_filters";
 import Wholesale_form from "./forms/wholesale_form";
 import Wholesale_data from "./data/Wholesale_data";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
+import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import Sidebar from "../../sidebar/Sidebar";
 import StatsGrid from "../../stats/StatsGrid";
@@ -250,6 +251,8 @@ function Wholesale() {
           </>
         ) : activeView === "buyers" ? (
           <Buyers theme={theme} currentUser={currentUser} />
+        ) : activeView === "mortgage" ? (
+          <MortgageCalculator />
         ) : (
           <DealAnalyzer />
         )}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Field, Select } from "../../../elements/elements";
+import { calculateMonthlyPayment } from "../../../../utils/utils";
 
 const initialSubToForm = {
   propertyValue: "",
@@ -68,26 +69,6 @@ function SubToTab({ tab }) {
     return "$" + Number.parseInt(numericValue, 10).toLocaleString("en-US");
   }
 
-  function calculateMonthlyPayment(
-    loanPrincipal,
-    annualRate,
-    totalPaymentCount,
-  ) {
-    if (loanPrincipal <= 0 || totalPaymentCount <= 0) {
-      return 0;
-    }
-
-    const monthlyInterestRate = annualRate / 12;
-    if (monthlyInterestRate <= 0) {
-      return loanPrincipal / totalPaymentCount;
-    }
-
-    const growthFactor = (1 + monthlyInterestRate) ** totalPaymentCount;
-    return (
-      loanPrincipal *
-      ((monthlyInterestRate * growthFactor) / (growthFactor - 1))
-    );
-  }
 
   function handleChange(event) {
     const { name, value } = event.target;

@@ -65,6 +65,15 @@ function formatPhone(value) {
   return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
+// annualRateDecimal: e.g. 0.065 for 6.5%
+function calculateMonthlyPayment(loanPrincipal, annualRateDecimal, totalPayments) {
+  if (loanPrincipal <= 0 || totalPayments <= 0) return 0;
+  const r = annualRateDecimal / 12;
+  if (r <= 0) return loanPrincipal / totalPayments;
+  const factor = (1 + r) ** totalPayments;
+  return loanPrincipal * ((r * factor) / (factor - 1));
+}
+
 export {
   normalizeDeal,
   getSavedDeals,
@@ -73,4 +82,5 @@ export {
   currency,
   monthKey,
   formatPhone,
+  calculateMonthlyPayment,
 };
