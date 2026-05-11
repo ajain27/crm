@@ -289,7 +289,8 @@ describe("LTV qualification", () => {
     render(<FixAndFlipTab tab={tab} />);
     fillRequiredFields({ arv: "250000", purchasePrice: "150000" }); // 60%
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("60.0%")).toBeInTheDocument();
+    // "60.0%" may appear in both the LTV banner and the pie legend
+    expect(screen.getAllByText("60.0%").length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -317,13 +318,14 @@ describe("summary calculations", () => {
 
     expect(screen.getByText("$180,000.00")).toBeInTheDocument(); // Total Capital
     expect(screen.getByText("$162,000.00")).toBeInTheDocument(); // Lender Funds
-    expect(screen.getByText("$3,240.00")).toBeInTheDocument();   // Points Cost
+    // Points Cost, Total Interest, Misc Fees, Net Profit also appear in the pie legend
+    expect(screen.getAllByText("$3,240.00").length).toBeGreaterThanOrEqual(1);   // Points Cost
     expect(screen.getByText("$1,620.00")).toBeInTheDocument();   // Monthly Interest
-    expect(screen.getByText("$9,720.00")).toBeInTheDocument();   // Total Interest
-    expect(screen.getByText("$3,000.00")).toBeInTheDocument();   // Misc Fees
+    expect(screen.getAllByText("$9,720.00").length).toBeGreaterThanOrEqual(1);   // Total Interest
+    expect(screen.getAllByText("$3,000.00").length).toBeGreaterThanOrEqual(1);   // Misc Fees
     expect(screen.getByText("$15,960.00")).toBeInTheDocument();  // Total Financing
     expect(screen.getByText("$33,960.00")).toBeInTheDocument();  // Out of Pocket
-    expect(screen.getByText("$54,040.00")).toBeInTheDocument();  // Net Profit
+    expect(screen.getAllByText("$54,040.00").length).toBeGreaterThanOrEqual(1);  // Net Profit
   });
 
   it("calculates correctly with zero fees", () => {
@@ -334,7 +336,7 @@ describe("summary calculations", () => {
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("$12,960.00")).toBeInTheDocument(); // Total Financing
-    expect(screen.getByText("$57,040.00")).toBeInTheDocument(); // Net Profit
+    expect(screen.getAllByText("$57,040.00").length).toBeGreaterThanOrEqual(1); // Net Profit
   });
 
   it("shows correct ROI in summary", () => {
@@ -379,7 +381,7 @@ describe("summary calculations", () => {
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
 
     expect(screen.getByText("$190,000.00")).toBeInTheDocument(); // Total Capital
-    expect(screen.getByText("$46,320.00")).toBeInTheDocument();  // Net Profit
+    expect(screen.getAllByText("$46,320.00").length).toBeGreaterThanOrEqual(1);  // Net Profit
   });
 
   it("clears the summary when any input field changes", () => {

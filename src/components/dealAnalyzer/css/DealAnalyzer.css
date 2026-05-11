@@ -313,6 +313,63 @@
     border-color: color-mix(in srgb, #dc2626 56%, var(--input-border) 44%);
   }
 
+  /* ── Pie / Donut Chart ─────────────────────────────────────────── */
+
+  .deal-analyzer-pie-wrap {
+    @apply rounded-[20px] border px-5 py-5;
+    margin-top: 1.25rem;
+    grid-column: 1 / -1;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+  }
+
+  .deal-analyzer-pie-body {
+    @apply flex flex-wrap items-center gap-6;
+  }
+
+  .deal-analyzer-pie-svg-wrap {
+    @apply flex-shrink-0;
+  }
+
+  .deal-analyzer-pie-svg {
+    display: block;
+    width: 200px;
+    height: 200px;
+  }
+
+  .deal-analyzer-pie-legend {
+    @apply flex flex-1 flex-col gap-2.5;
+    min-width: 200px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .deal-analyzer-pie-legend-item {
+    @apply flex items-center gap-2.5 text-sm;
+  }
+
+  .deal-analyzer-pie-dot {
+    @apply flex-shrink-0 rounded-full;
+    width: 10px;
+    height: 10px;
+  }
+
+  .deal-analyzer-pie-legend-label {
+    @apply flex-1 font-medium;
+    color: var(--text);
+  }
+
+  .deal-analyzer-pie-legend-pct {
+    @apply w-10 text-right text-xs font-semibold;
+    color: var(--muted);
+  }
+
+  .deal-analyzer-pie-legend-val {
+    @apply w-24 text-right font-semibold;
+    color: var(--text);
+  }
+
   @media (max-width: 600px) {
     .deal-analyzer-address {
       grid-column: span 1;
@@ -320,6 +377,15 @@
 
     .deal-analyzer-principal-input {
       padding-right: 9rem;
+    }
+
+    .deal-analyzer-pie-svg {
+      width: 160px;
+      height: 160px;
+    }
+
+    .deal-analyzer-pie-legend-val {
+      @apply w-20;
     }
   }
 }

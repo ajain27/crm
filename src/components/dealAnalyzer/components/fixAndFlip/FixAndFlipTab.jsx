@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Field } from "../../../elements/elements";
+import FixAndFlipPieChart from "./FixAndFlipPieChart";
 import {
   REHAB_OPTIONS,
   initialForm,
@@ -445,6 +446,8 @@ function FixAndFlipTab({ tab }) {
                 </strong>
               </div>
             </div>
+
+            <FixAndFlipPieChart summary={summary} />
 
             <div
               className="deal-analyzer-calculation"
