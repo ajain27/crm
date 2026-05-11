@@ -94,6 +94,13 @@
     @apply text-white;
   }
 
+  .deal-analyzer-auto-badge {
+    @apply ml-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+    background: color-mix(in srgb, var(--blue-light) 75%, transparent 25%);
+    color: var(--blue);
+    vertical-align: middle;
+  }
+
   .deal-analyzer-section-label {
     @apply px-6 pb-2 pt-1 text-sm font-semibold;
     color: var(--muted);

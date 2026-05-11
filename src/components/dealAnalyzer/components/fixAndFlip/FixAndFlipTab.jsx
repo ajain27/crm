@@ -1,9 +1,31 @@
 import { useState } from "react";
 import { Field } from "../../../elements/elements";
 
+// Rehab cost lookup: [under 1500 sqft, 1500–2500, 2500–3500]
+const REHAB_LOOKUP = {
+  light:   [30000,  40000,  55000],
+  average: [55000,  70000,  85000],
+  heavy:   [90000, 125000, 150000],
+};
+
+const REHAB_OPTIONS = [
+  { value: "",        label: "Select One..." },
+  { value: "light",   label: "Light Rehab (carpet and paint)" },
+  { value: "average", label: "Average Rehab (carpet/paint/kitchen/baths)" },
+  { value: "heavy",   label: "Heavy Rehab (gut job - carpet/paint/roof/siding/windows, etc)" },
+];
+
+function getAutoRehabCost(rehabType, sqft) {
+  if (!rehabType || sqft <= 0 || sqft > 3500) return null;
+  const tier = sqft < 1500 ? 0 : sqft <= 2500 ? 1 : 2;
+  return REHAB_LOOKUP[rehabType]?.[tier] ?? null;
+}
+
 const initialForm = {
   arv: "",
   purchasePrice: "",
+  rehabType: "",
+  squareFootage: "",
   rehabCost: "",
   durationMonths: "",
   points: "",
@@ -63,7 +85,7 @@ function FixAndFlipTab({ tab }) {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
       return;
     }
-    if (name === "durationMonths") {
+    if (name === "durationMonths" || name === "squareFootage") {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9]/g, "") }));
       return;
     }
@@ -78,10 +100,12 @@ function FixAndFlipTab({ tab }) {
     }
   }
 
-  // — Live derived values (always computed so readonly fields update as user types)
+  // — Live derived values
   const arv = parseCurrency(form.arv);
   const purchasePrice = parseCurrency(form.purchasePrice);
-  const rehabCost = parseCurrency(form.rehabCost);
+  const sqft = parseInt(form.squareFootage || "0", 10) || 0;
+  const autoRehabCost = getAutoRehabCost(form.rehabType, sqft);
+  const rehabCost = autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
   const duration = parseInt(form.durationMonths || "0", 10) || 0;
   const pointsPct = parsePercent(form.points);
   const interestRatePct = parsePercent(form.interestRate);
@@ -91,25 +115,27 @@ function FixAndFlipTab({ tab }) {
 
   const totalCapital = purchasePrice + rehabCost;
   const miscFees = originationFees + legalFees + appraisalFees;
-  // LTV: purchase price as % of ARV — must be ≤ 70% to qualify for hard money loan
   const ltvPct = arv > 0 ? (purchasePrice / arv) * 100 : 0;
   const ltvQualifies = arv > 0 && purchasePrice > 0 && ltvPct <= 70;
-  // 90% LTC: lender will fund 90% of total cost
   const lenderFunds = totalCapital * 0.9;
   const pointsCost = lenderFunds * (pointsPct / 100);
   const monthlyInterest = lenderFunds * (interestRatePct / 100 / 12);
   const totalInterest = monthlyInterest * duration;
   const totalFinancingCost = pointsCost + totalInterest + miscFees;
-  // Investor brings the 10% lender doesn't cover + all financing costs
   const outOfPocket = totalCapital - lenderFunds + totalFinancingCost;
   const netProfit = arv - purchasePrice - rehabCost - totalFinancingCost;
   const roi = totalCapital > 0 ? (netProfit / totalCapital) * 100 : 0;
   const isDeal = ltvQualifies && netProfit > 0;
 
+  // Rehab cost is satisfied either by auto-lookup or manual entry
+  const rehabCostReady = autoRehabCost !== null || form.rehabCost?.trim();
+  // sqft > 3500 with a type selected means user must enter manually
+  const isManualRehab = sqft > 3500 || !form.rehabType;
+
   const isFormComplete =
     form.arv?.trim() &&
     form.purchasePrice?.trim() &&
-    form.rehabCost?.trim() &&
+    rehabCostReady &&
     form.durationMonths?.trim() &&
     form.points?.trim() &&
     form.interestRate?.trim();
@@ -119,6 +145,8 @@ function FixAndFlipTab({ tab }) {
     setSummary({
       arv,
       purchasePrice,
+      rehabType: form.rehabType,
+      sqft,
       rehabCost,
       totalCapital,
       ltvPct,
@@ -197,14 +225,55 @@ function FixAndFlipTab({ tab }) {
             placeholder="e.g. $150,000"
             required
           />
+
+          {/* Rehab estimator */}
+          <label className="field">
+            <span>Rehab Type</span>
+            <select
+              name="rehabType"
+              value={form.rehabType}
+              onChange={handleChange}
+            >
+              {REHAB_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <Field
-            label="Rehab Cost"
-            name="rehabCost"
-            value={form.rehabCost}
+            label="Square Footage"
+            name="squareFootage"
+            value={form.squareFootage}
             onChange={handleChange}
-            placeholder="e.g. $30,000"
-            required
+            placeholder="e.g. 1,800"
           />
+
+          {/* Rehab Cost — readonly when auto-computed, editable when manual */}
+          {autoRehabCost !== null ? (
+            <label className="field deal-analyzer-output">
+              <span>
+                Rehab Cost
+                <span className="deal-analyzer-auto-badge">auto</span>
+              </span>
+              <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
+            </label>
+          ) : (
+            <Field
+              label={
+                isManualRehab && form.rehabType && sqft > 3500
+                  ? "Rehab Cost (manual — sq ft > 3,500)"
+                  : "Rehab Cost"
+              }
+              name="rehabCost"
+              value={form.rehabCost}
+              onChange={handleChange}
+              placeholder="e.g. $30,000"
+              required
+            />
+          )}
+
           <Field
             label="Duration (Months)"
             name="durationMonths"
@@ -324,7 +393,7 @@ function FixAndFlipTab({ tab }) {
                 <strong>{fmt(summary.purchasePrice)}</strong>
               </div>
               <div>
-                <span>Rehab Cost</span>
+                <span>Rehab Cost{summary.sqft > 0 && summary.sqft <= 3500 && summary.rehabType ? ` (${summary.sqft.toLocaleString()} sq ft)` : ""}</span>
                 <strong>{fmt(summary.rehabCost)}</strong>
               </div>
               <div>
@@ -346,9 +415,7 @@ function FixAndFlipTab({ tab }) {
                 <strong>{fmt(summary.monthlyInterest)}</strong>
               </div>
               <div>
-                <span>
-                  Total Interest ({summary.duration} mo × monthly)
-                </span>
+                <span>Total Interest ({summary.duration} mo × monthly)</span>
                 <strong>{fmt(summary.totalInterest)}</strong>
               </div>
               <div>
