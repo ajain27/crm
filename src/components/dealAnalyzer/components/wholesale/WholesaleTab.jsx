@@ -53,7 +53,7 @@ function WholesaleTab({ tab }) {
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
   const autoRehabCost = getAutoRehabCost(form.rehabType, sqft);
   const isManualRehab = sqft > 3500 || !form.rehabType;
-  const rehabCostReady = autoRehabCost !== null || form.rehabCost?.trim();
+  const rehabCostReady = form.rehabType === "no-rehab" || autoRehabCost !== null || form.rehabCost?.trim();
 
   const isFormComplete =
     form.arv?.trim() &&
@@ -134,27 +134,29 @@ function WholesaleTab({ tab }) {
             </select>
           </label>
 
-          {autoRehabCost !== null ? (
-            <label className="field deal-analyzer-output">
-              <span>
-                Rehab Cost
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
-              <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
-            </label>
-          ) : (
-            <Field
-              label={
-                isManualRehab && form.rehabType && sqft > 3500
-                  ? "Rehab Cost (manual — sq ft > 3,500)"
-                  : "Rehab Cost"
-              }
-              name="rehabCost"
-              value={form.rehabCost}
-              onChange={handleChange}
-              placeholder="e.g. $30,000"
-              required
-            />
+          {form.rehabType !== "no-rehab" && (
+            autoRehabCost !== null ? (
+              <label className="field deal-analyzer-output">
+                <span>
+                  Rehab Cost
+                  <span className="deal-analyzer-auto-badge">auto</span>
+                </span>
+                <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
+              </label>
+            ) : (
+              <Field
+                label={
+                  isManualRehab && form.rehabType && sqft > 3500
+                    ? "Rehab Cost (manual — sq ft > 3,500)"
+                    : "Rehab Cost"
+                }
+                name="rehabCost"
+                value={form.rehabCost}
+                onChange={handleChange}
+                placeholder="e.g. $30,000"
+                required
+              />
+            )
           )}
 
           <Field

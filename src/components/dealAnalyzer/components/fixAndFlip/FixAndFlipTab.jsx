@@ -74,8 +74,7 @@ function FixAndFlipTab({ tab }) {
   const roi = totalCapital > 0 ? (netProfit / totalCapital) * 100 : 0;
   const isDeal = ltvQualifies && netProfit > 0;
 
-  // Rehab cost is satisfied either by auto-lookup or manual entry
-  const rehabCostReady = autoRehabCost !== null || form.rehabCost?.trim();
+  const rehabCostReady = form.rehabType === "no-rehab" || autoRehabCost !== null || form.rehabCost?.trim();
   // sqft > 3500 with a type selected means user must enter manually
   const isManualRehab = sqft > 3500 || !form.rehabType;
 
@@ -199,46 +198,49 @@ function FixAndFlipTab({ tab }) {
             </select>
           </label>
 
-          {/* Min Rehab Cost — readonly when auto-computed, editable when manual */}
-          {autoRehabCost !== null ? (
-            <label className="field deal-analyzer-output">
-              <span>
-                Min Rehab Cost
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
-              <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
-            </label>
-          ) : (
-            <Field
-              label={
-                isManualRehab && form.rehabType && sqft > 3500
-                  ? "Min Rehab Cost (manual — sq ft > 3,500)"
-                  : "Min Rehab Cost"
-              }
-              name="rehabCost"
-              value={form.rehabCost}
-              onChange={handleChange}
-              placeholder="e.g. $30,000"
-              required
-            />
+          {form.rehabType !== "no-rehab" && (
+            <>
+              {autoRehabCost !== null ? (
+                <label className="field deal-analyzer-output">
+                  <span>
+                    Min Rehab Cost
+                    <span className="deal-analyzer-auto-badge">auto</span>
+                  </span>
+                  <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
+                </label>
+              ) : (
+                <Field
+                  label={
+                    isManualRehab && form.rehabType && sqft > 3500
+                      ? "Min Rehab Cost (manual — sq ft > 3,500)"
+                      : "Min Rehab Cost"
+                  }
+                  name="rehabCost"
+                  value={form.rehabCost}
+                  onChange={handleChange}
+                  placeholder="e.g. $30,000"
+                  required
+                />
+              )}
+
+              <Field
+                label="Additional Rehab Cost"
+                name="additionalRehabCost"
+                value={form.additionalRehabCost}
+                onChange={handleChange}
+                placeholder="e.g. $5,000"
+              />
+
+              <label className="field deal-analyzer-output">
+                <span>Total Rehab Cost</span>
+                <input
+                  value={totalRehab > 0 ? fmt(totalRehab) : ""}
+                  readOnly
+                  tabIndex={-1}
+                />
+              </label>
+            </>
           )}
-
-          <Field
-            label="Additional Rehab Cost"
-            name="additionalRehabCost"
-            value={form.additionalRehabCost}
-            onChange={handleChange}
-            placeholder="e.g. $5,000"
-          />
-
-          <label className="field deal-analyzer-output">
-            <span>Total Rehab Cost</span>
-            <input
-              value={totalRehab > 0 ? fmt(totalRehab) : ""}
-              readOnly
-              tabIndex={-1}
-            />
-          </label>
 
           <Field
             label="Duration (Months)"

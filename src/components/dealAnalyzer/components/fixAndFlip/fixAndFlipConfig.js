@@ -6,6 +6,7 @@ export const REHAB_LOOKUP = {
 
 export const REHAB_OPTIONS = [
   { value: "", label: "Select One..." },
+  { value: "no-rehab", label: "No Rehab Needed" },
   { value: "light", label: "Light Rehab (carpet and paint)" },
   { value: "average", label: "Average Rehab (carpet/paint/kitchen/baths)" },
   {
@@ -43,7 +44,9 @@ export const PERCENT_FIELDS = new Set(["points", "interestRate"]);
 
 // Rehab cost lookup: [under 1500 sqft, 1500–2500, 2500–3500]
 export function getAutoRehabCost(rehabType, sqft) {
-  if (!rehabType || sqft <= 0 || sqft > 3500) return null;
+  if (!rehabType) return null;
+  if (rehabType === "no-rehab") return 0;
+  if (sqft <= 0 || sqft > 3500) return null;
   const tier = sqft < 1500 ? 0 : sqft <= 2500 ? 1 : 2;
   return REHAB_LOOKUP[rehabType]?.[tier] ?? null;
 }
