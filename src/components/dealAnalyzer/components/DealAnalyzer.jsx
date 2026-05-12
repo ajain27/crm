@@ -1,8 +1,22 @@
 import { useState } from "react";
 import FixAndFlipTab from "./fixAndFlip/FixAndFlipTab";
 import SubToTab from "./subTo/SubToTab";
+import WholesaleTab from "./wholesale/WholesaleTab";
 
 const analyzerTabs = [
+  {
+    id: "wholesale",
+    label: "Wholesale",
+    eyebrow: "Wholesale Analysis",
+    title: "MAO calculator",
+    description:
+      "Calculate the Maximum Allowable Offer based on ARV, rehab costs, your wholesale fee, and the buyer's target profit.",
+    prompts: [
+      "Confirm ARV with recent sold comps",
+      "Verify rehab scope and cost estimates",
+      "Align wholesale fee with your buyers list expectations",
+    ],
+  },
   {
     id: "subto",
     label: "Sub-To",
@@ -32,7 +46,7 @@ const analyzerTabs = [
 ];
 
 function DealAnalyzer() {
-  const [activeTab, setActiveTab] = useState("subto");
+  const [activeTab, setActiveTab] = useState("wholesale");
   const currentTab =
     analyzerTabs.find((tab) => tab.id === activeTab) || analyzerTabs[0];
 
@@ -73,6 +87,7 @@ function DealAnalyzer() {
         </div>
 
         <div className="deal-analyzer-content">
+          {activeTab === "wholesale" && <WholesaleTab tab={currentTab} />}
           {activeTab === "subto" && <SubToTab tab={currentTab} />}
           {activeTab === "fix-flip" && <FixAndFlipTab tab={currentTab} />}
         </div>

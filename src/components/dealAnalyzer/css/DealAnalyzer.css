@@ -189,7 +189,7 @@
   }
 
   .deal-analyzer-actions {
-    @apply px-6 pb-6;
+    @apply flex justify-center px-6 pb-6;
   }
 
   .deal-analyzer-summary {
