@@ -175,6 +175,14 @@ function FixAndFlipTab({ tab }) {
             required
           />
 
+          <Field
+            label="Square Footage"
+            name="squareFootage"
+            value={form.squareFootage}
+            onChange={handleChange}
+            placeholder="e.g. 1,800"
+          />
+
           {/* Rehab estimator */}
           <label className="field">
             <span>Rehab Type</span>
@@ -190,14 +198,6 @@ function FixAndFlipTab({ tab }) {
               ))}
             </select>
           </label>
-
-          <Field
-            label="Square Footage"
-            name="squareFootage"
-            value={form.squareFootage}
-            onChange={handleChange}
-            placeholder="e.g. 1,800"
-          />
 
           {/* Min Rehab Cost — readonly when auto-computed, editable when manual */}
           {autoRehabCost !== null ? (
@@ -359,21 +359,8 @@ function FixAndFlipTab({ tab }) {
                 <strong>{fmt(summary.purchasePrice)}</strong>
               </div>
               <div>
-                <span>
-                  Min Rehab Cost
-                  {summary.sqft > 0 && summary.sqft <= 3500 && summary.rehabType
-                    ? ` (${summary.sqft.toLocaleString()} sq ft)`
-                    : ""}
-                </span>
-                <strong>{fmt(summary.rehabCost)}</strong>
-              </div>
-              <div>
-                <span>Additional Rehab Cost</span>
-                <strong>{fmt(summary.additionalRehab)}</strong>
-              </div>
-              <div>
                 <span>Total Rehab Cost</span>
-                <strong>{fmt(summary.totalRehab)}</strong>
+                <strong className="deal-analyzer-return-negative">{fmt(summary.totalRehab)}</strong>
               </div>
               <div>
                 <span>Total Capital Needed</span>
