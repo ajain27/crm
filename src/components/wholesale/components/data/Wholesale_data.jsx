@@ -101,6 +101,7 @@ function Wholesale_data({
               <th>Property Type</th>
               <th>On Market</th>
               {renderSortableHeader("Listed Price", "listedPrice")}
+              <th>Agent Info</th>
               {renderSortableHeader("ARV", "arv")}
               {renderSortableHeader("Rehab Cost", "rehabCost")}
               {renderSortableHeader("MAO", "mao")}

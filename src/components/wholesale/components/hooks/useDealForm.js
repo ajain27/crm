@@ -137,7 +137,7 @@ export function useDealForm({
       setForm((prev) => ({
         ...prev,
         onMarket: value,
-        ...(value !== "Yes" ? { listedPrice: "" } : {}),
+        ...(value !== "Yes" ? { listedPrice: "", agentName: "", agentPhone: "", listingUrl: "" } : {}),
       }));
       return;
     }

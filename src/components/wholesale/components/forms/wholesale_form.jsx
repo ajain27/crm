@@ -151,15 +151,40 @@ function Wholesale_form({
             required
           />
           {form.onMarket === "Yes" && (
-            <Field
-              label="Listed Price"
-              name="listedPrice"
-              type="text"
-              value={form.listedPrice}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              required
-            />
+            <>
+              <Field
+                label="Listed Price"
+                name="listedPrice"
+                type="text"
+                value={form.listedPrice}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+              />
+              <Field
+                label="Agent Name"
+                name="agentName"
+                value={form.agentName}
+                onChange={handleChange}
+                placeholder="e.g. Jane Smith"
+              />
+              <Field
+                label="Agent Phone"
+                name="agentPhone"
+                type="tel"
+                value={form.agentPhone}
+                onChange={handleChange}
+                placeholder="e.g. 512-555-0100"
+              />
+              <Field
+                label="Listing URL (Zillow / MLS)"
+                name="listingUrl"
+                type="url"
+                value={form.listingUrl}
+                onChange={handleChange}
+                placeholder="e.g. https://www.zillow.com/homedetails/..."
+              />
+            </>
           )}
           <Select
             label="Offer Status"

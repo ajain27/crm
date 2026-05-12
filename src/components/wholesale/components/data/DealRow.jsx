@@ -62,6 +62,40 @@ function DealRow({
             : "—"
         }
       />
+      <td>
+        {deal.onMarket === "Yes" && (deal.agentName || deal.agentPhone || deal.listingUrl) ? (
+          <div className="buyer-info-cell">
+            {deal.agentName ? (
+              <div className="buyer-line">
+                <span className="buyer-label">Name</span>
+                <span className="table-text">{deal.agentName}</span>
+              </div>
+            ) : null}
+            {deal.agentPhone ? (
+              <div className="buyer-line">
+                <span className="buyer-label">Phone</span>
+                <span className="table-text">{deal.agentPhone}</span>
+              </div>
+            ) : null}
+            {deal.listingUrl ? (
+              <div className="buyer-line">
+                <span className="buyer-label">Link</span>
+                <a
+                  href={deal.listingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="table-text"
+                  title={deal.listingUrl}
+                >
+                  View ↗
+                </a>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <span className="placeholder-dash">—</span>
+        )}
+      </td>
       <ReadOnlyCell value={currency(deal.arv)} />
       <ReadOnlyCell value={currency(deal.rehabCost)} />
       <ReadOnlyCell value={currency(deal.mao)} />
