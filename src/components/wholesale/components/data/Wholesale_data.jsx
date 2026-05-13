@@ -8,6 +8,7 @@ import { useBuyerEdit } from "./hooks/useBuyerEdit";
 import DealRow from "./DealRow";
 import NotesModal from "./modals/NotesModal";
 import ContractPreviewModal from "./modals/ContractPreviewModal";
+import DealDetailModal from "./modals/DealDetailModal";
 
 function Wholesale_data({
   filteredDeals,
@@ -26,6 +27,7 @@ function Wholesale_data({
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
+  const [detailDeal, setDetailDeal] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   function toggleSelect(id) {
@@ -173,6 +175,7 @@ function Wholesale_data({
                 handleContractUpload={handleContractUpload}
                 uploadingDealId={uploadingDealId}
                 handleRowClick={handleRowClick}
+                onRowDetailClick={setDetailDeal}
                 isSelected={selectedIds.has(deal.id)}
                 onToggleSelect={toggleSelect}
                 {...buyerEdit}
@@ -191,6 +194,12 @@ function Wholesale_data({
           Showing {currentDeals.length} of {filteredDeals.length} results
         </span>
       </Pagination>
+
+      <DealDetailModal
+        isOpen={!!detailDeal}
+        onClose={() => setDetailDeal(null)}
+        deal={detailDeal}
+      />
 
       <NotesModal
         isOpen={!!selectedDeal}

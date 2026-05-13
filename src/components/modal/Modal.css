@@ -8,7 +8,7 @@
   }
 
   .modal-header {
-    @apply mb-4 flex items-center justify-between;
+    @apply mb-6 flex items-center justify-between;
   }
 
   .modal-close {

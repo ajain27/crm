@@ -22,6 +22,7 @@ function DealRow({
   handleContractUpload,
   uploadingDealId,
   handleRowClick,
+  onRowDetailClick,
   isSelected,
   onToggleSelect,
   editingBuyerId,
@@ -37,12 +38,19 @@ function DealRow({
 
   const isRejected = deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No";
 
+  function handleTrClick(e) {
+    const tag = e.target.tagName.toLowerCase();
+    if (["input", "select", "button", "a", "label", "svg", "path"].includes(tag)) return;
+    onRowDetailClick(deal);
+  }
+
   return (
     <tr
       data-deal-id={deal.id}
       data-reveal
       style={{ "--reveal-delay": `${index * 35}ms` }}
-      className={deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : ""}
+      className={`clickable-row ${deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : ""}`}
+      onClick={handleTrClick}
     >
       <td className="text-center">
         <input
