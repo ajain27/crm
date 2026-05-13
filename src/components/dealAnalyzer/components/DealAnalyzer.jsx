@@ -2,6 +2,7 @@ import { useState } from "react";
 import FixAndFlipTab from "./fixAndFlip/FixAndFlipTab";
 import SubToTab from "./subTo/SubToTab";
 import WholesaleTab from "./wholesale/WholesaleTab";
+import MultiFamilyTab from "./multiFamily/MultiFamilyTab";
 
 const analyzerTabs = [
   {
@@ -41,6 +42,19 @@ const analyzerTabs = [
       "ARV support from nearby sold comps",
       "Rehab scope, timeline, and contingency budget",
       "Holding costs, closing costs, and target margin",
+    ],
+  },
+  {
+    id: "multi-family",
+    label: "Multi-Family",
+    eyebrow: "Multi-Family Analysis",
+    title: "Rental income & returns",
+    description:
+      "Analyze NOI, cap rate, cash flow, and cash-on-cash return to evaluate a multi-family acquisition.",
+    prompts: [
+      "Confirm rents with local comps and current leases",
+      "Account for vacancy, management, and maintenance costs",
+      "Stress-test cash flow at higher vacancy rates",
     ],
   },
 ];
@@ -90,6 +104,7 @@ function DealAnalyzer() {
           {activeTab === "wholesale" && <WholesaleTab tab={currentTab} />}
           {activeTab === "subto" && <SubToTab tab={currentTab} />}
           {activeTab === "fix-flip" && <FixAndFlipTab tab={currentTab} />}
+          {activeTab === "multi-family" && <MultiFamilyTab tab={currentTab} />}
         </div>
       </section>
     </>

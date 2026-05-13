@@ -9,6 +9,7 @@ export function SimpleStat({
   className = "",
   numericValue,
   format,
+  valueClassName = "",
 }) {
   const target =
     typeof numericValue === "number"
@@ -38,7 +39,7 @@ export function SimpleStat({
         </div>
         <div className="small-icon">{icon}</div>
       </div>
-      <strong>{display}</strong>
+      <strong className={valueClassName || undefined}>{display}</strong>
     </article>
   );
 }

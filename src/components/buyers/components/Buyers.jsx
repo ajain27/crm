@@ -214,6 +214,7 @@ function Buyers({ currentUser = { id: "" } }) {
               : `Buyers in ${filters.state}`
           }
           value={filteredBuyers.length}
+          valueClassName="text-blue-500"
         />
       </section>
 
