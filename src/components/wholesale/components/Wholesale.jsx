@@ -108,6 +108,10 @@ function Wholesale() {
 
   useScrollReveal([activeView, isLoading, tableLoading, deals.length]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [activeView]);
+
   function handleAuthenticated(user) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     setCurrentUser(user);

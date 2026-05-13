@@ -22,8 +22,10 @@ const tab = {
 // Misc Fees      = 1,500 + 1,000 + 500           = 3,000
 // Total Fin.     = 3,240 + 9,720 + 3,000         = 15,960
 // Out of Pocket  = (180,000 – 162,000) + 15,960  = 33,960
-// Net Profit     = 250,000 – 150,000 – 30,000 – 15,960 = 54,040
-// ROI            = 54,040 / 180,000 × 100        ≈ 30.0%
+// Closing Costs  = 250,000 × 2%                  = 5,000
+// Agent Comm.    = 250,000 × 3%                  = 7,500
+// Net Profit     = 250,000 – 150,000 – 30,000 – 15,960 – 5,000 – 7,500 = 41,540
+// ROI            = 41,540 / 180,000 × 100        ≈ 23.1%
 
 function fillRequiredFields({
   arv = "250000",
@@ -34,12 +36,22 @@ function fillRequiredFields({
   interestRate = "12",
 } = {}) {
   fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: arv } });
-  fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: purchasePrice } });
-  fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), { target: { value: rehabCost } });
-  fireEvent.change(screen.getByLabelText(/Duration/i), { target: { value: durationMonths } });
-  fireEvent.change(screen.getByLabelText(/^Points/i), { target: { value: points } });
+  fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+    target: { value: purchasePrice },
+  });
+  fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), {
+    target: { value: rehabCost },
+  });
+  fireEvent.change(screen.getByLabelText(/Duration/i), {
+    target: { value: durationMonths },
+  });
+  fireEvent.change(screen.getByLabelText(/^Points/i), {
+    target: { value: points },
+  });
   fireEvent.blur(screen.getByLabelText(/^Points/i));
-  fireEvent.change(screen.getByLabelText(/Interest Rate/i), { target: { value: interestRate } });
+  fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+    target: { value: interestRate },
+  });
   fireEvent.blur(screen.getByLabelText(/Interest Rate/i));
 }
 
@@ -73,7 +85,9 @@ describe("rendering", () => {
 
   it("renders the Calculate button", () => {
     render(<FixAndFlipTab tab={tab} />);
-    expect(screen.getByRole("button", { name: /Calculate/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Calculate/i }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -166,16 +180,28 @@ describe("input formatting", () => {
 describe("live readonly fields", () => {
   it("Total Capital Needed updates as purchase price and rehab cost change", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: "150000" } });
-    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), { target: { value: "30000" } });
-    expect(screen.getByLabelText(/Total Capital Needed/i)).toHaveValue("$180,000.00");
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), {
+      target: { value: "30000" },
+    });
+    expect(screen.getByLabelText(/Total Capital Needed/i)).toHaveValue(
+      "$180,000.00",
+    );
   });
 
   it("Total Rehab Cost updates live combining min and additional rehab", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), { target: { value: "30000" } });
-    fireEvent.change(screen.getByLabelText(/Additional Rehab Cost/i), { target: { value: "5000" } });
-    expect(screen.getByLabelText(/Total Rehab Cost/i)).toHaveValue("$35,000.00");
+    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), {
+      target: { value: "30000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Additional Rehab Cost/i), {
+      target: { value: "5000" },
+    });
+    expect(screen.getByLabelText(/Total Rehab Cost/i)).toHaveValue(
+      "$35,000.00",
+    );
   });
 
   it("Total Rehab Cost is empty when no rehab entered", () => {
@@ -185,11 +211,19 @@ describe("live readonly fields", () => {
 
   it("Total Capital Needed includes additional rehab cost", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: "150000" } });
-    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), { target: { value: "30000" } });
-    fireEvent.change(screen.getByLabelText(/Additional Rehab Cost/i), { target: { value: "5000" } });
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), {
+      target: { value: "30000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Additional Rehab Cost/i), {
+      target: { value: "5000" },
+    });
     // Total = 150k + 30k + 5k = 185k
-    expect(screen.getByLabelText(/Total Capital Needed/i)).toHaveValue("$185,000.00");
+    expect(screen.getByLabelText(/Total Capital Needed/i)).toHaveValue(
+      "$185,000.00",
+    );
   });
 
   it("Total Capital Needed is empty before any input", () => {
@@ -199,17 +233,27 @@ describe("live readonly fields", () => {
 
   it("Lender Funds (90% LTC) updates live", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: "150000" } });
-    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), { target: { value: "30000" } });
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), {
+      target: { value: "30000" },
+    });
     // 180,000 × 0.9 = 162,000
     expect(screen.getByLabelText(/Lender Funds/i)).toHaveValue("$162,000.00");
   });
 
   it("Total Misc Fees updates live as fee fields change", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Origination Fees/i), { target: { value: "1500" } });
-    fireEvent.change(screen.getByLabelText(/Legal Fees/i), { target: { value: "1000" } });
-    fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), { target: { value: "500" } });
+    fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
+      target: { value: "1500" },
+    });
+    fireEvent.change(screen.getByLabelText(/Legal Fees/i), {
+      target: { value: "1000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), {
+      target: { value: "500" },
+    });
     expect(screen.getByLabelText(/Total Misc Fees/i)).toHaveValue("$3,000.00");
   });
 
@@ -229,7 +273,9 @@ describe("Calculate button", () => {
 
   it("stays disabled after only ARV is filled", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: "250000" } });
+    fireEvent.change(screen.getByLabelText(/^ARV/i), {
+      target: { value: "250000" },
+    });
     expect(screen.getByRole("button", { name: /Calculate/i })).toBeDisabled();
   });
 
@@ -243,13 +289,27 @@ describe("Calculate button", () => {
   it("becomes enabled using auto rehab cost instead of manual entry", () => {
     render(<FixAndFlipTab tab={tab} />);
     const btn = screen.getByRole("button", { name: /Calculate/i });
-    fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: "250000" } });
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: "150000" } });
-    fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "light" } });
-    fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText(/Duration/i), { target: { value: "6" } });
-    fireEvent.change(screen.getByLabelText(/^Points/i), { target: { value: "2" } });
-    fireEvent.change(screen.getByLabelText(/Interest Rate/i), { target: { value: "12" } });
+    fireEvent.change(screen.getByLabelText(/^ARV/i), {
+      target: { value: "250000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+      target: { value: "light" },
+    });
+    fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+      target: { value: "1200" },
+    });
+    fireEvent.change(screen.getByLabelText(/Duration/i), {
+      target: { value: "6" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Points/i), {
+      target: { value: "2" },
+    });
+    fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+      target: { value: "12" },
+    });
     expect(btn).not.toBeDisabled();
   });
 });
@@ -311,43 +371,58 @@ describe("summary calculations", () => {
   it("calculates all summary values correctly with fees", () => {
     render(<FixAndFlipTab tab={tab} />);
     fillRequiredFields();
-    fireEvent.change(screen.getByLabelText(/Origination Fees/i), { target: { value: "1500" } });
-    fireEvent.change(screen.getByLabelText(/Legal Fees/i), { target: { value: "1000" } });
-    fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), { target: { value: "500" } });
+    fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
+      target: { value: "1500" },
+    });
+    fireEvent.change(screen.getByLabelText(/Legal Fees/i), {
+      target: { value: "1000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), {
+      target: { value: "500" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
 
     expect(screen.getByText("$180,000.00")).toBeInTheDocument(); // Total Capital
     expect(screen.getByText("$162,000.00")).toBeInTheDocument(); // Lender Funds
     // Points Cost, Total Interest, Misc Fees, Net Profit also appear in the pie legend
-    expect(screen.getAllByText("$3,240.00").length).toBeGreaterThanOrEqual(1);   // Points Cost
-    expect(screen.getByText("$1,620.00")).toBeInTheDocument();   // Monthly Interest
-    expect(screen.getAllByText("$9,720.00").length).toBeGreaterThanOrEqual(1);   // Total Interest
-    expect(screen.getAllByText("$3,000.00").length).toBeGreaterThanOrEqual(1);   // Misc Fees
-    expect(screen.getByText("$15,960.00")).toBeInTheDocument();  // Total Financing
-    expect(screen.getByText("$33,960.00")).toBeInTheDocument();  // Out of Pocket
-    expect(screen.getAllByText("$54,040.00").length).toBeGreaterThanOrEqual(1);  // Net Profit
+    expect(screen.getAllByText("$3,240.00").length).toBeGreaterThanOrEqual(1); // Points Cost
+    expect(screen.getByText("$1,620.00")).toBeInTheDocument(); // Monthly Interest
+    expect(screen.getAllByText("$9,720.00").length).toBeGreaterThanOrEqual(1); // Total Interest
+    expect(screen.getAllByText("$3,000.00").length).toBeGreaterThanOrEqual(1); // Misc Fees
+    expect(screen.getByText("$15,960.00")).toBeInTheDocument(); // Total Financing
+    expect(screen.getByText("$33,960.00")).toBeInTheDocument(); // Out of Pocket
+    expect(screen.getByText("$5,000.00")).toBeInTheDocument(); // Closing Costs (2% of ARV)
+    expect(screen.getByText("$7,500.00")).toBeInTheDocument(); // Agent Commission (3% of ARV)
+    expect(screen.getAllByText("$41,540.00").length).toBeGreaterThanOrEqual(1); // Net Profit
   });
 
   it("calculates correctly with zero fees", () => {
     render(<FixAndFlipTab tab={tab} />);
     // No origination/legal/appraisal fees
     // Total Fin. = 3,240 + 9,720 + 0 = 12,960
-    // Net Profit = 250,000 – 150,000 – 30,000 – 12,960 = 57,040
+    // Closing = 250k×2% = 5,000, Commission = 250k×3% = 7,500
+    // Net Profit = 250,000 – 150,000 – 30,000 – 12,960 – 5,000 – 7,500 = 44,540
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("$12,960.00")).toBeInTheDocument(); // Total Financing
-    expect(screen.getAllByText("$57,040.00").length).toBeGreaterThanOrEqual(1); // Net Profit
+    expect(screen.getAllByText("$44,540.00").length).toBeGreaterThanOrEqual(1); // Net Profit
   });
 
   it("shows correct ROI in summary", () => {
     render(<FixAndFlipTab tab={tab} />);
-    // ROI = 54,040 / 180,000 × 100 = 30.02...% → 30.0%
+    // ROI = 41,540 / 180,000 × 100 = 23.08...% → 23.1%
     fillRequiredFields();
-    fireEvent.change(screen.getByLabelText(/Origination Fees/i), { target: { value: "1500" } });
-    fireEvent.change(screen.getByLabelText(/Legal Fees/i), { target: { value: "1000" } });
-    fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), { target: { value: "500" } });
+    fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
+      target: { value: "1500" },
+    });
+    fireEvent.change(screen.getByLabelText(/Legal Fees/i), {
+      target: { value: "1000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), {
+      target: { value: "500" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("30.0%")).toBeInTheDocument();
+    expect(screen.getByText("23.1%")).toBeInTheDocument();
   });
 
   it("shows the formula breakdown in the summary", () => {
@@ -368,20 +443,35 @@ describe("summary calculations", () => {
     // Monthly = 171k × 0.12 / 12 = 1,710
     // TotalInt = 1,710 × 6 = 10,260
     // TotalFin = 3,420 + 10,260 = 13,680
-    // NetProfit = 250k − 150k − 40k − 13,680 = 46,320
-    fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: "250000" } });
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: "150000" } });
-    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), { target: { value: "30000" } });
-    fireEvent.change(screen.getByLabelText(/Additional Rehab Cost/i), { target: { value: "10000" } });
-    fireEvent.change(screen.getByLabelText(/Duration/i), { target: { value: "6" } });
-    fireEvent.change(screen.getByLabelText(/^Points/i), { target: { value: "2" } });
+    // Closing = 250k×2% = 5,000, Commission = 250k×3% = 7,500
+    // NetProfit = 250k − 150k − 40k − 13,680 − 5,000 − 7,500 = 33,820
+    fireEvent.change(screen.getByLabelText(/^ARV/i), {
+      target: { value: "250000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Min Rehab Cost/i), {
+      target: { value: "30000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Additional Rehab Cost/i), {
+      target: { value: "10000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Duration/i), {
+      target: { value: "6" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Points/i), {
+      target: { value: "2" },
+    });
     fireEvent.blur(screen.getByLabelText(/^Points/i));
-    fireEvent.change(screen.getByLabelText(/Interest Rate/i), { target: { value: "12" } });
+    fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+      target: { value: "12" },
+    });
     fireEvent.blur(screen.getByLabelText(/Interest Rate/i));
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
 
     expect(screen.getByText("$190,000.00")).toBeInTheDocument(); // Total Capital
-    expect(screen.getAllByText("$46,320.00").length).toBeGreaterThanOrEqual(1);  // Net Profit
+    expect(screen.getAllByText("$33,820.00").length).toBeGreaterThanOrEqual(1); // Net Profit
   });
 
   it("clears the summary when any input field changes", () => {
@@ -389,7 +479,9 @@ describe("summary calculations", () => {
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText(/Qualifies for Loan/i)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: "300000" } });
+    fireEvent.change(screen.getByLabelText(/^ARV/i), {
+      target: { value: "300000" },
+    });
     expect(screen.queryByText(/Qualifies for Loan/i)).not.toBeInTheDocument();
   });
 
@@ -398,7 +490,9 @@ describe("summary calculations", () => {
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText(/Final Verdict/i)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Origination Fees/i), { target: { value: "2000" } });
+    fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
+      target: { value: "2000" },
+    });
     expect(screen.queryByText(/Final Verdict/i)).not.toBeInTheDocument();
   });
 });
@@ -408,7 +502,7 @@ describe("summary calculations", () => {
 describe("final verdict", () => {
   it("shows Deal when LTV qualifies and net profit is positive", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fillRequiredFields(); // LTV=60%, profit=$57,040
+    fillRequiredFields(); // LTV=60%, profit=$44,540
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("Deal")).toBeInTheDocument();
   });
@@ -423,7 +517,11 @@ describe("final verdict", () => {
   it("shows No Deal when net profit is negative (LTV passes but deal loses money)", () => {
     render(<FixAndFlipTab tab={tab} />);
     // LTV=70% (qualifies), but heavy rehab wipes out profit
-    fillRequiredFields({ arv: "200000", purchasePrice: "140000", rehabCost: "90000" });
+    fillRequiredFields({
+      arv: "200000",
+      purchasePrice: "140000",
+      rehabCost: "90000",
+    });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("No Deal")).toBeInTheDocument();
   });
@@ -441,7 +539,11 @@ describe("final verdict", () => {
     // Use a high rehab to force zero profit:
     // ARV=200k, Purchase=100k, Rehab=100k → capital=200k, lender=180k
     // Fin cost will push profit negative
-    fillRequiredFields({ arv: "200000", purchasePrice: "100000", rehabCost: "100000" });
+    fillRequiredFields({
+      arv: "200000",
+      purchasePrice: "100000",
+      rehabCost: "100000",
+    });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("No Deal")).toBeInTheDocument();
   });
@@ -454,21 +556,25 @@ describe("rehab estimator", () => {
   // Tiers: sqft < 1500 → [0], 1500–2500 → [1], 2501–3500 → [2]
   it.each([
     // tier 0: under 1,500 sqft
-    ["light",   "1200", "$30,000.00"],
+    ["light", "1200", "$30,000.00"],
     ["average", "1200", "$55,000.00"],
-    ["heavy",   "1200", "$90,000.00"],
+    ["heavy", "1200", "$90,000.00"],
     // tier 1: 1,500–2,500 sqft
-    ["light",   "2000", "$40,000.00"],
+    ["light", "2000", "$40,000.00"],
     ["average", "2000", "$70,000.00"],
-    ["heavy",   "2000", "$125,000.00"],
+    ["heavy", "2000", "$125,000.00"],
     // tier 2: 2,501–3,500 sqft
-    ["light",   "3000", "$55,000.00"],
+    ["light", "3000", "$55,000.00"],
     ["average", "3000", "$85,000.00"],
-    ["heavy",   "3000", "$150,000.00"],
+    ["heavy", "3000", "$150,000.00"],
   ])("%s rehab at %s sq ft → auto %s", (rehabType, sqft, expected) => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: rehabType } });
-    fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: sqft } });
+    fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+      target: { value: rehabType },
+    });
+    fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+      target: { value: sqft },
+    });
     const input = screen.getByLabelText(/Min Rehab Cost/i);
     expect(input).toHaveValue(expected);
     expect(input).toHaveAttribute("readonly");
@@ -477,43 +583,77 @@ describe("rehab estimator", () => {
   describe("sqft boundary edges", () => {
     it("sqft=1499 uses tier 0 (light → $30,000)", () => {
       render(<FixAndFlipTab tab={tab} />);
-      fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "light" } });
-      fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "1499" } });
-      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue("$30,000.00");
+      fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+        target: { value: "light" },
+      });
+      fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+        target: { value: "1499" },
+      });
+      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue(
+        "$30,000.00",
+      );
     });
 
     it("sqft=1500 uses tier 1 (light → $40,000)", () => {
       render(<FixAndFlipTab tab={tab} />);
-      fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "light" } });
-      fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "1500" } });
-      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue("$40,000.00");
+      fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+        target: { value: "light" },
+      });
+      fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+        target: { value: "1500" },
+      });
+      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue(
+        "$40,000.00",
+      );
     });
 
     it("sqft=2500 uses tier 1 (average → $70,000)", () => {
       render(<FixAndFlipTab tab={tab} />);
-      fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "average" } });
-      fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "2500" } });
-      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue("$70,000.00");
+      fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+        target: { value: "average" },
+      });
+      fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+        target: { value: "2500" },
+      });
+      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue(
+        "$70,000.00",
+      );
     });
 
     it("sqft=2501 uses tier 2 (average → $85,000)", () => {
       render(<FixAndFlipTab tab={tab} />);
-      fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "average" } });
-      fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "2501" } });
-      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue("$85,000.00");
+      fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+        target: { value: "average" },
+      });
+      fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+        target: { value: "2501" },
+      });
+      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue(
+        "$85,000.00",
+      );
     });
 
     it("sqft=3500 uses tier 2 (heavy → $150,000)", () => {
       render(<FixAndFlipTab tab={tab} />);
-      fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "heavy" } });
-      fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "3500" } });
-      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue("$150,000.00");
+      fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+        target: { value: "heavy" },
+      });
+      fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+        target: { value: "3500" },
+      });
+      expect(screen.getByLabelText(/Min Rehab Cost/i)).toHaveValue(
+        "$150,000.00",
+      );
     });
 
     it("sqft=3501 falls back to manual entry", () => {
       render(<FixAndFlipTab tab={tab} />);
-      fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "heavy" } });
-      fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "3501" } });
+      fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+        target: { value: "heavy" },
+      });
+      fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+        target: { value: "3501" },
+      });
       const input = screen.getByLabelText(/Min Rehab Cost/i);
       expect(input).not.toHaveAttribute("readonly");
     });
@@ -521,7 +661,9 @@ describe("rehab estimator", () => {
 
   it("shows manual Min Rehab Cost field when no rehab type is selected", () => {
     render(<FixAndFlipTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+      target: { value: "1200" },
+    });
     const input = screen.getByLabelText(/Min Rehab Cost/i);
     expect(input).not.toHaveAttribute("readonly");
   });
@@ -530,14 +672,28 @@ describe("rehab estimator", () => {
     render(<FixAndFlipTab tab={tab} />);
     // light + 1200 sqft = $30,000 rehab
     // Purchase=150k, ARV=250k, Rehab=30k → Total Capital=180k → same as base scenario
-    fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: "250000" } });
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), { target: { value: "150000" } });
-    fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "light" } });
-    fireEvent.change(screen.getByLabelText(/Square Footage/i), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText(/Duration/i), { target: { value: "6" } });
-    fireEvent.change(screen.getByLabelText(/^Points/i), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText(/^ARV/i), {
+      target: { value: "250000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "150000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+      target: { value: "light" },
+    });
+    fireEvent.change(screen.getByLabelText(/Square Footage/i), {
+      target: { value: "1200" },
+    });
+    fireEvent.change(screen.getByLabelText(/Duration/i), {
+      target: { value: "6" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Points/i), {
+      target: { value: "2" },
+    });
     fireEvent.blur(screen.getByLabelText(/^Points/i));
-    fireEvent.change(screen.getByLabelText(/Interest Rate/i), { target: { value: "12" } });
+    fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+      target: { value: "12" },
+    });
     fireEvent.blur(screen.getByLabelText(/Interest Rate/i));
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
 
@@ -550,7 +706,9 @@ describe("rehab estimator", () => {
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText(/Final Verdict/i)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Rehab Type/i), { target: { value: "light" } });
+    fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+      target: { value: "light" },
+    });
     expect(screen.queryByText(/Final Verdict/i)).not.toBeInTheDocument();
   });
 });

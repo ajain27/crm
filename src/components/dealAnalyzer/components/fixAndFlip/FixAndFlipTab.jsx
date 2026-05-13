@@ -1,4 +1,7 @@
 import { useState } from "react";
+
+const CLOSING_COSTS_PCT = 2;
+const AGENT_COMMISSION_PCT = 3;
 import { Field, AnimatedAmount } from "../../../elements/elements";
 import FixAndFlipPieChart from "./FixAndFlipPieChart";
 import {
@@ -60,6 +63,8 @@ function FixAndFlipTab({ tab }) {
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
 
+  const closingCosts = arv * (CLOSING_COSTS_PCT / 100);
+  const agentCommission = arv * (AGENT_COMMISSION_PCT / 100);
   const totalCapital = purchasePrice + totalRehab;
   const miscFees = originationFees + legalFees + appraisalFees;
   const ltvPct = arv > 0 ? (purchasePrice / arv) * 100 : 0;
@@ -70,7 +75,13 @@ function FixAndFlipTab({ tab }) {
   const totalInterest = monthlyInterest * duration;
   const totalFinancingCost = pointsCost + totalInterest + miscFees;
   const outOfPocket = totalCapital - lenderFunds + totalFinancingCost;
-  const netProfit = arv - purchasePrice - totalRehab - totalFinancingCost;
+  const netProfit =
+    arv -
+    purchasePrice -
+    totalRehab -
+    totalFinancingCost -
+    closingCosts -
+    agentCommission;
   const roi = totalCapital > 0 ? (netProfit / totalCapital) * 100 : 0;
   const isDeal = ltvQualifies && netProfit > 0;
 
@@ -100,6 +111,8 @@ function FixAndFlipTab({ tab }) {
       additionalRehab,
       totalRehab,
       totalCapital,
+      closingCosts,
+      agentCommission,
       ltvPct,
       ltvQualifies,
       lenderFunds,
@@ -176,6 +189,33 @@ function FixAndFlipTab({ tab }) {
             placeholder="e.g. $150,000"
             required
           />
+
+          <label className="field deal-analyzer-output">
+            <span>
+              Closing Costs{" "}
+              <span className="deal-analyzer-auto-badge">
+                {CLOSING_COSTS_PCT}% of ARV
+              </span>
+            </span>
+            <input
+              value={arv ? fmt(closingCosts) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <label className="field deal-analyzer-output">
+            <span>
+              Agent Commission{" "}
+              <span className="deal-analyzer-auto-badge">
+                {AGENT_COMMISSION_PCT}% of ARV
+              </span>
+            </span>
+            <input
+              value={arv ? fmt(agentCommission) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
 
           <Field
             label="Square Footage"
@@ -445,6 +485,21 @@ function FixAndFlipTab({ tab }) {
                 </strong>
               </div>
               <div>
+                <span>Closing Costs ({CLOSING_COSTS_PCT}%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.closingCosts} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Agent Commission ({AGENT_COMMISSION_PCT}%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.agentCommission}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+              <div>
                 <span>Total Out of Pocket</span>
                 <strong>
                   <AnimatedAmount value={summary.outOfPocket} format={fmt} />
@@ -483,10 +538,11 @@ function FixAndFlipTab({ tab }) {
               style={{ marginTop: "1rem" }}
             >
               Net Profit = ARV − Purchase Price − Total Rehab Cost − Total
-              Financing Cost
+              Financing Cost − Closing Costs − Agent Commission
               <span>
                 {fmt(summary.arv)} − {fmt(summary.purchasePrice)} −{" "}
-                {fmt(summary.totalRehab)} − {fmt(summary.totalFinancingCost)} ={" "}
+                {fmt(summary.totalRehab)} − {fmt(summary.totalFinancingCost)} −{" "}
+                {fmt(summary.closingCosts)} − {fmt(summary.agentCommission)} ={" "}
                 {fmt(summary.netProfit)}
               </span>
             </div>

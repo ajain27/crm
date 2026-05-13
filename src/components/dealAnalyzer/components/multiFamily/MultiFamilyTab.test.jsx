@@ -24,8 +24,10 @@ const tab = {
 // Monthly Mortgage    = 300,000 / 360           = $833.33  (0% rate)
 // Monthly Cash Flow   = 2,964 − 833.33…         = $2,130.67
 // Annual Cash Flow    = 2,130.66… × 12          = $25,568.00
-// Total Cash Invested = 100,000 (no rehab/closing costs)
-// CoC Return          = 25,568 / 100,000 × 100  = 25.57%
+// Closing Costs       = 400,000 × 2%             = $8,000.00
+// Agent Commission    = 400,000 × 3%             = $12,000.00
+// Total Cash Invested = 100,000 + 8,000 + 12,000 = $120,000.00
+// CoC Return          = 25,568 / 120,000 × 100  = 21.31%
 // GRM                 = 400,000 / (4,800 × 12)  = 6.94x
 // Price Per Unit      = 400,000 / 4             = $100,000.00
 // Verdict: DEAL (CF > 0, CoC ≥ 8%, Cap Rate ≥ 5%)
@@ -312,26 +314,24 @@ describe("financing calculations", () => {
   });
 
   it("shows total cash invested and cash on cash return", () => {
-    // Total Cash Invested = $100,000 (down payment only, no rehab/closing)
-    // CoC = $25,568 / $100,000 × 100 = 25.57%
+    // Down=$100k + Closing(2%×400k=$8k) + Commission(3%×400k=$12k) = $120,000
+    // CoC = $25,568 / $120,000 × 100 = 21.31%
     render(<MultiFamilyTab tab={tab} />);
     fill();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("25.57%")).toBeInTheDocument();
+    expect(screen.getByText("$120,000.00")).toBeInTheDocument();
+    expect(screen.getByText("21.31%")).toBeInTheDocument();
   });
 
-  it("includes rehab and closing costs in total cash invested", () => {
-    // Down=$100k, Rehab=$10k, Closing=$5k → Total=$115,000
+  it("includes rehab and auto closing costs in total cash invested", () => {
+    // Down=$100k, Rehab=$10k, Closing(2%=$8k), Commission(3%=$12k) → Total=$130,000
     render(<MultiFamilyTab tab={tab} />);
     fill();
     fireEvent.change(screen.getByLabelText(/Rehab Cost/i), {
       target: { value: "10000" },
     });
-    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
-      target: { value: "5000" },
-    });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("$115,000.00")).toBeInTheDocument();
+    expect(screen.getByText("$130,000.00")).toBeInTheDocument();
   });
 });
 
@@ -399,7 +399,7 @@ describe("summary sections", () => {
 describe("final verdict", () => {
   it("shows Deal when cash flow is positive, CoC ≥ 8%, and cap rate ≥ 5%", () => {
     render(<MultiFamilyTab tab={tab} />);
-    fill(); // CF=$2,130.67, CoC=25.57%, CapRate=8.89% → DEAL
+    fill(); // CF=$2,130.67, CoC=21.31%, CapRate=8.89% → DEAL
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("Deal")).toBeInTheDocument();
   });

@@ -8,13 +8,15 @@ import {
 } from "../fixAndFlip/fixAndFlipConfig";
 import { calculateMonthlyPayment } from "../../../../utils/utils";
 
+const CLOSING_COSTS_PCT = 2; // 2% of purchase price
+const AGENT_COMMISSION_PCT = 3; // 3% of purchase price
+
 const initialForm = {
   purchasePrice: "",
   numUnits: "",
   rentPerUnit: "",
   otherIncome: "",
   vacancyRate: "",
-  closingCosts: "",
   rehabCost: "",
   additionalExpenses: "",
   downPayment: "",
@@ -26,7 +28,6 @@ const CURRENCY_FIELDS = new Set([
   "purchasePrice",
   "rentPerUnit",
   "otherIncome",
-  "closingCosts",
   "rehabCost",
   "additionalExpenses",
 ]);
@@ -82,8 +83,9 @@ function MultiFamilyTab({ tab }) {
     const vacancyPct = parsePercent(form.vacancyRate);
     const expenseRatioPct = 35;
     const additionalExpenses = parseCurrency(form.additionalExpenses);
-    const closingCosts = parseCurrency(form.closingCosts);
     const rehabCost = parseCurrency(form.rehabCost);
+    const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
+    const agentCommission = purchasePrice * (AGENT_COMMISSION_PCT / 100);
     const downPaymentPct = parsePercent(form.downPayment);
     const annualInterestRate = parsePercent(form.interestRate) / 100;
     const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
@@ -107,7 +109,8 @@ function MultiFamilyTab({ tab }) {
     );
     const monthlyCashFlow = monthlyNOI - monthlyMortgage;
     const annualCashFlow = monthlyCashFlow * 12;
-    const totalCashInvested = downPaymentAmount + closingCosts + rehabCost;
+    const totalCashInvested =
+      downPaymentAmount + closingCosts + agentCommission + rehabCost;
     const cocReturn =
       totalCashInvested > 0 ? (annualCashFlow / totalCashInvested) * 100 : null;
     const grm =
@@ -136,6 +139,8 @@ function MultiFamilyTab({ tab }) {
       capRate,
       downPaymentPct,
       downPaymentAmount,
+      closingCosts,
+      agentCommission,
       loanAmount,
       loanTermYears,
       monthlyMortgage,
@@ -213,13 +218,46 @@ function MultiFamilyTab({ tab }) {
             onChange={handleChange}
             placeholder="e.g. $20,000"
           />
-          <Field
-            label="Closing Costs"
-            name="closingCosts"
-            value={form.closingCosts}
-            onChange={handleChange}
-            placeholder="e.g. $8,000"
-          />
+          <label className="field deal-analyzer-output">
+            <span>
+              Closing Costs{" "}
+              <span className="deal-analyzer-auto-badge">
+                {CLOSING_COSTS_PCT}% of price
+              </span>
+            </span>
+            <input
+              value={
+                form.purchasePrice
+                  ? fmt(
+                      parseCurrency(form.purchasePrice) *
+                        (CLOSING_COSTS_PCT / 100),
+                    )
+                  : ""
+              }
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <label className="field deal-analyzer-output">
+            <span>
+              Agent Commission{" "}
+              <span className="deal-analyzer-auto-badge">
+                {AGENT_COMMISSION_PCT}% of price
+              </span>
+            </span>
+            <input
+              value={
+                form.purchasePrice
+                  ? fmt(
+                      parseCurrency(form.purchasePrice) *
+                        (AGENT_COMMISSION_PCT / 100),
+                    )
+                  : ""
+              }
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
         </div>
 
         {/* — Rental Income */}
@@ -508,6 +546,21 @@ function MultiFamilyTab({ tab }) {
                 <strong>
                   <AnimatedAmount
                     value={summary.downPaymentAmount}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Closing Costs ({CLOSING_COSTS_PCT}% of price)</span>
+                <strong>
+                  <AnimatedAmount value={summary.closingCosts} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Agent Commission ({AGENT_COMMISSION_PCT}% of price)</span>
+                <strong>
+                  <AnimatedAmount
+                    value={summary.agentCommission}
                     format={fmt}
                   />
                 </strong>
