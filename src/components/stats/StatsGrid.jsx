@@ -23,7 +23,9 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
     (deal) => deal.closed === "Yes",
   ).length;
   const activeDeals = filteredDeals.filter(
-    (deal) => deal.closed !== "Yes",
+    (deal) =>
+      deal.closed !== "Yes" &&
+      !(deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No"),
   ).length;
 
   const revenueEligibleDeals = deals.filter(

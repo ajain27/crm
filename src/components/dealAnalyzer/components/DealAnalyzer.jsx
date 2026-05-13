@@ -3,6 +3,7 @@ import FixAndFlipTab from "./fixAndFlip/FixAndFlipTab";
 import SubToTab from "./subTo/SubToTab";
 import WholesaleTab from "./wholesale/WholesaleTab";
 import MultiFamilyTab from "./multiFamily/MultiFamilyTab";
+import NovationTab from "./novation/NovationTab";
 
 const analyzerTabs = [
   {
@@ -57,6 +58,19 @@ const analyzerTabs = [
       "Stress-test cash flow at higher vacancy rates",
     ],
   },
+  {
+    id: "novation",
+    label: "Novation",
+    eyebrow: "Novation Analysis",
+    title: "List price profit check",
+    description:
+      "Analyze the spread between your contract price and the list price after accounting for selling costs and holding expenses.",
+    prompts: [
+      "Confirm list price with recent sold comps",
+      "Verify agent commission and closing cost estimates",
+      "Account for holding period and monthly carrying costs",
+    ],
+  },
 ];
 
 function DealAnalyzer() {
@@ -105,6 +119,7 @@ function DealAnalyzer() {
           {activeTab === "subto" && <SubToTab tab={currentTab} />}
           {activeTab === "fix-flip" && <FixAndFlipTab tab={currentTab} />}
           {activeTab === "multi-family" && <MultiFamilyTab tab={currentTab} />}
+          {activeTab === "novation" && <NovationTab tab={currentTab} />}
         </div>
       </section>
     </>
