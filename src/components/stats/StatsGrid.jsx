@@ -137,21 +137,24 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
         icon={<DollarSign size={20} />}
         label={`${currentMonthLabel} Gross Revenue`}
         subtitle="Closed deals this month"
-        value={currency(currentMonthGrossRevenue)}
+        numericValue={currentMonthGrossRevenue}
+        format={currency}
         colorTheme="green"
       />
       <SimpleStat
         icon={<DollarSign size={20} />}
         label="Overall Revenue"
         subtitle="All closed deals"
-        value={currency(overallGrossRevenue)}
+        numericValue={overallGrossRevenue}
+        format={currency}
         colorTheme="green"
       />
       <SimpleStat
         icon={<DollarSign size={20} />}
         label={revenueLabel}
         subtitle="Current filters"
-        value={currency(filteredDealsRevenue)}
+        numericValue={filteredDealsRevenue}
+        format={currency}
         colorTheme="green"
       />
     </section>

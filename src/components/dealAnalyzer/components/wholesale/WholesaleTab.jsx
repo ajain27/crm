@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Field } from "../../../elements/elements";
+import { Field, AnimatedAmount } from "../../../elements/elements";
 import {
   REHAB_OPTIONS,
   getAutoRehabCost,
@@ -53,7 +53,10 @@ function WholesaleTab({ tab }) {
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
   const autoRehabCost = getAutoRehabCost(form.rehabType, sqft);
   const isManualRehab = sqft > 3500 || !form.rehabType;
-  const rehabCostReady = form.rehabType === "no-rehab" || autoRehabCost !== null || form.rehabCost?.trim();
+  const rehabCostReady =
+    form.rehabType === "no-rehab" ||
+    autoRehabCost !== null ||
+    form.rehabCost?.trim();
 
   const isFormComplete =
     form.arv?.trim() &&
@@ -64,12 +67,20 @@ function WholesaleTab({ tab }) {
   function handleCalculate() {
     if (!isFormComplete) return;
     const arv = parseCurrency(form.arv);
-    const rehab = autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
+    const rehab =
+      autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
     const wholesaleFee = parseCurrency(form.wholesaleFee);
     const buyersProfitPct = parsePercent(form.buyersProfit);
     const mao = arv * (1 - buyersProfitPct / 100) - rehab - wholesaleFee;
 
-    setResult({ arv, rehab, wholesaleFee, buyersProfitPct, mao, assignDeal: mao + wholesaleFee });
+    setResult({
+      arv,
+      rehab,
+      wholesaleFee,
+      buyersProfitPct,
+      mao,
+      assignDeal: mao + wholesaleFee,
+    });
   }
 
   return (
@@ -101,7 +112,9 @@ function WholesaleTab({ tab }) {
         <div className="panel-header deal-analyzer-form-header">
           <div>
             <h2>Wholesale Inputs</h2>
-            <p>Enter the deal values to calculate your Maximum Allowable Offer.</p>
+            <p>
+              Enter the deal values to calculate your Maximum Allowable Offer.
+            </p>
           </div>
         </div>
 
@@ -125,7 +138,11 @@ function WholesaleTab({ tab }) {
 
           <label className="field">
             <span>Rehab Type</span>
-            <select name="rehabType" value={form.rehabType} onChange={handleChange}>
+            <select
+              name="rehabType"
+              value={form.rehabType}
+              onChange={handleChange}
+            >
               {REHAB_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
@@ -134,8 +151,8 @@ function WholesaleTab({ tab }) {
             </select>
           </label>
 
-          {form.rehabType !== "no-rehab" && (
-            autoRehabCost !== null ? (
+          {form.rehabType !== "no-rehab" &&
+            (autoRehabCost !== null ? (
               <label className="field deal-analyzer-output">
                 <span>
                   Rehab Cost
@@ -156,8 +173,7 @@ function WholesaleTab({ tab }) {
                 placeholder="e.g. $30,000"
                 required
               />
-            )
-          )}
+            ))}
 
           <Field
             label="Wholesale Fee"
@@ -197,7 +213,9 @@ function WholesaleTab({ tab }) {
             >
               <div>
                 <span>Maximum Allowable Offer (MAO)</span>
-                <strong>{fmt(result.mao)}</strong>
+                <strong>
+                  <AnimatedAmount value={result.mao} format={fmt} />
+                </strong>
               </div>
               <strong>{result.mao > 0 ? "Viable Deal" : "No Room"}</strong>
             </div>
@@ -207,7 +225,9 @@ function WholesaleTab({ tab }) {
             >
               <div>
                 <span>Assign Deal (MAO + Wholesale Fee)</span>
-                <strong>{fmt(result.assignDeal)}</strong>
+                <strong>
+                  <AnimatedAmount value={result.assignDeal} format={fmt} />
+                </strong>
               </div>
             </div>
           </div>

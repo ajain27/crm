@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Field, Select } from "../../../elements/elements";
+import { Field, Select, AnimatedAmount } from "../../../elements/elements";
 import { calculateMonthlyPayment } from "../../../../utils/utils";
 
 const initialSubToForm = {
@@ -68,7 +68,6 @@ function SubToTab({ tab }) {
 
     return "$" + Number.parseInt(numericValue, 10).toLocaleString("en-US");
   }
-
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -187,9 +186,13 @@ function SubToTab({ tab }) {
     }
 
     const totalEntryAmount =
-      entryFeeAmount + rehabCostAmount + (form.hasArrears === "Yes" ? arrearsAmount : 0);
+      entryFeeAmount +
+      rehabCostAmount +
+      (form.hasArrears === "Yes" ? arrearsAmount : 0);
     const calculatedCashOnCashReturn =
-      totalEntryAmount > 0 ? (calculatedCashFlow * 12 * 100) / totalEntryAmount : null;
+      totalEntryAmount > 0
+        ? (calculatedCashFlow * 12 * 100) / totalEntryAmount
+        : null;
     const isDeal =
       calculatedCashFlow > 0 &&
       calculatedCashOnCashReturn !== null &&
@@ -223,6 +226,19 @@ function SubToTab({ tab }) {
           ? `${calculatedCashOnCashReturn.toFixed(2)}%`
           : "--",
       verdict: isDeal ? "DEAL" : "NO DEAL",
+      raw: {
+        propertyValue: parseAmount(form.propertyValue),
+        entryFee: entryFeeAmount,
+        rehabCost: rehabCostAmount,
+        mortgageBalance: mortgageBalanceAmount,
+        arrearsAmount: form.hasArrears === "Yes" ? arrearsAmount : 0,
+        tax: taxAmount,
+        insurance: insuranceAmount,
+        rentEstimate: monthlyRentAmount,
+        cashFlow: calculatedCashFlow,
+        totalEntryAmount: totalEntryAmount,
+        principalAndInterest: amortizedMonthlyPayment,
+      },
     });
   }
 
@@ -400,7 +416,8 @@ function SubToTab({ tab }) {
               {analysisSummary?.cashOnCashReturn != null ? (
                 <span>
                   Cash on Cash Return = ({liveCashFlowValue} x 12) /{" "}
-                  {analysisSummary.totalEntryAmount} = {analysisSummary.cashOnCashValue}
+                  {analysisSummary.totalEntryAmount} ={" "}
+                  {analysisSummary.cashOnCashValue}
                 </span>
               ) : null}
               <span>
@@ -424,20 +441,119 @@ function SubToTab({ tab }) {
         {analysisSummary ? (
           <div className="deal-analyzer-summary">
             <div className="deal-analyzer-summary-grid">
-              <div><span>Property Value</span><strong>{analysisSummary.propertyValue}</strong></div>
-              <div><span>Entry Fee</span><strong>{analysisSummary.entryFee}</strong></div>
-              <div><span>Rehab Cost</span><strong>{analysisSummary.rehabCost}</strong></div>
-              <div><span>Mortgage Balance</span><strong>{analysisSummary.mortgageBalance}</strong></div>
-              <div><span>Any Arrears</span><strong>{analysisSummary.hasArrears}</strong></div>
-              <div><span>Arrears Amount</span><strong>{analysisSummary.arrearsAmount}</strong></div>
-              <div><span>Interest</span><strong>{analysisSummary.interest}</strong></div>
-              <div><span>Term</span><strong>{analysisSummary.termYears} years ({analysisSummary.totalMonths} months)</strong></div>
-              <div><span>Principal + Interest</span><strong>{analysisSummary.principalAndInterest}</strong></div>
-              <div><span>Principal / Interest Split</span><strong>{analysisSummary.principalBreakdown || "--"}</strong></div>
-              <div><span>Tax</span><strong>{analysisSummary.tax}</strong></div>
-              <div><span>Insurance</span><strong>{analysisSummary.insurance}</strong></div>
-              <div><span>Rent Estimate</span><strong>{analysisSummary.rentEstimate}</strong></div>
-              <div><span>Cash Flow</span><strong>{analysisSummary.cashFlow}</strong></div>
+              <div>
+                <span>Property Value</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.propertyValue}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Entry Fee</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.entryFee}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Rehab Cost</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.rehabCost}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Mortgage Balance</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.mortgageBalance}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Any Arrears</span>
+                <strong>{analysisSummary.hasArrears}</strong>
+              </div>
+              <div>
+                <span>Arrears Amount</span>
+                <strong>
+                  {analysisSummary.hasArrears === "Yes" ? (
+                    <AnimatedAmount
+                      value={analysisSummary.raw.arrearsAmount}
+                      format={formatAmount}
+                    />
+                  ) : (
+                    "--"
+                  )}
+                </strong>
+              </div>
+              <div>
+                <span>Interest</span>
+                <strong>{analysisSummary.interest}</strong>
+              </div>
+              <div>
+                <span>Term</span>
+                <strong>
+                  {analysisSummary.termYears} years (
+                  {analysisSummary.totalMonths} months)
+                </strong>
+              </div>
+              <div>
+                <span>Principal + Interest</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.principalAndInterest}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Principal / Interest Split</span>
+                <strong>{analysisSummary.principalBreakdown || "--"}</strong>
+              </div>
+              <div>
+                <span>Tax</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.tax}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Insurance</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.insurance}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Rent Estimate</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.rentEstimate}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Cash Flow</span>
+                <strong>
+                  <AnimatedAmount
+                    value={analysisSummary.raw.cashFlow}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
               <div>
                 <span>Total Entry</span>
                 <strong
@@ -447,7 +563,10 @@ function SubToTab({ tab }) {
                       : ""
                   }
                 >
-                  {analysisSummary.totalEntryAmount}
+                  <AnimatedAmount
+                    value={analysisSummary.raw.totalEntryAmount}
+                    format={formatAmount}
+                  />
                 </strong>
               </div>
               <div>

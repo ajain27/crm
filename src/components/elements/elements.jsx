@@ -1,3 +1,5 @@
+import { useCountUp } from "../../hooks/useCountUp";
+
 export function SimpleStat({
   icon,
   label,
@@ -5,7 +7,26 @@ export function SimpleStat({
   subtitle,
   colorTheme,
   className = "",
+  numericValue,
+  format,
 }) {
+  const target =
+    typeof numericValue === "number"
+      ? numericValue
+      : typeof value === "number"
+        ? value
+        : 0;
+  const animated = useCountUp(target);
+
+  let display;
+  if (typeof numericValue === "number" && format) {
+    display = format(animated);
+  } else if (typeof value === "number") {
+    display = animated;
+  } else {
+    display = value;
+  }
+
   return (
     <article
       className={`stat-card simple-stat ${colorTheme ? `theme-${colorTheme} simple-stat-themed` : ""} ${className}`.trim()}
@@ -17,19 +38,25 @@ export function SimpleStat({
         </div>
         <div className="small-icon">{icon}</div>
       </div>
-      <strong>{value}</strong>
+      <strong>{display}</strong>
     </article>
   );
 }
 
+export function AnimatedAmount({ value = 0, format }) {
+  const animated = useCountUp(Math.round(Math.abs(value)));
+  const signed = value < 0 ? -animated : animated;
+  return <>{format ? format(signed) : signed}</>;
+}
+
 export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
+  const animated = useCountUp(value);
   const radius = 58;
   const stroke = 12;
   const circumference = radius * Math.PI;
-  // Ensure we don't divide by zero
   const safeMax = max > 0 ? max : 1;
   const strokeDashoffset =
-    circumference - (Math.min(value, safeMax) / safeMax) * circumference;
+    circumference - (Math.min(animated, safeMax) / safeMax) * circumference;
 
   return (
     <article className={`stat-card gauge-stat theme-${colorTheme}`}>
@@ -58,7 +85,7 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
           />
         </svg>
         <div className="gauge-text">
-          <strong className="gauge-val">{value}</strong>
+          <strong className="gauge-val">{animated}</strong>
         </div>
       </div>
     </article>

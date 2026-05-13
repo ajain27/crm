@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Field } from "../../../elements/elements";
+import { Field, AnimatedAmount } from "../../../elements/elements";
 import FixAndFlipPieChart from "./FixAndFlipPieChart";
 import {
   REHAB_OPTIONS,
@@ -74,7 +74,10 @@ function FixAndFlipTab({ tab }) {
   const roi = totalCapital > 0 ? (netProfit / totalCapital) * 100 : 0;
   const isDeal = ltvQualifies && netProfit > 0;
 
-  const rehabCostReady = form.rehabType === "no-rehab" || autoRehabCost !== null || form.rehabCost?.trim();
+  const rehabCostReady =
+    form.rehabType === "no-rehab" ||
+    autoRehabCost !== null ||
+    form.rehabCost?.trim();
   // sqft > 3500 with a type selected means user must enter manually
   const isManualRehab = sqft > 3500 || !form.rehabType;
 
@@ -354,61 +357,98 @@ function FixAndFlipTab({ tab }) {
             >
               <div>
                 <span>ARV</span>
-                <strong>{fmt(summary.arv)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.arv} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Purchase Price</span>
-                <strong>{fmt(summary.purchasePrice)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.purchasePrice} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Total Rehab Cost</span>
-                <strong className="deal-analyzer-return-negative">{fmt(summary.totalRehab)}</strong>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.totalRehab} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Total Capital Needed</span>
-                <strong>{fmt(summary.totalCapital)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.totalCapital} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Lender Funds (90% LTC)</span>
-                <strong>{fmt(summary.lenderFunds)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.lenderFunds} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Points Cost ({summary.pointsPct}%)</span>
-                <strong>{fmt(summary.pointsCost)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.pointsCost} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>
                   Monthly Interest (Loan × {summary.interestRatePct}% ÷ 12)
                 </span>
-                <strong>{fmt(summary.monthlyInterest)}</strong>
+                <strong>
+                  <AnimatedAmount
+                    value={summary.monthlyInterest}
+                    format={fmt}
+                  />
+                </strong>
               </div>
               <div>
                 <span>Total Interest ({summary.duration} mo × monthly)</span>
-                <strong>{fmt(summary.totalInterest)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.totalInterest} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Origination Fees</span>
-                <strong>{fmt(summary.originationFees)}</strong>
+                <strong>
+                  <AnimatedAmount
+                    value={summary.originationFees}
+                    format={fmt}
+                  />
+                </strong>
               </div>
               <div>
                 <span>Legal Fees</span>
-                <strong>{fmt(summary.legalFees)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.legalFees} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Appraisal Fees</span>
-                <strong>{fmt(summary.appraisalFees)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.appraisalFees} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Total Misc Fees</span>
-                <strong>{fmt(summary.miscFees)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.miscFees} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Total Financing Cost</span>
-                <strong>{fmt(summary.totalFinancingCost)}</strong>
+                <strong>
+                  <AnimatedAmount
+                    value={summary.totalFinancingCost}
+                    format={fmt}
+                  />
+                </strong>
               </div>
               <div>
                 <span>Total Out of Pocket</span>
-                <strong>{fmt(summary.outOfPocket)}</strong>
+                <strong>
+                  <AnimatedAmount value={summary.outOfPocket} format={fmt} />
+                </strong>
               </div>
               <div>
                 <span>Net Profit</span>
@@ -419,7 +459,7 @@ function FixAndFlipTab({ tab }) {
                       : "deal-analyzer-return-negative"
                   }
                 >
-                  {fmt(summary.netProfit)}
+                  <AnimatedAmount value={summary.netProfit} format={fmt} />
                 </strong>
               </div>
               <div>
