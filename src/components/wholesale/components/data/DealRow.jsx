@@ -22,6 +22,8 @@ function DealRow({
   handleContractUpload,
   uploadingDealId,
   handleRowClick,
+  isSelected,
+  onToggleSelect,
   editingBuyerId,
   editingBuyerField,
   editBuyerValue,
@@ -33,13 +35,32 @@ function DealRow({
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
 
+  const isRejected = deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No";
+
   return (
     <tr
       data-deal-id={deal.id}
       data-reveal
       style={{ "--reveal-delay": `${index * 35}ms` }}
-      className={deal.closed === "Yes" ? "closed-row" : ""}
+      className={deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : ""}
     >
+      <td className="text-center">
+        <input
+          type="checkbox"
+          className="row-checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(deal.id)}
+        />
+      </td>
+      <td className="text-center">
+        <button
+          className="danger-btn"
+          title="Delete"
+          onClick={() => deleteDeal(deal.id)}
+        >
+          <Trash2 size={16} />
+        </button>
+      </td>
       <td className="text-center">
         <button
           className="secondary-btn note-btn"
@@ -397,15 +418,6 @@ function DealRow({
         )}
       </td>
 
-      <td>
-        <button
-          className="danger-btn"
-          title="Delete"
-          onClick={() => deleteDeal(deal.id)}
-        >
-          <Trash2 size={16} />
-        </button>
-      </td>
     </tr>
   );
 }

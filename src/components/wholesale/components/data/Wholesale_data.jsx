@@ -26,6 +26,28 @@ function Wholesale_data({
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === currentDeals.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(currentDeals.map((d) => d.id)));
+    }
+  }
+
+  function deleteSelected() {
+    selectedIds.forEach((id) => deleteDeal(id));
+    setSelectedIds(new Set());
+  }
 
   const { currentDeals, currentPage, setCurrentPage, totalPages, renderSortableHeader } =
     useDealsSort(filteredDeals);
@@ -89,10 +111,30 @@ function Wholesale_data({
 
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
+      {selectedIds.size > 0 && (
+        <div className="bulk-delete-bar">
+          <span>{selectedIds.size} row{selectedIds.size > 1 ? "s" : ""} selected</span>
+          <button className="danger-btn" onClick={deleteSelected}>
+            Delete Selected
+          </button>
+          <button className="secondary-btn" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </button>
+        </div>
+      )}
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
+              <th className="text-center">
+                <input
+                  type="checkbox"
+                  className="row-checkbox"
+                  checked={currentDeals.length > 0 && selectedIds.size === currentDeals.length}
+                  onChange={toggleSelectAll}
+                />
+              </th>
+              <th></th>
               <th className="notes-header">Notes</th>
               <th>Property Address</th>
               <th>City</th>
@@ -131,6 +173,8 @@ function Wholesale_data({
                 handleContractUpload={handleContractUpload}
                 uploadingDealId={uploadingDealId}
                 handleRowClick={handleRowClick}
+                isSelected={selectedIds.has(deal.id)}
+                onToggleSelect={toggleSelect}
                 {...buyerEdit}
               />
             ))}

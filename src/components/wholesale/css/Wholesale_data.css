@@ -13,7 +13,7 @@
   }
 
   th {
-    @apply whitespace-nowrap bg-app-th-bg px-[18px] py-[18px] text-left text-xs uppercase tracking-[0.02em] text-app-th-text;
+    @apply whitespace-nowrap bg-app-th-bg px-[12px] py-[10px] text-left text-xs uppercase tracking-[0.02em] text-app-th-text;
     border-bottom: 1px solid var(--line);
   }
 
@@ -46,7 +46,7 @@
   }
 
   td {
-    @apply align-middle p-[18px];
+    @apply align-middle px-[12px] py-[8px];
     border-bottom: 1px solid var(--line);
   }
 
@@ -200,6 +200,37 @@
 
   .closed-row .table-input {
     @apply border-transparent bg-transparent p-0 shadow-none;
+  }
+
+  .rejected-row td {
+    background: color-mix(in srgb, #dc2626 18%, var(--panel) 82%) !important;
+  }
+
+  .rejected-row input:not(.row-checkbox),
+  .rejected-row select,
+  .rejected-row button:not(.danger-btn):not(.note-btn) {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .bulk-delete-bar {
+    @apply flex flex-wrap items-center gap-3 px-4 py-2 text-sm font-semibold;
+    background: color-mix(in srgb, #dc2626 10%, var(--panel) 90%);
+    border-bottom: 1px solid color-mix(in srgb, #dc2626 30%, transparent 70%);
+    color: #dc2626;
+    white-space: nowrap;
+  }
+
+  .bulk-delete-bar button {
+    white-space: nowrap;
+    overflow: visible;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    min-width: max-content;
+  }
+
+  .row-checkbox {
+    @apply h-4 w-4 cursor-pointer accent-blue-500;
   }
 
   .date-input {
