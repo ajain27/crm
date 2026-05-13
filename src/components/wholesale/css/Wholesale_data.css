@@ -373,14 +373,17 @@
     }
   }
 
-  .deal-detail-modal {
-    max-width: 680px;
-    width: 92%;
+  .modal.deal-detail-modal {
+    border-radius: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 6rem);
   }
 
   .ddm-body {
     @apply flex flex-col gap-5 overflow-y-auto;
-    max-height: 70vh;
+    flex: 1;
+    min-height: 0;
     padding-right: 4px;
   }
 
@@ -391,7 +394,7 @@
 
   .ddm-grid {
     @apply grid gap-3;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
   .ddm-cell {
@@ -414,8 +417,12 @@
     color: var(--text);
   }
 
-  .ddm-positive .ddm-cell-value { color: #16a34a; }
-  .ddm-negative .ddm-cell-value { color: #dc2626; }
+  .ddm-positive .ddm-cell-value {
+    color: #16a34a;
+  }
+  .ddm-negative .ddm-cell-value {
+    color: #dc2626;
+  }
 
   .ddm-link {
     @apply text-sm font-semibold;
@@ -423,7 +430,9 @@
     text-decoration: none;
   }
 
-  .ddm-link:hover { text-decoration: underline; }
+  .ddm-link:hover {
+    text-decoration: underline;
+  }
 
   .ddm-notes {
     @apply rounded-xl p-3 text-sm leading-relaxed;
@@ -439,7 +448,11 @@
   }
 
   .clickable-row:not(.rejected-row):hover td {
-    background: color-mix(in srgb, var(--blue-light) 22%, var(--panel) 78%) !important;
+    background: color-mix(
+      in srgb,
+      var(--blue-light) 22%,
+      var(--panel) 78%
+    ) !important;
   }
 
   :root:not(.dark) .clickable-row:not(.rejected-row):hover td {

@@ -34,7 +34,7 @@ describe("Buyers component", () => {
 
     render(<Buyers theme="light" setTheme={vi.fn()} />);
 
-    expect(await screen.findByDisplayValue("Jane Doe")).toBeInTheDocument();
+    expect(await screen.findByText("Jane Doe")).toBeInTheDocument();
     expect(screen.getByText("Buyers List")).toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe("Buyers component", () => {
 
     render(<Buyers theme="light" setTheme={vi.fn()} />);
 
-    await screen.findByDisplayValue("Jane Doe");
+    await screen.findByText("Jane Doe");
 
     const addBuyerSection = screen.getByText("Add Buyer").closest("section");
     const addBuyerForm = within(addBuyerSection);
@@ -98,8 +98,8 @@ describe("Buyers component", () => {
 
     render(<Buyers theme="light" setTheme={vi.fn()} />);
 
-    await screen.findByDisplayValue("Jane Doe");
-    expect(screen.getByDisplayValue("John Smith")).toBeInTheDocument();
+    await screen.findByText("Jane Doe");
+    expect(screen.getByText("John Smith")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTitle("Search"));
     fireEvent.change(
@@ -109,7 +109,7 @@ describe("Buyers component", () => {
       },
     );
 
-    expect(screen.getByDisplayValue("John Smith")).toBeInTheDocument();
-    expect(screen.queryByDisplayValue("Jane Doe")).not.toBeInTheDocument();
+    expect(screen.getByText("John Smith")).toBeInTheDocument();
+    expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
   });
 });

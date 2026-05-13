@@ -1,11 +1,19 @@
 import Modal from "../../../../modal/Modal";
 
-function NotesModal({ isOpen, onClose, selectedDeal, notesDraft, setNotesDraft, saveNotes }) {
+function NotesModal({
+  isOpen,
+  onClose,
+  selectedDeal,
+  notesDraft,
+  setNotesDraft,
+  saveNotes,
+}) {
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`Notes for ${selectedDeal?.address}`}
+      style={{ maxWidth: "500px" }}
       actions={
         <>
           <button className="secondary-btn" onClick={onClose}>

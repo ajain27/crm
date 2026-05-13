@@ -126,12 +126,11 @@ function Select({ label, required, options, ...props }) {
 function ReadOnlyCell({ value, wide, small }) {
   return (
     <td>
-      <input
-        className={`readonly-input ${wide ? "wide" : ""} ${small ? "small" : ""}`}
-        value={value}
-        disabled
-        readOnly
-      />
+      <span
+        className={`readonly-input ${wide ? "wide" : ""} ${small ? "small" : ""}`.trim()}
+      >
+        {value}
+      </span>
     </td>
   );
 }

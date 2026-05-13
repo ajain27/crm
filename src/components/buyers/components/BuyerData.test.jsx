@@ -25,7 +25,7 @@ describe("BuyerData", () => {
       />,
     );
 
-    const row = screen.getByDisplayValue("Jane Doe").closest("tr");
+    const row = screen.getByText("Jane Doe").closest("tr");
     const editEmailButton = within(row).getByTitle("Edit Email");
     fireEvent.click(editEmailButton);
 
@@ -53,7 +53,7 @@ describe("BuyerData", () => {
       />,
     );
 
-    const row = screen.getByDisplayValue("Jane Doe").closest("tr");
+    const row = screen.getByText("Jane Doe").closest("tr");
     const editPhoneButton = within(row).getByTitle("Edit Phone");
     fireEvent.click(editPhoneButton);
 

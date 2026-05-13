@@ -1,10 +1,15 @@
 @layer components {
   .modal-overlay {
-    @apply fixed inset-0 z-[9999] grid place-items-center bg-slate-900/40 backdrop-blur-[4px];
+    @apply fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/40 backdrop-blur-[4px];
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1rem;
   }
 
   .modal {
-    @apply w-[90%] max-w-[500px] rounded-2xl bg-app-panel p-6 shadow-app-panel;
+    @apply w-[90%] rounded-2xl bg-app-panel p-6 shadow-app-panel;
+    margin: 0 auto;
   }
 
   .modal-header {

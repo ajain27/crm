@@ -42,6 +42,11 @@ function DealDetailModal({ isOpen, onClose, deal }) {
       onClose={onClose}
       title={deal.address}
       className="deal-detail-modal"
+      style={{
+        width: "min(640px, 92vw)",
+        maxWidth: "min(640px, 92vw)",
+        borderRadius: "1.25rem",
+      }}
       actions={
         <button className="secondary-btn" onClick={onClose}>
           Close

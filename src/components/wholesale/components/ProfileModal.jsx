@@ -14,6 +14,7 @@ function ProfileModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Edit Profile"
+      style={{ maxWidth: "500px" }}
       actions={
         <div className="profile-modal-actions">
           <button className="secondary-btn profile-modal-btn" onClick={onClose}>
@@ -45,7 +46,11 @@ function ProfileModal({
                 </span>
               )}
             </div>
-            <input type="file" accept="image/*" onChange={onProfileImageChange} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onProfileImageChange}
+            />
             {profileForm.profileImage && (
               <button
                 type="button"
