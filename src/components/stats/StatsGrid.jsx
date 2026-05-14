@@ -27,6 +27,9 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
       deal.closed !== "Yes" &&
       !(deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No"),
   ).length;
+  const deadDeals = filteredDeals.filter(
+    (deal) => deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No",
+  ).length;
 
   const revenueEligibleDeals = deals.filter(
     (deal) =>
@@ -113,6 +116,13 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
         value={activeDeals}
         max={Math.max(10, offersThisMonth * 2)}
         colorTheme="orange"
+      />
+      <GaugeStat
+        label="Rejected Deals"
+        subtitle="Offer rejected"
+        value={deadDeals}
+        max={Math.max(10, deadDeals * 2)}
+        colorTheme="red"
       />
       <GaugeStat
         label="Accepted"

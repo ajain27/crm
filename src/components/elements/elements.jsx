@@ -76,7 +76,13 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
           />
           <path
             className="gauge-path"
-            stroke={colorTheme === "orange" ? "#fcd34d" : "#86efac"}
+            stroke={
+              colorTheme === "orange"
+                ? "#fcd34d"
+                : colorTheme === "red"
+                  ? "#fca5a5"
+                  : "#86efac"
+            }
             strokeWidth={stroke}
             strokeDasharray={`${circumference} ${circumference}`}
             strokeDashoffset={strokeDashoffset}
