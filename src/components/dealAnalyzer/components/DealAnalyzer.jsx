@@ -4,6 +4,7 @@ import SubToTab from "./subTo/SubToTab";
 import WholesaleTab from "./wholesale/WholesaleTab";
 import MultiFamilyTab from "./multiFamily/MultiFamilyTab";
 import NovationTab from "./novation/NovationTab";
+import RentalTab from "./rental/RentalTab";
 
 const analyzerTabs = [
   {
@@ -71,6 +72,19 @@ const analyzerTabs = [
       "Account for holding period and monthly carrying costs",
     ],
   },
+  {
+    id: "rental",
+    label: "Rental",
+    eyebrow: "Rental Analysis",
+    title: "Cash flow & returns",
+    description:
+      "Evaluate a rental property's monthly cash flow, DSCR, cap rate, and cash-on-cash return using DSCR financing.",
+    prompts: [
+      "Verify rent estimate with local market comps",
+      "Confirm DSCR rate and confirm the lender's qualifying ratio",
+      "Account for vacancy, maintenance, and management costs",
+    ],
+  },
 ];
 
 function DealAnalyzer() {
@@ -120,6 +134,7 @@ function DealAnalyzer() {
           {activeTab === "fix-flip" && <FixAndFlipTab tab={currentTab} />}
           {activeTab === "multi-family" && <MultiFamilyTab tab={currentTab} />}
           {activeTab === "novation" && <NovationTab tab={currentTab} />}
+          {activeTab === "rental" && <RentalTab tab={currentTab} />}
         </div>
       </section>
     </>

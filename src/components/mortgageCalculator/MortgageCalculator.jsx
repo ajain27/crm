@@ -21,7 +21,9 @@ function formatCurrencyInput(value) {
   if (value === "") return "";
   const [whole = "", decimal] = value.split(".");
   const formatted = Number(whole || 0).toLocaleString("en-US");
-  return decimal !== undefined ? `$${formatted}.${decimal.slice(0, 2)}` : `$${formatted}`;
+  return decimal !== undefined
+    ? `$${formatted}.${decimal.slice(0, 2)}`
+    : `$${formatted}`;
 }
 
 function parseNum(value) {
@@ -49,7 +51,14 @@ function MortgageCalculator() {
   const downPaymentPreview = useMemo(() => {
     const price = parseFloat(homePrice.replace(/[^0-9.]/g, ""));
     const pct = parseNum(downPaymentPercent);
-    if (!homePrice || !downPaymentPercent || isNaN(price) || price <= 0 || pct < 0) return "";
+    if (
+      !homePrice ||
+      !downPaymentPercent ||
+      isNaN(price) ||
+      price <= 0 ||
+      pct < 0
+    )
+      return "";
     return fmt((price * pct) / 100);
   }, [homePrice, downPaymentPercent]);
 
@@ -59,16 +68,29 @@ function MortgageCalculator() {
     const rate = parseFloat(interestRate.replace(/[^0-9.]/g, ""));
     const years = parseInt(loanTerm.replace(/[^\d]/g, ""), 10);
 
-    if (!homePrice || isNaN(price) || price <= 0) return "Enter a home price greater than 0.";
+    if (!homePrice || isNaN(price) || price <= 0)
+      return "Enter a home price greater than 0.";
     if (downPaymentPercent && (isNaN(downPct) || downPct < 0 || downPct > 100))
       return "Down payment must be between 0 and 100.";
-    if (!interestRate || isNaN(rate) || rate < 0) return "Enter a valid interest rate.";
-    if (!loanTerm || isNaN(years) || years <= 0) return "Enter a loan term greater than 0 years.";
-    if (propertyTax && parseNum(propertyTax) < 0) return "Property tax cannot be negative.";
-    if (homeInsurance && parseNum(homeInsurance) < 0) return "Home insurance cannot be negative.";
+    if (!interestRate || isNaN(rate) || rate < 0)
+      return "Enter a valid interest rate.";
+    if (!loanTerm || isNaN(years) || years <= 0)
+      return "Enter a loan term greater than 0 years.";
+    if (propertyTax && parseNum(propertyTax) < 0)
+      return "Property tax cannot be negative.";
+    if (homeInsurance && parseNum(homeInsurance) < 0)
+      return "Home insurance cannot be negative.";
     if (hoa && parseNum(hoa) < 0) return "HOA cannot be negative.";
     return "";
-  }, [homePrice, downPaymentPercent, interestRate, loanTerm, propertyTax, homeInsurance, hoa]);
+  }, [
+    homePrice,
+    downPaymentPercent,
+    interestRate,
+    loanTerm,
+    propertyTax,
+    homeInsurance,
+    hoa,
+  ]);
 
   const breakdown = useMemo(() => {
     if (validationMessage) return null;
@@ -105,7 +127,16 @@ function MortgageCalculator() {
       totalInterest: totalPI - loanAmt,
       payments: n,
     };
-  }, [validationMessage, homePrice, downPaymentPercent, interestRate, loanTerm, propertyTax, homeInsurance, hoa]);
+  }, [
+    validationMessage,
+    homePrice,
+    downPaymentPercent,
+    interestRate,
+    loanTerm,
+    propertyTax,
+    homeInsurance,
+    hoa,
+  ]);
 
   const canCalculate = !validationMessage;
 
@@ -130,7 +161,9 @@ function MortgageCalculator() {
         <div className="panel-header">
           <div>
             <h2>Loan Details</h2>
-            <p>Enter your purchase price, financing terms, and carrying costs.</p>
+            <p>
+              Enter your purchase price, financing terms, and carrying costs.
+            </p>
           </div>
         </div>
 
@@ -143,7 +176,9 @@ function MortgageCalculator() {
               inputMode="decimal"
               value={formatCurrencyInput(homePrice)}
               onChange={(e) => {
-                setHomePrice(sanitizeNumericInput(e.target.value, { allowDecimal: true }));
+                setHomePrice(
+                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
+                );
                 setHasCalculated(false);
               }}
               placeholder="e.g. $350,000"
@@ -162,7 +197,9 @@ function MortgageCalculator() {
               inputMode="numeric"
               value={downPaymentPercent}
               onChange={(e) => {
-                setDownPaymentPercent(sanitizeNumericInput(e.target.value, { maxLength: 2 }));
+                setDownPaymentPercent(
+                  sanitizeNumericInput(e.target.value, { maxLength: 2 }),
+                );
                 setHasCalculated(false);
               }}
               placeholder="e.g. 20"
@@ -177,7 +214,9 @@ function MortgageCalculator() {
               inputMode="decimal"
               value={interestRate}
               onChange={(e) => {
-                setInterestRate(sanitizeNumericInput(e.target.value, { allowDecimal: true }));
+                setInterestRate(
+                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
+                );
                 setHasCalculated(false);
               }}
               placeholder="e.g. 6.5"
@@ -199,7 +238,6 @@ function MortgageCalculator() {
           </label>
         </div>
 
-        <div className="mc-section-label">Monthly Carrying Costs</div>
         <div className="mc-form-grid">
           <label className="field">
             <span>Annual Property Tax</span>
@@ -208,7 +246,9 @@ function MortgageCalculator() {
               inputMode="decimal"
               value={formatCurrencyInput(propertyTax)}
               onChange={(e) => {
-                setPropertyTax(sanitizeNumericInput(e.target.value, { allowDecimal: true }));
+                setPropertyTax(
+                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
+                );
                 setHasCalculated(false);
               }}
               placeholder="e.g. $4,200"
@@ -222,7 +262,9 @@ function MortgageCalculator() {
               inputMode="decimal"
               value={formatCurrencyInput(homeInsurance)}
               onChange={(e) => {
-                setHomeInsurance(sanitizeNumericInput(e.target.value, { allowDecimal: true }));
+                setHomeInsurance(
+                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
+                );
                 setHasCalculated(false);
               }}
               placeholder="e.g. $1,800"
@@ -236,7 +278,9 @@ function MortgageCalculator() {
               inputMode="decimal"
               value={formatCurrencyInput(hoa)}
               onChange={(e) => {
-                setHoa(sanitizeNumericInput(e.target.value, { allowDecimal: true }));
+                setHoa(
+                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
+                );
                 setHasCalculated(false);
               }}
               placeholder="e.g. $200"
@@ -269,22 +313,27 @@ function MortgageCalculator() {
               <div className="mc-banner-meta">
                 <span>{fmt(breakdown.loanAmt)} loan</span>
                 <span>·</span>
-                <span>{loanTerm} yr @ {interestRate}%</span>
+                <span>
+                  {loanTerm} yr @ {interestRate}%
+                </span>
               </div>
             </div>
 
             {/* Breakdown cards */}
-            <div className="mc-section-label" style={{ padding: "1.25rem 0 0.5rem" }}>
+            <div
+              className="mc-section-label"
+              style={{ padding: "1.25rem 0 0.5rem" }}
+            >
               Monthly Breakdown
             </div>
             <div className="mc-breakdown-grid">
               {[
                 { label: "Principal + Interest", value: breakdown.pi },
-                { label: "Property Tax / mo",    value: breakdown.monthlyTax },
-                { label: "Home Insurance / mo",  value: breakdown.monthlyIns },
-                { label: "HOA / mo",             value: breakdown.monthlyHoa },
-                { label: "Down Payment",         value: breakdown.downAmt },
-                { label: "Loan Amount",          value: breakdown.loanAmt },
+                { label: "Property Tax / mo", value: breakdown.monthlyTax },
+                { label: "Home Insurance / mo", value: breakdown.monthlyIns },
+                { label: "HOA / mo", value: breakdown.monthlyHoa },
+                { label: "Down Payment", value: breakdown.downAmt },
+                { label: "Loan Amount", value: breakdown.loanAmt },
               ].map(({ label, value }) => (
                 <div key={label} className="mc-breakdown-card">
                   <span>{label}</span>
@@ -293,15 +342,27 @@ function MortgageCalculator() {
               ))}
             </div>
 
-            <div className="mc-section-label" style={{ padding: "1.25rem 0 0.5rem" }}>
+            <div
+              className="mc-section-label"
+              style={{ padding: "1.25rem 0 0.5rem" }}
+            >
               Lifetime Totals
             </div>
             <div className="mc-breakdown-grid">
               {[
-                { label: "Total Interest Paid",       value: breakdown.totalInterest },
-                { label: "Total Principal + Interest", value: breakdown.totalPI },
-                { label: "Total Carrying Costs",      value: breakdown.totalExtras },
-                { label: "Total Mortgage Paid",       value: breakdown.totalMortgage },
+                {
+                  label: "Total Interest Paid",
+                  value: breakdown.totalInterest,
+                },
+                {
+                  label: "Total Principal + Interest",
+                  value: breakdown.totalPI,
+                },
+                { label: "Total Carrying Costs", value: breakdown.totalExtras },
+                {
+                  label: "Total Mortgage Paid",
+                  value: breakdown.totalMortgage,
+                },
               ].map(({ label, value }) => (
                 <div key={label} className="mc-breakdown-card">
                   <span>{label}</span>
@@ -322,9 +383,9 @@ function MortgageCalculator() {
               </div>
               {[
                 { label: "Principal + Interest", value: breakdown.pi },
-                { label: "Property Tax",         value: breakdown.monthlyTax },
-                { label: "Home Insurance",       value: breakdown.monthlyIns },
-                { label: "HOA",                  value: breakdown.monthlyHoa },
+                { label: "Property Tax", value: breakdown.monthlyTax },
+                { label: "Home Insurance", value: breakdown.monthlyIns },
+                { label: "HOA", value: breakdown.monthlyHoa },
               ].map(({ label, value }) => (
                 <div key={label} className="mc-table-row">
                   <span>{label}</span>

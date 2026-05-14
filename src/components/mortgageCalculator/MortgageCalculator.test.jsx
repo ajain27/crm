@@ -29,12 +29,20 @@ function fillBase({
   rate = "0",
   term = "10",
 } = {}) {
-  fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: homePrice } });
+  fireEvent.change(screen.getByLabelText(/Home Price/i), {
+    target: { value: homePrice },
+  });
   if (downPct) {
-    fireEvent.change(screen.getByLabelText(/Down Payment/i), { target: { value: downPct } });
+    fireEvent.change(screen.getByLabelText(/Down Payment/i), {
+      target: { value: downPct },
+    });
   }
-  fireEvent.change(screen.getByLabelText(/Interest Rate/i), { target: { value: rate } });
-  fireEvent.change(screen.getByLabelText(/Loan Term/i), { target: { value: term } });
+  fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+    target: { value: rate },
+  });
+  fireEvent.change(screen.getByLabelText(/Loan Term/i), {
+    target: { value: term },
+  });
 }
 
 function clickCalculate() {
@@ -46,23 +54,28 @@ function clickCalculate() {
 describe("rendering", () => {
   it("renders the page heading", () => {
     render(<MortgageCalculator />);
-    expect(screen.getByRole("heading", { name: /Mortgage Calculator/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Mortgage Calculator/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the page subtitle", () => {
     render(<MortgageCalculator />);
-    expect(screen.getByText(/full monthly and lifetime cost breakdown/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/full monthly and lifetime cost breakdown/i),
+    ).toBeInTheDocument();
   });
 
   it("renders the Loan Details section heading", () => {
     render(<MortgageCalculator />);
-    expect(screen.getByRole("heading", { name: /Loan Details/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Loan Details/i }),
+    ).toBeInTheDocument();
   });
 
-  it("renders both form section labels", () => {
+  it("renders the form section label", () => {
     render(<MortgageCalculator />);
     expect(screen.getByText("Purchase & Financing")).toBeInTheDocument();
-    expect(screen.getByText("Monthly Carrying Costs")).toBeInTheDocument();
   });
 
   it("renders all input fields", () => {
@@ -78,12 +91,16 @@ describe("rendering", () => {
 
   it("renders the Calculate Mortgage button", () => {
     render(<MortgageCalculator />);
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).toBeInTheDocument();
   });
 
   it("does not show results on initial render", () => {
     render(<MortgageCalculator />);
-    expect(screen.queryByText(/Estimated Monthly Payment/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Estimated Monthly Payment/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Monthly Breakdown/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Lifetime Totals/i)).not.toBeInTheDocument();
   });
@@ -94,38 +111,56 @@ describe("rendering", () => {
 describe("Calculate button state", () => {
   it("is disabled on initial render", () => {
     render(<MortgageCalculator />);
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).toBeDisabled();
   });
 
   it("is disabled when only home price is entered", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "200000" } });
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "200000" },
+    });
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).toBeDisabled();
   });
 
   it("is enabled when home price, rate, and term are all provided", () => {
     render(<MortgageCalculator />);
     fillBase();
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).not.toBeDisabled();
   });
 
   it("is disabled when home price is 0", () => {
     render(<MortgageCalculator />);
     fillBase({ homePrice: "0" });
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).toBeDisabled();
   });
 
   it("is disabled when loan term is 0", () => {
     render(<MortgageCalculator />);
     fillBase({ term: "0" });
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).toBeDisabled();
   });
 
   it("is disabled when interest rate is missing", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "200000" } });
-    fireEvent.change(screen.getByLabelText(/Loan Term/i), { target: { value: "30" } });
-    expect(screen.getByRole("button", { name: /Calculate Mortgage/i })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "200000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Loan Term/i), {
+      target: { value: "30" },
+    });
+    expect(
+      screen.getByRole("button", { name: /Calculate Mortgage/i }),
+    ).toBeDisabled();
   });
 });
 
@@ -134,43 +169,59 @@ describe("Calculate button state", () => {
 describe("input formatting", () => {
   it("formats home price with $ and commas", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "350000" } });
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "350000" },
+    });
     expect(screen.getByLabelText(/Home Price/i).value).toBe("$350,000");
   });
 
   it("formats property tax as currency", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), { target: { value: "4200" } });
+    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), {
+      target: { value: "4200" },
+    });
     expect(screen.getByLabelText(/Annual Property Tax/i).value).toBe("$4,200");
   });
 
   it("formats home insurance as currency", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), { target: { value: "1800" } });
-    expect(screen.getByLabelText(/Annual Home Insurance/i).value).toBe("$1,800");
+    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), {
+      target: { value: "1800" },
+    });
+    expect(screen.getByLabelText(/Annual Home Insurance/i).value).toBe(
+      "$1,800",
+    );
   });
 
   it("formats HOA as currency", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), { target: { value: "200" } });
+    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), {
+      target: { value: "200" },
+    });
     expect(screen.getByLabelText(/Monthly HOA/i).value).toBe("$200");
   });
 
   it("strips non-numeric characters from interest rate", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Interest Rate/i), { target: { value: "abc6.5xyz" } });
+    fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+      target: { value: "abc6.5xyz" },
+    });
     expect(screen.getByLabelText(/Interest Rate/i).value).toBe("6.5");
   });
 
   it("strips non-numeric characters from loan term", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Loan Term/i), { target: { value: "30 years" } });
+    fireEvent.change(screen.getByLabelText(/Loan Term/i), {
+      target: { value: "30 years" },
+    });
     expect(screen.getByLabelText(/Loan Term/i).value).toBe("30");
   });
 
   it("caps down payment at 2 digits", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Down Payment/i), { target: { value: "200" } });
+    fireEvent.change(screen.getByLabelText(/Down Payment/i), {
+      target: { value: "200" },
+    });
     expect(screen.getByLabelText(/Down Payment/i).value).toBe("20");
   });
 });
@@ -180,30 +231,46 @@ describe("input formatting", () => {
 describe("down payment preview", () => {
   it("shows dollar amount preview when both home price and down % are entered", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "300000" } });
-    fireEvent.change(screen.getByLabelText(/Down Payment/i), { target: { value: "20" } });
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Down Payment/i), {
+      target: { value: "20" },
+    });
     expect(screen.getByText(/\$60,000/)).toBeInTheDocument();
   });
 
   it("does not show preview when only home price is entered", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "300000" } });
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "300000" },
+    });
     expect(screen.queryByText(/\$60,000/)).not.toBeInTheDocument();
   });
 
   it("does not show preview when down payment is 0", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "300000" } });
-    fireEvent.change(screen.getByLabelText(/Down Payment/i), { target: { value: "0" } });
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Down Payment/i), {
+      target: { value: "0" },
+    });
     expect(screen.queryByText(/mc-field-hint/)).not.toBeInTheDocument();
   });
 
   it("updates preview when home price changes", () => {
     render(<MortgageCalculator />);
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "200000" } });
-    fireEvent.change(screen.getByLabelText(/Down Payment/i), { target: { value: "10" } });
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "200000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Down Payment/i), {
+      target: { value: "10" },
+    });
     expect(screen.getByText(/\$20,000/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "400000" } });
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "400000" },
+    });
     expect(screen.getByText(/\$40,000/)).toBeInTheDocument();
   });
 });
@@ -269,9 +336,15 @@ describe("summary calculations — with carrying costs", () => {
   it("calculates total monthly = $1,350.00 with tax, insurance, HOA", () => {
     render(<MortgageCalculator />);
     fillBase();
-    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), { target: { value: "2400" } });
-    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), { target: { value: "50" } });
+    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), {
+      target: { value: "2400" },
+    });
+    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), {
+      target: { value: "1200" },
+    });
+    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), {
+      target: { value: "50" },
+    });
     clickCalculate();
     const cells = screen.getAllByText("$1,350.00");
     expect(cells.length).toBeGreaterThanOrEqual(1);
@@ -280,7 +353,9 @@ describe("summary calculations — with carrying costs", () => {
   it("shows monthly tax of $200.00 for $2,400/yr annual tax", () => {
     render(<MortgageCalculator />);
     fillBase();
-    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), { target: { value: "2400" } });
+    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), {
+      target: { value: "2400" },
+    });
     clickCalculate();
     expect(screen.getAllByText("$200.00").length).toBeGreaterThanOrEqual(1);
   });
@@ -288,7 +363,9 @@ describe("summary calculations — with carrying costs", () => {
   it("shows monthly insurance of $100.00 for $1,200/yr annual insurance", () => {
     render(<MortgageCalculator />);
     fillBase();
-    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), {
+      target: { value: "1200" },
+    });
     clickCalculate();
     expect(screen.getAllByText("$100.00").length).toBeGreaterThanOrEqual(1);
   });
@@ -296,7 +373,9 @@ describe("summary calculations — with carrying costs", () => {
   it("shows monthly HOA of $50.00", () => {
     render(<MortgageCalculator />);
     fillBase();
-    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), { target: { value: "50" } });
+    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), {
+      target: { value: "50" },
+    });
     clickCalculate();
     expect(screen.getAllByText("$50.00").length).toBeGreaterThanOrEqual(1);
   });
@@ -348,7 +427,9 @@ describe("results sections", () => {
     render(<MortgageCalculator />);
     fillBase();
     clickCalculate();
-    expect(screen.getAllByText("Principal + Interest").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Principal + Interest").length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Down Payment")).toBeInTheDocument();
     expect(screen.getByText("Loan Amount")).toBeInTheDocument();
   });
@@ -367,9 +448,15 @@ describe("results sections", () => {
   it("shows table rows for each cost type", () => {
     render(<MortgageCalculator />);
     fillBase();
-    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), { target: { value: "2400" } });
-    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), { target: { value: "50" } });
+    fireEvent.change(screen.getByLabelText(/Annual Property Tax/i), {
+      target: { value: "2400" },
+    });
+    fireEvent.change(screen.getByLabelText(/Annual Home Insurance/i), {
+      target: { value: "1200" },
+    });
+    fireEvent.change(screen.getByLabelText(/Monthly HOA/i), {
+      target: { value: "50" },
+    });
     clickCalculate();
     expect(screen.getByText("Property Tax")).toBeInTheDocument();
     expect(screen.getByText("Home Insurance")).toBeInTheDocument();
@@ -386,15 +473,21 @@ describe("results clear on input change", () => {
     fillBase();
     clickCalculate();
     expect(screen.getByText(/Estimated Monthly Payment/i)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Home Price/i), { target: { value: "150000" } });
-    expect(screen.queryByText(/Estimated Monthly Payment/i)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Home Price/i), {
+      target: { value: "150000" },
+    });
+    expect(
+      screen.queryByText(/Estimated Monthly Payment/i),
+    ).not.toBeInTheDocument();
   });
 
   it("restores results when Calculate is clicked again", () => {
     render(<MortgageCalculator />);
     fillBase();
     clickCalculate();
-    fireEvent.change(screen.getByLabelText(/Loan Term/i), { target: { value: "15" } });
+    fireEvent.change(screen.getByLabelText(/Loan Term/i), {
+      target: { value: "15" },
+    });
     clickCalculate();
     expect(screen.getByText(/Estimated Monthly Payment/i)).toBeInTheDocument();
   });
