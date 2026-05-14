@@ -1,3 +1,9 @@
+import {
+  getAutoRehabCost,
+  getRehabMultiplier,
+  parseCurrency,
+} from "../../dealAnalyzer/components/fixAndFlip/fixAndFlipConfig";
+
 export const SESSION_STORAGE_KEY = "crmCurrentUser";
 export const MAX_PROFILE_IMAGE_SIZE = 600 * 1024;
 export const MAX_CONTRACT_FILE_SIZE = 700 * 1024;
@@ -46,7 +52,10 @@ export function createEmptyDealForm() {
     agentPhone: "",
     listingUrl: "",
     arv: "",
+    rehabType: "",
+    squareFootage: "",
     rehabCost: "",
+    additionalRehabCost: "",
     desiredProfit: "",
     mao: "",
     offerStatus: "Not Sent",
@@ -126,4 +135,45 @@ export function createProfileForm(user = null) {
     lastName: user?.lastName || "",
     profileImage: user?.profileImage || "",
   };
+}
+
+export function getWholesaleRehabDetails(form) {
+  const sqft = parseInt(form?.squareFootage || "0", 10) || 0;
+  const rehabMultiplier = getRehabMultiplier(form?.state);
+  const autoRehabResult = getAutoRehabCost(form?.rehabType, sqft);
+  const autoRehabCost =
+    autoRehabResult !== null
+      ? Math.round(autoRehabResult.cost * rehabMultiplier)
+      : null;
+  const manualRehabCost = parseCurrency(form?.rehabCost);
+  const additionalRehabCost = parseCurrency(form?.additionalRehabCost);
+  const baseRehabCost =
+    autoRehabCost !== null ? autoRehabCost : manualRehabCost;
+  const totalRehabCost =
+    form?.rehabType === "no-rehab" ? 0 : baseRehabCost + additionalRehabCost;
+  const rehabCostReady =
+    form?.rehabType === "no-rehab" ||
+    autoRehabCost !== null ||
+    Boolean(form?.rehabCost?.trim());
+
+  return {
+    sqft,
+    autoRehabCost,
+    autoRehabEstimated: autoRehabResult?.estimated ?? false,
+    isManualRehab: sqft > 3500 || !form?.rehabType,
+    manualRehabCost,
+    additionalRehabCost,
+    baseRehabCost,
+    totalRehabCost,
+    rehabCostReady,
+  };
+}
+
+export function getSuggestedWholesaleMao(form) {
+  const arv = parseCurrency(form?.arv);
+  const desiredProfit = parseCurrency(form?.desiredProfit);
+  const { totalRehabCost } = getWholesaleRehabDetails(form);
+  const suggestedMao = arv * 0.7 - totalRehabCost - desiredProfit;
+
+  return Math.round(suggestedMao);
 }

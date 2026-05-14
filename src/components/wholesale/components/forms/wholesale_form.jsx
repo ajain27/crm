@@ -1,16 +1,34 @@
 import { Field, Select } from "../../../elements/elements";
 import { X } from "lucide-react";
+import { STATE_OPTIONS } from "../../../../constants/stateOptions";
+import { REHAB_OPTIONS } from "../../../dealAnalyzer/components/fixAndFlip/fixAndFlipConfig";
+import {
+  getSuggestedWholesaleMao,
+  getWholesaleRehabDetails,
+} from "../wholesaleConfig";
 
 function Wholesale_form({
   addDeal,
   form,
   handleChange,
   handleBlur,
-  checkDuplicateAddress,
+  handleAddressBlur,
   handleContractFileChange,
   clearContractFile,
 }) {
   const today = new Date().toISOString().slice(0, 10);
+  const {
+    sqft,
+    autoRehabCost,
+    autoRehabEstimated,
+    isManualRehab,
+    rehabCostReady,
+  } = getWholesaleRehabDetails(form);
+  const suggestedMao = getSuggestedWholesaleMao(form);
+  const suggestedMaoPlaceholder =
+    suggestedMao !== 0
+      ? `Suggested MAO: ${suggestedMao < 0 ? "-" : ""}$${Math.abs(suggestedMao).toLocaleString()}`
+      : "";
   const isFormComplete =
     Boolean(form.address?.trim()) &&
     Boolean(form.city?.trim()) &&
@@ -18,7 +36,7 @@ function Wholesale_form({
     Boolean(form.state?.trim()) &&
     Boolean(form.propertyType?.trim()) &&
     Boolean(form.arv?.trim()) &&
-    Boolean(form.rehabCost?.trim()) &&
+    rehabCostReady &&
     Boolean(form.desiredProfit?.trim()) &&
     Boolean(form.mao?.trim()) &&
     Boolean(form.onMarket?.trim()) &&
@@ -56,7 +74,7 @@ function Wholesale_form({
             name="address"
             value={form.address}
             onChange={handleChange}
-            onBlur={(e) => checkDuplicateAddress(e.target.value)}
+            onBlur={handleAddressBlur}
             required
           />
           <Field
@@ -74,14 +92,24 @@ function Wholesale_form({
             maxLength="5"
             required
           />
-          <Field
-            label="State"
-            name="state"
-            value={form.state}
-            onChange={handleChange}
-            maxLength="2"
-            required
-          />
+          <label className="field">
+            <span>
+              State
+              <span className="required-marker">*</span>
+            </span>
+            <select
+              name="state"
+              value={form.state}
+              onChange={handleChange}
+              required
+            >
+              {STATE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Select
             label="Property Type"
             name="propertyType"
@@ -100,14 +128,67 @@ function Wholesale_form({
             required
           />
           <Field
-            label="Rehab Cost"
-            name="rehabCost"
-            type="text"
-            value={form.rehabCost}
+            label="Square Footage"
+            name="squareFootage"
+            value={form.squareFootage}
             onChange={handleChange}
-            onBlur={handleBlur}
-            required
+            placeholder="e.g. 1,800"
           />
+          <label className="field">
+            <span>Rehab Type</span>
+            <select
+              name="rehabType"
+              value={form.rehabType}
+              onChange={handleChange}
+            >
+              {REHAB_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {form.rehabType !== "no-rehab" &&
+            (autoRehabCost !== null ? (
+              <label className="field">
+                <span>
+                  Rehab Cost
+                  <span className="deal-analyzer-auto-badge">
+                    {autoRehabEstimated ? "est. avg sqft" : "auto"}
+                  </span>
+                </span>
+                <input
+                  value={`$${autoRehabCost.toLocaleString("en-US")}`}
+                  readOnly
+                  tabIndex={-1}
+                />
+              </label>
+            ) : (
+              <Field
+                label={
+                  isManualRehab && form.rehabType && sqft > 3500
+                    ? "Rehab Cost (manual — sq ft > 3,500)"
+                    : "Rehab Cost"
+                }
+                name="rehabCost"
+                type="text"
+                value={form.rehabCost}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required={Boolean(form.rehabType !== "no-rehab")}
+              />
+            ))}
+          {form.rehabType !== "no-rehab" && (
+            <Field
+              label="Additional Rehab Cost"
+              name="additionalRehabCost"
+              type="text"
+              value={form.additionalRehabCost}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="e.g. $5,000"
+            />
+          )}
           <Field
             label="Desired Profit"
             name="desiredProfit"
@@ -124,22 +205,13 @@ function Wholesale_form({
             </span>
             <input
               required
+              id="mao"
               name="mao"
               type="text"
               value={form.mao}
               onChange={handleChange}
               onBlur={handleBlur}
-              placeholder={(() => {
-                const parseNumber = (val) =>
-                  Number(String(val).replace(/[^0-9]/g, ""));
-                const arv = parseNumber(form.arv);
-                const rehab = parseNumber(form.rehabCost);
-                const profit = parseNumber(form.desiredProfit);
-                const calculated = arv * 0.7 - rehab - profit;
-                return calculated > 0
-                  ? `Suggested MAO: $${calculated.toLocaleString()}`
-                  : "";
-              })()}
+              placeholder={suggestedMaoPlaceholder}
             />
           </label>
           <Select
@@ -209,7 +281,10 @@ function Wholesale_form({
                 <span>Contract Upload</span>
                 {form.contractFileName ? (
                   <div className="file-upload-status">
-                    <span className="file-upload-name" title={form.contractFileName}>
+                    <span
+                      className="file-upload-name"
+                      title={form.contractFileName}
+                    >
                       {form.contractFileName}
                     </span>
                     <button

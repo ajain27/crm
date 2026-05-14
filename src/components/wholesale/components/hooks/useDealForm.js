@@ -4,6 +4,7 @@ import {
   createEmptyDealForm,
   createDefaultFilters,
   createContractVersion,
+  getWholesaleRehabDetails,
 } from "../wholesaleConfig";
 
 export function useDealForm({
@@ -87,6 +88,7 @@ export function useDealForm({
     if (name === "city" && /\d/.test(value)) return;
     if (name === "zipCode" && /[^0-9]/.test(value)) return;
     if (name === "state" && /[^a-zA-Z]/.test(value)) return;
+    if (name === "squareFootage" && /[^0-9]/.test(value)) return;
 
     if (name === "closed" && value === "Yes") {
       const isReady = form.sellerAccepted === "Yes" && form.assigned === "Yes";
@@ -137,7 +139,9 @@ export function useDealForm({
       setForm((prev) => ({
         ...prev,
         onMarket: value,
-        ...(value !== "Yes" ? { listedPrice: "", agentName: "", agentPhone: "", listingUrl: "" } : {}),
+        ...(value !== "Yes"
+          ? { listedPrice: "", agentName: "", agentPhone: "", listingUrl: "" }
+          : {}),
       }));
       return;
     }
@@ -179,10 +183,25 @@ export function useDealForm({
       return;
     }
 
+    if (name === "rehabType") {
+      setForm((prev) => ({
+        ...prev,
+        rehabType: value,
+        ...(value === "no-rehab"
+          ? {
+              rehabCost: "",
+              additionalRehabCost: "",
+            }
+          : {}),
+      }));
+      return;
+    }
+
     const currencyFields = [
       "arv",
       "listedPrice",
       "rehabCost",
+      "additionalRehabCost",
       "desiredProfit",
       "mao",
       "contractPrice",
@@ -206,6 +225,7 @@ export function useDealForm({
       "arv",
       "listedPrice",
       "rehabCost",
+      "additionalRehabCost",
       "desiredProfit",
       "mao",
       "contractPrice",
@@ -217,14 +237,19 @@ export function useDealForm({
         const numVal = parseInt(numericValue, 10);
         const parseNumber = (val) =>
           Number(String(val || "0").replace(/[^0-9]/g, ""));
+        const nextForm = { ...form, [name]: value };
+        const { totalRehabCost } = getWholesaleRehabDetails(nextForm);
         const currentVals = {
           arv: parseNumber(form.arv),
-          rehabCost: parseNumber(form.rehabCost),
+          rehabCost: totalRehabCost,
           mao: parseNumber(form.mao),
           contractPrice: parseNumber(form.contractPrice),
           assignedPrice: parseNumber(form.assignedPrice),
         };
-        currentVals[name] = numVal;
+        if (name === "arv") currentVals.arv = numVal;
+        if (name === "mao") currentVals.mao = numVal;
+        if (name === "contractPrice") currentVals.contractPrice = numVal;
+        if (name === "assignedPrice") currentVals.assignedPrice = numVal;
 
         if (currentVals.arv > 0) {
           if (currentVals.rehabCost > currentVals.arv) {
@@ -239,11 +264,6 @@ export function useDealForm({
           }
           if (currentVals.contractPrice > currentVals.arv) {
             alert("Contract price cannot be more than ARV.");
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-          if (currentVals.mao > 0 && currentVals.rehabCost > currentVals.mao) {
-            alert("Rehab cost cannot be more than MAO.");
             setForm((prev) => ({ ...prev, [name]: "" }));
             return;
           }
@@ -266,10 +286,17 @@ export function useDealForm({
     }
   }
 
+  function handleAddressBlur(event) {
+    const cleaned = event.target.value.replace(/[^a-zA-Z0-9]+$/, "");
+    setForm((prev) => ({ ...prev, address: cleaned }));
+    checkDuplicateAddress(cleaned);
+  }
+
   function checkDuplicateAddress(address) {
     if (!address.trim()) return;
     const existingDeal = deals.find(
-      (deal) => deal.address.toLowerCase() === address.trim().toLowerCase(),
+      (deal) =>
+        deal.address.trim().toLowerCase() === address.trim().toLowerCase(),
     );
     if (existingDeal) {
       alert("A property with this address already exists.");
@@ -338,7 +365,7 @@ export function useDealForm({
     const maoNum = parseNumber(form.mao);
     const contractNum = parseNumber(form.contractPrice);
     const assignedNum = parseNumber(form.assignedPrice);
-    const rehabNum = parseNumber(form.rehabCost);
+    const { totalRehabCost: rehabNum } = getWholesaleRehabDetails(form);
 
     if (arvNum > 0) {
       if (rehabNum > arvNum) {
@@ -353,10 +380,6 @@ export function useDealForm({
         alert("Contract price cannot be more than ARV.");
         return;
       }
-    }
-    if (maoNum > 0 && rehabNum > maoNum) {
-      alert("Rehab cost cannot be more than MAO.");
-      return;
     }
     if (contractNum > 0 && assignedNum > 0 && assignedNum < contractNum) {
       alert("Assigned price needs to be more than or equal to contract price.");
@@ -376,7 +399,9 @@ export function useDealForm({
       zipCode: form.zipCode.trim(),
       arv: parseNumber(form.arv),
       listedPrice: parseNumber(form.listedPrice),
-      rehabCost: parseNumber(form.rehabCost),
+      squareFootage: parseNumber(form.squareFootage),
+      rehabCost: rehabNum,
+      additionalRehabCost: parseNumber(form.additionalRehabCost),
       mao: parseNumber(form.mao),
       contractPrice: parseNumber(form.contractPrice),
       assignedPrice: parseNumber(form.assignedPrice),
@@ -471,6 +496,7 @@ export function useDealForm({
     handleBlur,
     handleContractFileChange,
     clearContractFile,
+    handleAddressBlur,
     checkDuplicateAddress,
     addDeal,
   };

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
+import { STATE_OPTIONS } from "../../../../constants/stateOptions";
 import {
   REHAB_OPTIONS,
-  STATE_OPTIONS,
   getAutoRehabCost,
   getRehabMultiplier,
   isCheapMarket,

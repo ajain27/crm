@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { STATE_OPTIONS } from "../../../../constants/stateOptions";
 
 const CLOSING_COSTS_PCT = 2;
 const AGENT_COMMISSION_PCT = 3;
@@ -6,7 +7,6 @@ import { Field, AnimatedAmount } from "../../../elements/elements";
 import FixAndFlipPieChart from "./FixAndFlipPieChart";
 import {
   REHAB_OPTIONS,
-  STATE_OPTIONS,
   initialForm,
   CURRENCY_FIELDS,
   PERCENT_FIELDS,

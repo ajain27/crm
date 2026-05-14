@@ -77,7 +77,7 @@ function Wholesale() {
     handleBlur,
     handleContractFileChange,
     clearContractFile,
-    checkDuplicateAddress,
+    handleAddressBlur,
     addDeal,
   } = useDealForm({
     deals,
@@ -212,7 +212,7 @@ function Wholesale() {
               form={form}
               handleChange={handleChange}
               handleBlur={handleBlur}
-              checkDuplicateAddress={checkDuplicateAddress}
+              handleAddressBlur={handleAddressBlur}
               handleContractFileChange={handleContractFileChange}
               clearContractFile={clearContractFile}
             />
