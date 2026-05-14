@@ -6,10 +6,13 @@ import { Field, AnimatedAmount } from "../../../elements/elements";
 import FixAndFlipPieChart from "./FixAndFlipPieChart";
 import {
   REHAB_OPTIONS,
+  STATE_OPTIONS,
   initialForm,
   CURRENCY_FIELDS,
   PERCENT_FIELDS,
   getAutoRehabCost,
+  getRehabMultiplier,
+  isCheapMarket,
   parseCurrency,
   parsePercent,
   fmt,
@@ -51,7 +54,14 @@ function FixAndFlipTab({ tab }) {
   const arv = parseCurrency(form.arv);
   const purchasePrice = parseCurrency(form.purchasePrice);
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
-  const autoRehabCost = getAutoRehabCost(form.rehabType, sqft);
+  const rehabMultiplier = getRehabMultiplier(form.state);
+  const cheapMarket = isCheapMarket(form.state);
+  const autoRehabResult = getAutoRehabCost(form.rehabType, sqft);
+  const autoRehabCost =
+    autoRehabResult !== null
+      ? Math.round(autoRehabResult.cost * rehabMultiplier)
+      : null;
+  const autoRehabEstimated = autoRehabResult?.estimated ?? false;
   const rehabCost =
     autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
   const additionalRehab = parseCurrency(form.additionalRehabCost);
@@ -173,6 +183,16 @@ function FixAndFlipTab({ tab }) {
         {/* — Property & Deal */}
         <div className="deal-analyzer-section-label">Property &amp; Deal</div>
         <div className="deal-analyzer-form-grid">
+          <label className="field">
+            <span>State</span>
+            <select name="state" value={form.state} onChange={handleChange}>
+              {STATE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Field
             label="ARV"
             name="arv"
@@ -247,7 +267,14 @@ function FixAndFlipTab({ tab }) {
                 <label className="field deal-analyzer-output">
                   <span>
                     Min Rehab Cost
-                    <span className="deal-analyzer-auto-badge">auto</span>
+                    <span className="deal-analyzer-auto-badge">
+                      {autoRehabEstimated ? "est. avg sqft" : "auto"}
+                    </span>
+                    {/* {cheapMarket && (
+                      <span className="deal-analyzer-auto-badge">
+                        Exp market ÷ 3
+                      </span>
+                    )} */}
                   </span>
                   <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
                 </label>

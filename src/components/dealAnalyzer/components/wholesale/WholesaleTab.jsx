@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
 import {
   REHAB_OPTIONS,
+  STATE_OPTIONS,
   getAutoRehabCost,
+  getRehabMultiplier,
+  isCheapMarket,
   parseCurrency,
   parsePercent,
   fmt,
@@ -10,6 +13,7 @@ import {
 } from "../fixAndFlip/fixAndFlipConfig";
 
 const initialForm = {
+  state: "",
   arv: "",
   rehabType: "",
   squareFootage: "",
@@ -51,7 +55,14 @@ function WholesaleTab({ tab }) {
   }
 
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
-  const autoRehabCost = getAutoRehabCost(form.rehabType, sqft);
+  const rehabMultiplier = getRehabMultiplier(form.state);
+  const cheapMarket = isCheapMarket(form.state);
+  const autoRehabResult = getAutoRehabCost(form.rehabType, sqft);
+  const autoRehabCost =
+    autoRehabResult !== null
+      ? Math.round(autoRehabResult.cost * rehabMultiplier)
+      : null;
+  const autoRehabEstimated = autoRehabResult?.estimated ?? false;
   const isManualRehab = sqft > 3500 || !form.rehabType;
   const rehabCostReady =
     form.rehabType === "no-rehab" ||
@@ -119,6 +130,16 @@ function WholesaleTab({ tab }) {
         </div>
 
         <div className="deal-analyzer-form-grid">
+          <label className="field">
+            <span>State</span>
+            <select name="state" value={form.state} onChange={handleChange}>
+              {STATE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Field
             label="ARV"
             name="arv"
@@ -156,7 +177,12 @@ function WholesaleTab({ tab }) {
               <label className="field deal-analyzer-output">
                 <span>
                   Rehab Cost
-                  <span className="deal-analyzer-auto-badge">auto</span>
+                  <span className="deal-analyzer-auto-badge">
+                    {autoRehabEstimated ? "est. avg sqft" : "auto"}
+                  </span>
+                  {/* {cheapMarket && (
+                    <span className="deal-analyzer-auto-badge">cheap market ÷3</span>
+                  )} */}
                 </span>
                 <input value={fmt(autoRehabCost)} readOnly tabIndex={-1} />
               </label>
