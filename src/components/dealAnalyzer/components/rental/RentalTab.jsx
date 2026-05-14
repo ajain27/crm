@@ -3,6 +3,9 @@ import { Field, AnimatedAmount } from "../../../elements/elements";
 import { calculateMonthlyPayment } from "../../../../utils/utils";
 
 const PROP_MGMT_PCT = 10;
+const FIRST_MONTH_PROP_MGMT_PCT = 50;
+const CLOSING_COSTS_PCT = 2;
+const INSPECTION_COST = 450;
 
 function parseCurrency(value) {
   const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
@@ -37,6 +40,7 @@ const CURRENCY_FIELDS = new Set([
 const initialForm = {
   purchasePrice: "",
   downPayment: "",
+  agentCommission: "",
   dscrRate: "",
   loanTerm: "30",
   monthlyRent: "",
@@ -55,7 +59,11 @@ function RentalTab({ tab }) {
       setForm((prev) => ({ ...prev, [name]: fmtCurrencyInput(value) }));
       return;
     }
-    if (name === "downPayment" || name === "dscrRate") {
+    if (
+      name === "downPayment" ||
+      name === "agentCommission" ||
+      name === "dscrRate"
+    ) {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
       return;
     }
@@ -68,7 +76,12 @@ function RentalTab({ tab }) {
 
   function handleBlur(e) {
     const { name, value } = e.target;
-    if ((name === "downPayment" || name === "dscrRate") && value) {
+    if (
+      (name === "downPayment" ||
+        name === "agentCommission" ||
+        name === "dscrRate") &&
+      value
+    ) {
       const numeric = value.replace(/[^0-9.]/g, "");
       if (numeric) setForm((prev) => ({ ...prev, [name]: `${numeric}%` }));
     }
@@ -78,6 +91,8 @@ function RentalTab({ tab }) {
   const purchasePrice = parseCurrency(form.purchasePrice);
   const downPaymentPct = parsePercent(form.downPayment);
   const downPaymentAmt = purchasePrice * (downPaymentPct / 100);
+  const agentCommissionPct = parsePercent(form.agentCommission);
+  const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
   const loanAmount = purchasePrice - downPaymentAmt;
   const dscrRate = parsePercent(form.dscrRate);
   const loanTermYears = parseInt(form.loanTerm || "30", 10) || 30;
@@ -91,14 +106,22 @@ function RentalTab({ tab }) {
     loanTermYears * 12,
   );
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
+  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
+  const firstMonthMgmtAdjustment = Math.max(
+    0,
+    firstMonthPropMgmtFee - propMgmtFee,
+  );
+  const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const totalMonthlyExpenses =
     monthlyMortgage + propMgmtFee + monthlyInsurance + monthlyTaxes;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
-  const annualCashFlow = monthlyCashFlow * 12;
+  const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
   const noi = monthlyRent - propMgmtFee - monthlyInsurance - monthlyTaxes;
   const dscr = monthlyMortgage > 0 ? noi / monthlyMortgage : 0;
+  const totalFundsNeeded =
+    downPaymentAmt + closingCosts + agentCommissionAmt + INSPECTION_COST;
   const cashOnCash =
-    downPaymentAmt > 0 ? (annualCashFlow / downPaymentAmt) * 100 : 0;
+    totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
 
   const isFormComplete =
@@ -114,17 +137,24 @@ function RentalTab({ tab }) {
       purchasePrice,
       downPaymentPct,
       downPaymentAmt,
+      agentCommissionPct,
+      agentCommissionAmt,
       loanAmount,
       dscrRate,
       loanTermYears,
       monthlyRent,
       monthlyMortgage,
+      closingCosts,
       propMgmtFee,
+      firstMonthPropMgmtFee,
+      firstMonthMgmtAdjustment,
       monthlyInsurance,
       monthlyTaxes,
       totalMonthlyExpenses,
       monthlyCashFlow,
       annualCashFlow,
+      inspectionCost: INSPECTION_COST,
+      totalFundsNeeded,
       noi,
       dscr,
       cashOnCash,
@@ -190,6 +220,14 @@ function RentalTab({ tab }) {
             placeholder="e.g. 20"
             required
           />
+          <Field
+            label="Agent Commission (%)"
+            name="agentCommission"
+            value={form.agentCommission}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. 3"
+          />
           <label className="field deal-analyzer-output">
             <span>Down Payment Amount</span>
             <input
@@ -199,9 +237,30 @@ function RentalTab({ tab }) {
             />
           </label>
           <label className="field deal-analyzer-output">
+            <span>Agent Commission Amount</span>
+            <input
+              value={agentCommissionAmt > 0 ? fmt(agentCommissionAmt) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <label className="field deal-analyzer-output">
             <span>Loan Amount</span>
             <input
               value={loanAmount > 0 ? fmt(loanAmount) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <label className="field deal-analyzer-output">
+            <span>
+              Closing Costs{" "}
+              <span className="deal-analyzer-auto-badge">
+                {CLOSING_COSTS_PCT}% of price
+              </span>
+            </span>
+            <input
+              value={closingCosts > 0 ? fmt(closingCosts) : ""}
               readOnly
               tabIndex={-1}
             />
@@ -247,9 +306,9 @@ function RentalTab({ tab }) {
             placeholder="e.g. $1,800"
             required
           />
-          <label className="field deal-analyzer-output">
+          <label className="field deal-analyzer-output deal-analyzer-inline-badge-output">
             <span>
-              Property Management{" "}
+              Property Management
               <span className="deal-analyzer-auto-badge">
                 {PROP_MGMT_PCT}% of rent
               </span>
@@ -374,6 +433,57 @@ function RentalTab({ tab }) {
                 className="deal-analyzer-section-label"
                 style={{ gridColumn: "1 / -1" }}
               >
+                One-Time Costs
+              </div>
+
+              <div>
+                <span>Closing Costs ({CLOSING_COSTS_PCT}% of price)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.closingCosts} format={fmt} />
+                </strong>
+              </div>
+              {summary.agentCommissionAmt > 0 && (
+                <div>
+                  <span>Agent Commission ({summary.agentCommissionPct}%)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.agentCommissionAmt}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              <div>
+                <span>
+                  First Month Property Management ({FIRST_MONTH_PROP_MGMT_PCT}%)
+                </span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.firstMonthPropMgmtFee}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Inspection Cost</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.inspectionCost} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Total Funds Needed</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.totalFundsNeeded}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+
+              <div
+                className="deal-analyzer-section-label"
+                style={{ gridColumn: "1 / -1" }}
+              >
                 Returns
               </div>
 
@@ -458,6 +568,19 @@ function RentalTab({ tab }) {
                   ? ` − ${fmt(summary.monthlyTaxes)}`
                   : ""}{" "}
                 = {fmt(summary.monthlyCashFlow)}
+              </span>
+            </div>
+
+            <div
+              className="deal-analyzer-calculation"
+              style={{ marginTop: "0.75rem" }}
+            >
+              Annual Cash Flow = (Monthly Cash Flow × 12) − First Month Prop.
+              Mgmt Adjustment
+              <span>
+                ({fmt(summary.monthlyCashFlow)} × 12) −{" "}
+                {fmt(summary.firstMonthMgmtAdjustment)} ={" "}
+                {fmt(summary.annualCashFlow)}
               </span>
             </div>
           </div>

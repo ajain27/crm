@@ -13,18 +13,23 @@ const tab = {
 // Purchase = $360,000 | Down = 10% = $36,000 | Loan = $324,000
 // Rate = 0% (interest-free) | Term = 30yr → Mortgage = $324,000 / 360 = $900/mo
 // Rent = $2,000 | Prop Mgmt = 10% = $200 | Insurance = $100 | Taxes = $100
+// Agent Commission = 3% of $360,000 = $10,800
+// Closing Costs = 2% of $360,000 = $7,200
+// First Month Prop Mgmt = 50% = $1,000 | First Month Adjustment = $800
+// Inspection Cost = $450 | Total Funds Needed = $54,450
 //
 // Total Expenses = $900 + $200 + $100 + $100 = $1,300
 // Monthly Cash Flow = $2,000 − $1,300 = $700
-// Annual Cash Flow  = $700 × 12 = $8,400
+// Annual Cash Flow  = ($700 × 12) − $800 = $7,600
 // NOI (monthly)     = $2,000 − $200 − $100 − $100 = $1,600
 // DSCR              = $1,600 / $900 = 1.78
-// Cash-on-Cash      = $8,400 / $36,000 × 100 = 23.3%
+// Cash-on-Cash      = $7,600 / $54,450 × 100 = 14.0%
 // Cap Rate          = ($1,600 × 12 / $360,000) × 100 = 5.3%
 
 function fillFields({
   purchasePrice = "360000",
   downPayment = "10",
+  agentCommission = "3",
   dscrRate = "0",
   loanTerm = "30",
   monthlyRent = "2000",
@@ -36,6 +41,9 @@ function fillFields({
   });
   fireEvent.change(screen.getByLabelText(/Down Payment \(%\)/i), {
     target: { value: downPayment },
+  });
+  fireEvent.change(screen.getByLabelText(/Agent Commission \(%\)/i), {
+    target: { value: agentCommission },
   });
   fireEvent.change(screen.getByLabelText(/DSCR Interest Rate/i), {
     target: { value: dscrRate },
@@ -144,6 +152,14 @@ describe("input formatting", () => {
     expect(input).toHaveValue("20%");
   });
 
+  it("appends % to Agent Commission on blur", () => {
+    render(<RentalTab tab={tab} />);
+    const input = screen.getByLabelText(/Agent Commission \(%\)/i);
+    fireEvent.change(input, { target: { value: "3" } });
+    fireEvent.blur(input);
+    expect(input).toHaveValue("3%");
+  });
+
   it("appends % to DSCR Interest Rate on blur", () => {
     render(<RentalTab tab={tab} />);
     const input = screen.getByLabelText(/DSCR Interest Rate/i);
@@ -182,6 +198,19 @@ describe("live readonly fields", () => {
     expect(screen.getByLabelText(/Loan Amount/i)).toHaveValue("$160,000.00");
   });
 
+  it("Agent Commission Amount updates as purchase price and percent change", () => {
+    render(<RentalTab tab={tab} />);
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "200000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Agent Commission \(%\)/i), {
+      target: { value: "3" },
+    });
+    expect(screen.getByLabelText(/Agent Commission Amount/i)).toHaveValue(
+      "$6,000.00",
+    );
+  });
+
   it("Property Management shows 10% of rent live", () => {
     render(<RentalTab tab={tab} />);
     fireEvent.change(screen.getByLabelText(/Estimated Monthly Rent/i), {
@@ -214,6 +243,14 @@ describe("live readonly fields", () => {
       target: { value: "30" },
     });
     expect(screen.getByLabelText(/Monthly Mortgage/i)).toHaveValue("$900.00");
+  });
+
+  it("Closing Costs updates as 2% of purchase price", () => {
+    render(<RentalTab tab={tab} />);
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "360000" },
+    });
+    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$7,200.00");
   });
 });
 
@@ -281,10 +318,10 @@ describe("summary calculations", () => {
 
   it("calculates annual cash flow = monthly × 12", () => {
     render(<RentalTab tab={tab} />);
-    // $700 × 12 = $8,400
+    // ($700 × 12) − $800 first-month management adjustment = $7,600
     fillFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("$8,400.00")).toBeInTheDocument();
+    expect(screen.getByText("$7,600.00")).toBeInTheDocument();
   });
 
   it("calculates DSCR = NOI / mortgage", () => {
@@ -297,10 +334,24 @@ describe("summary calculations", () => {
 
   it("calculates cash-on-cash return = annual CF / down payment", () => {
     render(<RentalTab tab={tab} />);
-    // $8,400 / $36,000 × 100 = 23.3%
+    // $7,600 / $54,450 × 100 = 14.0%
     fillFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("23.3%")).toBeInTheDocument();
+    expect(screen.getByText("14.0%")).toBeInTheDocument();
+  });
+
+  it("shows one-time commission, closing, first month management, and inspection costs", () => {
+    render(<RentalTab tab={tab} />);
+    fillFields();
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+    expect(screen.getByText("Agent Commission (3%)")).toBeInTheDocument();
+    expect(screen.getByText("Closing Costs (2% of price)")).toBeInTheDocument();
+    expect(
+      screen.getByText("First Month Property Management (50%)"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Inspection Cost")).toBeInTheDocument();
+    expect(screen.getByText("Total Funds Needed")).toBeInTheDocument();
+    expect(screen.getByText("$54,450.00")).toBeInTheDocument();
   });
 
   it("calculates cap rate = annual NOI / purchase price", () => {
