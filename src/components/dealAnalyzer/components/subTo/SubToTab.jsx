@@ -384,7 +384,7 @@ function SubToTab({ tab }) {
 
           <div style={{ gridColumn: "1 / -1" }}>
             <a
-              href="https://app.rentcast.io/app"
+              href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
               target="_blank"
               rel="noopener noreferrer"
               className="deal-analyzer-rent-estimate-btn"
