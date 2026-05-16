@@ -170,6 +170,9 @@
 
   .app-topbar-spacer {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
   }
 
   .app-topbar-actions {

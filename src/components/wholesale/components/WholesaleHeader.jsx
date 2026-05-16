@@ -47,9 +47,7 @@ function WholesaleHeader({
   return (
     <div className="app-topbar">
       <div className="app-topbar-row1">
-        <div className="app-topbar-spacer" />
-        <img src={logo} alt="You Win Estates" className="app-topbar-logo" />
-        <div className="app-topbar-actions">
+        <div className="app-topbar-spacer">
           <button
             type="button"
             className="ghost-btn header-theme-toggle"
@@ -63,7 +61,9 @@ function WholesaleHeader({
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-
+        </div>
+        <img src={logo} alt="You Win Estates" className="app-topbar-logo" />
+        <div className="app-topbar-actions">
           <div className="profile-menu-wrap" ref={profileMenuRef}>
             <button
               type="button"
