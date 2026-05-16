@@ -296,19 +296,8 @@ function RentalTab({ tab }) {
         </div>
 
         {/* — Income & Expenses */}
-        <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
+        <div className="deal-analyzer-section-label">Monthly Expenses</div>
         <div className="deal-analyzer-form-grid">
-          <div style={{ gridColumn: "1 / -1" }}>
-            <a
-              href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="deal-analyzer-rent-estimate-btn"
-            >
-              Get Rent Estimate ↗
-            </a>
-          </div>
-
           <Field
             label="Estimated Monthly Rent"
             name="monthlyRent"
@@ -320,8 +309,11 @@ function RentalTab({ tab }) {
           <label className="field deal-analyzer-output deal-analyzer-inline-badge-output">
             <span>
               Property Management
-              <span className="deal-analyzer-auto-badge">
-                {PROP_MGMT_PCT}% of rent
+              <span
+                className="deal-analyzer-auto-badge"
+                style={{ fontSize: "10px" }}
+              >
+                {PROP_MGMT_PCT}% (RENT)
               </span>
             </span>
             <input
@@ -344,6 +336,16 @@ function RentalTab({ tab }) {
             onChange={handleChange}
             placeholder="e.g. $250"
           />
+          <div style={{ gridColumn: "1 / -1" }}>
+            <a
+              href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="deal-analyzer-rent-estimate-btn"
+            >
+              Get Rent Estimate ↗
+            </a>
+          </div>
         </div>
 
         <div className="deal-analyzer-actions">

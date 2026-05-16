@@ -18,6 +18,7 @@ const initialForm = {
   rehabType: "",
   squareFootage: "",
   rehabCost: "",
+  additionalRehabCost: "",
   wholesaleFee: "",
   buyersProfit: "",
 };
@@ -26,7 +27,12 @@ function WholesaleTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
 
-  const CURRENCY_FIELDS = new Set(["arv", "rehabCost", "wholesaleFee"]);
+  const CURRENCY_FIELDS = new Set([
+    "arv",
+    "rehabCost",
+    "additionalRehabCost",
+    "wholesaleFee",
+  ]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -78,14 +84,18 @@ function WholesaleTab({ tab }) {
   function handleCalculate() {
     if (!isFormComplete) return;
     const arv = parseCurrency(form.arv);
-    const rehab =
+    const baseRehab =
       autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
+    const additionalRehab = parseCurrency(form.additionalRehabCost);
+    const rehab = baseRehab + additionalRehab;
     const wholesaleFee = parseCurrency(form.wholesaleFee);
     const buyersProfitPct = parsePercent(form.buyersProfit);
     const mao = arv * (1 - buyersProfitPct / 100) - rehab - wholesaleFee;
 
     setResult({
       arv,
+      baseRehab,
+      additionalRehab,
       rehab,
       wholesaleFee,
       buyersProfitPct,
@@ -201,6 +211,16 @@ function WholesaleTab({ tab }) {
               />
             ))}
 
+          {form.rehabType !== "no-rehab" && (
+            <Field
+              label="Additional Rehab Needed"
+              name="additionalRehabCost"
+              value={form.additionalRehabCost}
+              onChange={handleChange}
+              placeholder="e.g. $5,000"
+            />
+          )}
+
           <Field
             label="Wholesale Fee"
             name="wholesaleFee"
@@ -253,6 +273,59 @@ function WholesaleTab({ tab }) {
                 <span>Assign Deal (MAO + Wholesale Fee)</span>
                 <strong>
                   <AnimatedAmount value={result.assignDeal} format={fmt} />
+                </strong>
+              </div>
+            </div>
+
+            <div
+              className="deal-analyzer-summary-grid"
+              style={{ marginTop: "1.25rem" }}
+            >
+              <div
+                className="deal-analyzer-section-label"
+                style={{ gridColumn: "1 / -1", marginTop: 0 }}
+              >
+                Breakdown
+              </div>
+              <div>
+                <span>ARV</span>
+                <strong className="deal-analyzer-return-positive">
+                  <AnimatedAmount value={result.arv} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Rehab Cost</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={result.baseRehab} format={fmt} />
+                </strong>
+              </div>
+              {result.additionalRehab > 0 && (
+                <div>
+                  <span>Additional Rehab</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={result.additionalRehab}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              <div>
+                <span>Total Rehab</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={result.rehab} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Wholesale Fee</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={result.wholesaleFee} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Buyer's Profit</span>
+                <strong className="deal-analyzer-return-negative">
+                  {result.buyersProfitPct}%
                 </strong>
               </div>
             </div>

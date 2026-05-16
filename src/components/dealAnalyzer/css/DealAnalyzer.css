@@ -95,7 +95,7 @@
   }
 
   .deal-analyzer-auto-badge {
-    @apply ml-1 inline-flex rounded-full px-1.5 py-0 text-[9px] font-semibold uppercase tracking-[0.08em];
+    @apply ml-1 inline-flex rounded-full px-1 py-0 text-[7px] font-semibold uppercase tracking-[0.08em];
     background: color-mix(in srgb, var(--blue-light) 75%, transparent 25%);
     color: var(--blue);
     vertical-align: middle;
@@ -113,8 +113,16 @@
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
+  .deal-analyzer-inline-badge-output {
+    min-width: 0;
+  }
+
   .deal-analyzer-inline-badge-output > span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     white-space: nowrap;
+    overflow: hidden;
   }
 
   .deal-analyzer-address {
