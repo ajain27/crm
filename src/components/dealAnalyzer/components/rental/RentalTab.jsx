@@ -296,7 +296,7 @@ function RentalTab({ tab }) {
         </div>
 
         {/* — Income & Expenses */}
-        <div className="deal-analyzer-section-label">Monthly Expenses</div>
+        <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
         <div className="deal-analyzer-form-grid">
           <Field
             label="Estimated Monthly Rent"

@@ -1,5 +1,12 @@
-import { Menu, Moon, Sun } from "lucide-react";
+import { BarChart3, Calculator, Home, Moon, Sun, Users } from "lucide-react";
 import logo from "../../../assets/logo.png";
+
+const NAV_ITEMS = [
+  { id: "dashboard", label: "Dashboard", icon: Home },
+  { id: "buyers", label: "Buyers List", icon: Users },
+  { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
+  { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
+];
 
 function buildDisplayName(currentUser) {
   return (
@@ -12,7 +19,10 @@ function buildDisplayName(currentUser) {
 
 function buildProfileInitial(currentUser) {
   return String(
-    currentUser?.firstName || currentUser?.username || currentUser?.email || "U",
+    currentUser?.firstName ||
+      currentUser?.username ||
+      currentUser?.email ||
+      "U",
   )
     .trim()
     .charAt(0)
@@ -21,10 +31,10 @@ function buildProfileInitial(currentUser) {
 
 function WholesaleHeader({
   currentUser,
-  isSidebarOpen,
+  activeView,
+  setActiveView,
   isProfileMenuOpen,
   theme,
-  onToggleSidebar,
   onToggleTheme,
   onToggleProfileMenu,
   onEditProfile,
@@ -35,92 +45,85 @@ function WholesaleHeader({
   const profileInitial = buildProfileInitial(currentUser);
 
   return (
-    <div
-      className={`company-header ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
-    >
-      <div
-        className={`company-brand-header ${isSidebarOpen ? "sidebar-visible" : "sidebar-hidden"}`}
-      >
-        <button
-          type="button"
-          className="ghost-btn sidebar-toggle-btn sidebar-toggle-btn-floating"
-          onClick={onToggleSidebar}
-          aria-label={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
-          title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
-        >
-          <Menu size={18} />
-        </button>
-        <img
-          src={logo}
-          alt="You Win Estates"
-          className="company-header-logo is-visible"
-        />
-        <span className="company-proprietary-tag">
-          Proprietary & Confidential
-        </span>
-      </div>
+    <div className="app-topbar">
+      <div className="app-topbar-row1">
+        <div className="app-topbar-spacer" />
+        <img src={logo} alt="You Win Estates" className="app-topbar-logo" />
+        <div className="app-topbar-actions">
+          <button
+            type="button"
+            className="ghost-btn header-theme-toggle"
+            onClick={onToggleTheme}
+            aria-label={
+              theme === "dark"
+                ? "Switch to light theme"
+                : "Switch to dark theme"
+            }
+            title={theme === "dark" ? "Light Theme" : "Dark Theme"}
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
 
-      <div className="header-actions">
-        <button
-          type="button"
-          className="ghost-btn header-theme-toggle"
-          onClick={onToggleTheme}
-          aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-          title={theme === "dark" ? "Light Theme" : "Dark Theme"}
-        >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        <div className="profile-menu-wrap" ref={profileMenuRef}>
-        <button
-          type="button"
-          className="profile-avatar-btn"
-          onClick={onToggleProfileMenu}
-          aria-label="Open profile menu"
-          title="Open profile menu"
-        >
-          {currentUser?.profileImage ? (
-            <img
-              src={currentUser.profileImage}
-              alt={currentUser.firstName || currentUser.username || "Profile"}
-              className="profile-avatar-image"
-            />
-          ) : (
-            <span className="profile-avatar-fallback">{profileInitial}</span>
-          )}
-        </button>
-
-        {isProfileMenuOpen && (
-          <div className="profile-menu-dropdown">
-            <div className="profile-menu-header">
-              <strong>{displayName}</strong>
-              <span>{currentUser?.email}</span>
-            </div>
+          <div className="profile-menu-wrap" ref={profileMenuRef}>
             <button
               type="button"
-              className="profile-menu-item profile-menu-theme-item"
-              onClick={onToggleTheme}
+              className="profile-avatar-btn"
+              onClick={onToggleProfileMenu}
+              aria-label="Open profile menu"
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-              {theme === "dark" ? "Light Theme" : "Dark Theme"}
+              {currentUser?.profileImage ? (
+                <img
+                  src={currentUser.profileImage}
+                  alt={
+                    currentUser.firstName || currentUser.username || "Profile"
+                  }
+                  className="profile-avatar-image"
+                />
+              ) : (
+                <span className="profile-avatar-fallback">
+                  {profileInitial}
+                </span>
+              )}
             </button>
-            <button
-              type="button"
-              className="profile-menu-item"
-              onClick={onEditProfile}
-            >
-              Edit Profile
-            </button>
-            <button
-              type="button"
-              className="profile-menu-item danger"
-              onClick={onSignOut}
-            >
-              Sign Out
-            </button>
+
+            {isProfileMenuOpen && (
+              <div className="profile-menu-dropdown">
+                <div className="profile-menu-header">
+                  <strong>{displayName}</strong>
+                  <span>{currentUser?.email}</span>
+                </div>
+                <button
+                  type="button"
+                  className="profile-menu-item"
+                  onClick={onEditProfile}
+                >
+                  Edit Profile
+                </button>
+                <button
+                  type="button"
+                  className="profile-menu-item danger"
+                  onClick={onSignOut}
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      <div className="app-topbar-nav">
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            className={`app-topbar-nav-item${activeView === id ? " active" : ""}`}
+            onClick={() => setActiveView(id)}
+          >
+            <Icon size={14} />
+            {label}
+          </button>
+        ))}
       </div>
     </div>
   );

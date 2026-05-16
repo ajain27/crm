@@ -16,7 +16,6 @@ import Wholesale_data from "./data/Wholesale_data";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
-import Sidebar from "../../sidebar/Sidebar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
@@ -48,20 +47,6 @@ function Wholesale() {
     }
   });
   const [activeView, setActiveView] = useState("dashboard");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth > 1100;
-  });
-
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth > 1100) {
-        setIsSidebarOpen(true);
-      }
-    }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const { deals, setDeals, isLoading, errorMessage, deleteDeal, persist } =
     useDealsData({ currentUser });
@@ -143,27 +128,14 @@ function Wholesale() {
   }
 
   return (
-    <div
-      className={`layout ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}
-    >
-      <div className="desktop-sidebar-slot">
-        <Sidebar
-          activeView={activeView}
-          setActiveView={setActiveView}
-          currentUser={currentUser}
-          isOpen={isSidebarOpen}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-        />
-      </div>
-
+    <div className="layout layout-no-sidebar">
       <main className="main">
         <WholesaleHeader
           currentUser={currentUser}
-          isSidebarOpen={isSidebarOpen}
+          activeView={activeView}
+          setActiveView={setActiveView}
           isProfileMenuOpen={isProfileMenuOpen}
           theme={theme}
-          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           onToggleTheme={toggleTheme}
           onToggleProfileMenu={() => setIsProfileMenuOpen((prev) => !prev)}
           onEditProfile={() => {
@@ -173,16 +145,6 @@ function Wholesale() {
           onSignOut={handleSignOut}
           profileMenuRef={profileMenuRef}
         />
-        <div className="mobile-sidebar-slot">
-          <Sidebar
-            activeView={activeView}
-            setActiveView={setActiveView}
-            currentUser={currentUser}
-            isOpen={isSidebarOpen}
-            theme={theme}
-            onToggleTheme={toggleTheme}
-          />
-        </div>
         {activeView === "dashboard" ? (
           <>
             <header className="page-header" data-reveal="left">
