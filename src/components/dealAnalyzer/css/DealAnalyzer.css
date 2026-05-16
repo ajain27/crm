@@ -256,7 +256,13 @@
   }
 
   .deal-analyzer-final-verdict {
-    @apply mt-5 flex items-center justify-between rounded-[20px] border px-6 py-5;
+    @apply mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border px-6 py-5;
+  }
+
+  .deal-analyzer-verdict-reason {
+    @apply w-full text-sm;
+    color: var(--muted);
+    margin: 0;
   }
 
   .deal-analyzer-final-verdict span {

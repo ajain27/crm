@@ -93,7 +93,11 @@ function FixAndFlipTab({ tab }) {
     closingCosts -
     agentCommission;
   const roi = totalCapital > 0 ? (netProfit / totalCapital) * 100 : 0;
-  const isDeal = ltvQualifies && netProfit > 0;
+  const longDurationLowProfit = duration > 6 && netProfit < 40000;
+  const isDeal = ltvQualifies && netProfit > 0 && !longDurationLowProfit;
+  const notDealReason = longDurationLowProfit
+    ? `Duration of ${duration} months exceeds 6 months with a net profit below $40,000 — holding costs outweigh the return.`
+    : null;
 
   const rehabCostReady =
     form.rehabType === "no-rehab" ||
@@ -141,6 +145,7 @@ function FixAndFlipTab({ tab }) {
       netProfit,
       roi,
       isDeal,
+      notDealReason,
     });
   }
 
@@ -579,6 +584,11 @@ function FixAndFlipTab({ tab }) {
             >
               <span>Final Verdict</span>
               <strong>{summary.isDeal ? "Deal" : "No Deal"}</strong>
+              {summary.notDealReason && (
+                <p className="deal-analyzer-verdict-reason">
+                  {summary.notDealReason}
+                </p>
+              )}
             </div>
           </div>
         )}

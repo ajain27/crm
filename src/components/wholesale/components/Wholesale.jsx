@@ -48,6 +48,13 @@ function Wholesale() {
   });
   const [activeView, setActiveView] = useState("dashboard");
 
+  useEffect(() => {
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   const { deals, setDeals, isLoading, errorMessage, deleteDeal, persist } =
     useDealsData({ currentUser });
 
@@ -129,22 +136,22 @@ function Wholesale() {
 
   return (
     <div className="layout layout-no-sidebar">
+      <WholesaleHeader
+        currentUser={currentUser}
+        activeView={activeView}
+        setActiveView={setActiveView}
+        isProfileMenuOpen={isProfileMenuOpen}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onToggleProfileMenu={() => setIsProfileMenuOpen((prev) => !prev)}
+        onEditProfile={() => {
+          setIsProfileMenuOpen(false);
+          setIsProfileModalOpen(true);
+        }}
+        onSignOut={handleSignOut}
+        profileMenuRef={profileMenuRef}
+      />
       <main className="main">
-        <WholesaleHeader
-          currentUser={currentUser}
-          activeView={activeView}
-          setActiveView={setActiveView}
-          isProfileMenuOpen={isProfileMenuOpen}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onToggleProfileMenu={() => setIsProfileMenuOpen((prev) => !prev)}
-          onEditProfile={() => {
-            setIsProfileMenuOpen(false);
-            setIsProfileModalOpen(true);
-          }}
-          onSignOut={handleSignOut}
-          profileMenuRef={profileMenuRef}
-        />
         {activeView === "dashboard" ? (
           <>
             <header className="page-header" data-reveal="left">
