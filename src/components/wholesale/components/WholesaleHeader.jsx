@@ -3,9 +3,9 @@ import logo from "../../../assets/logo.png";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
-  { id: "buyers", label: "Buyers List", icon: Users },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
   { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
+  { id: "buyers", label: "Buyers List", icon: Users },
 ];
 
 function buildDisplayName(currentUser) {
