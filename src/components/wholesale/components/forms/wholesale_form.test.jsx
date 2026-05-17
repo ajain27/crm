@@ -45,7 +45,7 @@ describe("Wholesale_form rehab fields", () => {
   it("shows manual rehab input when auto rehab is unavailable", () => {
     renderForm({
       rehabType: "heavy",
-      squareFootage: "4000",
+      squareFootage: "5600",
       rehabCost: "$80,000",
     });
 
@@ -67,7 +67,7 @@ describe("Wholesale_form rehab fields", () => {
   it("shows a negative suggested MAO instead of hiding the placeholder", () => {
     renderForm({
       rehabType: "heavy",
-      squareFootage: "4000",
+      squareFootage: "5600",
       rehabCost: "$80,000",
       desiredProfit: "$10,000",
       mao: "",

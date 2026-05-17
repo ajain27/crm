@@ -69,7 +69,7 @@ function WholesaleTab({ tab }) {
       ? Math.round(autoRehabResult.cost * rehabMultiplier)
       : null;
   const autoRehabEstimated = autoRehabResult?.estimated ?? false;
-  const isManualRehab = sqft > 3500 || !form.rehabType;
+  const isManualRehab = sqft > 5500 || !form.rehabType;
   const rehabCostReady =
     form.rehabType === "no-rehab" ||
     autoRehabCost !== null ||
@@ -199,7 +199,7 @@ function WholesaleTab({ tab }) {
             ) : (
               <Field
                 label={
-                  isManualRehab && form.rehabType && sqft > 3500
+                  isManualRehab && form.rehabType && sqft > 5500
                     ? "Rehab Cost (manual — sq ft > 3,500)"
                     : "Rehab Cost"
                 }

@@ -40,7 +40,7 @@ describe("getWholesaleRehabDetails", () => {
     const form = {
       ...createEmptyDealForm(),
       rehabType: "heavy",
-      squareFootage: "4000",
+      squareFootage: "5600",
       rehabCost: "$80,000",
       additionalRehabCost: "$5,000",
     };
@@ -73,7 +73,7 @@ describe("getSuggestedWholesaleMao", () => {
       ...createEmptyDealForm(),
       arv: "$100,000",
       rehabType: "heavy",
-      squareFootage: "4000",
+      squareFootage: "5600",
       rehabCost: "$80,000",
       desiredProfit: "$10,000",
     };

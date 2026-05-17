@@ -103,8 +103,8 @@ function FixAndFlipTab({ tab }) {
     form.rehabType === "no-rehab" ||
     autoRehabCost !== null ||
     form.rehabCost?.trim();
-  // sqft > 3500 with a type selected means user must enter manually
-  const isManualRehab = sqft > 3500 || !form.rehabType;
+  // sqft > 5500 with a type selected means user must enter manually
+  const isManualRehab = sqft > 5500 || !form.rehabType;
 
   const isFormComplete =
     form.arv?.trim() &&
@@ -286,7 +286,7 @@ function FixAndFlipTab({ tab }) {
               ) : (
                 <Field
                   label={
-                    isManualRehab && form.rehabType && sqft > 3500
+                    isManualRehab && form.rehabType && sqft > 5500
                       ? "Min Rehab Cost (manual — sq ft > 3,500)"
                       : "Min Rehab Cost"
                   }

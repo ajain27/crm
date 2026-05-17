@@ -646,13 +646,13 @@ describe("rehab estimator", () => {
       );
     });
 
-    it("sqft=3501 falls back to manual entry", () => {
+    it("sqft=5501 falls back to manual entry", () => {
       render(<FixAndFlipTab tab={tab} />);
       fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
         target: { value: "heavy" },
       });
       fireEvent.change(screen.getByLabelText(/Square Footage/i), {
-        target: { value: "3501" },
+        target: { value: "5501" },
       });
       const input = screen.getByLabelText(/Min Rehab Cost/i);
       expect(input).not.toHaveAttribute("readonly");

@@ -160,7 +160,7 @@ export function getWholesaleRehabDetails(form) {
     sqft,
     autoRehabCost,
     autoRehabEstimated: autoRehabResult?.estimated ?? false,
-    isManualRehab: sqft > 3500 || !form?.rehabType,
+    isManualRehab: sqft > 5500 || !form?.rehabType,
     manualRehabCost,
     additionalRehabCost,
     baseRehabCost,
