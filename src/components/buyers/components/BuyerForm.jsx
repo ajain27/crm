@@ -8,9 +8,7 @@ function BuyerForm({ addBuyer, form, handleChange }) {
     });
   }
   const isFormComplete =
-    Boolean(form.fullName?.trim()) &&
-    Boolean(form.email?.trim()) &&
-    Boolean(form.state?.trim());
+    Boolean(form.fullName?.trim()) && Boolean(form.state?.trim());
 
   return (
     <section
@@ -40,7 +38,6 @@ function BuyerForm({ addBuyer, form, handleChange }) {
             type="email"
             value={form.email}
             onChange={handleChange}
-            required
           />
           <Field
             label="Phone Number"

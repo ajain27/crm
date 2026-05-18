@@ -87,16 +87,16 @@ function Buyers({ currentUser = { id: "" } }) {
   async function addBuyer(event) {
     event.preventDefault();
 
-    if (!form.fullName?.trim() || !form.email?.trim() || !form.state?.trim()) {
-      alert("Please fill out at least Full Name, Email, and State.");
+    if (!form.fullName?.trim() || !form.state?.trim()) {
+      alert("Please fill out at least Full Name and State.");
       return;
     }
 
-    const newEmail = form.email.trim().toLowerCase();
+    const newEmail = form.email?.trim().toLowerCase() || "";
     const newPhone = form.phone?.trim();
 
     const isDuplicate = buyers.some((buyer) => {
-      const emailMatch = buyer.email?.toLowerCase() === newEmail;
+      const emailMatch = newEmail && buyer.email?.toLowerCase() === newEmail;
       const phoneMatch = newPhone && buyer.phone === newPhone;
       return emailMatch || phoneMatch;
     });
