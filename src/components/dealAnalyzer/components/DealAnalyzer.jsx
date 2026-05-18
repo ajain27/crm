@@ -9,6 +9,19 @@ import FindCompsTab from "./findComps/FindCompsTab";
 
 const analyzerTabs = [
   {
+    id: "find-comps",
+    label: "Find Comps",
+    eyebrow: "Comparable Sales",
+    title: "Find property comps",
+    description:
+      "Search for comparable sold properties and After Repair Value estimates to validate your deal numbers before making an offer.",
+    prompts: [
+      "Use sold comps within 0.5 miles and last 6 months",
+      "Match bed/bath count and similar square footage",
+      "Adjust for condition, lot size, and location differences",
+    ],
+  },
+  {
     id: "wholesale",
     label: "Wholesale",
     eyebrow: "Wholesale Analysis",
@@ -22,16 +35,16 @@ const analyzerTabs = [
     ],
   },
   {
-    id: "subto",
-    label: "Sub-To",
-    eyebrow: "Creative Finance",
-    title: "Subject-to deal review",
+    id: "rental",
+    label: "Rental",
+    eyebrow: "Rental Analysis",
+    title: "Cash flow & returns",
     description:
-      "Break down takeover terms, seller pain points, and the financing structure you need to validate before moving forward.",
+      "Evaluate a rental property's monthly cash flow, DSCR, cap rate, and cash-on-cash return using DSCR financing.",
     prompts: [
-      "Existing loan balance, interest rate, and monthly payment",
-      "Seller cash needed at closing and arrears to cure",
-      "Exit path: hold, wrap, or novation strategy",
+      "Verify rent estimate with local market comps",
+      "Confirm DSCR rate and confirm the lender's qualifying ratio",
+      "Account for vacancy, maintenance, and management costs",
     ],
   },
   {
@@ -47,6 +60,20 @@ const analyzerTabs = [
       "Holding costs, closing costs, and target margin",
     ],
   },
+  {
+    id: "subto",
+    label: "Sub-To",
+    eyebrow: "Creative Finance",
+    title: "Subject-to deal review",
+    description:
+      "Break down takeover terms, seller pain points, and the financing structure you need to validate before moving forward.",
+    prompts: [
+      "Existing loan balance, interest rate, and monthly payment",
+      "Seller cash needed at closing and arrears to cure",
+      "Exit path: hold, wrap, or novation strategy",
+    ],
+  },
+
   {
     id: "multi-family",
     label: "Multi-Family",
@@ -73,36 +100,10 @@ const analyzerTabs = [
       "Account for holding period and monthly carrying costs",
     ],
   },
-  {
-    id: "rental",
-    label: "Rental",
-    eyebrow: "Rental Analysis",
-    title: "Cash flow & returns",
-    description:
-      "Evaluate a rental property's monthly cash flow, DSCR, cap rate, and cash-on-cash return using DSCR financing.",
-    prompts: [
-      "Verify rent estimate with local market comps",
-      "Confirm DSCR rate and confirm the lender's qualifying ratio",
-      "Account for vacancy, maintenance, and management costs",
-    ],
-  },
-  {
-    id: "find-comps",
-    label: "Find Comps",
-    eyebrow: "Comparable Sales",
-    title: "Find property comps",
-    description:
-      "Search for comparable sold properties and After Repair Value estimates to validate your deal numbers before making an offer.",
-    prompts: [
-      "Use sold comps within 0.5 miles and last 6 months",
-      "Match bed/bath count and similar square footage",
-      "Adjust for condition, lot size, and location differences",
-    ],
-  },
 ];
 
 function DealAnalyzer() {
-  const [activeTab, setActiveTab] = useState("wholesale");
+  const [activeTab, setActiveTab] = useState("find-comps");
   const currentTab =
     analyzerTabs.find((tab) => tab.id === activeTab) || analyzerTabs[0];
 
