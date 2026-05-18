@@ -1,5 +1,22 @@
 import { useState } from "react";
-import { ExternalLink, Search, MapPin } from "lucide-react";
+import { ExternalLink, Search, MapPin, Clock } from "lucide-react";
+
+const CACHE_KEY = "findComps_cache";
+const MAX_CACHE = 10;
+
+function loadCache() {
+  try {
+    return JSON.parse(localStorage.getItem(CACHE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function persistCache(entries) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+  } catch {}
+}
 
 const fmt = (n) => (n != null ? `$${Math.round(n).toLocaleString()}` : "—");
 
@@ -23,22 +40,52 @@ function getCompLinks(encoded) {
 
 function FindCompsTab({ tab }) {
   const [address, setAddress] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | loading | done | error
+  const [status, setStatus] = useState("idle");
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [cache, setCache] = useState(loadCache);
+
+  function upsertCache(searchAddress, data) {
+    setCache((prev) => {
+      const filtered = prev.filter(
+        (e) => e.address.toLowerCase() !== searchAddress.toLowerCase(),
+      );
+      const next = [
+        {
+          address: searchAddress,
+          result: data,
+          searchedAt: new Date().toISOString(),
+        },
+        ...filtered,
+      ].slice(0, MAX_CACHE);
+      persistCache(next);
+      return next;
+    });
+  }
 
   async function handleFindComps() {
     if (!address.trim()) return;
+
+    const trimmed = address.trim();
+
+    // Serve from cache if available
+    const cached = cache.find(
+      (e) => e.address.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (cached) {
+      upsertCache(cached.address, cached.result); // bump to top
+      setResult(cached.result);
+      setStatus("done");
+      return;
+    }
+
     setStatus("loading");
     setResult(null);
     setErrorMsg("");
 
     try {
       const apiKey = import.meta.env.VITE_RENTCAST_API_KEY;
-      const params = new URLSearchParams({
-        address: address.trim(),
-        compCount: 5,
-      });
+      const params = new URLSearchParams({ address: trimmed, compCount: 5 });
       const res = await fetch(
         `https://api.rentcast.io/v1/avm/value?${params}`,
         { headers: { "X-Api-Key": apiKey } },
@@ -48,6 +95,7 @@ function FindCompsTab({ tab }) {
         throw new Error(err.message || `Error ${res.status}`);
       }
       const data = await res.json();
+      upsertCache(trimmed, data);
       setResult(data);
       setStatus("done");
     } catch (err) {
@@ -61,6 +109,13 @@ function FindCompsTab({ tab }) {
     setResult(null);
     setAddress("");
     setErrorMsg("");
+  }
+
+  function handleLoadRecent(entry) {
+    setAddress(entry.address);
+    setResult(entry.result);
+    setStatus("done");
+    upsertCache(entry.address, entry.result);
   }
 
   const encoded = encodeURIComponent(address.trim());
@@ -134,6 +189,35 @@ function FindCompsTab({ tab }) {
               {status === "loading" ? "Searching…" : "Find Comps"}
             </button>
           </div>
+
+          {/* Recent searches — shown only on idle with no typed address */}
+          {status === "idle" && cache.length > 0 && !address.trim() && (
+            <div className="find-comps-recent">
+              <span className="find-comps-recent-label">
+                <Clock size={12} />
+                Recent searches
+              </span>
+              <ul className="find-comps-recent-list">
+                {cache.map((entry) => (
+                  <li key={entry.address}>
+                    <button
+                      className="find-comps-recent-item"
+                      onClick={() => handleLoadRecent(entry)}
+                    >
+                      <span className="find-comps-recent-address">
+                        {entry.address}
+                      </span>
+                      {entry.result?.price != null && (
+                        <span className="find-comps-recent-arv">
+                          {fmt(entry.result.price)}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {status === "loading" && (
@@ -153,7 +237,6 @@ function FindCompsTab({ tab }) {
 
         {status === "done" && result && (
           <div className="find-comps-results">
-            {/* Header */}
             <div className="find-comps-results-header">
               <span className="find-comps-results-label">Results for</span>
               <strong className="find-comps-results-address">
@@ -164,7 +247,6 @@ function FindCompsTab({ tab }) {
               </button>
             </div>
 
-            {/* ARV estimate */}
             <div className="find-comps-arv-row">
               <div className="find-comps-arv-card find-comps-arv-main">
                 <span>Estimated ARV</span>
@@ -184,7 +266,6 @@ function FindCompsTab({ tab }) {
               </div>
             </div>
 
-            {/* Subject property details */}
             {sp && (
               <div className="find-comps-subject">
                 <span className="find-comps-section-label">
@@ -231,7 +312,6 @@ function FindCompsTab({ tab }) {
               </div>
             )}
 
-            {/* Comparables table */}
             {result.comparables?.length > 0 && (
               <div className="find-comps-table-wrap">
                 <span className="find-comps-section-label">
@@ -295,7 +375,6 @@ function FindCompsTab({ tab }) {
               </div>
             )}
 
-            {/* External links */}
             <div className="find-comps-external">
               <span className="find-comps-section-label">
                 Verify on External Sources

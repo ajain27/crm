@@ -443,6 +443,45 @@
     @apply inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap px-5;
   }
 
+  /* Recent searches */
+  .find-comps-recent {
+    @apply mt-4;
+  }
+
+  .find-comps-recent-label {
+    @apply mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider;
+    color: var(--muted);
+  }
+
+  .find-comps-recent-list {
+    @apply flex flex-col gap-1;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .find-comps-recent-item {
+    @apply flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left transition-colors duration-150;
+    background: color-mix(in srgb, var(--panel) 96%, var(--blue-light) 4%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    cursor: pointer;
+  }
+
+  .find-comps-recent-item:hover {
+    border-color: var(--blue);
+    background: color-mix(in srgb, var(--panel) 90%, var(--blue-light) 10%);
+  }
+
+  .find-comps-recent-address {
+    @apply truncate text-sm font-medium;
+    color: var(--text);
+  }
+
+  .find-comps-recent-arv {
+    @apply shrink-0 text-sm font-semibold;
+    color: #16a34a;
+  }
+
   .find-comps-loader {
     @apply flex flex-col items-center justify-center gap-4 px-6 pb-10 pt-6;
   }
