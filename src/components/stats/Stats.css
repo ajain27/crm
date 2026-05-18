@@ -88,6 +88,10 @@
     @apply bg-red-500;
   }
 
+  .theme-blue {
+    @apply bg-blue-500;
+  }
+
   .gauge-header p {
     @apply mb-0.5 text-[15px] font-bold text-slate-900;
   }

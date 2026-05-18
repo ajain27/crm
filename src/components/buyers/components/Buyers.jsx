@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, Users } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import {
   fetchBuyers,
   saveBuyer,
@@ -10,7 +10,7 @@ import BuyerForm from "./BuyerForm";
 import BuyerFilters from "./BuyerFilters";
 import BuyerData from "./BuyerData";
 import MailMergeModal from "./MailMergeModal";
-import { SimpleStat } from "../../elements/elements";
+import { GaugeStat, SimpleStat } from "../../elements/elements";
 
 const emptyBuyerForm = {
   fullName: "",
@@ -116,6 +116,7 @@ function Buyers({ currentUser = { id: "" } }) {
       userId: currentUser.id,
       state: form.state?.trim().toUpperCase() || "",
       phone: form.phone ? formatPhone(form.phone) : "",
+      createdAt: new Date().toISOString(),
     };
 
     try {
@@ -250,6 +251,27 @@ function Buyers({ currentUser = { id: "" } }) {
     });
   }, [buyers, filters]);
 
+  const buyersWithEmail = useMemo(
+    () => buyers.filter((b) => b.email?.trim()).length,
+    [buyers],
+  );
+
+  const addedThisMonth = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return buyers.filter((b) => {
+      if (!b.createdAt) return false;
+      const d = new Date(b.createdAt);
+      return d.getFullYear() === y && d.getMonth() === m;
+    }).length;
+  }, [buyers]);
+
+  const statesCovered = useMemo(
+    () => new Set(buyers.map((b) => b.state?.trim()).filter(Boolean)).size,
+    [buyers],
+  );
+
   return (
     <>
       <header className="page-header" data-reveal="left">
@@ -263,16 +285,34 @@ function Buyers({ currentUser = { id: "" } }) {
         data-reveal-group
         style={{ "--reveal-delay": "60ms" }}
       >
-        <SimpleStat
-          className="no-ripple"
-          icon={<Users size={20} />}
+        <GaugeStat
           label={
             filters.state === "All"
               ? "Total Buyers"
               : `Buyers in ${filters.state}`
           }
           value={filteredBuyers.length}
-          valueClassName="text-blue-500"
+          max={buyers.length || 1}
+          colorTheme="green"
+        />
+        <SimpleStat
+          className="no-ripple"
+          label="With Email"
+          value={buyersWithEmail}
+          subtitle="mail merge ready"
+          colorTheme="blue"
+        />
+        <SimpleStat
+          className="no-ripple"
+          label="Added This Month"
+          value={addedThisMonth}
+          colorTheme="green"
+        />
+        <SimpleStat
+          className="no-ripple"
+          label="States Covered"
+          value={statesCovered}
+          colorTheme="orange"
         />
       </section>
 
