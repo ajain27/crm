@@ -4,10 +4,6 @@
     @apply flex items-center gap-1.5;
   }
 
-  .buyer-add-form {
-    grid-template-columns: repeat(7, 1fr);
-  }
-
   .buyer-add-form .state-buys-group {
     grid-column: span 2;
   }
