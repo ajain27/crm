@@ -1,11 +1,35 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, CheckCircle, AlertCircle, Loader } from "lucide-react";
-import emailjs from "@emailjs/browser";
 import Modal from "../../modal/Modal";
 
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "";
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
+async function sendViaBrevo({
+  apiKey,
+  senderEmail,
+  toEmail,
+  toName,
+  subject,
+  body,
+}) {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: "You Win Estates", email: senderEmail },
+      to: [{ email: toEmail, name: toName || toEmail }],
+      subject,
+      textContent: body,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  return res;
+}
 
 const EMPTY_TEMPLATE = {
   address: "",
@@ -77,10 +101,11 @@ function buildBody(template, buyerFullName) {
   ].join("\n");
 }
 
-const NOT_CONFIGURED =
-  !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY;
-
 function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
+  const brevoApiKey = import.meta.env.VITE_BREVO_API_KEY || "";
+  const brevoSenderEmail =
+    import.meta.env.VITE_BREVO_SENDER_EMAIL || "ankit4pace@gmail.com";
+  const NOT_CONFIGURED = !brevoApiKey;
   const [template, setTemplate] = useState(EMPTY_TEMPLATE);
   const [sendStatus, setSendStatus] = useState(null);
   const [sendProgress, setSendProgress] = useState({ sent: 0, total: 0 });
@@ -99,6 +124,12 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
       }));
     }
   }, [isOpen, stateLabel]);
+
+  useEffect(() => {
+    if (sendStatus !== "done") return;
+    const timer = setTimeout(handleClose, 3000);
+    return () => clearTimeout(timer);
+  }, [sendStatus]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -125,18 +156,14 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     for (const buyer of recipients) {
       if (abortRef.current) break;
       try {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          {
-            to_email: buyer.email.trim(),
-            to_name: buyer.fullName || "",
-            subject,
-            message: buildBody(template, buyer.fullName),
-            reply_to: "ankit4pace@gmail.com",
-          },
-          EMAILJS_PUBLIC_KEY,
-        );
+        await sendViaBrevo({
+          apiKey: brevoApiKey,
+          senderEmail: brevoSenderEmail,
+          toEmail: buyer.email.trim(),
+          toName: buyer.fullName || "",
+          subject,
+          body: buildBody(template, buyer.fullName),
+        });
         sent++;
         setSendProgress({ sent, total: recipients.length });
         if (sent < recipients.length) {
@@ -212,11 +239,8 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
         {NOT_CONFIGURED && (
           <div className="mail-merge-warning mail-merge-warning-error">
             <AlertCircle size={15} />
-            EmailJS is not configured. Add <code>
-              VITE_EMAILJS_SERVICE_ID
-            </code>, <code>VITE_EMAILJS_TEMPLATE_ID</code>, and{" "}
-            <code>VITE_EMAILJS_PUBLIC_KEY</code> to your <code>.env.local</code>
-            .
+            Brevo is not configured. Add <code>VITE_BREVO_API_KEY</code> to your{" "}
+            <code>.env.local</code> and redeploy.
           </div>
         )}
 

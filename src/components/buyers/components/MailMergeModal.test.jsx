@@ -1,18 +1,11 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-// Set env vars before module import so NOT_CONFIGURED is false
+// Set env var before module import so NOT_CONFIGURED is false
 beforeAll(() => {
-  vi.stubEnv("VITE_EMAILJS_SERVICE_ID", "service_test");
-  vi.stubEnv("VITE_EMAILJS_TEMPLATE_ID", "template_test");
-  vi.stubEnv("VITE_EMAILJS_PUBLIC_KEY", "key_test");
+  vi.stubEnv("VITE_BREVO_API_KEY", "test-brevo-key");
 });
 
-vi.mock("@emailjs/browser", () => ({
-  default: { send: vi.fn().mockResolvedValue({ status: 200 }) },
-}));
-
-const { default: emailjs } = await import("@emailjs/browser");
 const { default: MailMergeModal } = await import("./MailMergeModal");
 
 const BUYERS_WITH_EMAIL = [
@@ -26,6 +19,23 @@ const BUYER_NO_EMAIL = {
   email: "",
   state: "GA",
 };
+
+function mockFetchOk() {
+  globalThis.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ messageId: "ok" }),
+  });
+}
+
+function mockFetchFailSecond() {
+  globalThis.fetch = vi
+    .fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+    .mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ message: "fail" }),
+    });
+}
 
 function renderModal(selectedBuyers = BUYERS_WITH_EMAIL) {
   const onClose = vi.fn();
@@ -41,6 +51,7 @@ function renderModal(selectedBuyers = BUYERS_WITH_EMAIL) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockFetchOk();
 });
 
 describe("MailMergeModal", () => {
@@ -188,7 +199,7 @@ describe("MailMergeModal", () => {
   });
 
   describe("send behaviour", () => {
-    it("calls emailjs.send once per recipient", async () => {
+    it("calls fetch once per recipient", async () => {
       renderModal();
       fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), {
         target: { value: "123 Oak St, Dallas, TX" },
@@ -198,7 +209,7 @@ describe("MailMergeModal", () => {
       );
 
       await waitFor(() => {
-        expect(emailjs.send).toHaveBeenCalledTimes(2);
+        expect(globalThis.fetch).toHaveBeenCalledTimes(2);
       });
     });
 
@@ -212,8 +223,9 @@ describe("MailMergeModal", () => {
       );
 
       await waitFor(() => {
-        const calls = emailjs.send.mock.calls;
-        const sentTo = calls.map((c) => c[2].to_email);
+        const calls = globalThis.fetch.mock.calls;
+        const bodies = calls.map((c) => JSON.parse(c[1].body));
+        const sentTo = bodies.map((b) => b.to[0].email);
         expect(sentTo).toContain("jane@example.com");
         expect(sentTo).toContain("john@example.com");
       });
@@ -229,7 +241,9 @@ describe("MailMergeModal", () => {
       );
 
       await waitFor(() => {
-        const messages = emailjs.send.mock.calls.map((c) => c[2].message);
+        const calls = globalThis.fetch.mock.calls;
+        const bodies = calls.map((c) => JSON.parse(c[1].body));
+        const messages = bodies.map((b) => b.textContent);
         expect(messages.some((m) => m.includes("Hi Jane,"))).toBe(true);
         expect(messages.some((m) => m.includes("Hi John,"))).toBe(true);
       });
@@ -252,9 +266,7 @@ describe("MailMergeModal", () => {
     });
 
     it("shows error for failed recipients", async () => {
-      emailjs.send
-        .mockResolvedValueOnce({ status: 200 })
-        .mockRejectedValueOnce(new Error("fail"));
+      mockFetchFailSecond();
 
       renderModal();
       fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), {

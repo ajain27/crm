@@ -199,6 +199,61 @@
     }
   }
 
+  .buyer-bulk-actions {
+    display: flex;
+    gap: 0.5rem;
+    grid-column: span 2;
+  }
+
+  .buyer-bulk-actions .buyer-compose-btn {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  /* All filter buttons match select input height (h-11 = 44px) */
+  .filters .primary-btn,
+  .filters .secondary-btn,
+  .filters .danger-btn {
+    @apply h-11;
+    width: auto;
+  }
+
+  .filters .secondary-btn {
+    width: 100%;
+  }
+
+  /* Override fixed icon-button sizing on danger-btn inside bulk actions */
+  .buyer-bulk-actions .danger-btn {
+    font-weight: 700;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .buyer-select-all-banner {
+    text-align: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--blue) 6%, var(--panel) 94%);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .buyer-select-all-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--blue);
+    font-size: inherit;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  .buyer-select-all-link:hover {
+    opacity: 0.8;
+  }
+
   .buyer-compose-btn {
     display: flex;
     align-items: center;

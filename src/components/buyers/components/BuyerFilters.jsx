@@ -1,4 +1,4 @@
-import { Search, RefreshCw, Mail } from "lucide-react";
+import { Search, RefreshCw, Mail, Trash2, X } from "lucide-react";
 import { Select } from "../../elements/elements";
 import { useEffect, useRef, useState } from "react";
 
@@ -8,6 +8,7 @@ function BuyerFilters({
   setFilters,
   selectedCount,
   onCompose,
+  onDeleteSelected,
 }) {
   const [searchExpanded, setSearchExpanded] = useState(Boolean(filters.search));
   const searchInputRef = useRef(null);
@@ -57,21 +58,37 @@ function BuyerFilters({
             <Search size={18} />
           </button>
           {searchExpanded && (
-            <input
-              ref={searchInputRef}
-              type="text"
-              className="search-input-expanded"
-              id="buyer-search"
-              name="search"
-              placeholder="Search buyers by name, email, phone, city..."
-              value={filters.search}
-              onChange={handleFilter}
-              onBlur={() => {
-                if (!filters.search) {
-                  setSearchExpanded(false);
-                }
-              }}
-            />
+            <div className="search-input-wrap">
+              <input
+                ref={searchInputRef}
+                type="text"
+                className="search-input-expanded"
+                id="buyer-search"
+                name="search"
+                placeholder="Search buyers by name, email, phone, city..."
+                value={filters.search}
+                onChange={handleFilter}
+                onBlur={() => {
+                  if (!filters.search) {
+                    setSearchExpanded(false);
+                  }
+                }}
+              />
+              {filters.search && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setFilters((prev) => ({ ...prev, search: "" }));
+                    searchInputRef.current?.focus();
+                  }}
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -87,9 +104,20 @@ function BuyerFilters({
           <RefreshCw size={16} /> Clear Filters
         </button>
         {selectedCount > 0 && (
-          <button className="primary-btn buyer-compose-btn" onClick={onCompose}>
-            <Mail size={16} /> Compose Email ({selectedCount})
-          </button>
+          <div className="buyer-bulk-actions">
+            <button
+              className="primary-btn buyer-compose-btn"
+              onClick={onCompose}
+            >
+              <Mail size={16} /> Compose Email ({selectedCount})
+            </button>
+            <button
+              className="danger-btn buyer-compose-btn"
+              onClick={onDeleteSelected}
+            >
+              <Trash2 size={16} /> Delete ({selectedCount})
+            </button>
+          </div>
         )}
       </div>
     </section>

@@ -164,12 +164,42 @@ function Buyers({ currentUser = { id: "" } }) {
     [],
   );
 
+  async function handleDeleteSelected() {
+    if (selectedIds.size === 0) return;
+    if (
+      !window.confirm(
+        `Delete ${selectedIds.size} buyer${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`,
+      )
+    )
+      return;
+
+    const ids = [...selectedIds];
+    try {
+      await Promise.all(ids.map((id) => deleteBuyerById(id)));
+      setBuyers((prev) => prev.filter((b) => !selectedIds.has(b.id)));
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error("Failed to delete buyers", error);
+      alert(
+        "Some buyers could not be deleted. Check your database connection.",
+      );
+    }
+  }
+
   function handleToggleSelect(id) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  }
+
+  function handleSelectAllFiltered(selectAll) {
+    if (selectAll) {
+      setSelectedIds(new Set(filteredBuyers.map((b) => b.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
   }
 
   function handleSelectAll(pageBuyers, allSelected) {
@@ -254,6 +284,7 @@ function Buyers({ currentUser = { id: "" } }) {
         setFilters={setFilters}
         selectedCount={selectedIds.size}
         onCompose={() => setIsMailMergeOpen(true)}
+        onDeleteSelected={handleDeleteSelected}
       />
 
       <BuyerData
@@ -264,6 +295,7 @@ function Buyers({ currentUser = { id: "" } }) {
         selectedIds={selectedIds}
         onToggleSelect={handleToggleSelect}
         onSelectAll={handleSelectAll}
+        onSelectAllFiltered={handleSelectAllFiltered}
       />
 
       <MailMergeModal

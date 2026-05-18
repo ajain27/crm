@@ -45,9 +45,25 @@
   }
 
   .search-input-expanded {
-    @apply h-10 w-[500px] rounded-lg border bg-app-panel px-3 text-sm text-app-text outline-none;
+    @apply h-10 w-[500px] rounded-lg border bg-app-panel px-3 pr-8 text-sm text-app-text outline-none;
     border-color: var(--input-border);
     animation: slideInLeft 0.2s ease;
+  }
+
+  .search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-clear-btn {
+    @apply flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-transparent p-0 text-app-muted transition-colors duration-150;
+    position: absolute;
+    right: 0.5rem;
+  }
+
+  .search-clear-btn:hover {
+    @apply text-app-text;
   }
 
   .search-input-expanded::placeholder {

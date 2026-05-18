@@ -14,6 +14,7 @@ function BuyerData({
   selectedIds = EMPTY_SET,
   onToggleSelect = () => {},
   onSelectAll = () => {},
+  onSelectAllFiltered = () => {},
 }) {
   const [editingBuyerId, setEditingBuyerId] = useState(null);
   const [editingField, setEditingField] = useState(null);
@@ -74,7 +75,53 @@ function BuyerData({
               <th>Actions</th>
             </tr>
           </thead>
+          {allPageSelected &&
+            filteredBuyers.length > paginatedBuyers.length && (
+              <thead>
+                <tr>
+                  <td colSpan={7} className="buyer-select-all-banner">
+                    {selectedIds.size === filteredBuyers.length ? (
+                      <>
+                        All <strong>{filteredBuyers.length}</strong> buyers are
+                        selected.{" "}
+                        <button
+                          className="buyer-select-all-link"
+                          onClick={() => onSelectAllFiltered(false)}
+                        >
+                          Clear selection
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        All <strong>{paginatedBuyers.length}</strong> buyers on
+                        this page are selected.{" "}
+                        <button
+                          className="buyer-select-all-link"
+                          onClick={() => onSelectAllFiltered(true)}
+                        >
+                          Select all {filteredBuyers.length} buyers
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              </thead>
+            )}
           <tbody>
+            {paginatedBuyers.length === 0 && (
+              <tr>
+                <td
+                  colSpan={7}
+                  style={{
+                    textAlign: "center",
+                    padding: "2rem",
+                    color: "var(--muted)",
+                  }}
+                >
+                  No buyers found.
+                </td>
+              </tr>
+            )}
             {paginatedBuyers.map((buyer, index) => (
               <tr
                 key={buyer.id}
