@@ -42,7 +42,7 @@
     @apply text-sm font-semibold text-app-input-text;
   }
 
-  .field input,
+  .field input:not([type="checkbox"]),
   .field select,
   .search-field input {
     @apply h-11 w-full rounded-lg border bg-app-panel px-3 text-app-text outline-none transition-colors;

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 function BuyerFilters({
   filters,
   states,
+  types,
   setFilters,
   selectedCount,
   onCompose,
@@ -99,6 +100,13 @@ function BuyerFilters({
           value={filters.state}
           onChange={handleFilter}
           options={states}
+        />
+        <Select
+          label="Filter by Type"
+          name="realEstateType"
+          value={filters.realEstateType}
+          onChange={handleFilter}
+          options={types}
         />
         <button className="secondary-btn" onClick={clearFilters}>
           <RefreshCw size={16} /> Clear Filters

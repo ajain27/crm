@@ -600,7 +600,7 @@
     border: 1px solid color-mix(in srgb, var(--blue) 62%, var(--line) 38%);
   }
 
-  .field input,
+  .field input:not([type="checkbox"]),
   .field textarea,
   .auth-field input,
   .editable-input,
@@ -616,7 +616,7 @@
       border-color 0.18s ease;
   }
 
-  .field input:focus,
+  .field input:not([type="checkbox"]):focus,
   .field textarea:focus,
   .auth-field input:focus,
   .editable-input:focus,

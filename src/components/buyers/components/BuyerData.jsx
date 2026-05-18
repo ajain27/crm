@@ -15,6 +15,7 @@ function BuyerData({
   onToggleSelect = () => {},
   onSelectAll = () => {},
   onSelectAllFiltered = () => {},
+  propertyTypes = [],
 }) {
   const [editingBuyerId, setEditingBuyerId] = useState(null);
   const [editingField, setEditingField] = useState(null);
@@ -38,7 +39,12 @@ function BuyerData({
   function startEditingField(buyer, field) {
     setEditingBuyerId(buyer.id);
     setEditingField(field);
-    setEditFieldValue(buyer[field] || "");
+    if (field === "realEstateType") {
+      const val = buyer.realEstateType;
+      setEditFieldValue(Array.isArray(val) ? val : val ? [val] : []);
+    } else {
+      setEditFieldValue(buyer[field] || "");
+    }
   }
 
   function saveField(id) {
@@ -71,6 +77,7 @@ function BuyerData({
               <th>Email</th>
               <th>State</th>
               <th>City</th>
+              <th>Buys</th>
               <th>Phone Number</th>
               <th>Actions</th>
             </tr>
@@ -79,7 +86,7 @@ function BuyerData({
             filteredBuyers.length > paginatedBuyers.length && (
               <thead>
                 <tr>
-                  <td colSpan={7} className="buyer-select-all-banner">
+                  <td colSpan={8} className="buyer-select-all-banner">
                     {selectedIds.size === filteredBuyers.length ? (
                       <>
                         All <strong>{filteredBuyers.length}</strong> buyers are
@@ -111,7 +118,7 @@ function BuyerData({
             {paginatedBuyers.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   style={{
                     textAlign: "center",
                     padding: "2rem",
@@ -180,6 +187,63 @@ function BuyerData({
                 </td>
                 <ReadOnlyCell value={buyer.state} small />
                 <ReadOnlyCell value={buyer.city} />
+                <td>
+                  {editingBuyerId === buyer.id &&
+                  editingField === "realEstateType" ? (
+                    <div className="buyer-type-edit">
+                      {propertyTypes.map((type) => (
+                        <label key={type} className="buyer-type-option">
+                          <input
+                            type="checkbox"
+                            className="buyer-checkbox"
+                            checked={
+                              Array.isArray(editFieldValue) &&
+                              editFieldValue.includes(type)
+                            }
+                            onChange={() =>
+                              setEditFieldValue((prev) =>
+                                Array.isArray(prev) && prev.includes(type)
+                                  ? prev.filter((t) => t !== type)
+                                  : [
+                                      ...(Array.isArray(prev) ? prev : []),
+                                      type,
+                                    ],
+                              )
+                            }
+                          />
+                          <span>{type}</span>
+                        </label>
+                      ))}
+                      <button
+                        className="ghost-btn icon-button"
+                        onClick={() => saveField(buyer.id)}
+                        title="Save"
+                      >
+                        <Check size={16} color="var(--green)" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="field-with-action">
+                      <span className="table-text">
+                        {(Array.isArray(buyer.realEstateType)
+                          ? buyer.realEstateType
+                          : buyer.realEstateType
+                            ? [buyer.realEstateType]
+                            : []
+                        ).join(", ") || "—"}
+                      </span>
+                      <button
+                        className="ghost-btn icon-button"
+                        onClick={() =>
+                          startEditingField(buyer, "realEstateType")
+                        }
+                        title="Edit Types"
+                      >
+                        <Edit2 size={16} color="var(--muted)" />
+                      </button>
+                    </div>
+                  )}
+                </td>
                 <td>
                   {editingBuyerId === buyer.id && editingField === "phone" ? (
                     <div className="inline-edit-row">

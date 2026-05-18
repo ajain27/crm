@@ -4,6 +4,68 @@
     @apply flex items-center gap-1.5;
   }
 
+  .buyer-add-form {
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .buyer-add-form .state-buys-group {
+    grid-column: span 2;
+  }
+
+  .state-buys-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .state-buys-group .field:first-child {
+    flex: 0 0 auto;
+  }
+
+  .state-buys-group .field:first-child input {
+    width: 3.5rem;
+    min-width: 0;
+  }
+
+  .state-buys-group .field:last-child {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .buyer-type-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-top: 0.25rem;
+  }
+
+  .buyer-add-form .buyer-type-checkboxes {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+  }
+
+  .buyer-type-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .buyer-type-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.25rem 0;
+  }
+
+  .buyer-type-edit .buyer-type-option {
+    font-size: 0.78rem;
+  }
+
   .editable-input {
     @apply h-9 rounded-md border border-app-blue px-2 outline-none;
   }

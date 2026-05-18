@@ -1,11 +1,21 @@
 import { Field } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
 
-function BuyerForm({ addBuyer, form, handleChange }) {
+function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
   function handlePhoneChange(e) {
     handleChange({
       target: { name: "phone", value: formatPhone(e.target.value) },
     });
+  }
+
+  function handleTypeToggle(type) {
+    const current = Array.isArray(form.realEstateType)
+      ? form.realEstateType
+      : [];
+    const next = current.includes(type)
+      ? current.filter((t) => t !== type)
+      : [...current, type];
+    handleChange({ target: { name: "realEstateType", value: next } });
   }
   const isFormComplete =
     Boolean(form.fullName?.trim()) && Boolean(form.state?.trim());
@@ -24,7 +34,7 @@ function BuyerForm({ addBuyer, form, handleChange }) {
             <p>Maintain your list of cash buyers and investors.</p>
           </div>
         </div>
-        <form className="add-form" onSubmit={addBuyer}>
+        <form className="add-form buyer-add-form" onSubmit={addBuyer}>
           <Field
             label="Full Name"
             name="fullName"
@@ -52,14 +62,35 @@ function BuyerForm({ addBuyer, form, handleChange }) {
             value={form.city}
             onChange={handleChange}
           />
-          <Field
-            label="State (They buy in)"
-            name="state"
-            value={form.state}
-            onChange={handleChange}
-            maxLength="2"
-            required
-          />
+          <div className="state-buys-group">
+            <Field
+              label="State"
+              name="state"
+              value={form.state}
+              onChange={handleChange}
+              maxLength="2"
+              required
+            />
+            <div className="field">
+              <span>Buys</span>
+              <div className="buyer-type-checkboxes">
+                {propertyTypes.map((type) => (
+                  <label key={type} className="buyer-type-option">
+                    <input
+                      type="checkbox"
+                      className="buyer-checkbox"
+                      checked={(Array.isArray(form.realEstateType)
+                        ? form.realEstateType
+                        : []
+                      ).includes(type)}
+                      onChange={() => handleTypeToggle(type)}
+                    />
+                    {type}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
           <button
             className="primary-btn form-btn"
             type="submit"

@@ -12,13 +12,15 @@ import BuyerData from "./BuyerData";
 import MailMergeModal from "./MailMergeModal";
 import { GaugeStat, SimpleStat } from "../../elements/elements";
 
+export const PROPERTY_TYPES = ["Single Family", "Multi Family", "Vacant Lot"];
+
 const emptyBuyerForm = {
   fullName: "",
   email: "",
   phone: "",
   city: "",
   state: "",
-  realEstateType: "Single Family",
+  realEstateType: [],
 };
 
 function Buyers({ currentUser = { id: "" } }) {
@@ -51,8 +53,11 @@ function Buyers({ currentUser = { id: "" } }) {
   }
 
   async function updateBuyer(id, field, value) {
-    const cleanedValue =
-      field === "email" ? value.trim().toLowerCase() : value.trim();
+    const cleanedValue = Array.isArray(value)
+      ? value
+      : field === "email"
+        ? value.trim().toLowerCase()
+        : value.trim();
 
     const isDuplicate = buyers.some((buyer) => {
       if (buyer.id === id) return false;
@@ -155,17 +160,7 @@ function Buyers({ currentUser = { id: "" } }) {
     [buyers],
   );
 
-  const types = useMemo(
-    () => [
-      "All",
-      "Single Family",
-      "Multi Family",
-      "Commercial",
-      "Land",
-      "Other",
-    ],
-    [],
-  );
+  const types = useMemo(() => ["All", ...PROPERTY_TYPES], []);
 
   async function handleDeleteSelected() {
     if (selectedIds.size === 0) return;
@@ -225,9 +220,14 @@ function Buyers({ currentUser = { id: "" } }) {
     return buyers.filter((buyer) => {
       const matchesState =
         filters.state === "All" || buyer.state === filters.state;
+      const buyerTypes = Array.isArray(buyer.realEstateType)
+        ? buyer.realEstateType
+        : buyer.realEstateType
+          ? [buyer.realEstateType]
+          : [];
       const matchesType =
         filters.realEstateType === "All" ||
-        buyer.realEstateType === filters.realEstateType;
+        buyerTypes.includes(filters.realEstateType);
       const matchesSearch =
         !query ||
         (() => {
@@ -316,7 +316,12 @@ function Buyers({ currentUser = { id: "" } }) {
         />
       </section>
 
-      <BuyerForm addBuyer={addBuyer} form={form} handleChange={handleChange} />
+      <BuyerForm
+        addBuyer={addBuyer}
+        form={form}
+        handleChange={handleChange}
+        propertyTypes={PROPERTY_TYPES}
+      />
 
       <BuyerFilters
         filters={filters}
@@ -338,6 +343,7 @@ function Buyers({ currentUser = { id: "" } }) {
         onToggleSelect={handleToggleSelect}
         onSelectAll={handleSelectAll}
         onSelectAllFiltered={handleSelectAllFiltered}
+        propertyTypes={PROPERTY_TYPES}
       />
 
       <MailMergeModal
