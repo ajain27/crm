@@ -210,7 +210,9 @@ function BuyerData({
                     </div>
                   ) : (
                     <div className="field-with-action">
-                      <span className="table-text">{buyer.phone || "—"}</span>
+                      <span className="table-text">
+                        {buyer.phone ? formatPhone(buyer.phone) : "—"}
+                      </span>
                       <button
                         className="ghost-btn icon-button"
                         onClick={() => startEditingField(buyer, "phone")}

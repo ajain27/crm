@@ -5,6 +5,7 @@ import {
   saveBuyer,
   deleteBuyerById,
 } from "../../../firebase/firestoreService";
+import { formatPhone } from "../../../utils/utils";
 import BuyerForm from "./BuyerForm";
 import BuyerFilters from "./BuyerFilters";
 import BuyerData from "./BuyerData";
@@ -114,6 +115,7 @@ function Buyers({ currentUser = { id: "" } }) {
       id: crypto.randomUUID(),
       userId: currentUser.id,
       state: form.state?.trim().toUpperCase() || "",
+      phone: form.phone ? formatPhone(form.phone) : "",
     };
 
     try {
