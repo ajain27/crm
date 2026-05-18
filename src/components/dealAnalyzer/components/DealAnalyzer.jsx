@@ -5,6 +5,7 @@ import WholesaleTab from "./wholesale/WholesaleTab";
 import MultiFamilyTab from "./multiFamily/MultiFamilyTab";
 import NovationTab from "./novation/NovationTab";
 import RentalTab from "./rental/RentalTab";
+import FindCompsTab from "./findComps/FindCompsTab";
 
 const analyzerTabs = [
   {
@@ -85,6 +86,19 @@ const analyzerTabs = [
       "Account for vacancy, maintenance, and management costs",
     ],
   },
+  {
+    id: "find-comps",
+    label: "Find Comps",
+    eyebrow: "Comparable Sales",
+    title: "Find property comps",
+    description:
+      "Search for comparable sold properties and After Repair Value estimates to validate your deal numbers before making an offer.",
+    prompts: [
+      "Use sold comps within 0.5 miles and last 6 months",
+      "Match bed/bath count and similar square footage",
+      "Adjust for condition, lot size, and location differences",
+    ],
+  },
 ];
 
 function DealAnalyzer() {
@@ -135,6 +149,7 @@ function DealAnalyzer() {
           {activeTab === "multi-family" && <MultiFamilyTab tab={currentTab} />}
           {activeTab === "novation" && <NovationTab tab={currentTab} />}
           {activeTab === "rental" && <RentalTab tab={currentTab} />}
+          {activeTab === "find-comps" && <FindCompsTab tab={currentTab} />}
         </div>
       </section>
     </>
