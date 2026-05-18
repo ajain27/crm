@@ -8,6 +8,7 @@ import {
 import BuyerForm from "./BuyerForm";
 import BuyerFilters from "./BuyerFilters";
 import BuyerData from "./BuyerData";
+import MailMergeModal from "./MailMergeModal";
 import { SimpleStat } from "../../elements/elements";
 
 const emptyBuyerForm = {
@@ -27,6 +28,8 @@ function Buyers({ currentUser = { id: "" } }) {
     realEstateType: "All",
     search: "",
   });
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [isMailMergeOpen, setIsMailMergeOpen] = useState(false);
 
   useEffect(() => {
     async function loadBuyers() {
@@ -161,6 +164,29 @@ function Buyers({ currentUser = { id: "" } }) {
     [],
   );
 
+  function handleToggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function handleSelectAll(pageBuyers, allSelected) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      pageBuyers.forEach((b) =>
+        allSelected ? next.delete(b.id) : next.add(b.id),
+      );
+      return next;
+    });
+  }
+
+  const selectedBuyers = useMemo(
+    () => buyers.filter((b) => selectedIds.has(b.id)),
+    [buyers, selectedIds],
+  );
+
   const filteredBuyers = useMemo(() => {
     const query = filters.search.toLowerCase();
     return buyers.filter((buyer) => {
@@ -226,6 +252,8 @@ function Buyers({ currentUser = { id: "" } }) {
         types={types}
         RefreshCw={RefreshCw}
         setFilters={setFilters}
+        selectedCount={selectedIds.size}
+        onCompose={() => setIsMailMergeOpen(true)}
       />
 
       <BuyerData
@@ -233,6 +261,15 @@ function Buyers({ currentUser = { id: "" } }) {
         buyers={buyers}
         deleteBuyer={deleteBuyer}
         updateBuyer={updateBuyer}
+        selectedIds={selectedIds}
+        onToggleSelect={handleToggleSelect}
+        onSelectAll={handleSelectAll}
+      />
+
+      <MailMergeModal
+        isOpen={isMailMergeOpen}
+        onClose={() => setIsMailMergeOpen(false)}
+        selectedBuyers={selectedBuyers}
       />
     </>
   );

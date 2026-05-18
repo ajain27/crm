@@ -14,6 +14,93 @@ const buyers = [
 ];
 
 describe("BuyerData", () => {
+  describe("checkbox selection", () => {
+    it("renders a checkbox for each buyer row", () => {
+      render(
+        <BuyerData
+          filteredBuyers={buyers}
+          buyers={buyers}
+          deleteBuyer={vi.fn()}
+          updateBuyer={vi.fn()}
+          selectedIds={new Set()}
+          onToggleSelect={vi.fn()}
+          onSelectAll={vi.fn()}
+        />,
+      );
+      const checkboxes = screen.getAllByRole("checkbox");
+      // header checkbox + 1 row checkbox
+      expect(checkboxes).toHaveLength(2);
+    });
+
+    it("calls onToggleSelect when a row checkbox is clicked", () => {
+      const onToggleSelect = vi.fn();
+      render(
+        <BuyerData
+          filteredBuyers={buyers}
+          buyers={buyers}
+          deleteBuyer={vi.fn()}
+          updateBuyer={vi.fn()}
+          selectedIds={new Set()}
+          onToggleSelect={onToggleSelect}
+          onSelectAll={vi.fn()}
+        />,
+      );
+      const row = screen.getByText("Jane Doe").closest("tr");
+      const checkbox = row.querySelector('input[type="checkbox"]');
+      fireEvent.click(checkbox);
+      expect(onToggleSelect).toHaveBeenCalledWith("b1");
+    });
+
+    it("calls onSelectAll when header checkbox is clicked", () => {
+      const onSelectAll = vi.fn();
+      render(
+        <BuyerData
+          filteredBuyers={buyers}
+          buyers={buyers}
+          deleteBuyer={vi.fn()}
+          updateBuyer={vi.fn()}
+          selectedIds={new Set()}
+          onToggleSelect={vi.fn()}
+          onSelectAll={onSelectAll}
+        />,
+      );
+      const [headerCheckbox] = screen.getAllByRole("checkbox");
+      fireEvent.click(headerCheckbox);
+      expect(onSelectAll).toHaveBeenCalledWith(buyers, false);
+    });
+
+    it("marks header checkbox as checked when all rows are selected", () => {
+      render(
+        <BuyerData
+          filteredBuyers={buyers}
+          buyers={buyers}
+          deleteBuyer={vi.fn()}
+          updateBuyer={vi.fn()}
+          selectedIds={new Set(["b1"])}
+          onToggleSelect={vi.fn()}
+          onSelectAll={vi.fn()}
+        />,
+      );
+      const [headerCheckbox] = screen.getAllByRole("checkbox");
+      expect(headerCheckbox.checked).toBe(true);
+    });
+
+    it("applies selected row class when buyer is selected", () => {
+      render(
+        <BuyerData
+          filteredBuyers={buyers}
+          buyers={buyers}
+          deleteBuyer={vi.fn()}
+          updateBuyer={vi.fn()}
+          selectedIds={new Set(["b1"])}
+          onToggleSelect={vi.fn()}
+          onSelectAll={vi.fn()}
+        />,
+      );
+      const row = screen.getByText("Jane Doe").closest("tr");
+      expect(row.className).toContain("buyer-row-selected");
+    });
+  });
   it("calls updateBuyer when the email is edited", () => {
     const updateBuyer = vi.fn();
     render(

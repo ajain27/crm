@@ -48,6 +48,164 @@
     @apply min-h-12 min-w-[160px];
   }
 
+  /* Mail Merge Modal */
+  .mail-merge-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .mail-merge-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .mail-merge-warning {
+    background: color-mix(in srgb, #f59e0b 12%, var(--panel) 88%);
+    border: 1px solid color-mix(in srgb, #f59e0b 40%, transparent 60%);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+
+  .mail-merge-recipients {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    min-height: 2.5rem;
+    background: var(--bg);
+  }
+
+  .mail-merge-chip {
+    display: inline-flex;
+    align-items: center;
+    background: var(--blue-light);
+    color: var(--blue);
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .mail-merge-empty {
+    font-size: 0.82rem;
+    color: var(--muted);
+    align-self: center;
+  }
+
+  .mail-merge-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .mail-merge-full {
+    grid-column: 1 / -1;
+  }
+
+  .mail-merge-preview-wrap {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0.82rem;
+  }
+
+  .mail-merge-preview-subject {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .mail-merge-preview-subject span {
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .mail-merge-preview {
+    margin: 0;
+    padding: 0.75rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    white-space: pre-wrap;
+    color: var(--muted);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+
+  /* Buyer table checkbox column */
+  .buyer-checkbox-cell {
+    width: 2.5rem;
+    text-align: center;
+    padding-left: 0.5rem !important;
+    padding-right: 0.25rem !important;
+  }
+
+  .buyer-checkbox {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: var(--blue);
+  }
+
+  .buyer-row-selected {
+    background: color-mix(in srgb, var(--blue) 6%, transparent 94%) !important;
+  }
+
+  .mail-merge-warning-error {
+    background: color-mix(in srgb, #dc2626 10%, var(--panel) 90%);
+    border-color: color-mix(in srgb, #dc2626 35%, transparent 65%);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .mail-merge-success {
+    background: color-mix(in srgb, #16a34a 10%, var(--panel) 90%);
+    border: 1px solid color-mix(in srgb, #16a34a 35%, transparent 65%);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .mail-merge-send-result {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .spin-icon {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .buyer-compose-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
   @media (max-width: 600px) {
     .profile-modal-actions {
       @apply flex-col;
@@ -55,6 +213,10 @@
 
     .profile-modal-btn {
       @apply w-full;
+    }
+
+    .mail-merge-grid {
+      grid-template-columns: 1fr;
     }
   }
 }

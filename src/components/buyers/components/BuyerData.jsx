@@ -4,7 +4,17 @@ import { formatPhone } from "../../../utils/utils";
 import { Trash2, Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 
-function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
+const EMPTY_SET = new Set();
+
+function BuyerData({
+  filteredBuyers,
+  buyers,
+  deleteBuyer,
+  updateBuyer,
+  selectedIds = EMPTY_SET,
+  onToggleSelect = () => {},
+  onSelectAll = () => {},
+}) {
   const [editingBuyerId, setEditingBuyerId] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editFieldValue, setEditFieldValue] = useState("");
@@ -17,6 +27,12 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
   const startIndex = (safePage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredBuyers.length);
   const paginatedBuyers = filteredBuyers.slice(startIndex, endIndex);
+
+  const allPageSelected =
+    paginatedBuyers.length > 0 &&
+    paginatedBuyers.every((b) => selectedIds.has(b.id));
+  const somePageSelected =
+    !allPageSelected && paginatedBuyers.some((b) => selectedIds.has(b.id));
 
   function startEditingField(buyer, field) {
     setEditingBuyerId(buyer.id);
@@ -38,6 +54,18 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
         <table className="compact-table">
           <thead>
             <tr>
+              <th className="buyer-checkbox-cell">
+                <input
+                  type="checkbox"
+                  className="buyer-checkbox"
+                  checked={allPageSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = somePageSelected;
+                  }}
+                  onChange={() => onSelectAll(paginatedBuyers, allPageSelected)}
+                  title="Select all on this page"
+                />
+              </th>
               <th>Name</th>
               <th>Email</th>
               <th>State</th>
@@ -52,7 +80,18 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
                 key={buyer.id}
                 data-reveal
                 style={{ "--reveal-delay": `${index * 35}ms` }}
+                className={
+                  selectedIds.has(buyer.id) ? "buyer-row-selected" : ""
+                }
               >
+                <td className="buyer-checkbox-cell">
+                  <input
+                    type="checkbox"
+                    className="buyer-checkbox"
+                    checked={selectedIds.has(buyer.id)}
+                    onChange={() => onToggleSelect(buyer.id)}
+                  />
+                </td>
                 <ReadOnlyCell value={buyer.fullName} wide />
                 <td>
                   {editingBuyerId === buyer.id && editingField === "email" ? (
@@ -101,7 +140,9 @@ function BuyerData({ filteredBuyers, buyers, deleteBuyer, updateBuyer }) {
                         id={`edit-phone-${buyer.id}`}
                         className="editable-input narrow"
                         value={editFieldValue}
-                        onChange={(e) => setEditFieldValue(formatPhone(e.target.value))}
+                        onChange={(e) =>
+                          setEditFieldValue(formatPhone(e.target.value))
+                        }
                         maxLength={12}
                         autoFocus
                         onKeyDown={(e) => {

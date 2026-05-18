@@ -1,8 +1,14 @@
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, Mail } from "lucide-react";
 import { Select } from "../../elements/elements";
 import { useEffect, useRef, useState } from "react";
 
-function BuyerFilters({ filters, states, setFilters }) {
+function BuyerFilters({
+  filters,
+  states,
+  setFilters,
+  selectedCount,
+  onCompose,
+}) {
   const [searchExpanded, setSearchExpanded] = useState(Boolean(filters.search));
   const searchInputRef = useRef(null);
 
@@ -80,6 +86,11 @@ function BuyerFilters({ filters, states, setFilters }) {
         <button className="secondary-btn" onClick={clearFilters}>
           <RefreshCw size={16} /> Clear Filters
         </button>
+        {selectedCount > 0 && (
+          <button className="primary-btn buyer-compose-btn" onClick={onCompose}>
+            <Mail size={16} /> Compose Email ({selectedCount})
+          </button>
+        )}
       </div>
     </section>
   );
