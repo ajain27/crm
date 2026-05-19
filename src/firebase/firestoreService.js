@@ -29,6 +29,7 @@ const db = getFirestore(app);
 const propertiesCollection = collection(db, "properties");
 const buyersCollection = collection(db, "buyers");
 const usersCollection = collection(db, "users");
+const leadsCollection = collection(db, "leads");
 
 function contractsSubcollection(dealId) {
   return collection(db, "properties", dealId, "contracts");
@@ -121,7 +122,12 @@ export async function signInUser({ email, password }) {
   };
 }
 
-export async function updateUserProfile({ id, firstName, lastName, profileImage }) {
+export async function updateUserProfile({
+  id,
+  firstName,
+  lastName,
+  profileImage,
+}) {
   const userRef = doc(usersCollection, id);
   await setDoc(
     userRef,
@@ -165,7 +171,15 @@ export async function deleteDealById(id) {
   await deleteDoc(doc(propertiesCollection, id));
 }
 
-export async function saveContractVersion({ id, dealId, userId, name, type, data, uploadedAt }) {
+export async function saveContractVersion({
+  id,
+  dealId,
+  userId,
+  name,
+  type,
+  data,
+  uploadedAt,
+}) {
   await setDoc(doc(contractsSubcollection(dealId), id), {
     id,
     dealId,
@@ -202,4 +216,19 @@ export async function saveBuyer(buyer) {
 export async function deleteBuyerById(id) {
   const buyerRef = doc(buyersCollection, id);
   await deleteDoc(buyerRef);
+}
+
+export async function fetchLeads(userId) {
+  const snapshot = userId
+    ? await getDocs(query(leadsCollection, where("userId", "==", userId)))
+    : await getDocs(leadsCollection);
+  return mapSnapshot(snapshot);
+}
+
+export async function saveLead(lead) {
+  await setDoc(doc(leadsCollection, lead.id), lead);
+}
+
+export async function deleteLeadById(id) {
+  await deleteDoc(doc(leadsCollection, id));
 }

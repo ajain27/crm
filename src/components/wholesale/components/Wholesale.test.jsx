@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import Wholesale from "./Wholesale";
 
 vi.mock("react-dom/client", () => ({
@@ -9,6 +15,7 @@ vi.mock("react-dom/client", () => ({
 vi.mock("../../../firebase/firestoreService", () => ({
   fetchDeals: vi.fn().mockResolvedValue([]),
   fetchBuyers: vi.fn().mockResolvedValue([]),
+  fetchLeads: vi.fn().mockResolvedValue([]),
   saveDeal: vi.fn().mockResolvedValue(undefined),
   saveBuyer: vi.fn().mockResolvedValue(undefined),
   deleteDealById: vi.fn().mockResolvedValue(undefined),
@@ -88,9 +95,7 @@ describe("Wholesale", () => {
       expect(fetchDeals).toHaveBeenCalledWith("u1");
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Open profile menu/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Open profile menu/i }));
 
     expect(screen.getByText("Edit Profile")).toBeInTheDocument();
     expect(screen.getByText("Sign Out")).toBeInTheDocument();

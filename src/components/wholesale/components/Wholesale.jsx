@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import "../../../styles/styles.css";
 import {
   fetchBuyers,
@@ -9,6 +9,9 @@ import {
   saveContractVersion,
   fetchContractVersion,
   deleteContractById,
+  fetchLeads,
+  saveLead,
+  deleteLeadById,
 } from "../../../firebase/firestoreService";
 import Wholesale_filters from "./filters/Wholesale_filters";
 import Wholesale_form from "./forms/wholesale_form";
@@ -16,6 +19,7 @@ import Wholesale_data from "./data/Wholesale_data";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
+import PotentialLeads from "../../leads/PotentialLeads";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
@@ -47,6 +51,15 @@ function Wholesale() {
     }
   });
   const [activeView, setActiveView] = useState("dashboard");
+  const [leads, setLeads] = useState([]);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetchLeads(currentUser.id)
+      .then(setLeads)
+      .catch(() => {});
+  }, [currentUser?.id]);
 
   useEffect(() => {
     if ("scrollRestoration" in history) {
@@ -114,6 +127,8 @@ function Wholesale() {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     setCurrentUser(null);
     setDeals([]);
+    setLeads([]);
+    setBannerDismissed(false);
     resetForm();
     setFilters(createDefaultFilters());
     setActiveView("dashboard");
@@ -150,8 +165,64 @@ function Wholesale() {
         }}
         onSignOut={handleSignOut}
         profileMenuRef={profileMenuRef}
+        dueLeadsCount={(() => {
+          const today = new Date().toISOString().split("T")[0];
+          return leads.filter((l) => l.followUpDate && l.followUpDate <= today)
+            .length;
+        })()}
+        onBellClick={() => setActiveView("leads")}
       />
       <main className="main">
+        {!bannerDismissed &&
+          (() => {
+            const today = new Date().toISOString().split("T")[0];
+            const due = leads.filter(
+              (l) => l.followUpDate && l.followUpDate <= today,
+            );
+            if (!due.length) return null;
+            return (
+              <div className="followup-banner">
+                <div className="followup-banner-body">
+                  <span className="followup-banner-title">
+                    Follow-up{due.length > 1 ? "s" : ""} due today
+                  </span>
+                  <ul className="followup-banner-list">
+                    {due.map((l) => (
+                      <li key={l.id} className="followup-banner-item">
+                        <strong>
+                          {l.followUpDate < today ? "Overdue" : "Today"}
+                        </strong>{" "}
+                        — {l.address}
+                        {(l.email || l.phone) && (
+                          <span className="followup-banner-contacts">
+                            {l.email && (
+                              <a href={`mailto:${l.email}`}>{l.email}</a>
+                            )}
+                            {l.phone && (
+                              <a href={`tel:${l.phone}`}>{l.phone}</a>
+                            )}
+                          </span>
+                        )}
+                        <button
+                          className="followup-banner-view"
+                          onClick={() => setActiveView("leads")}
+                        >
+                          View leads →
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  className="followup-banner-dismiss"
+                  onClick={() => setBannerDismissed(true)}
+                  aria-label="Dismiss"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            );
+          })()}
         {activeView === "dashboard" ? (
           <>
             <header className="page-header" data-reveal="left">
@@ -222,6 +293,17 @@ function Wholesale() {
               />
             </LoadingScreen>
           </>
+        ) : activeView === "leads" ? (
+          <PotentialLeads
+            currentUser={currentUser}
+            leads={leads}
+            setLeads={setLeads}
+            saveLead={saveLead}
+            deleteLeadById={deleteLeadById}
+            saveDeal={saveDeal}
+            setDeals={setDeals}
+            setActiveView={setActiveView}
+          />
         ) : activeView === "buyers" ? (
           <Buyers theme={theme} currentUser={currentUser} />
         ) : activeView === "mortgage" ? (

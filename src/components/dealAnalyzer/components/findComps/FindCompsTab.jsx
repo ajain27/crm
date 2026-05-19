@@ -44,6 +44,7 @@ function FindCompsTab({ tab }) {
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [cache, setCache] = useState(loadCache);
+  const [recentQuery, setRecentQuery] = useState("");
 
   function upsertCache(searchAddress, data) {
     setCache((prev) => {
@@ -122,6 +123,12 @@ function FindCompsTab({ tab }) {
   const compLinks = getCompLinks(encoded);
   const sp = result?.subjectProperty;
 
+  const filteredCache = recentQuery.trim()
+    ? cache.filter((e) =>
+        e.address.toLowerCase().includes(recentQuery.trim().toLowerCase()),
+      )
+    : cache;
+
   return (
     <>
       <div className="deal-analyzer-hero">
@@ -190,32 +197,48 @@ function FindCompsTab({ tab }) {
             </button>
           </div>
 
-          {/* Recent searches — shown only on idle with no typed address */}
           {status === "idle" && cache.length > 0 && !address.trim() && (
             <div className="find-comps-recent">
-              <span className="find-comps-recent-label">
-                <Clock size={12} />
-                Recent searches
-              </span>
-              <ul className="find-comps-recent-list">
-                {cache.map((entry) => (
-                  <li key={entry.address}>
-                    <button
-                      className="find-comps-recent-item"
-                      onClick={() => handleLoadRecent(entry)}
-                    >
-                      <span className="find-comps-recent-address">
-                        {entry.address}
-                      </span>
-                      {entry.result?.price != null && (
-                        <span className="find-comps-recent-arv">
-                          {fmt(entry.result.price)}
+              <div className="find-comps-recent-header">
+                <span className="find-comps-recent-label">
+                  <Clock size={12} />
+                  Recent searches
+                </span>
+                <div className="find-comps-recent-search">
+                  <Search size={13} className="find-comps-recent-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Filter by address…"
+                    value={recentQuery}
+                    onChange={(e) => setRecentQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+              {filteredCache.length > 0 ? (
+                <ul className="find-comps-recent-list">
+                  {filteredCache.map((entry) => (
+                    <li key={entry.address}>
+                      <button
+                        className="find-comps-recent-item"
+                        onClick={() => handleLoadRecent(entry)}
+                      >
+                        <span className="find-comps-recent-address">
+                          {entry.address}
                         </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                        {entry.result?.price != null && (
+                          <span className="find-comps-recent-arv">
+                            {fmt(entry.result.price)}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="find-comps-recent-empty">
+                  No recent searches match &ldquo;{recentQuery}&rdquo;
+                </p>
+              )}
             </div>
           )}
         </div>

@@ -51,8 +51,13 @@ function Wholesale_data({
     setSelectedIds(new Set());
   }
 
-  const { currentDeals, currentPage, setCurrentPage, totalPages, renderSortableHeader } =
-    useDealsSort(filteredDeals);
+  const {
+    currentDeals,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    renderSortableHeader,
+  } = useDealsSort(filteredDeals);
 
   const { updateDeal, updateDealPatch } = useDealUpdater({
     deals,
@@ -97,7 +102,9 @@ function Wholesale_data({
     }
   }
 
-  const selectedContractDeal = deals.find((d) => d.id === selectedContractDealId);
+  const selectedContractDeal = deals.find(
+    (d) => d.id === selectedContractDealId,
+  );
   const contractVersions = selectedContractDeal
     ? getContractVersions(selectedContractDeal)
     : [];
@@ -115,11 +122,16 @@ function Wholesale_data({
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
       {selectedIds.size > 0 && (
         <div className="bulk-delete-bar">
-          <span>{selectedIds.size} row{selectedIds.size > 1 ? "s" : ""} selected</span>
+          <span>
+            {selectedIds.size} row{selectedIds.size > 1 ? "s" : ""} selected
+          </span>
           <button className="danger-btn" onClick={deleteSelected}>
             Delete Selected
           </button>
-          <button className="secondary-btn" onClick={() => setSelectedIds(new Set())}>
+          <button
+            className="secondary-btn"
+            onClick={() => setSelectedIds(new Set())}
+          >
             Clear
           </button>
         </div>
@@ -132,7 +144,10 @@ function Wholesale_data({
                 <input
                   type="checkbox"
                   className="row-checkbox"
-                  checked={currentDeals.length > 0 && selectedIds.size === currentDeals.length}
+                  checked={
+                    currentDeals.length > 0 &&
+                    selectedIds.size === currentDeals.length
+                  }
                   onChange={toggleSelectAll}
                 />
               </th>
@@ -199,6 +214,7 @@ function Wholesale_data({
         isOpen={!!detailDeal}
         onClose={() => setDetailDeal(null)}
         deal={detailDeal}
+        updateDealPatch={updateDealPatch}
       />
 
       <NotesModal

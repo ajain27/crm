@@ -1,146 +1,468 @@
+import { useState, useEffect } from "react";
 import Modal from "../../../../modal/Modal";
-import { currency } from "../../../../../utils/utils";
 
-function val(v) {
-  return v && String(v).trim() ? v : "—";
+const PROPERTY_TYPES = ["Single Family", "Multi Family", "Land"];
+const OFFER_STATUSES = ["Not Sent", "Offer Sent"];
+const YES_NO = ["No", "Yes"];
+const ACCEPTED_OPTS = ["No", "Waiting", "Yes"];
+
+const CURRENCY_FIELDS = [
+  "arv",
+  "listedPrice",
+  "rehabCost",
+  "additionalRehabCost",
+  "desiredProfit",
+  "mao",
+  "contractPrice",
+  "assignedPrice",
+];
+
+function fmtCurrency(raw) {
+  const digits = String(raw ?? "").replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  return "$" + parseInt(digits, 10).toLocaleString("en-US");
 }
 
-function currencyVal(v) {
-  const n = Number(v || 0);
-  return n > 0 ? currency(n) : "—";
+function parseCurrency(val) {
+  return parseInt(String(val ?? "").replace(/[^0-9]/g, ""), 10) || 0;
+}
+
+function initDraft(deal) {
+  const d = { ...deal };
+  CURRENCY_FIELDS.forEach((f) => {
+    d[f] = d[f] ? fmtCurrency(String(d[f])) : "";
+  });
+  return d;
 }
 
 function Section({ title, children }) {
   return (
     <div className="ddm-section">
       <div className="ddm-section-label">{title}</div>
-      <div className="ddm-grid">{children}</div>
+      <div className="ddm-edit-grid">{children}</div>
     </div>
   );
 }
 
-function Cell({ label, value, wide, highlight }) {
+function Field({ label, children, wide }) {
   return (
-    <div
-      className={`ddm-cell${wide ? " ddm-cell-wide" : ""}${highlight ? ` ${highlight}` : ""}`}
-    >
-      <span className="ddm-cell-label">{label}</span>
-      <strong className="ddm-cell-value">{value}</strong>
+    <div className={`ddm-edit-field${wide ? " ddm-edit-field-wide" : ""}`}>
+      <span className="ddm-edit-label">{label}</span>
+      {children}
     </div>
   );
 }
 
-function DealDetailModal({ isOpen, onClose, deal }) {
+function DealDetailModal({ isOpen, onClose, deal, updateDealPatch }) {
+  const [draft, setDraft] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (deal) setDraft(initDraft(deal));
+  }, [deal]);
+
+  // Auto-calculate MAO when inputs change
+  useEffect(() => {
+    const arv = parseCurrency(draft.arv);
+    if (arv <= 0) return;
+    const rehab = parseCurrency(draft.rehabCost);
+    const extra = parseCurrency(draft.additionalRehabCost);
+    const profit = parseCurrency(draft.desiredProfit);
+    const mao = Math.round(arv * 0.7 - rehab - extra - profit);
+    if (mao > 0) {
+      setDraft((prev) => ({ ...prev, mao: fmtCurrency(String(mao)) }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    draft.arv,
+    draft.rehabCost,
+    draft.additionalRehabCost,
+    draft.desiredProfit,
+  ]);
+
   if (!deal) return null;
 
-  const grossRevenue =
-    Number(deal.assignedPrice || 0) - Number(deal.contractPrice || 0);
+  const offerSent = (draft.offerStatus || "Not Sent") === "Offer Sent";
+  const locked = offerSent && (draft.sellerAccepted || "No") === "No";
+
+  function set(field, value) {
+    if (CURRENCY_FIELDS.includes(field)) {
+      setDraft((prev) => ({ ...prev, [field]: fmtCurrency(value) }));
+    } else if (field === "offerStatus" && value === "Not Sent") {
+      setDraft((prev) => ({
+        ...prev,
+        offerStatus: value,
+        sellerAccepted: "No",
+      }));
+    } else {
+      setDraft((prev) => ({ ...prev, [field]: value }));
+    }
+  }
+
+  async function handleSave() {
+    if (draft.closed === "Yes" && deal.closed !== "Yes") {
+      if (draft.sellerAccepted !== "Yes" || draft.assigned !== "Yes") {
+        alert(
+          "Cannot close: Seller must have Accepted and deal must be Assigned first.",
+        );
+        return;
+      }
+    }
+
+    const numeric = {};
+    CURRENCY_FIELDS.forEach((f) => {
+      numeric[f] = parseCurrency(draft[f]);
+    });
+
+    let closedDate = draft.closedDate || "";
+    let closedInMonth = draft.closedInMonth || "";
+    if (draft.closed === "Yes" && deal.closed !== "Yes" && !closedDate) {
+      const d = window.prompt("Enter the close date (YYYY-MM-DD).", "");
+      if (!d) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        alert("Please enter a valid close date in YYYY-MM-DD format.");
+        return;
+      }
+      closedDate = d;
+      closedInMonth = d.slice(5, 7);
+    }
+
+    setSaving(true);
+    try {
+      const { id, ...rest } = draft;
+      await updateDealPatch(deal.id, {
+        ...rest,
+        ...numeric,
+        closedDate,
+        closedInMonth,
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={deal.address}
+      title={draft.address || deal.address || "Deal Details"}
       className="deal-detail-modal"
-      style={{
-        width: "min(640px, 92vw)",
-        maxWidth: "min(640px, 92vw)",
-        borderRadius: "1.25rem",
-      }}
+      style={{ width: "min(720px, 95vw)", maxWidth: "min(720px, 95vw)" }}
       actions={
-        <button className="secondary-btn" onClick={onClose}>
-          Close
-        </button>
+        <>
+          <button className="secondary-btn" onClick={onClose} disabled={saving}>
+            Cancel
+          </button>
+          <button
+            className="primary-btn"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "Saving…" : "Save Changes"}
+          </button>
+        </>
       }
     >
       <div className="ddm-body">
+        {locked && (
+          <div className="ddm-locked-notice">
+            Offer sent but seller has not accepted yet. Update "Seller Accepted"
+            to unlock fields.
+          </div>
+        )}
+
         <Section title="Property">
-          <Cell
-            label="Address"
-            value={`${val(deal.address)}, ${val(deal.city)}, ${val(deal.state)} ${val(deal.zipCode)}`}
-            wide
-          />
-          <Cell label="Type" value={val(deal.propertyType)} />
+          <Field label="Address" wide>
+            <input
+              disabled={locked}
+              value={draft.address || ""}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Street address"
+            />
+          </Field>
+          <Field label="City">
+            <input
+              disabled={locked}
+              value={draft.city || ""}
+              onChange={(e) => set("city", e.target.value)}
+              placeholder="City"
+            />
+          </Field>
+          <Field label="State">
+            <input
+              disabled={locked}
+              value={draft.state || ""}
+              onChange={(e) => set("state", e.target.value)}
+              maxLength={2}
+              placeholder="TX"
+            />
+          </Field>
+          <Field label="Zip Code">
+            <input
+              disabled={locked}
+              value={draft.zipCode || ""}
+              onChange={(e) => set("zipCode", e.target.value)}
+              placeholder="00000"
+            />
+          </Field>
+          <Field label="Property Type">
+            <select
+              disabled={locked}
+              value={draft.propertyType || "Single Family"}
+              onChange={(e) => set("propertyType", e.target.value)}
+            >
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Sq Ft">
+            <input
+              disabled={locked}
+              type="number"
+              value={draft.squareFootage || ""}
+              onChange={(e) => set("squareFootage", e.target.value)}
+              placeholder="0"
+            />
+          </Field>
+          <Field label="Seller Phone">
+            <input
+              disabled={locked}
+              value={draft.sellerPhone || ""}
+              onChange={(e) => set("sellerPhone", e.target.value)}
+              placeholder="555-000-0000"
+            />
+          </Field>
+        </Section>
+
+        <Section title="Listing">
+          <Field label="On Market">
+            <select
+              disabled={locked}
+              value={draft.onMarket || "No"}
+              onChange={(e) => set("onMarket", e.target.value)}
+            >
+              {YES_NO.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {draft.onMarket === "Yes" && (
+            <>
+              <Field label="Listed Price">
+                <input
+                  disabled={locked}
+                  value={draft.listedPrice || ""}
+                  onChange={(e) => set("listedPrice", e.target.value)}
+                  placeholder="$0"
+                />
+              </Field>
+              <Field label="Agent Name">
+                <input
+                  disabled={locked}
+                  value={draft.agentName || ""}
+                  onChange={(e) => set("agentName", e.target.value)}
+                  placeholder="Agent name"
+                />
+              </Field>
+              <Field label="Agent Phone">
+                <input
+                  disabled={locked}
+                  value={draft.agentPhone || ""}
+                  onChange={(e) => set("agentPhone", e.target.value)}
+                  placeholder="555-000-0000"
+                />
+              </Field>
+              <Field label="Listing URL" wide>
+                <input
+                  disabled={locked}
+                  type="url"
+                  value={draft.listingUrl || ""}
+                  onChange={(e) => set("listingUrl", e.target.value)}
+                  placeholder="https://…"
+                />
+              </Field>
+            </>
+          )}
         </Section>
 
         <Section title="Deal Numbers">
-          <Cell label="ARV" value={currencyVal(deal.arv)} />
-          <Cell label="Rehab Cost" value={currencyVal(deal.rehabCost)} />
-          <Cell label="MAO" value={currencyVal(deal.mao)} />
+          <Field label="ARV">
+            <input
+              disabled={locked}
+              value={draft.arv || ""}
+              onChange={(e) => set("arv", e.target.value)}
+              placeholder="$0"
+            />
+          </Field>
+          <Field label="Rehab Cost">
+            <input
+              disabled={locked}
+              value={draft.rehabCost || ""}
+              onChange={(e) => set("rehabCost", e.target.value)}
+              placeholder="$0"
+            />
+          </Field>
+          <Field label="Additional Rehab">
+            <input
+              disabled={locked}
+              value={draft.additionalRehabCost || ""}
+              onChange={(e) => set("additionalRehabCost", e.target.value)}
+              placeholder="$0"
+            />
+          </Field>
+          <Field label="Desired Profit">
+            <input
+              disabled={locked}
+              value={draft.desiredProfit || ""}
+              onChange={(e) => set("desiredProfit", e.target.value)}
+              placeholder="$0"
+            />
+          </Field>
+          <Field label="MAO (auto)">
+            <input
+              disabled={locked}
+              value={draft.mao || ""}
+              onChange={(e) => set("mao", e.target.value)}
+              placeholder="$0"
+              className="ddm-mao-input"
+            />
+          </Field>
         </Section>
-
-        {deal.onMarket === "Yes" && (
-          <Section title="On Market">
-            <Cell label="Listed Price" value={currencyVal(deal.listedPrice)} />
-            <Cell label="Agent Name" value={val(deal.agentName)} />
-            <Cell label="Agent Phone" value={val(deal.agentPhone)} />
-            {deal.listingUrl ? (
-              <div className="ddm-cell">
-                <span className="ddm-cell-label">Listing</span>
-                <a
-                  href={deal.listingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ddm-link"
-                >
-                  View Listing ↗
-                </a>
-              </div>
-            ) : (
-              <Cell label="Listing" value="—" />
-            )}
-          </Section>
-        )}
 
         <Section title="Offer & Contract">
-          <Cell label="Offer Status" value={val(deal.offerStatus)} />
-          <Cell label="Offer Date" value={val(deal.offerDate)} />
-          <Cell
-            label="Contract Price"
-            value={currencyVal(deal.contractPrice)}
-          />
-          <Cell
-            label="Seller Accepted"
-            value={val(deal.sellerAccepted)}
-            highlight={
-              deal.sellerAccepted === "Yes"
-                ? "ddm-positive"
-                : deal.sellerAccepted === "No" &&
-                    deal.offerStatus !== "Not Sent"
-                  ? "ddm-negative"
-                  : ""
-            }
-          />
+          <Field label="Offer Status">
+            <select
+              disabled={locked}
+              value={draft.offerStatus || "Not Sent"}
+              onChange={(e) => set("offerStatus", e.target.value)}
+            >
+              {OFFER_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Offer Date">
+            <input
+              disabled={locked}
+              type="date"
+              value={draft.offerDate || ""}
+              onChange={(e) => set("offerDate", e.target.value)}
+            />
+          </Field>
+          {offerSent && (
+            <Field label="Seller Accepted">
+              <select
+                value={draft.sellerAccepted || "No"}
+                onChange={(e) => set("sellerAccepted", e.target.value)}
+              >
+                {ACCEPTED_OPTS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          <Field label="Contract Price">
+            <input
+              disabled={locked}
+              value={draft.contractPrice || ""}
+              onChange={(e) => set("contractPrice", e.target.value)}
+              placeholder="$0"
+            />
+          </Field>
         </Section>
 
-        {deal.assigned === "Yes" && (
-          <Section title="Assignment">
-            <Cell
-              label="Assigned Price"
-              value={currencyVal(deal.assignedPrice)}
-            />
-            <Cell label="Buyer Name" value={val(deal.buyerName)} />
-            <Cell label="Buyer Email" value={val(deal.buyerEmail)} wide />
-          </Section>
-        )}
+        <Section title="Assignment">
+          <Field label="Assigned">
+            <select
+              disabled={locked}
+              value={draft.assigned || "No"}
+              onChange={(e) => set("assigned", e.target.value)}
+            >
+              {YES_NO.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {draft.assigned === "Yes" && (
+            <>
+              <Field label="Assigned Price">
+                <input
+                  disabled={locked}
+                  value={draft.assignedPrice || ""}
+                  onChange={(e) => set("assignedPrice", e.target.value)}
+                  placeholder="$0"
+                />
+              </Field>
+              <Field label="Buyer Name">
+                <input
+                  disabled={locked}
+                  value={draft.buyerName || ""}
+                  onChange={(e) => set("buyerName", e.target.value)}
+                  placeholder="Buyer name"
+                />
+              </Field>
+              <Field label="Buyer Email">
+                <input
+                  disabled={locked}
+                  type="email"
+                  value={draft.buyerEmail || ""}
+                  onChange={(e) => set("buyerEmail", e.target.value)}
+                  placeholder="buyer@email.com"
+                />
+              </Field>
+            </>
+          )}
+        </Section>
 
-        {deal.closed === "Yes" && (
-          <Section title="Closing">
-            <Cell label="Closed On" value={val(deal.closedDate)} />
-            <Cell
-              label="Gross Revenue"
-              value={grossRevenue > 0 ? currency(grossRevenue) : "—"}
-              highlight="ddm-positive"
-            />
-          </Section>
-        )}
+        <Section title="Closing">
+          <Field label="Closed">
+            <select
+              disabled={locked}
+              value={draft.closed || "No"}
+              onChange={(e) => set("closed", e.target.value)}
+            >
+              {YES_NO.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {draft.closed === "Yes" && (
+            <Field label="Closed Date">
+              <input
+                disabled={locked}
+                type="date"
+                value={draft.closedDate || ""}
+                onChange={(e) => set("closedDate", e.target.value)}
+              />
+            </Field>
+          )}
+        </Section>
 
-        {deal.notes && (
-          <div className="ddm-section">
-            <div className="ddm-section-label">Notes</div>
-            <p className="ddm-notes">{deal.notes}</p>
-          </div>
-        )}
+        <div className="ddm-section">
+          <div className="ddm-section-label">Notes</div>
+          <textarea
+            className="ddm-notes-input"
+            disabled={locked}
+            value={draft.notes || ""}
+            onChange={(e) => set("notes", e.target.value)}
+            placeholder="Add notes about this deal…"
+            rows={4}
+          />
+        </div>
       </div>
     </Modal>
   );

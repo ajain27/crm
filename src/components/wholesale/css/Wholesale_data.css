@@ -5,6 +5,31 @@
 
   .table-wrap {
     @apply w-full overflow-x-auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .table-wrap:hover {
+    scrollbar-color: color-mix(in srgb, var(--muted) 50%, transparent 50%)
+      transparent;
+  }
+
+  .table-wrap::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .table-wrap:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted) 50%, transparent 50%);
   }
 
   table {
@@ -385,6 +410,31 @@
     flex: 1;
     min-height: 0;
     padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .ddm-body:hover {
+    scrollbar-color: color-mix(in srgb, var(--muted) 50%, transparent 50%)
+      transparent;
+  }
+
+  .ddm-body::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .ddm-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .ddm-body::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .ddm-body:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted) 50%, transparent 50%);
   }
 
   .ddm-section-label {
@@ -441,6 +491,98 @@
     color: var(--text);
     white-space: pre-wrap;
     margin: 0;
+  }
+
+  /* Editable modal fields */
+  .ddm-edit-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .ddm-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .ddm-edit-field-wide {
+    grid-column: 1 / -1;
+  }
+
+  .ddm-edit-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .ddm-edit-field input,
+  .ddm-edit-field select,
+  .ddm-edit-field textarea {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .ddm-edit-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25L7 9.25L11 5.25' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 14px 14px;
+  }
+
+  .ddm-edit-field input:disabled,
+  .ddm-edit-field select:disabled,
+  .ddm-edit-field textarea:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .ddm-locked-notice {
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--orange) 40%, transparent 60%);
+    background: color-mix(
+      in srgb,
+      var(--bg-orange-light, #fff7ed) 70%,
+      transparent 30%
+    );
+    color: var(--orange, #d97706);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .ddm-edit-field input:focus,
+  .ddm-edit-field select:focus,
+  .ddm-edit-field textarea:focus {
+    border-color: var(--blue);
+  }
+
+  .ddm-notes-input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+
+  .ddm-notes-input:focus {
+    border-color: var(--blue);
   }
 
   .clickable-row {

@@ -448,8 +448,38 @@
     @apply mt-4;
   }
 
+  .find-comps-recent-header {
+    @apply mb-2 flex items-center justify-between gap-3;
+  }
+
   .find-comps-recent-label {
-    @apply mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider;
+    @apply flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider;
+    color: var(--muted);
+  }
+
+  .find-comps-recent-search {
+    @apply relative flex items-center;
+  }
+
+  .find-comps-recent-search-icon {
+    @apply pointer-events-none absolute left-2.5;
+    color: var(--muted);
+  }
+
+  .find-comps-recent-search input {
+    @apply rounded-lg border py-1.5 pl-7 pr-3 text-xs outline-none transition-colors;
+    background: color-mix(in srgb, var(--panel) 96%, var(--blue-light) 4%);
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    color: var(--text);
+    width: 200px;
+  }
+
+  .find-comps-recent-search input:focus {
+    border-color: var(--blue);
+  }
+
+  .find-comps-recent-empty {
+    @apply py-3 text-center text-sm;
     color: var(--muted);
   }
 

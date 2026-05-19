@@ -1,8 +1,18 @@
-import { BarChart3, Calculator, Home, Moon, Sun, Users } from "lucide-react";
+import {
+  BarChart3,
+  Calculator,
+  Home,
+  Moon,
+  Sun,
+  Users,
+  Crosshair,
+  Bell,
+} from "lucide-react";
 import logo from "../../../assets/logo.png";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
+  { id: "leads", label: "Potential Leads", icon: Crosshair },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
   { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
   { id: "buyers", label: "Buyers List", icon: Users },
@@ -40,6 +50,8 @@ function WholesaleHeader({
   onEditProfile,
   onSignOut,
   profileMenuRef,
+  dueLeadsCount,
+  onBellClick,
 }) {
   const displayName = buildDisplayName(currentUser);
   const profileInitial = buildProfileInitial(currentUser);
@@ -61,6 +73,24 @@ function WholesaleHeader({
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+          <div className="header-bell-wrap">
+            <button
+              type="button"
+              className="ghost-btn header-theme-toggle"
+              onClick={onBellClick}
+              title={
+                dueLeadsCount > 0
+                  ? `${dueLeadsCount} follow-up${dueLeadsCount > 1 ? "s" : ""} due`
+                  : "Potential Leads"
+              }
+              aria-label="Follow-up reminders"
+            >
+              <Bell size={18} />
+            </button>
+            {dueLeadsCount > 0 && (
+              <span className="header-bell-badge">{dueLeadsCount}</span>
+            )}
+          </div>
         </div>
         <img src={logo} alt="You Win Estates" className="app-topbar-logo" />
         <div className="app-topbar-actions">
