@@ -101,20 +101,31 @@ export async function createUserAccount({
   };
 }
 
-export async function signInUser({ email, password }) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const matchingUsers = await getDocs(
-    query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
-  );
+export async function signInUser({ username, password }) {
+  const normalizedUsername = username.trim().toLowerCase();
+  const allUsers = await Promise.race([
+    getDocs(usersCollection),
+    new Promise((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error("Connection timed out. Check Firebase configuration."),
+          ),
+        10000,
+      ),
+    ),
+  ]);
+  const user = allUsers.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .find((u) => (u.username || "").toLowerCase() === normalizedUsername);
 
-  const [user] = mapSnapshot(matchingUsers);
   if (!user) {
-    throw new Error("No account found for that email.");
+    throw new Error("Incorrect username or password.");
   }
 
   const passwordHash = await hashPassword(password);
   if (user.passwordHash !== passwordHash) {
-    throw new Error("Incorrect password.");
+    throw new Error("Incorrect username or password.");
   }
 
   return {

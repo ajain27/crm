@@ -7,7 +7,7 @@ import {
 
 function AuthGate({ onAuthenticated }) {
   const [view, setView] = useState("login"); // "login" | "forgot" | "reset"
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [resetEmail, setResetEmail] = useState("");
   const [resetOtp, setResetOtp] = useState("");
   const [resetPassword, setResetPassword] = useState("");
@@ -36,10 +36,10 @@ function AuthGate({ onAuthenticated }) {
     setIsSubmitting(true);
     try {
       const user = await signInUser({
-        email: form.email,
+        username: form.username,
         password: form.password,
       });
-      setForm({ email: "", password: "" });
+      setForm({ username: "", password: "" });
       onAuthenticated(user);
     } catch (error) {
       setErrorMessage(error.message || "Unable to sign in.");
@@ -104,14 +104,15 @@ function AuthGate({ onAuthenticated }) {
 
             <form className="auth-form" onSubmit={handleSignIn}>
               <label className="auth-field">
-                <span>Email</span>
+                <span>Username</span>
                 <input
                   required
-                  type="email"
-                  name="email"
-                  value={form.email}
+                  type="text"
+                  name="username"
+                  value={form.username}
                   onChange={handleChange}
-                  placeholder="you@example.com"
+                  placeholder="Username"
+                  autoComplete="username"
                 />
               </label>
 
