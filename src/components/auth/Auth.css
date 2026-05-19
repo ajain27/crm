@@ -61,7 +61,29 @@
     @apply rounded-xl bg-red-100 px-[14px] py-3 text-[0.95rem] text-red-800;
   }
 
+  .auth-success {
+    @apply mb-4 rounded-xl bg-green-50 px-[14px] py-3 text-[0.95rem] text-green-800;
+    border: 1px solid #bbf7d0;
+  }
+
   .auth-submit {
     @apply min-h-[46px] w-full;
+  }
+
+  .auth-forgot-link {
+    display: block;
+    margin-top: 0.875rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--blue);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .auth-forgot-link:hover {
+    text-decoration: underline;
   }
 }

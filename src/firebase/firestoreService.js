@@ -30,6 +30,7 @@ const propertiesCollection = collection(db, "properties");
 const buyersCollection = collection(db, "buyers");
 const usersCollection = collection(db, "users");
 const leadsCollection = collection(db, "leads");
+const passwordResetsCollection = collection(db, "passwordResets");
 
 function leadFilesSubcollection(leadId) {
   return collection(db, "leads", leadId, "files");
@@ -265,4 +266,75 @@ export async function fetchLeadFile(leadId, id) {
 
 export async function deleteLeadFileById(leadId, id) {
   await deleteDoc(doc(leadFilesSubcollection(leadId), id));
+}
+
+export async function sendPasswordResetOtp(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const match = await getDocs(
+    query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
+  );
+  if (match.empty) throw new Error("No account found for that email.");
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 15 * 60 * 1000;
+  await setDoc(doc(passwordResetsCollection, normalizedEmail), {
+    otp,
+    expiresAt,
+    used: false,
+  });
+
+  const apiKey = import.meta.env.VITE_BREVO_API_KEY || "";
+  const senderEmail =
+    import.meta.env.VITE_BREVO_SENDER_EMAIL || "ankit4pace@gmail.com";
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: "You Win Estates CRM", email: senderEmail },
+      to: [{ email: normalizedEmail }],
+      subject: "Your password reset code",
+      textContent: `Your one-time reset code is: ${otp}\n\nThis code expires in 15 minutes. If you did not request this, ignore this email.`,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to send email (HTTP ${res.status})`);
+  }
+}
+
+export async function confirmPasswordReset(email, otp, newPassword) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const resetSnap = await getDoc(
+    doc(passwordResetsCollection, normalizedEmail),
+  );
+  if (!resetSnap.exists())
+    throw new Error("No reset request found. Please request a new code.");
+
+  const { otp: stored, expiresAt, used } = resetSnap.data();
+  if (used)
+    throw new Error(
+      "This code has already been used. Please request a new one.",
+    );
+  if (Date.now() > expiresAt)
+    throw new Error("Code expired. Please request a new one.");
+  if (otp.trim() !== stored)
+    throw new Error("Incorrect code. Please try again.");
+
+  const userSnap = await getDocs(
+    query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
+  );
+  if (userSnap.empty) throw new Error("Account not found.");
+
+  const newHash = await hashPassword(newPassword);
+  const userRef = doc(usersCollection, userSnap.docs[0].id);
+  await setDoc(userRef, { passwordHash: newHash }, { merge: true });
+  await setDoc(
+    doc(passwordResetsCollection, normalizedEmail),
+    { used: true },
+    { merge: true },
+  );
 }
