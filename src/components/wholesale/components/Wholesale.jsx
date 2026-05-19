@@ -12,6 +12,9 @@ import {
   fetchLeads,
   saveLead,
   deleteLeadById,
+  saveLeadFile,
+  fetchLeadFile,
+  deleteLeadFileById,
 } from "../../../firebase/firestoreService";
 import Wholesale_filters from "./filters/Wholesale_filters";
 import Wholesale_form from "./forms/wholesale_form";
@@ -300,6 +303,9 @@ function Wholesale() {
             setLeads={setLeads}
             saveLead={saveLead}
             deleteLeadById={deleteLeadById}
+            saveLeadFile={saveLeadFile}
+            fetchLeadFile={fetchLeadFile}
+            deleteLeadFileById={deleteLeadFileById}
             saveDeal={saveDeal}
             setDeals={setDeals}
             setActiveView={setActiveView}

@@ -35,6 +35,7 @@ const CURRENCY_FIELDS = new Set([
   "monthlyRent",
   "monthlyInsurance",
   "monthlyTaxes",
+  "annualMiscExpense",
 ]);
 
 const initialForm = {
@@ -46,6 +47,7 @@ const initialForm = {
   monthlyRent: "",
   monthlyInsurance: "",
   monthlyTaxes: "",
+  annualMiscExpense: "",
 };
 
 function RentalTab({ tab }) {
@@ -99,6 +101,8 @@ function RentalTab({ tab }) {
   const monthlyRent = parseCurrency(form.monthlyRent);
   const monthlyInsurance = parseCurrency(form.monthlyInsurance);
   const monthlyTaxes = parseCurrency(form.monthlyTaxes);
+  const annualMiscExpense = parseCurrency(form.annualMiscExpense);
+  const monthlyMiscExpense = annualMiscExpense / 12;
 
   const monthlyMortgage = calculateMonthlyPayment(
     loanAmount,
@@ -113,10 +117,19 @@ function RentalTab({ tab }) {
   );
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const totalMonthlyExpenses =
-    monthlyMortgage + propMgmtFee + monthlyInsurance + monthlyTaxes;
+    monthlyMortgage +
+    propMgmtFee +
+    monthlyInsurance +
+    monthlyTaxes +
+    monthlyMiscExpense;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
-  const noi = monthlyRent - propMgmtFee - monthlyInsurance - monthlyTaxes;
+  const noi =
+    monthlyRent -
+    propMgmtFee -
+    monthlyInsurance -
+    monthlyTaxes -
+    monthlyMiscExpense;
   const dscr = monthlyMortgage > 0 ? noi / monthlyMortgage : 0;
   const totalFundsNeeded =
     downPaymentAmt + closingCosts + agentCommissionAmt + INSPECTION_COST;
@@ -150,6 +163,8 @@ function RentalTab({ tab }) {
       firstMonthMgmtAdjustment,
       monthlyInsurance,
       monthlyTaxes,
+      annualMiscExpense,
+      monthlyMiscExpense,
       totalMonthlyExpenses,
       monthlyCashFlow,
       annualCashFlow,
@@ -336,6 +351,22 @@ function RentalTab({ tab }) {
             onChange={handleChange}
             placeholder="e.g. $250"
           />
+          <Field
+            label="Annual Miscellaneous Expense"
+            name="annualMiscExpense"
+            value={form.annualMiscExpense}
+            onChange={handleChange}
+            placeholder="e.g. $1,200"
+          />
+          {annualMiscExpense > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>
+                Misc. Expense / Month{" "}
+                <span className="deal-analyzer-auto-badge">÷ 12</span>
+              </span>
+              <input value={fmt(monthlyMiscExpense)} readOnly tabIndex={-1} />
+            </label>
+          )}
           <div style={{ gridColumn: "1 / -1" }}>
             <a
               href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
@@ -429,6 +460,20 @@ function RentalTab({ tab }) {
                   <span>Property Taxes</span>
                   <strong className="deal-analyzer-return-negative">
                     <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
+                  </strong>
+                </div>
+              )}
+              {summary.monthlyMiscExpense > 0 && (
+                <div>
+                  <span>
+                    Misc. Expenses (Annual {fmt(summary.annualMiscExpense)} ÷
+                    12)
+                  </span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.monthlyMiscExpense}
+                      format={fmt}
+                    />
                   </strong>
                 </div>
               )}
@@ -570,7 +615,7 @@ function RentalTab({ tab }) {
               style={{ marginTop: "1rem" }}
             >
               Monthly Cash Flow = Rent − Mortgage − Prop. Mgmt − Insurance −
-              Taxes
+              Taxes{summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
               <span>
                 {fmt(summary.monthlyRent)} − {fmt(summary.monthlyMortgage)} −{" "}
                 {fmt(summary.propMgmtFee)}
@@ -579,6 +624,9 @@ function RentalTab({ tab }) {
                   : ""}
                 {summary.monthlyTaxes > 0
                   ? ` − ${fmt(summary.monthlyTaxes)}`
+                  : ""}
+                {summary.monthlyMiscExpense > 0
+                  ? ` − ${fmt(summary.monthlyMiscExpense)}`
                   : ""}{" "}
                 = {fmt(summary.monthlyCashFlow)}
               </span>

@@ -31,6 +31,10 @@ const buyersCollection = collection(db, "buyers");
 const usersCollection = collection(db, "users");
 const leadsCollection = collection(db, "leads");
 
+function leadFilesSubcollection(leadId) {
+  return collection(db, "leads", leadId, "files");
+}
+
 function contractsSubcollection(dealId) {
   return collection(db, "properties", dealId, "contracts");
 }
@@ -231,4 +235,34 @@ export async function saveLead(lead) {
 
 export async function deleteLeadById(id) {
   await deleteDoc(doc(leadsCollection, id));
+}
+
+export async function saveLeadFile({
+  id,
+  leadId,
+  userId,
+  name,
+  type,
+  data,
+  uploadedAt,
+}) {
+  await setDoc(doc(leadFilesSubcollection(leadId), id), {
+    id,
+    leadId,
+    userId,
+    name,
+    type,
+    data,
+    uploadedAt,
+  });
+}
+
+export async function fetchLeadFile(leadId, id) {
+  const snapshot = await getDoc(doc(leadFilesSubcollection(leadId), id));
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() };
+}
+
+export async function deleteLeadFileById(leadId, id) {
+  await deleteDoc(doc(leadFilesSubcollection(leadId), id));
 }
