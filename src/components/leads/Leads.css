@@ -292,6 +292,111 @@
     color: var(--muted);
   }
 
+  /* Lead detail modal */
+  .modal.lead-detail-modal {
+    border-radius: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 6rem);
+  }
+
+  .ldm-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .ldm-body:hover {
+    scrollbar-color: color-mix(in srgb, var(--muted) 50%, transparent 50%)
+      transparent;
+  }
+
+  .ldm-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ldm-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ldm-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .ldm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .ldm-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .ldm-input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .ldm-input:focus {
+    border-color: var(--blue);
+  }
+
+  .ldm-wide {
+    grid-column: 1 / -1;
+  }
+
+  .ldm-input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  :root.dark .ldm-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.15);
+    opacity: 0.85;
+  }
+
+  .ldm-notes {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+
+  .ldm-notes:focus {
+    border-color: var(--blue);
+  }
+
   /* Follow-up notification banner */
   .followup-banner {
     display: flex;

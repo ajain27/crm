@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatPhone } from "../../utils/utils";
 import { createEmptyDealForm } from "../wholesale/components/wholesaleConfig";
+import LeadDetailModal from "./LeadDetailModal";
 import "./Leads.css";
 
 const SOURCES = [
@@ -97,6 +98,7 @@ export default function PotentialLeads({
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [detailLead, setDetailLead] = useState(null);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -134,6 +136,11 @@ export default function PotentialLeads({
     if (!window.confirm("Delete this lead?")) return;
     await deleteLeadById(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
+  }
+
+  async function handleLeadSave(updated) {
+    await saveLead(updated);
+    setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
   }
 
   async function handleAddedToCRM(leadId) {
@@ -456,8 +463,12 @@ export default function PotentialLeads({
                 {filtered.map((lead) => {
                   const status = followUpStatus(lead.followUpDate);
                   return (
-                    <tr key={lead.id}>
-                      <td>
+                    <tr
+                      key={lead.id}
+                      className="clickable-row"
+                      onClick={() => setDetailLead(lead)}
+                    >
+                      <td onClick={(e) => e.stopPropagation()}>
                         <button
                           className="leads-delete-btn"
                           title="Delete lead"
@@ -546,7 +557,7 @@ export default function PotentialLeads({
                           "—"
                         )}
                       </td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         <button
                           className="leads-crm-btn"
                           title="Add to CRM pipeline"
@@ -564,6 +575,13 @@ export default function PotentialLeads({
           </div>
         )}
       </section>
+
+      <LeadDetailModal
+        isOpen={!!detailLead}
+        onClose={() => setDetailLead(null)}
+        lead={detailLead}
+        onSave={handleLeadSave}
+      />
     </>
   );
 }
