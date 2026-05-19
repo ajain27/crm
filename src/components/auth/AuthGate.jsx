@@ -55,7 +55,9 @@ function AuthGate({ onAuthenticated }) {
     try {
       await sendPasswordResetOtp(resetEmail);
       setView("reset");
-      setSuccessMessage(`A 6-digit code was sent to ${resetEmail}.`);
+      setSuccessMessage(
+        `If ${resetEmail} is registered, a 6-digit code was sent. Check your inbox.`,
+      );
     } catch (error) {
       setErrorMessage(error.message || "Could not send reset code.");
     } finally {

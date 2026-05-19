@@ -270,11 +270,9 @@ export async function deleteLeadFileById(leadId, id) {
 
 export async function sendPasswordResetOtp(email) {
   const normalizedEmail = email.trim().toLowerCase();
-  const match = await getDocs(
-    query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
-  );
-  if (match.empty) throw new Error("No account found for that email.");
 
+  // Don't reveal whether the email exists — just attempt the reset.
+  // confirmPasswordReset will fail gracefully if the email isn't registered.
   const otp = String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = Date.now() + 15 * 60 * 1000;
   await setDoc(doc(passwordResetsCollection, normalizedEmail), {
