@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Modal from "../../../../modal/Modal";
 
 const PROPERTY_TYPES = ["Single Family", "Multi Family", "Land"];
-const OFFER_STATUSES = ["Not Sent", "Offer Sent"];
+const OFFER_STATUSES = ["Not Sent", "Offer Sent", "Offer Withdrawn"];
 const YES_NO = ["No", "Yes"];
 const ACCEPTED_OPTS = ["No", "Waiting", "Yes"];
 
@@ -88,7 +88,10 @@ function DealDetailModal({ isOpen, onClose, deal, updateDealPatch }) {
   function set(field, value) {
     if (CURRENCY_FIELDS.includes(field)) {
       setDraft((prev) => ({ ...prev, [field]: fmtCurrency(value) }));
-    } else if (field === "offerStatus" && value === "Not Sent") {
+    } else if (
+      field === "offerStatus" &&
+      (value === "Not Sent" || value === "Offer Withdrawn")
+    ) {
       setDraft((prev) => ({
         ...prev,
         offerStatus: value,

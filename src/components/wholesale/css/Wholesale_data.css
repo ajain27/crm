@@ -238,6 +238,21 @@
     opacity: 0.5;
   }
 
+  .withdrawn-row td {
+    background: color-mix(in srgb, #9a3412 18%, var(--panel) 82%) !important;
+  }
+
+  .withdrawn-row input:not(.row-checkbox),
+  .withdrawn-row select,
+  .withdrawn-row button:not(.danger-btn):not(.note-btn) {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .withdrawn-row:hover td {
+    background: color-mix(in srgb, #9a3412 24%, var(--panel) 76%) !important;
+  }
+
   .bulk-delete-bar {
     @apply flex flex-wrap items-center gap-3 px-4 py-2 text-sm font-semibold;
     background: color-mix(in srgb, #dc2626 10%, var(--panel) 90%);
@@ -369,6 +384,11 @@
   .badge.no {
     color: var(--red);
     background-color: var(--bg-red-light);
+  }
+
+  .badge.offer-withdrawn {
+    color: var(--muted);
+    background-color: color-mix(in srgb, var(--muted) 12%, transparent 88%);
   }
 
   .table-footer {

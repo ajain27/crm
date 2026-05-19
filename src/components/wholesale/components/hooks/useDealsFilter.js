@@ -7,7 +7,12 @@ export function useDealsFilter({ deals }) {
   const states = useMemo(
     () => [
       "All",
-      ...new Set(deals.map((d) => d.state).filter(Boolean).sort()),
+      ...new Set(
+        deals
+          .map((d) => d.state)
+          .filter(Boolean)
+          .sort(),
+      ),
     ],
     [deals],
   );
@@ -15,7 +20,12 @@ export function useDealsFilter({ deals }) {
   const propertyTypes = useMemo(
     () => [
       "All",
-      ...new Set(deals.map((d) => d.propertyType).filter(Boolean).sort()),
+      ...new Set(
+        deals
+          .map((d) => d.propertyType)
+          .filter(Boolean)
+          .sort(),
+      ),
     ],
     [deals],
   );
@@ -44,6 +54,9 @@ export function useDealsFilter({ deals }) {
       const matchesAccepted =
         filters.offerAccepted === "All" ||
         deal.sellerAccepted === filters.offerAccepted;
+      const matchesOfferStatus =
+        filters.offerStatus === "All" ||
+        (deal.offerStatus || "Not Sent") === filters.offerStatus;
       const matchesAssigned =
         filters.assigned === "All" || deal.assigned === filters.assigned;
       const matchesClosed =
@@ -99,6 +112,7 @@ export function useDealsFilter({ deals }) {
         matchesState &&
         matchesPropertyType &&
         matchesAccepted &&
+        matchesOfferStatus &&
         matchesAssigned &&
         matchesSearch &&
         matchesClosed &&

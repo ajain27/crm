@@ -30,6 +30,7 @@ export function createDefaultFilters() {
     state: "All",
     propertyType: "All",
     offerAccepted: "All",
+    offerStatus: "All",
     assigned: "All",
     search: "",
     closed: "All",

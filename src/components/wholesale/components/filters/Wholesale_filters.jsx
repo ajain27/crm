@@ -97,6 +97,14 @@ function Wholesale_filters({
             options={years}
           />
           <Select
+            label="Offer Status"
+            value={filters.offerStatus}
+            onChange={(e) =>
+              setFilters({ ...filters, offerStatus: e.target.value })
+            }
+            options={["All", "Not Sent", "Offer Sent", "Offer Withdrawn"]}
+          />
+          <Select
             label="Offer Accepted"
             value={filters.offerAccepted}
             onChange={(e) =>
@@ -120,6 +128,7 @@ function Wholesale_filters({
                 state: "All",
                 propertyType: "All",
                 offerAccepted: "All",
+                offerStatus: "All",
                 assigned: "All",
                 search: "",
                 closed: "All",

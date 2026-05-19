@@ -1,5 +1,13 @@
 import { ReadOnlyCell } from "../../../elements/elements";
-import { Trash2, FileText, Edit2, Check, Eye, Upload, Loader2 } from "lucide-react";
+import {
+  Trash2,
+  FileText,
+  Edit2,
+  Check,
+  Eye,
+  Upload,
+  Loader2,
+} from "lucide-react";
 import { currency } from "../../../../utils/utils";
 import { getContractVersions } from "../wholesaleConfig";
 
@@ -36,11 +44,16 @@ function DealRow({
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
 
-  const isRejected = deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No";
+  const isRejected =
+    deal.offerStatus === "Offer Sent" && deal.sellerAccepted === "No";
+  const isWithdrawn = deal.offerStatus === "Offer Withdrawn";
 
   function handleTrClick(e) {
     const tag = e.target.tagName.toLowerCase();
-    if (["input", "select", "button", "a", "label", "svg", "path"].includes(tag)) return;
+    if (
+      ["input", "select", "button", "a", "label", "svg", "path"].includes(tag)
+    )
+      return;
     onRowDetailClick(deal);
   }
 
@@ -49,7 +62,7 @@ function DealRow({
       data-deal-id={deal.id}
       data-reveal
       style={{ "--reveal-delay": `${index * 35}ms` }}
-      className={`clickable-row ${deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : ""}`}
+      className={`clickable-row ${deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : isWithdrawn ? "withdrawn-row" : ""}`}
       onClick={handleTrClick}
     >
       <td className="text-center">
@@ -92,7 +105,8 @@ function DealRow({
         }
       />
       <td>
-        {deal.onMarket === "Yes" && (deal.agentName || deal.agentPhone || deal.listingUrl) ? (
+        {deal.onMarket === "Yes" &&
+        (deal.agentName || deal.agentPhone || deal.listingUrl) ? (
           <div className="buyer-info-cell">
             {deal.agentName ? (
               <div className="buyer-line">
@@ -138,6 +152,7 @@ function DealRow({
         >
           <option value="Not Sent">Not Sent</option>
           <option value="Offer Sent">Offer Sent</option>
+          <option value="Offer Withdrawn">Offer Withdrawn</option>
         </select>
       </td>
 
@@ -164,7 +179,9 @@ function DealRow({
             className={`badge ${deal.sellerAccepted?.toLowerCase()}`}
             value={deal.sellerAccepted}
             disabled={deal.closed === "Yes"}
-            onChange={(e) => updateDeal(deal.id, "sellerAccepted", e.target.value)}
+            onChange={(e) =>
+              updateDeal(deal.id, "sellerAccepted", e.target.value)
+            }
           >
             <option value="No">No</option>
             <option value="Waiting">Waiting</option>
@@ -183,7 +200,9 @@ function DealRow({
                 type="button"
                 className="secondary-btn contract-action-btn"
                 onClick={() => openContract(deal)}
-                title={latestContractVersion.name || "View latest uploaded contract"}
+                title={
+                  latestContractVersion.name || "View latest uploaded contract"
+                }
                 aria-label={`View contract for ${deal.address}`}
               >
                 <Eye size={16} />
@@ -206,7 +225,9 @@ function DealRow({
                     ? `Replace contract for ${deal.address}`
                     : `Upload contract for ${deal.address}`
               }
-              aria-disabled={deal.closed === "Yes" || uploadingDealId === deal.id}
+              aria-disabled={
+                deal.closed === "Yes" || uploadingDealId === deal.id
+              }
               style={
                 deal.closed === "Yes" || uploadingDealId === deal.id
                   ? { opacity: 0.5, pointerEvents: "none" }
@@ -291,7 +312,11 @@ function DealRow({
             }}
             onBlur={(e) => {
               const val = parseCurrencyInput(e.target.value);
-              if (val < deal.contractPrice && val > 0 && deal.contractPrice > 0) {
+              if (
+                val < deal.contractPrice &&
+                val > 0 &&
+                deal.contractPrice > 0
+              ) {
                 alert(
                   `Assigned price needs to be more than or equal to contract price (${currency(deal.contractPrice)}).`,
                 );
@@ -312,7 +337,8 @@ function DealRow({
           <div className="buyer-info-cell">
             <div className="buyer-line">
               <span className="buyer-label">Name</span>
-              {editingBuyerId === deal.id && editingBuyerField === "buyerName" ? (
+              {editingBuyerId === deal.id &&
+              editingBuyerField === "buyerName" ? (
                 <>
                   <input
                     type="text"
@@ -348,7 +374,8 @@ function DealRow({
             </div>
             <div className="buyer-line">
               <span className="buyer-label">Email</span>
-              {editingBuyerId === deal.id && editingBuyerField === "buyerEmail" ? (
+              {editingBuyerId === deal.id &&
+              editingBuyerField === "buyerEmail" ? (
                 <>
                   <input
                     type="email"
@@ -425,7 +452,6 @@ function DealRow({
           <span className="placeholder-dash">—</span>
         )}
       </td>
-
     </tr>
   );
 }
