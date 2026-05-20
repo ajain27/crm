@@ -18,7 +18,10 @@ import { formatPhone } from "../../utils/utils";
 import { createEmptyDealForm } from "../wholesale/components/wholesaleConfig";
 import ContractPreviewModal from "../wholesale/components/data/modals/ContractPreviewModal";
 import LeadDetailModal from "./LeadDetailModal";
+import Pagination from "../pagination/Pagination";
 import "./Leads.css";
+
+const ITEMS_PER_PAGE = 10;
 
 const MAX_FILE_SIZE = 750 * 1024;
 
@@ -38,18 +41,7 @@ function createLeadFile({ name, type, data }) {
   };
 }
 
-const SOURCES = [
-  "Driving for Dollars",
-  "MLS / Zillow",
-  "Facebook / Instagram",
-  "Direct Mail",
-  "Cold Call",
-  "Referral",
-  "PropStream",
-  "Propwire",
-  "Auction.com",
-  "Other",
-];
+const SOURCES = ["MLS / Zillow", "Cold Call", "Propwire", "Auction.com"];
 
 function createEmptyForm() {
   return {
@@ -123,7 +115,13 @@ export default function PotentialLeads({
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterAgent, setFilterAgent] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [detailLead, setDetailLead] = useState(null);
+
+  function resetPage() {
+    setCurrentPage(1);
+  }
 
   // File management
   const [uploadingLeadId, setUploadingLeadId] = useState(null);
@@ -325,6 +323,11 @@ export default function PotentialLeads({
       if (search && !l.address.toLowerCase().includes(search.toLowerCase()))
         return false;
       if (filterSource && l.source !== filterSource) return false;
+      if (
+        filterAgent &&
+        (l.agentName || "").trim().toLowerCase() !== filterAgent.toLowerCase()
+      )
+        return false;
       if (filterStatus) {
         const s = followUpStatus(l.followUpDate);
         if (filterStatus === "none" && l.followUpDate) return false;
@@ -338,8 +341,23 @@ export default function PotentialLeads({
       return a.followUpDate.localeCompare(b.followUpDate);
     });
 
-  const activeFilters = search || filterSource || filterStatus;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice(
+    (safePage - 1) * ITEMS_PER_PAGE,
+    safePage * ITEMS_PER_PAGE,
+  );
+
+  const activeFilters = search || filterSource || filterStatus || filterAgent;
   const usedSources = [...new Set(leads.map((l) => l.source).filter(Boolean))];
+  const usedAgents = [
+    ...new Map(
+      leads
+        .map((l) => l.agentName)
+        .filter(Boolean)
+        .map((n) => [n.trim().toLowerCase(), n.trim()]),
+    ).values(),
+  ].sort();
 
   return (
     <>
@@ -538,7 +556,10 @@ export default function PotentialLeads({
             </div>
             <select
               value={filterSource}
-              onChange={(e) => setFilterSource(e.target.value)}
+              onChange={(e) => {
+                setFilterSource(e.target.value);
+                resetPage();
+              }}
               className="leads-filter-select"
             >
               <option value="">All sources</option>
@@ -549,8 +570,26 @@ export default function PotentialLeads({
               ))}
             </select>
             <select
+              value={filterAgent}
+              onChange={(e) => {
+                setFilterAgent(e.target.value);
+                resetPage();
+              }}
+              className="leads-filter-select"
+            >
+              <option value="">All agents</option>
+              {usedAgents.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+            <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                resetPage();
+              }}
               className="leads-filter-select"
             >
               <option value="">All statuses</option>
@@ -566,6 +605,8 @@ export default function PotentialLeads({
                   setSearch("");
                   setFilterSource("");
                   setFilterStatus("");
+                  setFilterAgent("");
+                  resetPage();
                 }}
               >
                 Clear
@@ -583,176 +624,192 @@ export default function PotentialLeads({
             <p>No leads match the current filters.</p>
           </div>
         ) : (
-          <div className="table-wrap leads-table-wrap">
-            <table className="compact-table leads-table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Address</th>
-                  <th>Source</th>
-                  <th>Agent</th>
-                  <th>Follow-Up</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Added</th>
-                  <th>MLS Link</th>
-                  <th>Files</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((lead) => {
-                  const status = followUpStatus(lead.followUpDate);
-                  const leadFiles = getLeadFiles(lead);
-                  const isUploading = uploadingLeadId === lead.id;
-                  return (
-                    <tr
-                      key={lead.id}
-                      className="clickable-row"
-                      onClick={() => setDetailLead(lead)}
-                    >
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <button
-                          className="leads-delete-btn"
-                          title="Delete lead"
-                          onClick={() => handleDelete(lead.id)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                      <td className="leads-address-cell">{lead.address}</td>
-                      <td>
-                        {lead.source ? (
-                          <span className="leads-source-badge">
-                            {lead.source}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td>
-                        {lead.agentName || lead.agentPhone ? (
-                          <div className="leads-agent-cell">
-                            {lead.agentName && <span>{lead.agentName}</span>}
-                            {lead.agentPhone && (
-                              <a
-                                href={`tel:${lead.agentPhone}`}
-                                className="leads-contact-link"
-                              >
-                                {lead.agentPhone}
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td>
-                        {lead.followUpDate ? (
-                          <span
-                            className={`leads-followup-badge leads-followup-${status}`}
+          <>
+            <div
+              className="table-wrap leads-table-wrap"
+              style={{ overflowX: "auto" }}
+            >
+              <table className="compact-table leads-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Address</th>
+                    <th>Source</th>
+                    <th>Agent</th>
+                    <th>Follow-Up</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Added</th>
+                    <th>MLS Link</th>
+                    <th>Files</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((lead) => {
+                    const status = followUpStatus(lead.followUpDate);
+                    const leadFiles = getLeadFiles(lead);
+                    const isUploading = uploadingLeadId === lead.id;
+                    return (
+                      <tr
+                        key={lead.id}
+                        className="clickable-row"
+                        onClick={() => setDetailLead(lead)}
+                      >
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="leads-delete-btn"
+                            title="Delete lead"
+                            onClick={() => handleDelete(lead.id)}
                           >
-                            {formatDate(lead.followUpDate)}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td>
-                        {lead.email ? (
-                          <a
-                            href={`mailto:${lead.email}`}
-                            className="leads-contact-link"
-                          >
-                            {lead.email}
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td>
-                        {lead.phone ? (
-                          <a
-                            href={`tel:${lead.phone}`}
-                            className="leads-contact-link"
-                          >
-                            {lead.phone}
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="leads-date-cell">
-                        {formatDate(lead.dateAdded)}
-                      </td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        {lead.url ? (
-                          <a
-                            href={lead.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="leads-mls-link"
-                            title={lead.url}
-                          >
-                            <ExternalLink size={12} />
-                            {lead.source === "MLS / Zillow" ? "MLS" : "Link"}
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <div className="leads-file-actions">
-                          {leadFiles.length > 0 && (
-                            <button
-                              className="secondary-btn contract-action-btn"
-                              title="View files"
-                              onClick={() => openFiles(lead)}
-                            >
-                              <Eye size={14} />
-                            </button>
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                        <td className="leads-address-cell">{lead.address}</td>
+                        <td>
+                          {lead.source ? (
+                            <span className="leads-source-badge">
+                              {lead.source}
+                            </span>
+                          ) : (
+                            "—"
                           )}
-                          <label
-                            htmlFor={`lead-file-${lead.id}`}
-                            className="secondary-btn contract-action-btn"
-                            title={isUploading ? "Uploading…" : "Upload file"}
-                            style={
-                              isUploading
-                                ? { opacity: 0.5, pointerEvents: "none" }
-                                : undefined
-                            }
-                          >
-                            {isUploading ? (
-                              <Loader2 size={14} className="spin" />
-                            ) : (
-                              <Upload size={14} />
+                        </td>
+                        <td>
+                          {lead.agentName || lead.agentPhone ? (
+                            <div className="leads-agent-cell">
+                              {lead.agentName && <span>{lead.agentName}</span>}
+                              {lead.agentPhone && (
+                                <a
+                                  href={`tel:${lead.agentPhone}`}
+                                  className="leads-contact-link"
+                                >
+                                  {lead.agentPhone}
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td>
+                          {lead.followUpDate ? (
+                            <span
+                              className={`leads-followup-badge leads-followup-${status}`}
+                            >
+                              {formatDate(lead.followUpDate)}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td>
+                          {lead.email ? (
+                            <a
+                              href={`mailto:${lead.email}`}
+                              className="leads-contact-link"
+                            >
+                              {lead.email}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td>
+                          {lead.phone ? (
+                            <a
+                              href={`tel:${lead.phone}`}
+                              className="leads-contact-link"
+                            >
+                              {lead.phone}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="leads-date-cell">
+                          {formatDate(lead.dateAdded)}
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          {lead.url ? (
+                            <a
+                              href={lead.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="leads-mls-link"
+                              title={lead.url}
+                            >
+                              <ExternalLink size={12} />
+                              {lead.source === "MLS / Zillow" ? "MLS" : "Link"}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className="leads-file-actions">
+                            {leadFiles.length > 0 && (
+                              <button
+                                className="secondary-btn contract-action-btn"
+                                title="View files"
+                                onClick={() => openFiles(lead)}
+                              >
+                                <Eye size={14} />
+                              </button>
                             )}
-                          </label>
-                          <input
-                            id={`lead-file-${lead.id}`}
-                            type="file"
-                            accept=".pdf,.odt,.odf,image/*"
-                            className="contract-upload-input"
-                            onChange={(e) => handleFileUpload(lead, e)}
-                          />
-                        </div>
-                      </td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <button
-                          className="leads-crm-btn"
-                          title="Add to CRM pipeline"
-                          onClick={() => handleAddedToCRM(lead.id)}
-                        >
-                          <CheckCheck size={14} />
-                          CRM
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            <label
+                              htmlFor={`lead-file-${lead.id}`}
+                              className="secondary-btn contract-action-btn"
+                              title={isUploading ? "Uploading…" : "Upload file"}
+                              style={
+                                isUploading
+                                  ? { opacity: 0.5, pointerEvents: "none" }
+                                  : undefined
+                              }
+                            >
+                              {isUploading ? (
+                                <Loader2 size={14} className="spin" />
+                              ) : (
+                                <Upload size={14} />
+                              )}
+                            </label>
+                            <input
+                              id={`lead-file-${lead.id}`}
+                              type="file"
+                              accept=".pdf,.odt,.odf,image/*"
+                              className="contract-upload-input"
+                              onChange={(e) => handleFileUpload(lead, e)}
+                            />
+                          </div>
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="leads-crm-btn"
+                            title="Add to CRM pipeline"
+                            onClick={() => handleAddedToCRM(lead.id)}
+                          >
+                            <CheckCheck size={14} />
+                            CRM
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            >
+              <span className="pagination-summary">
+                {filtered.length === 0
+                  ? "No leads"
+                  : `${(safePage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(safePage * ITEMS_PER_PAGE, filtered.length)} of ${filtered.length} lead${filtered.length !== 1 ? "s" : ""}`}
+              </span>
+            </Pagination>
+          </>
         )}
       </section>
 
