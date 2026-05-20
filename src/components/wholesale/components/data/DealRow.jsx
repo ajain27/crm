@@ -1,13 +1,5 @@
 import { ReadOnlyCell } from "../../../elements/elements";
-import {
-  Trash2,
-  FileText,
-  Edit2,
-  Check,
-  Eye,
-  Upload,
-  Loader2,
-} from "lucide-react";
+import { Trash2, Edit2, Check, Eye, Upload, Loader2 } from "lucide-react";
 import { currency } from "../../../../utils/utils";
 import { getContractVersions } from "../wholesaleConfig";
 
@@ -29,7 +21,6 @@ function DealRow({
   openContract,
   handleContractUpload,
   uploadingDealId,
-  handleRowClick,
   onRowDetailClick,
   isSelected,
   onToggleSelect,
@@ -80,15 +71,6 @@ function DealRow({
           onClick={() => deleteDeal(deal.id)}
         >
           <Trash2 size={16} />
-        </button>
-      </td>
-      <td className="text-center">
-        <button
-          className="secondary-btn note-btn"
-          onClick={() => handleRowClick(deal)}
-          title="View/Edit Notes"
-        >
-          <FileText size={16} />
         </button>
       </td>
       <ReadOnlyCell value={deal.address} wide />

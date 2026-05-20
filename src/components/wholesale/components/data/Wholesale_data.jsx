@@ -152,7 +152,6 @@ function Wholesale_data({
                 />
               </th>
               <th></th>
-              <th className="notes-header">Notes</th>
               <th>Property Address</th>
               <th>City</th>
               <th>Zip Code</th>
