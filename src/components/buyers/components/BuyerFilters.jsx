@@ -10,6 +10,7 @@ function BuyerFilters({
   selectedCount,
   onCompose,
   onDeleteSelected,
+  onClearSelection,
 }) {
   const [searchExpanded, setSearchExpanded] = useState(Boolean(filters.search));
   const searchInputRef = useRef(null);
@@ -31,6 +32,7 @@ function BuyerFilters({
       realEstateType: "All",
       search: "",
     });
+    onClearSelection?.();
   };
 
   return (

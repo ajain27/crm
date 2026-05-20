@@ -332,6 +332,7 @@ function Buyers({ currentUser = { id: "" } }) {
         selectedCount={selectedIds.size}
         onCompose={() => setIsMailMergeOpen(true)}
         onDeleteSelected={handleDeleteSelected}
+        onClearSelection={() => setSelectedIds(new Set())}
       />
 
       <BuyerData
