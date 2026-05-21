@@ -179,9 +179,9 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    const closedSelect = screen.getAllByRole("combobox").find((select) =>
-      select.className.includes("badge no"),
-    );
+    const closedSelect = screen
+      .getAllByRole("combobox")
+      .find((select) => select.className.includes("badge no"));
     expect(closedSelect).toBeDefined();
     fireEvent.change(closedSelect, { target: { value: "Yes" } });
 
@@ -234,6 +234,7 @@ describe("Wholesale_data", () => {
             id: "d1",
             address: "123 Main St",
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             offerDate: "2026-04-15",
           },
           {
@@ -241,6 +242,7 @@ describe("Wholesale_data", () => {
             id: "d2",
             address: "456 Oak Ave",
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             offerDate: "2026-03-10",
           },
         ]}
@@ -250,6 +252,7 @@ describe("Wholesale_data", () => {
             id: "d1",
             address: "123 Main St",
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             offerDate: "2026-04-15",
           },
           {
@@ -257,6 +260,7 @@ describe("Wholesale_data", () => {
             id: "d2",
             address: "456 Oak Ave",
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             offerDate: "2026-03-10",
           },
         ]}
@@ -283,6 +287,7 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             contractFileName: "purchase-contract.pdf",
             contractFileType: "application/pdf",
             contractFileData: "data:application/pdf;base64,ZmFrZQ==",
@@ -301,6 +306,7 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             contractFileName: "purchase-contract.pdf",
             contractFileType: "application/pdf",
             contractFileData: "data:application/pdf;base64,ZmFrZQ==",
@@ -328,9 +334,9 @@ describe("Wholesale_data", () => {
     );
 
     expect(screen.getByText("Contract for 123 Main St")).toBeInTheDocument();
-    expect(
-      document.querySelector(".contract-preview-meta"),
-    ).toHaveTextContent("purchase-contract.pdf");
+    expect(document.querySelector(".contract-preview-meta")).toHaveTextContent(
+      "purchase-contract.pdf",
+    );
     await waitFor(() => {
       expect(
         document.querySelector('iframe[title="purchase-contract.pdf"]'),
@@ -345,6 +351,7 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             contractVersions: [
               {
                 id: "older",
@@ -370,6 +377,7 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             contractVersions: [
               {
                 id: "older",
@@ -436,12 +444,14 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
           },
         ]}
         deals={[
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
           },
         ]}
         deleteDeal={vi.fn()}
@@ -467,6 +477,7 @@ describe("Wholesale_data", () => {
       expect(saveDeal).toHaveBeenCalledWith({
         ...deal,
         offerStatus: "Offer Sent",
+        sellerAccepted: "Waiting",
         contractVersions: [
           expect.objectContaining({
             name: "contract.odt",
@@ -493,6 +504,7 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             contractFileName: "purchase-contract.pdf",
             contractFileType: "application/pdf",
             contractFileData: "data:application/pdf;base64,ZmFrZQ==",
@@ -511,6 +523,7 @@ describe("Wholesale_data", () => {
           {
             ...deal,
             offerStatus: "Offer Sent",
+            sellerAccepted: "Waiting",
             contractFileName: "purchase-contract.pdf",
             contractFileType: "application/pdf",
             contractFileData: "data:application/pdf;base64,ZmFrZQ==",
@@ -545,6 +558,7 @@ describe("Wholesale_data", () => {
       expect(saveDeal).toHaveBeenCalledWith({
         ...deal,
         offerStatus: "Offer Sent",
+        sellerAccepted: "Waiting",
         contractVersions: [],
         contractFileName: "",
         contractFileType: "",

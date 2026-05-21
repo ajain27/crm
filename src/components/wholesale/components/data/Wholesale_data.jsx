@@ -25,6 +25,7 @@ function Wholesale_data({
   currentUserId,
 }) {
   const today = new Date().toISOString().slice(0, 10);
+  const [tab, setTab] = useState("active");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [detailDeal, setDetailDeal] = useState(null);
@@ -51,13 +52,24 @@ function Wholesale_data({
     setSelectedIds(new Set());
   }
 
+  function isInactive(deal) {
+    const isRejected =
+      deal.offerStatus === "Offer Sent" && deal.sellerAccepted === "No";
+    const isWithdrawn = deal.offerStatus === "Offer Withdrawn";
+    return isRejected || isWithdrawn;
+  }
+
+  const tabFilteredDeals = filteredDeals.filter((d) =>
+    tab === "inactive" ? isInactive(d) : !isInactive(d),
+  );
+
   const {
     currentDeals,
     currentPage,
     setCurrentPage,
     totalPages,
     renderSortableHeader,
-  } = useDealsSort(filteredDeals);
+  } = useDealsSort(tabFilteredDeals);
 
   const { updateDeal, updateDealPatch } = useDealUpdater({
     deals,
@@ -118,8 +130,36 @@ function Wholesale_data({
     "";
   const contractMimeType = selectedContractVersion?.type || "";
 
+  const activeCount = filteredDeals.filter((d) => !isInactive(d)).length;
+  const inactiveCount = filteredDeals.filter((d) => isInactive(d)).length;
+
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
+      <div className="deal-tab-bar">
+        <button
+          className={`deal-tab-btn${tab === "active" ? " deal-tab-btn--active" : ""}`}
+          onClick={() => {
+            setTab("active");
+            setCurrentPage(1);
+            setSelectedIds(new Set());
+          }}
+        >
+          Active
+          <span className="deal-tab-count">{activeCount}</span>
+        </button>
+        <button
+          className={`deal-tab-btn${tab === "inactive" ? " deal-tab-btn--active" : ""}`}
+          onClick={() => {
+            setTab("inactive");
+            setCurrentPage(1);
+            setSelectedIds(new Set());
+          }}
+        >
+          Inactive
+          <span className="deal-tab-count">{inactiveCount}</span>
+        </button>
+      </div>
+
       {selectedIds.size > 0 && (
         <div className="bulk-delete-bar">
           <span>
@@ -205,7 +245,7 @@ function Wholesale_data({
         setCurrentPage={setCurrentPage}
       >
         <span>
-          Showing {currentDeals.length} of {filteredDeals.length} results
+          Showing {currentDeals.length} of {tabFilteredDeals.length} results
         </span>
       </Pagination>
 
