@@ -1,23 +1,6 @@
 import { useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
-
-function parseCurrency(value) {
-  const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function fmt(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function fmtCurrencyInput(value) {
-  const numeric = String(value || "").replace(/[^0-9]/g, "");
-  return numeric ? "$" + parseInt(numeric, 10).toLocaleString("en-US") : "";
-}
+import { parseCurrency, fmt, fmtCurrencyInput } from "../../../../utils/utils";
 
 const CURRENCY_FIELDS = new Set(["arv", "wholesaleFee"]);
 

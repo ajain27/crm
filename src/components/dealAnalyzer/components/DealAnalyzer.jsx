@@ -6,6 +6,7 @@ import MultiFamilyTab from "./multiFamily/MultiFamilyTab";
 import NovationTab from "./novation/NovationTab";
 import RentalTab from "./rental/RentalTab";
 import FindCompsTab from "./findComps/FindCompsTab";
+import MorbyMethodTab from "./morbyMethod/MorbyMethodTab";
 
 const analyzerTabs = [
   {
@@ -100,6 +101,19 @@ const analyzerTabs = [
       "Account for holding period and monthly carrying costs",
     ],
   },
+  {
+    id: "morby-method",
+    label: "Morby Method",
+    eyebrow: "Creative Finance",
+    title: "Seller carryback deal review",
+    description:
+      "Analyze a Morby Method deal where the seller carries back funds in a second lien position to cover the buyer's closing costs and down payment gap.",
+    prompts: [
+      "Confirm DSCR first lien terms with your lender",
+      "Negotiate seller carryback amount to minimize cash to close",
+      "Verify DSCR ratio and cash-on-cash return targets",
+    ],
+  },
 ];
 
 function DealAnalyzer() {
@@ -151,6 +165,7 @@ function DealAnalyzer() {
           {activeTab === "novation" && <NovationTab tab={currentTab} />}
           {activeTab === "rental" && <RentalTab tab={currentTab} />}
           {activeTab === "find-comps" && <FindCompsTab tab={currentTab} />}
+          {activeTab === "morby-method" && <MorbyMethodTab tab={currentTab} />}
         </div>
       </section>
     </>

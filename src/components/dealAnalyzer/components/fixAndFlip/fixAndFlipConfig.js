@@ -109,25 +109,9 @@ export function getAutoRehabCost(rehabType, sqft) {
   return { cost, estimated };
 }
 
-export function parseCurrency(value) {
-  const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-export function parsePercent(value) {
-  const n = parseFloat(String(value || "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-export function fmt(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-export function fmtCurrencyInput(value) {
-  const numeric = String(value || "").replace(/[^0-9]/g, "");
-  return numeric ? "$" + parseInt(numeric, 10).toLocaleString("en-US") : "";
-}
+export {
+  parseCurrency,
+  parsePercent,
+  fmt,
+  fmtCurrencyInput,
+} from "../../../../utils/utils";

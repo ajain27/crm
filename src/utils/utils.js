@@ -66,12 +66,39 @@ function formatPhone(value) {
 }
 
 // annualRateDecimal: e.g. 0.065 for 6.5%
-function calculateMonthlyPayment(loanPrincipal, annualRateDecimal, totalPayments) {
+function calculateMonthlyPayment(
+  loanPrincipal,
+  annualRateDecimal,
+  totalPayments,
+) {
   if (loanPrincipal <= 0 || totalPayments <= 0) return 0;
   const r = annualRateDecimal / 12;
   if (r <= 0) return loanPrincipal / totalPayments;
   const factor = (1 + r) ** totalPayments;
   return loanPrincipal * ((r * factor) / (factor - 1));
+}
+
+function parseCurrency(value) {
+  const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parsePercent(value) {
+  const n = parseFloat(String(value || "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function fmt(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function fmtCurrencyInput(value) {
+  const numeric = String(value || "").replace(/[^0-9]/g, "");
+  return numeric ? "$" + parseInt(numeric, 10).toLocaleString("en-US") : "";
 }
 
 export {
@@ -83,4 +110,8 @@ export {
   monthKey,
   formatPhone,
   calculateMonthlyPayment,
+  parseCurrency,
+  parsePercent,
+  fmt,
+  fmtCurrencyInput,
 };

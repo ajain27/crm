@@ -12,11 +12,12 @@ const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
 const TITLE_FEES_PCT = 1;
 const INSPECTION_COST = 450;
-const LENDER_LTC = 0.8;
-const DOWN_PCT = Math.round((1 - LENDER_LTC) * 100);
+const DSCR_LTV = 0.8;
+const DOWN_PCT = Math.round((1 - DSCR_LTV) * 100);
 
 function calcPMT(annualRatePct, termYears, principal) {
-  if (annualRatePct <= 0 || termYears <= 0 || principal <= 0) return 0;
+  if (principal <= 0 || termYears <= 0) return 0;
+  if (annualRatePct <= 0) return principal / (termYears * 12);
   const r = annualRatePct / 100 / 12;
   const n = termYears * 12;
   const factor = Math.pow(1 + r, n);
@@ -25,36 +26,37 @@ function calcPMT(annualRatePct, termYears, principal) {
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "sellerCarryback",
   "monthlyRent",
   "monthlyInsurance",
   "monthlyTaxes",
   "annualMiscExpense",
-  "originationFees",
-  "legalFees",
-  "appraisalFees",
 ]);
 
-const PERCENT_FIELDS = new Set(["agentCommission", "points", "interestRate"]);
+const PERCENT_FIELDS = new Set([
+  "agentCommission",
+  "dscrRate",
+  "sellerCarrybackRate",
+]);
 
 const initialForm = {
   purchasePrice: "",
   agentCommission: "",
-  // loan-only fields
-  points: "",
-  interestRate: "",
-  loanTermYears: "",
-  originationFees: "",
-  legalFees: "",
-  appraisalFees: "",
-  // income & expenses
+  // DSCR first lien
+  dscrRate: "",
+  dscrTermYears: "",
+  // Seller carryback (2nd lien)
+  sellerCarryback: "",
+  sellerCarrybackRate: "",
+  sellerCarrybackTermYears: "",
+  // Income & expenses
   monthlyRent: "",
   monthlyInsurance: "",
   monthlyTaxes: "",
   annualMiscExpense: "",
 };
 
-function RentalTab({ tab }) {
-  const [financeType, setFinanceType] = useState("cash");
+function MorbyMethodTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
 
@@ -69,7 +71,7 @@ function RentalTab({ tab }) {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
       return;
     }
-    if (name === "loanTermYears") {
+    if (name === "dscrTermYears" || name === "sellerCarrybackTermYears") {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9]/g, "") }));
       return;
     }
@@ -84,16 +86,47 @@ function RentalTab({ tab }) {
     }
   }
 
-  function switchFinanceType(type) {
-    setFinanceType(type);
-    setSummary(null);
-  }
-
-  // — Shared derived values
+  // — Shared
   const purchasePrice = parseCurrency(form.purchasePrice);
   const agentCommissionPct = parsePercent(form.agentCommission);
   const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
+  const titleFees = purchasePrice * (TITLE_FEES_PCT / 100);
+
+  // — DSCR first lien (80% LTV)
+  const dscrLoanAmount = purchasePrice * DSCR_LTV;
+  const downPaymentRequired = purchasePrice * (1 - DSCR_LTV);
+  const dscrRatePct = parsePercent(form.dscrRate);
+  const dscrTermYears = parseInt(form.dscrTermYears || "0", 10) || 0;
+  const dscrMonthlyPayment = calcPMT(
+    dscrRatePct,
+    dscrTermYears,
+    dscrLoanAmount,
+  );
+
+  // — Seller carryback (2nd lien promissory note)
+  const sellerCarryback = parseCurrency(form.sellerCarryback);
+  const sellerCarrybackRatePct = parsePercent(form.sellerCarrybackRate);
+  const sellerCarrybackTermYears =
+    parseInt(form.sellerCarrybackTermYears || "0", 10) || 0;
+  const sellerCarrybackMonthly = calcPMT(
+    sellerCarrybackRatePct,
+    sellerCarrybackTermYears,
+    sellerCarryback,
+  );
+
+  // — What buyer actually brings to close
+  const totalUpfrontNeeded =
+    downPaymentRequired +
+    closingCosts +
+    titleFees +
+    agentCommissionAmt +
+    INSPECTION_COST;
+  const sellerCovers = Math.min(sellerCarryback, totalUpfrontNeeded);
+  const buyerCashToClose = Math.max(0, totalUpfrontNeeded - sellerCarryback);
+  const sellerExcess = Math.max(0, sellerCarryback - totalUpfrontNeeded);
+
+  // — Income & expenses
   const monthlyRent = parseCurrency(form.monthlyRent);
   const monthlyInsurance = parseCurrency(form.monthlyInsurance);
   const monthlyTaxes = parseCurrency(form.monthlyTaxes);
@@ -106,32 +139,15 @@ function RentalTab({ tab }) {
     firstMonthPropMgmtFee - propMgmtFee,
   );
 
-  // — Loan-mode derived values (DSCR)
-  const lenderFunds = purchasePrice * LENDER_LTC;
-  const downPayment = purchasePrice * (1 - LENDER_LTC);
-  const pointsPct = parsePercent(form.points);
-  const interestRatePct = parsePercent(form.interestRate);
-  const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
-  const titleFees = purchasePrice * (TITLE_FEES_PCT / 100);
-  const originationFees = parseCurrency(form.originationFees);
-  const legalFees = parseCurrency(form.legalFees);
-  const appraisalFees = parseCurrency(form.appraisalFees);
-  const pointsCost = lenderFunds * (pointsPct / 100);
-  const miscFees = originationFees + legalFees + appraisalFees;
-  const upfrontLoanCosts = pointsCost + miscFees;
-  const loanOutOfPocket = downPayment + upfrontLoanCosts;
-  const loanMortgage = calcPMT(interestRatePct, loanTermYears, lenderFunds);
-
-  // — Cash-flow calculations
-  const monthlyMortgage = financeType === "loan" ? loanMortgage : 0;
   const noi =
     monthlyRent -
     propMgmtFee -
     monthlyInsurance -
     monthlyTaxes -
     monthlyMiscExpense;
+  const totalMonthlyDebtService = dscrMonthlyPayment + sellerCarrybackMonthly;
   const totalMonthlyExpenses =
-    monthlyMortgage +
+    totalMonthlyDebtService +
     propMgmtFee +
     monthlyInsurance +
     monthlyTaxes +
@@ -139,44 +155,44 @@ function RentalTab({ tab }) {
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
 
-  const totalFundsNeeded =
-    financeType === "loan"
-      ? loanOutOfPocket +
-        closingCosts +
-        titleFees +
-        agentCommissionAmt +
-        INSPECTION_COST
-      : purchasePrice +
-        closingCosts +
-        titleFees +
-        agentCommissionAmt +
-        INSPECTION_COST;
-
-  const cashOnCash =
-    totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
+  // — Returns
+  const dscr = dscrMonthlyPayment > 0 ? noi / dscrMonthlyPayment : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
-  const dscr = loanMortgage > 0 ? noi / loanMortgage : 0;
-
-  const isLoanFormComplete =
-    form.purchasePrice?.trim() &&
-    form.monthlyRent?.trim() &&
-    form.interestRate?.trim() &&
-    form.loanTermYears?.trim();
-
-  const isCashFormComplete =
-    form.purchasePrice?.trim() && form.monthlyRent?.trim();
+  const cashOnCash =
+    buyerCashToClose > 0 ? (annualCashFlow / buyerCashToClose) * 100 : null;
 
   const isFormComplete =
-    financeType === "loan" ? isLoanFormComplete : isCashFormComplete;
+    form.purchasePrice?.trim() &&
+    form.dscrRate?.trim() &&
+    form.dscrTermYears?.trim() &&
+    form.sellerCarryback?.trim() &&
+    form.monthlyRent?.trim();
 
   function handleCalculate() {
     if (!isFormComplete) return;
     setSummary({
-      financeType,
       purchasePrice,
       agentCommissionPct,
       agentCommissionAmt,
       closingCosts,
+      titleFees,
+      // DSCR
+      dscrLoanAmount,
+      downPaymentRequired,
+      dscrRatePct,
+      dscrTermYears,
+      dscrMonthlyPayment,
+      // Seller carryback
+      sellerCarryback,
+      sellerCarrybackRatePct,
+      sellerCarrybackTermYears,
+      sellerCarrybackMonthly,
+      // Buyer close
+      totalUpfrontNeeded,
+      sellerCovers,
+      buyerCashToClose,
+      sellerExcess,
+      // Cash flow
       monthlyRent,
       propMgmtFee,
       firstMonthPropMgmtFee,
@@ -185,31 +201,15 @@ function RentalTab({ tab }) {
       monthlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
-      // loan
-      lenderFunds,
-      downPayment,
-      pointsPct,
-      pointsCost,
-      interestRatePct,
-      loanTermYears,
-      titleFees,
-      loanMortgage,
-      miscFees,
-      originationFees,
-      legalFees,
-      appraisalFees,
-      upfrontLoanCosts,
-      loanOutOfPocket,
-      // cash flow
-      monthlyMortgage,
       noi,
+      totalMonthlyDebtService,
       totalMonthlyExpenses,
       monthlyCashFlow,
       annualCashFlow,
-      totalFundsNeeded,
-      cashOnCash,
-      capRate,
+      // Returns
       dscr,
+      capRate,
+      cashOnCash,
       inspectionCost: INSPECTION_COST,
     });
   }
@@ -242,43 +242,12 @@ function RentalTab({ tab }) {
       >
         <div className="panel-header deal-analyzer-form-header">
           <div>
-            <h2>Rental Inputs</h2>
+            <h2>Morby Method Inputs</h2>
             <p>
-              Enter purchase details, financing type, and monthly income and
-              expenses to calculate cash flow.
+              Stack a DSCR first lien with a seller-carried second lien
+              (promissory note) to minimize your cash to close.
             </p>
           </div>
-        </div>
-
-        {/* — Finance type toggle */}
-        <div
-          className="deal-analyzer-section-label"
-          style={{ textAlign: "center" }}
-        >
-          Purchase Type
-        </div>
-        <div
-          className="deal-tab-bar"
-          style={{
-            padding: "0 0 1rem 0",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <button
-            type="button"
-            className={`deal-tab-btn${financeType === "cash" ? " deal-tab-btn--active" : ""}`}
-            onClick={() => switchFinanceType("cash")}
-          >
-            Cash
-          </button>
-          <button
-            type="button"
-            className={`deal-tab-btn${financeType === "loan" ? " deal-tab-btn--active" : ""}`}
-            onClick={() => switchFinanceType("loan")}
-          >
-            Loan (DSCR)
-          </button>
         </div>
 
         {/* — Purchase & Acquisition */}
@@ -291,7 +260,7 @@ function RentalTab({ tab }) {
             name="purchasePrice"
             value={form.purchasePrice}
             onChange={handleChange}
-            placeholder="e.g. $200,000"
+            placeholder="e.g. $300,000"
             required
           />
           <Field
@@ -336,89 +305,130 @@ function RentalTab({ tab }) {
           </label>
         </div>
 
-        {/* — DSCR Loan (loan mode only) */}
-        {financeType === "loan" && (
-          <>
-            <div className="deal-analyzer-section-label">DSCR Loan</div>
-            <div className="deal-analyzer-form-grid">
-              <label className="field deal-analyzer-output">
-                <span>
-                  Down Payment{" "}
-                  <span className="deal-analyzer-auto-badge">{DOWN_PCT}%</span>
-                </span>
-                <input
-                  value={downPayment > 0 ? fmt(downPayment) : ""}
-                  readOnly
-                  tabIndex={-1}
-                />
-              </label>
-              <Field
-                label="Points (%)"
-                name="points"
-                value={form.points}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="e.g. 2"
-                required
+        {/* — DSCR First Lien */}
+        <div className="deal-analyzer-section-label">
+          DSCR First Lien{" "}
+          <span className="deal-analyzer-auto-badge">
+            {DSCR_LTV * 100}% LTV
+          </span>
+        </div>
+        <div className="deal-analyzer-form-grid">
+          <label className="field deal-analyzer-output">
+            <span>
+              Loan Amount{" "}
+              <span className="deal-analyzer-auto-badge">
+                {DSCR_LTV * 100}% of price
+              </span>
+            </span>
+            <input
+              value={dscrLoanAmount > 0 ? fmt(dscrLoanAmount) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <label className="field deal-analyzer-output">
+            <span>
+              Down Payment Required{" "}
+              <span className="deal-analyzer-auto-badge">{DOWN_PCT}%</span>
+            </span>
+            <input
+              value={downPaymentRequired > 0 ? fmt(downPaymentRequired) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <Field
+            label="Interest Rate (% / year)"
+            name="dscrRate"
+            value={form.dscrRate}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. 7.5"
+            required
+          />
+          <Field
+            label="Loan Term (Years)"
+            name="dscrTermYears"
+            value={form.dscrTermYears}
+            onChange={handleChange}
+            placeholder="e.g. 30"
+            required
+          />
+          <label className="field deal-analyzer-output">
+            <span>
+              Monthly Payment{" "}
+              <span className="deal-analyzer-auto-badge">auto</span>
+            </span>
+            <input
+              value={dscrMonthlyPayment > 0 ? fmt(dscrMonthlyPayment) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+        </div>
+
+        {/* — Seller Carryback (2nd Lien) */}
+        <div className="deal-analyzer-section-label">
+          Seller Carryback — 2nd Lien Promissory Note
+        </div>
+        <div className="deal-analyzer-form-grid">
+          <Field
+            label="Seller Carryback Amount"
+            name="sellerCarryback"
+            value={form.sellerCarryback}
+            onChange={handleChange}
+            placeholder="e.g. $60,000"
+            required
+          />
+          <Field
+            label="Note Rate (% / year)"
+            name="sellerCarrybackRate"
+            value={form.sellerCarrybackRate}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. 0 (often interest-free)"
+          />
+          <Field
+            label="Note Term (Years)"
+            name="sellerCarrybackTermYears"
+            value={form.sellerCarrybackTermYears}
+            onChange={handleChange}
+            placeholder="e.g. 5 (balloon)"
+          />
+          {sellerCarryback > 0 && sellerCarrybackTermYears > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>
+                Monthly Note Payment{" "}
+                <span className="deal-analyzer-auto-badge">auto</span>
+              </span>
+              <input
+                value={fmt(sellerCarrybackMonthly)}
+                readOnly
+                tabIndex={-1}
               />
-              <Field
-                label="Interest Rate (% / year)"
-                name="interestRate"
-                value={form.interestRate}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="e.g. 12"
-                required
-              />
-              <Field
-                label="Loan Term (Years)"
-                name="loanTermYears"
-                value={form.loanTermYears}
-                onChange={handleChange}
-                placeholder="e.g. 30"
-                required
-              />
-              <Field
-                label="Origination Fees"
-                name="originationFees"
-                value={form.originationFees}
-                onChange={handleChange}
-                placeholder="e.g. $1,500"
-              />
-              <Field
-                label="Legal Fees"
-                name="legalFees"
-                value={form.legalFees}
-                onChange={handleChange}
-                placeholder="e.g. $1,000"
-              />
-              <Field
-                label="Appraisal Fees"
-                name="appraisalFees"
-                value={form.appraisalFees}
-                onChange={handleChange}
-                placeholder="e.g. $500"
-              />
-              {miscFees > 0 && (
-                <label className="field deal-analyzer-output">
-                  <span>Total Misc Fees</span>
-                  <input value={fmt(miscFees)} readOnly tabIndex={-1} />
-                </label>
-              )}
-              <label className="field deal-analyzer-output">
-                <span>
-                  Monthly Mortgage{" "}
-                  <span className="deal-analyzer-auto-badge">auto</span>
-                </span>
-                <input
-                  value={loanMortgage > 0 ? fmt(loanMortgage) : ""}
-                  readOnly
-                  tabIndex={-1}
-                />
-              </label>
-            </div>
-          </>
-        )}
+            </label>
+          )}
+          {sellerCarryback > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>Seller Covers at Close</span>
+              <input value={fmt(sellerCovers)} readOnly tabIndex={-1} />
+            </label>
+          )}
+          {buyerCashToClose >= 0 && purchasePrice > 0 && (
+            <label
+              className={`field deal-analyzer-output ${buyerCashToClose === 0 ? "deal-analyzer-output-positive" : ""}`}
+            >
+              <span>Buyer Cash to Close</span>
+              <input value={fmt(buyerCashToClose)} readOnly tabIndex={-1} />
+            </label>
+          )}
+          {sellerExcess > 0 && (
+            <label className="field deal-analyzer-output deal-analyzer-output-positive">
+              <span>Seller Excess (rehab / reserves)</span>
+              <input value={fmt(sellerExcess)} readOnly tabIndex={-1} />
+            </label>
+          )}
+        </div>
 
         {/* — Income & Expenses */}
         <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
@@ -428,7 +438,7 @@ function RentalTab({ tab }) {
             name="monthlyRent"
             value={form.monthlyRent}
             onChange={handleChange}
-            placeholder="e.g. $1,800"
+            placeholder="e.g. $2,500"
             required
           />
           <label className="field deal-analyzer-output deal-analyzer-inline-badge-output">
@@ -452,14 +462,14 @@ function RentalTab({ tab }) {
             name="monthlyInsurance"
             value={form.monthlyInsurance}
             onChange={handleChange}
-            placeholder="e.g. $100"
+            placeholder="e.g. $150"
           />
           <Field
             label="Monthly Property Taxes"
             name="monthlyTaxes"
             value={form.monthlyTaxes}
             onChange={handleChange}
-            placeholder="e.g. $250"
+            placeholder="e.g. $300"
           />
           <Field
             label="Annual Miscellaneous Expense"
@@ -516,11 +526,41 @@ function RentalTab({ tab }) {
               className="deal-analyzer-summary-grid"
               style={{ marginTop: "1.25rem" }}
             >
+              {/* Capital Stack */}
               <div
                 className="deal-analyzer-section-label"
                 style={{ gridColumn: "1 / -1", marginTop: 0 }}
               >
-                Income
+                Capital Stack
+              </div>
+              <div>
+                <span>Purchase Price</span>
+                <strong>
+                  <AnimatedAmount value={summary.purchasePrice} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>DSCR Loan ({DSCR_LTV * 100}% LTV — 1st lien)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.dscrLoanAmount} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Seller Carryback (2nd lien)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.sellerCarryback}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+
+              {/* Monthly Expenses */}
+              <div
+                className="deal-analyzer-section-label"
+                style={{ gridColumn: "1 / -1" }}
+              >
+                Monthly Expenses
               </div>
               <div>
                 <span>Monthly Rent</span>
@@ -528,22 +568,34 @@ function RentalTab({ tab }) {
                   <AnimatedAmount value={summary.monthlyRent} format={fmt} />
                 </strong>
               </div>
-
-              <div
-                className="deal-analyzer-section-label"
-                style={{ gridColumn: "1 / -1" }}
-              >
-                Monthly Expenses
-              </div>
-
-              {summary.financeType === "loan" && summary.loanMortgage > 0 && (
+              {summary.dscrMonthlyPayment > 0 && (
                 <div>
                   <span>
-                    Monthly Mortgage (DSCR {summary.interestRatePct}%,{" "}
-                    {summary.loanTermYears} yr)
+                    DSCR Payment ({summary.dscrRatePct}%,{" "}
+                    {summary.dscrTermYears} yr)
                   </span>
                   <strong className="deal-analyzer-return-negative">
-                    <AnimatedAmount value={summary.loanMortgage} format={fmt} />
+                    <AnimatedAmount
+                      value={summary.dscrMonthlyPayment}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.sellerCarrybackMonthly > 0 && (
+                <div>
+                  <span>
+                    Seller Note Payment (
+                    {summary.sellerCarrybackRatePct > 0
+                      ? `${summary.sellerCarrybackRatePct}%`
+                      : "0%"}
+                    , {summary.sellerCarrybackTermYears} yr)
+                  </span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.sellerCarrybackMonthly}
+                      format={fmt}
+                    />
                   </strong>
                 </div>
               )}
@@ -596,91 +648,30 @@ function RentalTab({ tab }) {
                 </strong>
               </div>
 
+              {/* Buyer Cash to Close */}
               <div
                 className="deal-analyzer-section-label"
                 style={{ gridColumn: "1 / -1" }}
               >
-                {summary.financeType === "loan"
-                  ? "Total Cash Needed to Buy"
-                  : "One-Time Costs"}
+                Buyer Cash to Close
               </div>
-
-              {summary.financeType === "cash" && (
-                <div>
-                  <span>Purchase Price</span>
-                  <strong className="deal-analyzer-return-negative">
-                    <AnimatedAmount
-                      value={summary.purchasePrice}
-                      format={fmt}
-                    />
-                  </strong>
-                </div>
-              )}
-              {summary.financeType === "loan" && (
-                <>
-                  <div>
-                    <span>Down Payment ({DOWN_PCT}% of purchase)</span>
-                    <strong className="deal-analyzer-return-negative">
-                      <AnimatedAmount
-                        value={summary.downPayment}
-                        format={fmt}
-                      />
-                    </strong>
-                  </div>
-                  {summary.pointsCost > 0 && (
-                    <div>
-                      <span>Points ({summary.pointsPct}%)</span>
-                      <strong className="deal-analyzer-return-negative">
-                        <AnimatedAmount
-                          value={summary.pointsCost}
-                          format={fmt}
-                        />
-                      </strong>
-                    </div>
-                  )}
-                  {summary.originationFees > 0 && (
-                    <div>
-                      <span>Origination Fees</span>
-                      <strong className="deal-analyzer-return-negative">
-                        <AnimatedAmount
-                          value={summary.originationFees}
-                          format={fmt}
-                        />
-                      </strong>
-                    </div>
-                  )}
-                  {summary.legalFees > 0 && (
-                    <div>
-                      <span>Legal Fees</span>
-                      <strong className="deal-analyzer-return-negative">
-                        <AnimatedAmount
-                          value={summary.legalFees}
-                          format={fmt}
-                        />
-                      </strong>
-                    </div>
-                  )}
-                  {summary.appraisalFees > 0 && (
-                    <div>
-                      <span>Appraisal Fees</span>
-                      <strong className="deal-analyzer-return-negative">
-                        <AnimatedAmount
-                          value={summary.appraisalFees}
-                          format={fmt}
-                        />
-                      </strong>
-                    </div>
-                  )}
-                </>
-              )}
               <div>
-                <span>Closing Costs ({CLOSING_COSTS_PCT}% of price)</span>
+                <span>Down Payment ({DOWN_PCT}%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.downPaymentRequired}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Closing Costs ({CLOSING_COSTS_PCT}%)</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.closingCosts} format={fmt} />
                 </strong>
               </div>
               <div>
-                <span>Title Fees ({TITLE_FEES_PCT}% of price)</span>
+                <span>Title Fees ({TITLE_FEES_PCT}%)</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.titleFees} format={fmt} />
                 </strong>
@@ -708,32 +699,59 @@ function RentalTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>Inspection Cost</span>
+                <span>Inspection</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.inspectionCost} format={fmt} />
                 </strong>
               </div>
               <div>
-                <span>
-                  {summary.financeType === "loan"
-                    ? "Total Cash Needed to Buy"
-                    : "Total Funds Needed"}
-                </span>
+                <span>Total Needed at Close</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
-                    value={summary.totalFundsNeeded}
+                    value={summary.totalUpfrontNeeded}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Seller Covers (2nd lien)</span>
+                <strong className="deal-analyzer-return-positive">
+                  <AnimatedAmount value={summary.sellerCovers} format={fmt} />
+                </strong>
+              </div>
+              {summary.sellerExcess > 0 && (
+                <div>
+                  <span>Seller Excess (reserves / rehab)</span>
+                  <strong className="deal-analyzer-return-positive">
+                    <AnimatedAmount value={summary.sellerExcess} format={fmt} />
+                  </strong>
+                </div>
+              )}
+              <div>
+                <span>
+                  <strong>Buyer Cash to Close</strong>
+                </span>
+                <strong
+                  className={
+                    summary.buyerCashToClose === 0
+                      ? "deal-analyzer-return-positive"
+                      : "deal-analyzer-return-negative"
+                  }
+                >
+                  <AnimatedAmount
+                    value={summary.buyerCashToClose}
                     format={fmt}
                   />
                 </strong>
               </div>
 
+              {/* Returns */}
               <div
                 className="deal-analyzer-section-label"
                 style={{ gridColumn: "1 / -1" }}
               >
                 Returns
               </div>
-
               <div>
                 <span>Monthly Cash Flow</span>
                 <strong
@@ -761,12 +779,12 @@ function RentalTab({ tab }) {
                   <AnimatedAmount value={summary.annualCashFlow} format={fmt} />
                 </strong>
               </div>
-              {summary.financeType === "loan" && summary.loanMortgage > 0 && (
+              {summary.dscrMonthlyPayment > 0 && (
                 <div>
-                  <span>DSCR</span>
+                  <span>DSCR (NOI ÷ 1st lien payment)</span>
                   <strong
                     className={
-                      summary.dscr >= 1
+                      summary.dscr >= 1.25
                         ? "deal-analyzer-return-positive"
                         : "deal-analyzer-return-negative"
                     }
@@ -775,23 +793,33 @@ function RentalTab({ tab }) {
                   </strong>
                 </div>
               )}
-              <div>
-                <span>Cash-on-Cash Return</span>
-                <strong
-                  className={
-                    summary.cashOnCash >= 0
-                      ? "deal-analyzer-return-positive"
-                      : "deal-analyzer-return-negative"
-                  }
-                >
-                  {summary.cashOnCash.toFixed(1)}%
-                </strong>
-              </div>
+              {summary.cashOnCash !== null && (
+                <div>
+                  <span>Cash-on-Cash Return</span>
+                  <strong
+                    className={
+                      summary.cashOnCash >= 8
+                        ? "deal-analyzer-return-positive"
+                        : "deal-analyzer-return-negative"
+                    }
+                  >
+                    {summary.cashOnCash.toFixed(1)}%
+                  </strong>
+                </div>
+              )}
+              {summary.buyerCashToClose === 0 && (
+                <div>
+                  <span>Cash-on-Cash Return</span>
+                  <strong className="deal-analyzer-return-positive">
+                    ∞ (zero cash in)
+                  </strong>
+                </div>
+              )}
               <div>
                 <span>Cap Rate</span>
                 <strong
                   className={
-                    summary.capRate >= 0
+                    summary.capRate >= 5
                       ? "deal-analyzer-return-positive"
                       : "deal-analyzer-return-negative"
                   }
@@ -805,16 +833,14 @@ function RentalTab({ tab }) {
               className="deal-analyzer-calculation"
               style={{ marginTop: "1rem" }}
             >
-              Monthly Cash Flow = Rent − Prop. Mgmt
-              {summary.financeType === "loan" ? " − Monthly Mortgage" : ""}
+              Monthly Cash Flow = Rent − DSCR Payment − Seller Note − Prop. Mgmt
               {summary.monthlyInsurance > 0 ? " − Insurance" : ""}
               {summary.monthlyTaxes > 0 ? " − Taxes" : ""}
               {summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
               <span>
-                {fmt(summary.monthlyRent)} − {fmt(summary.propMgmtFee)}
-                {summary.financeType === "loan" && summary.loanMortgage > 0
-                  ? ` − ${fmt(summary.loanMortgage)}`
-                  : ""}
+                {fmt(summary.monthlyRent)} − {fmt(summary.dscrMonthlyPayment)} −{" "}
+                {fmt(summary.sellerCarrybackMonthly)} −{" "}
+                {fmt(summary.propMgmtFee)}
                 {summary.monthlyInsurance > 0
                   ? ` − ${fmt(summary.monthlyInsurance)}`
                   : ""}
@@ -827,19 +853,6 @@ function RentalTab({ tab }) {
                 = {fmt(summary.monthlyCashFlow)}
               </span>
             </div>
-
-            <div
-              className="deal-analyzer-calculation"
-              style={{ marginTop: "0.75rem" }}
-            >
-              Annual Cash Flow = (Monthly Cash Flow × 12) − First Month Prop.
-              Mgmt Adjustment
-              <span>
-                ({fmt(summary.monthlyCashFlow)} × 12) −{" "}
-                {fmt(summary.firstMonthMgmtAdjustment)} ={" "}
-                {fmt(summary.annualCashFlow)}
-              </span>
-            </div>
           </div>
         )}
       </section>
@@ -847,4 +860,4 @@ function RentalTab({ tab }) {
   );
 }
 
-export default RentalTab;
+export default MorbyMethodTab;
