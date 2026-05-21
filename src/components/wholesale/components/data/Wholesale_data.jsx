@@ -114,6 +114,13 @@ function Wholesale_data({
     }
   }
 
+  function reactivateDeal(deal) {
+    const patch = { sellerAccepted: "Waiting" };
+    if (deal.offerStatus === "Offer Withdrawn")
+      patch.offerStatus = "Offer Sent";
+    updateDealPatch(deal.id, patch);
+  }
+
   const selectedContractDeal = deals.find(
     (d) => d.id === selectedContractDealId,
   );
@@ -254,6 +261,14 @@ function Wholesale_data({
         onClose={() => setDetailDeal(null)}
         deal={detailDeal}
         updateDealPatch={updateDealPatch}
+        onReactivate={
+          detailDeal && isInactive(detailDeal)
+            ? () => {
+                reactivateDeal(detailDeal);
+                setDetailDeal(null);
+              }
+            : undefined
+        }
       />
 
       <NotesModal

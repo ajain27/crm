@@ -53,7 +53,13 @@ function Field({ label, children, wide }) {
   );
 }
 
-function DealDetailModal({ isOpen, onClose, deal, updateDealPatch }) {
+function DealDetailModal({
+  isOpen,
+  onClose,
+  deal,
+  updateDealPatch,
+  onReactivate,
+}) {
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -157,6 +163,15 @@ function DealDetailModal({ isOpen, onClose, deal, updateDealPatch }) {
           <button className="secondary-btn" onClick={onClose} disabled={saving}>
             Cancel
           </button>
+          {onReactivate && (
+            <button
+              className="secondary-btn"
+              onClick={onReactivate}
+              disabled={saving}
+            >
+              Make Active
+            </button>
+          )}
           <button
             className="primary-btn"
             onClick={handleSave}

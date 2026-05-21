@@ -56,7 +56,7 @@ function DealRow({
       className={`clickable-row ${deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : isWithdrawn ? "withdrawn-row" : ""}`}
       onClick={handleTrClick}
     >
-      <td className="text-center">
+      <td className="text-center" onClick={(e) => e.stopPropagation()}>
         <input
           type="checkbox"
           className="row-checkbox"
@@ -64,7 +64,7 @@ function DealRow({
           onChange={() => onToggleSelect(deal.id)}
         />
       </td>
-      <td className="text-center">
+      <td className="text-center" onClick={(e) => e.stopPropagation()}>
         <button
           className="danger-btn"
           title="Delete"

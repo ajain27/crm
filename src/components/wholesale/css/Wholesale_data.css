@@ -253,6 +253,15 @@
     background: color-mix(in srgb, #9a3412 24%, var(--panel) 76%) !important;
   }
 
+  .deal-row-actions {
+    @apply flex items-center justify-center gap-1;
+  }
+
+  .deal-reactivate-btn {
+    @apply inline-flex h-7 w-7 min-w-7 items-center justify-center rounded-lg p-0;
+    color: var(--blue);
+  }
+
   .deal-tab-bar {
     @apply flex gap-2 px-4 pt-4 pb-3;
   }
