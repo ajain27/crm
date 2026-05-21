@@ -26,6 +26,10 @@ function calcPMT(annualRatePct, termYears, principal) {
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
   "sellerCarryback",
+  "originationFees",
+  "legalFees",
+  "appraisalFees",
+  "underwritingFees",
   "monthlyRent",
   "monthlyInsurance",
   "monthlyTaxes",
@@ -36,6 +40,7 @@ const PERCENT_FIELDS = new Set([
   "agentCommission",
   "titleFees",
   "dscrRate",
+  "dscrPoints",
   "sellerCarrybackRate",
 ]);
 
@@ -46,6 +51,11 @@ const initialForm = {
   // DSCR first lien
   dscrRate: "",
   dscrTermYears: "",
+  dscrPoints: "",
+  originationFees: "",
+  legalFees: "",
+  appraisalFees: "",
+  underwritingFees: "",
   // Seller carryback (2nd lien)
   sellerCarryback: "",
   sellerCarrybackRate: "",
@@ -105,6 +115,15 @@ function MorbyMethodTab({ tab }) {
     dscrTermYears,
     dscrLoanAmount,
   );
+  const dscrPointsPct = parsePercent(form.dscrPoints);
+  const dscrPointsCost = dscrLoanAmount * (dscrPointsPct / 100);
+  const originationFees = parseCurrency(form.originationFees);
+  const legalFees = parseCurrency(form.legalFees);
+  const appraisalFees = parseCurrency(form.appraisalFees);
+  const underwritingFees = parseCurrency(form.underwritingFees);
+  const dscrMiscFees =
+    originationFees + legalFees + appraisalFees + underwritingFees;
+  const dscrUpfrontCosts = dscrPointsCost + dscrMiscFees;
 
   // — Seller carryback (2nd lien promissory note)
   const sellerCarryback = parseCurrency(form.sellerCarryback);
@@ -120,6 +139,7 @@ function MorbyMethodTab({ tab }) {
   // — What buyer actually brings to close
   const totalUpfrontNeeded =
     downPaymentRequired +
+    dscrUpfrontCosts +
     closingCosts +
     titleFees +
     agentCommissionAmt +
@@ -186,6 +206,14 @@ function MorbyMethodTab({ tab }) {
       dscrRatePct,
       dscrTermYears,
       dscrMonthlyPayment,
+      dscrPointsPct,
+      dscrPointsCost,
+      originationFees,
+      legalFees,
+      appraisalFees,
+      underwritingFees,
+      dscrMiscFees,
+      dscrUpfrontCosts,
       // Seller carryback
       sellerCarryback,
       sellerCarrybackRatePct,
@@ -359,6 +387,48 @@ function MorbyMethodTab({ tab }) {
             placeholder="e.g. 30"
             required
           />
+          <Field
+            label="Points (%)"
+            name="dscrPoints"
+            value={form.dscrPoints}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. 2"
+          />
+          <Field
+            label="Origination Fees"
+            name="originationFees"
+            value={form.originationFees}
+            onChange={handleChange}
+            placeholder="e.g. $1,000"
+          />
+          <Field
+            label="Legal Fees"
+            name="legalFees"
+            value={form.legalFees}
+            onChange={handleChange}
+            placeholder="e.g. $500"
+          />
+          <Field
+            label="Appraisal Fees"
+            name="appraisalFees"
+            value={form.appraisalFees}
+            onChange={handleChange}
+            placeholder="e.g. $500"
+          />
+          <Field
+            label="Underwriting Fees"
+            name="underwritingFees"
+            value={form.underwritingFees}
+            onChange={handleChange}
+            placeholder="e.g. $500"
+          />
+          {dscrMiscFees > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>Total Misc Fees</span>
+              <input value={fmt(dscrMiscFees)} readOnly tabIndex={-1} />
+            </label>
+          )}
           <label className="field deal-analyzer-output">
             <span>
               Monthly Payment{" "}
@@ -670,6 +740,58 @@ function MorbyMethodTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.dscrPointsCost > 0 && (
+                <div>
+                  <span>Points ({summary.dscrPointsPct}%)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.dscrPointsCost}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.originationFees > 0 && (
+                <div>
+                  <span>Origination Fees</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.originationFees}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.legalFees > 0 && (
+                <div>
+                  <span>Legal Fees</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount value={summary.legalFees} format={fmt} />
+                  </strong>
+                </div>
+              )}
+              {summary.appraisalFees > 0 && (
+                <div>
+                  <span>Appraisal Fees</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.appraisalFees}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.underwritingFees > 0 && (
+                <div>
+                  <span>Underwriting Fees</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.underwritingFees}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
               <div>
                 <span>Closing Costs ({CLOSING_COSTS_PCT}%)</span>
                 <strong className="deal-analyzer-return-negative">

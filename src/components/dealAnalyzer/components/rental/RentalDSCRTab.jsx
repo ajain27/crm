@@ -24,6 +24,7 @@ function calcPMT(annualRatePct, termYears, principal) {
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "underwritingFees",
   "monthlyRent",
   "monthlyInsurance",
   "monthlyTaxes",
@@ -44,6 +45,7 @@ const initialForm = {
   purchasePrice: "",
   agentCommission: "",
   titleFees: "",
+  underwritingFees: "",
   points: "",
   interestRate: "",
   loanTermYears: "",
@@ -92,6 +94,7 @@ function RentalDSCRTab() {
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
+  const underwritingFees = parseCurrency(form.underwritingFees);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const monthlyInsurance = parseCurrency(form.monthlyInsurance);
   const monthlyTaxes = parseCurrency(form.monthlyTaxes);
@@ -136,6 +139,7 @@ function RentalDSCRTab() {
     loanOutOfPocket +
     closingCosts +
     titleFees +
+    underwritingFees +
     agentCommissionAmt +
     INSPECTION_COST;
   const cashOnCash =
@@ -158,6 +162,7 @@ function RentalDSCRTab() {
       closingCosts,
       titleFeesPct,
       titleFees,
+      underwritingFees,
       monthlyRent,
       propMgmtFee,
       firstMonthPropMgmtFee,
@@ -318,6 +323,13 @@ function RentalDSCRTab() {
           label="Appraisal Fees"
           name="appraisalFees"
           value={form.appraisalFees}
+          onChange={handleChange}
+          placeholder="e.g. $500"
+        />
+        <Field
+          label="Underwriting Fees"
+          name="underwritingFees"
+          value={form.underwritingFees}
           onChange={handleChange}
           placeholder="e.g. $500"
         />
@@ -570,6 +582,17 @@ function RentalDSCRTab() {
                 <span>Title Fees ({summary.titleFeesPct}%)</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.titleFees} format={fmt} />
+                </strong>
+              </div>
+            )}
+            {summary.underwritingFees > 0 && (
+              <div>
+                <span>Underwriting Fees</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.underwritingFees}
+                    format={fmt}
+                  />
                 </strong>
               </div>
             )}
