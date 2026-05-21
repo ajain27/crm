@@ -166,6 +166,7 @@ function MorbyMethodTab({ tab }) {
     form.dscrRate?.trim() &&
     form.dscrTermYears?.trim() &&
     form.sellerCarryback?.trim() &&
+    form.sellerCarrybackTermYears?.trim() &&
     form.monthlyRent?.trim();
 
   function handleCalculate() {
@@ -394,6 +395,7 @@ function MorbyMethodTab({ tab }) {
             value={form.sellerCarrybackTermYears}
             onChange={handleChange}
             placeholder="e.g. 5 (balloon)"
+            required
           />
           {sellerCarryback > 0 && sellerCarrybackTermYears > 0 && (
             <label className="field deal-analyzer-output">
