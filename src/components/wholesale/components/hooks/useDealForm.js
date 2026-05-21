@@ -6,6 +6,7 @@ import {
   createContractVersion,
   getWholesaleRehabDetails,
 } from "../wholesaleConfig";
+import { findDuplicateByAddress } from "../../../../utils/utils";
 
 export function useDealForm({
   deals,
@@ -19,9 +20,11 @@ export function useDealForm({
 }) {
   const [form, setForm] = useState(createEmptyDealForm);
   const [tableLoading, setTableLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   function resetForm() {
     setForm(createEmptyDealForm());
+    setFormError("");
   }
 
   function handleContractFileChange(event) {
@@ -85,6 +88,7 @@ export function useDealForm({
   function handleChange(event) {
     const { name, value } = event.target;
 
+    if (name === "address") setFormError("");
     if (name === "city" && /\d/.test(value)) return;
     if (name === "zipCode" && /[^0-9]/.test(value)) return;
     if (name === "state" && /[^a-zA-Z]/.test(value)) return;
@@ -294,12 +298,9 @@ export function useDealForm({
 
   function checkDuplicateAddress(address) {
     if (!address.trim()) return;
-    const existingDeal = deals.find(
-      (deal) =>
-        deal.address.trim().toLowerCase() === address.trim().toLowerCase(),
-    );
+    const existingDeal = findDuplicateByAddress(deals, address);
     if (existingDeal) {
-      alert("A property with this address already exists.");
+      setFormError(`"${existingDeal.address}" is already in your pipeline.`);
       setFilters((prevFilters) => ({
         ...prevFilters,
         search: existingDeal.address,
@@ -328,12 +329,9 @@ export function useDealForm({
       return;
     }
 
-    const existingDeal = deals.find(
-      (deal) =>
-        deal.address.toLowerCase() === form.address.trim().toLowerCase(),
-    );
+    const existingDeal = findDuplicateByAddress(deals, form.address);
     if (existingDeal) {
-      alert("A property with this address already exists.");
+      setFormError(`"${existingDeal.address}" is already in your pipeline.`);
       setFilters((prevFilters) => ({
         ...prevFilters,
         search: existingDeal.address,
@@ -492,6 +490,7 @@ export function useDealForm({
     form,
     tableLoading,
     resetForm,
+    formError,
     handleChange,
     handleBlur,
     handleContractFileChange,

@@ -79,6 +79,7 @@ function Wholesale() {
 
   const {
     form,
+    formError,
     tableLoading,
     resetForm,
     handleChange,
@@ -253,6 +254,7 @@ function Wholesale() {
             <Wholesale_form
               addDeal={addDeal}
               form={form}
+              formError={formError}
               handleChange={handleChange}
               handleBlur={handleBlur}
               handleAddressBlur={handleAddressBlur}

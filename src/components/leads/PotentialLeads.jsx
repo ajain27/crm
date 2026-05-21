@@ -14,7 +14,7 @@ import {
   Eye,
   Loader2,
 } from "lucide-react";
-import { formatPhone } from "../../utils/utils";
+import { formatPhone, findDuplicateByAddress } from "../../utils/utils";
 import { createEmptyDealForm } from "../wholesale/components/wholesaleConfig";
 import ContractPreviewModal from "../wholesale/components/data/modals/ContractPreviewModal";
 import LeadDetailModal from "./LeadDetailModal";
@@ -240,7 +240,15 @@ export default function PotentialLeads({
 
   function handleChange(e) {
     const { name, value } = e.target;
+    if (name === "address") setFormError("");
     setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleAddressBlur(e) {
+    const duplicate = findDuplicateByAddress(leads, e.target.value);
+    if (duplicate) {
+      setFormError(`"${duplicate.address}" is already in your lead list.`);
+    }
   }
 
   function handlePhoneChange(e) {
@@ -250,6 +258,11 @@ export default function PotentialLeads({
   async function handleAddLead(e) {
     e.preventDefault();
     if (!form.address.trim()) return;
+    const duplicate = findDuplicateByAddress(leads, form.address);
+    if (duplicate) {
+      setFormError(`"${duplicate.address}" is already in your lead list.`);
+      return;
+    }
     setSaving(true);
     setFormError("");
     try {
@@ -395,6 +408,7 @@ export default function PotentialLeads({
                 name="address"
                 value={form.address}
                 onChange={handleChange}
+                onBlur={handleAddressBlur}
                 placeholder="e.g. 123 Main St, Dallas, TX 75201"
                 required
               />
@@ -521,7 +535,7 @@ export default function PotentialLeads({
           <button
             className="primary-btn form-btn"
             type="submit"
-            disabled={!form.address.trim() || saving}
+            disabled={!form.address.trim() || !!formError || saving}
           >
             <Plus size={15} />
             {saving ? "Saving…" : "Add Lead"}

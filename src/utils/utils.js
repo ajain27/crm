@@ -78,6 +78,14 @@ function calculateMonthlyPayment(
   return loanPrincipal * ((r * factor) / (factor - 1));
 }
 
+function findDuplicateByAddress(items, address) {
+  const normalized = address.trim().toLowerCase();
+  return normalized
+    ? (items.find((item) => item.address.trim().toLowerCase() === normalized) ??
+        null)
+    : null;
+}
+
 function parseCurrency(value) {
   const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
   return Number.isFinite(n) ? n : 0;
@@ -114,4 +122,5 @@ export {
   parsePercent,
   fmt,
   fmtCurrencyInput,
+  findDuplicateByAddress,
 };

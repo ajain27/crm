@@ -10,6 +10,7 @@ import {
 function Wholesale_form({
   addDeal,
   form,
+  formError,
   handleChange,
   handleBlur,
   handleAddressBlur,
@@ -69,14 +70,23 @@ function Wholesale_form({
           </div>
         </div>
         <form className="add-form" onSubmit={addDeal}>
-          <Field
-            label="Property Address"
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-            onBlur={handleAddressBlur}
-            required
-          />
+          <label className="field">
+            <span>
+              Property Address <span className="required-marker">*</span>
+            </span>
+            {formError && (
+              <span style={{ fontSize: "0.875rem", color: "#ef4444" }}>
+                {formError}
+              </span>
+            )}
+            <input
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              onBlur={handleAddressBlur}
+              required
+            />
+          </label>
           <Field
             label="City"
             name="city"
@@ -416,7 +426,7 @@ function Wholesale_form({
           <button
             className="primary-btn form-btn"
             type="submit"
-            disabled={!isFormComplete}
+            disabled={!isFormComplete || !!formError}
           >
             Save
           </button>
