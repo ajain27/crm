@@ -31,6 +31,7 @@ const tab = {
 function fillCash({
   purchasePrice = "200000",
   agentCommission = "3",
+  titleFees = "1",
   monthlyRent = "2000",
   monthlyInsurance = "100",
   monthlyTaxes = "100",
@@ -41,6 +42,11 @@ function fillCash({
   if (agentCommission) {
     fireEvent.change(screen.getByLabelText(/Agent Commission \(%\)/i), {
       target: { value: agentCommission },
+    });
+  }
+  if (titleFees) {
+    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
+      target: { value: titleFees },
     });
   }
   fireEvent.change(screen.getByLabelText(/Estimated Monthly Rent/i), {
@@ -65,6 +71,7 @@ function switchToLoan() {
 function fillLoan({
   purchasePrice = "200000",
   agentCommission = "3",
+  titleFees = "1",
   points = "2",
   interestRate = "12",
   loanTermYears = "30",
@@ -79,6 +86,11 @@ function fillLoan({
   if (agentCommission) {
     fireEvent.change(screen.getByLabelText(/Agent Commission \(%\)/i), {
       target: { value: agentCommission },
+    });
+  }
+  if (titleFees) {
+    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
+      target: { value: titleFees },
     });
   }
   if (points) {
@@ -272,13 +284,18 @@ describe("live readonly fields", () => {
     expect(screen.getByLabelText(/Property Management/i)).toHaveValue("");
   });
 
-  it("shows Title Fees as 1% of purchase price", () => {
+  it("shows Title Fees amount when percentage entered", () => {
     render(<RentalTab tab={tab} />);
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
       target: { value: "200000" },
     });
+    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
+      target: { value: "1" },
+    });
     // 1% of $200,000 = $2,000
-    expect(screen.getByLabelText(/Title Fees/i)).toHaveValue("$2,000.00");
+    expect(screen.getByLabelText(/Title Fees Amount/i)).toHaveValue(
+      "$2,000.00",
+    );
   });
 
   it("shows Down Payment as 20% of purchase price in loan mode", () => {

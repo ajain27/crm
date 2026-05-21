@@ -10,7 +10,6 @@ import {
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
-const TITLE_FEES_PCT = 1;
 const INSPECTION_COST = 450;
 const DSCR_LTV = 0.8;
 const DOWN_PCT = Math.round((1 - DSCR_LTV) * 100);
@@ -35,6 +34,7 @@ const CURRENCY_FIELDS = new Set([
 
 const PERCENT_FIELDS = new Set([
   "agentCommission",
+  "titleFees",
   "dscrRate",
   "sellerCarrybackRate",
 ]);
@@ -42,6 +42,7 @@ const PERCENT_FIELDS = new Set([
 const initialForm = {
   purchasePrice: "",
   agentCommission: "",
+  titleFees: "",
   // DSCR first lien
   dscrRate: "",
   dscrTermYears: "",
@@ -91,7 +92,8 @@ function MorbyMethodTab({ tab }) {
   const agentCommissionPct = parsePercent(form.agentCommission);
   const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
-  const titleFees = purchasePrice * (TITLE_FEES_PCT / 100);
+  const titleFeesPct = parsePercent(form.titleFees);
+  const titleFees = purchasePrice * (titleFeesPct / 100);
 
   // — DSCR first lien (80% LTV)
   const dscrLoanAmount = purchasePrice * DSCR_LTV;
@@ -176,6 +178,7 @@ function MorbyMethodTab({ tab }) {
       agentCommissionPct,
       agentCommissionAmt,
       closingCosts,
+      titleFeesPct,
       titleFees,
       // DSCR
       dscrLoanAmount,
@@ -291,19 +294,20 @@ function MorbyMethodTab({ tab }) {
               tabIndex={-1}
             />
           </label>
-          <label className="field deal-analyzer-output">
-            <span>
-              Title Fees{" "}
-              <span className="deal-analyzer-auto-badge">
-                {TITLE_FEES_PCT}% of price
-              </span>
-            </span>
-            <input
-              value={titleFees > 0 ? fmt(titleFees) : ""}
-              readOnly
-              tabIndex={-1}
-            />
-          </label>
+          <Field
+            label="Title Fees (%)"
+            name="titleFees"
+            value={form.titleFees}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. 1"
+          />
+          {titleFees > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>Title Fees Amount</span>
+              <input value={fmt(titleFees)} readOnly tabIndex={-1} />
+            </label>
+          )}
         </div>
 
         {/* — DSCR First Lien */}
@@ -672,12 +676,14 @@ function MorbyMethodTab({ tab }) {
                   <AnimatedAmount value={summary.closingCosts} format={fmt} />
                 </strong>
               </div>
-              <div>
-                <span>Title Fees ({TITLE_FEES_PCT}%)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.titleFees} format={fmt} />
-                </strong>
-              </div>
+              {summary.titleFees > 0 && (
+                <div>
+                  <span>Title Fees ({summary.titleFeesPct}%)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount value={summary.titleFees} format={fmt} />
+                  </strong>
+                </div>
+              )}
               {summary.agentCommissionAmt > 0 && (
                 <div>
                   <span>Agent Commission ({summary.agentCommissionPct}%)</span>

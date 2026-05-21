@@ -10,7 +10,6 @@ import {
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
-const TITLE_FEES_PCT = 1;
 const INSPECTION_COST = 450;
 
 const CURRENCY_FIELDS = new Set([
@@ -21,11 +20,12 @@ const CURRENCY_FIELDS = new Set([
   "annualMiscExpense",
 ]);
 
-const PERCENT_FIELDS = new Set(["agentCommission"]);
+const PERCENT_FIELDS = new Set(["agentCommission", "titleFees"]);
 
 const initialForm = {
   purchasePrice: "",
   agentCommission: "",
+  titleFees: "",
   monthlyRent: "",
   monthlyInsurance: "",
   monthlyTaxes: "",
@@ -62,7 +62,8 @@ function RentalCashTab() {
   const agentCommissionPct = parsePercent(form.agentCommission);
   const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
-  const titleFees = purchasePrice * (TITLE_FEES_PCT / 100);
+  const titleFeesPct = parsePercent(form.titleFees);
+  const titleFees = purchasePrice * (titleFeesPct / 100);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const monthlyInsurance = parseCurrency(form.monthlyInsurance);
   const monthlyTaxes = parseCurrency(form.monthlyTaxes);
@@ -104,6 +105,7 @@ function RentalCashTab() {
       agentCommissionPct,
       agentCommissionAmt,
       closingCosts,
+      titleFeesPct,
       titleFees,
       monthlyRent,
       propMgmtFee,
@@ -179,19 +181,20 @@ function RentalCashTab() {
             tabIndex={-1}
           />
         </label>
-        <label className="field deal-analyzer-output">
-          <span>
-            Title Fees{" "}
-            <span className="deal-analyzer-auto-badge">
-              {TITLE_FEES_PCT}% of price
-            </span>
-          </span>
-          <input
-            value={titleFees > 0 ? fmt(titleFees) : ""}
-            readOnly
-            tabIndex={-1}
-          />
-        </label>
+        <Field
+          label="Title Fees (%)"
+          name="titleFees"
+          value={form.titleFees}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder="e.g. 1"
+        />
+        {titleFees > 0 && (
+          <label className="field deal-analyzer-output">
+            <span>Title Fees Amount</span>
+            <input value={fmt(titleFees)} readOnly tabIndex={-1} />
+          </label>
+        )}
       </div>
 
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
@@ -373,12 +376,14 @@ function RentalCashTab() {
                 <AnimatedAmount value={summary.closingCosts} format={fmt} />
               </strong>
             </div>
-            <div>
-              <span>Title Fees ({TITLE_FEES_PCT}% of price)</span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount value={summary.titleFees} format={fmt} />
-              </strong>
-            </div>
+            {summary.titleFees > 0 && (
+              <div>
+                <span>Title Fees ({summary.titleFeesPct}%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.titleFees} format={fmt} />
+                </strong>
+              </div>
+            )}
             {summary.agentCommissionAmt > 0 && (
               <div>
                 <span>Agent Commission ({summary.agentCommissionPct}%)</span>
