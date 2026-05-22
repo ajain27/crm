@@ -398,6 +398,128 @@ function DealRow({
       </td>
 
       <td>
+        <div className="buyer-info-cell">
+          <div className="buyer-line">
+            <select
+              className={`badge ${(deal.jvDeal || "no")?.toLowerCase()}`}
+              value={deal.jvDeal || "No"}
+              onChange={(e) => {
+                updateDeal(deal.id, "jvDeal", e.target.value);
+                if (e.target.value === "No") {
+                  updateDeal(deal.id, "jvPartnerName", "");
+                  updateDeal(deal.id, "jvPartnerEmail", "");
+                  updateDeal(deal.id, "jvSplit", 0);
+                }
+              }}
+            >
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          {deal.jvDeal === "Yes" && (
+            <>
+              <div className="buyer-line">
+                <span className="buyer-label">Partner</span>
+                {editingBuyerId === deal.id &&
+                editingBuyerField === "jvPartnerName" ? (
+                  <>
+                    <input
+                      type="text"
+                      className="readonly-input table-input buyer-edit-input"
+                      value={editBuyerValue}
+                      onChange={(e) => setEditBuyerValue(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveBuyerEdit(deal.id);
+                        if (e.key === "Escape") cancelBuyerEdit();
+                      }}
+                    />
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => saveBuyerEdit(deal.id)}
+                      title="Save"
+                    >
+                      <Check size={16} color="var(--green)" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="table-text">
+                      {deal.jvPartnerName || "—"}
+                    </span>
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => startEditingBuyer(deal, "jvPartnerName")}
+                      title="Edit Partner Name"
+                    >
+                      <Edit2 size={16} color="var(--muted)" />
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="buyer-line">
+                <span className="buyer-label">Email</span>
+                {editingBuyerId === deal.id &&
+                editingBuyerField === "jvPartnerEmail" ? (
+                  <>
+                    <input
+                      type="email"
+                      className="readonly-input table-input buyer-edit-input"
+                      value={editBuyerValue}
+                      onChange={(e) => setEditBuyerValue(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveBuyerEdit(deal.id);
+                        if (e.key === "Escape") cancelBuyerEdit();
+                      }}
+                    />
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => saveBuyerEdit(deal.id)}
+                      title="Save"
+                    >
+                      <Check size={16} color="var(--green)" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="table-text">
+                      {deal.jvPartnerEmail || "—"}
+                    </span>
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => startEditingBuyer(deal, "jvPartnerEmail")}
+                      title="Edit Partner Email"
+                    >
+                      <Edit2 size={16} color="var(--muted)" />
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="buyer-line">
+                <span className="buyer-label">Split</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="readonly-input table-input contract-input"
+                  defaultValue={toEditableCurrency(deal.jvSplit)}
+                  onFocus={(e) => {
+                    const num = parseCurrencyInput(e.target.value);
+                    e.target.value = num ? String(num) : "";
+                  }}
+                  onBlur={(e) => {
+                    const val = parseCurrencyInput(e.target.value);
+                    e.target.value = toEditableCurrency(val);
+                    updateDeal(deal.id, "jvSplit", val);
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </td>
+
+      <td>
         <select
           className={`badge ${deal.closed?.toLowerCase()}`}
           value={deal.closed}

@@ -15,6 +15,7 @@ const CURRENCY_FIELDS = [
   "mao",
   "contractPrice",
   "assignedPrice",
+  "jvSplit",
 ];
 
 function fmtCurrency(raw) {
@@ -438,6 +439,51 @@ function DealDetailModal({
                   value={draft.buyerEmail || ""}
                   onChange={(e) => set("buyerEmail", e.target.value)}
                   placeholder="buyer@email.com"
+                />
+              </Field>
+            </>
+          )}
+        </Section>
+
+        <Section title="JV Deal">
+          <Field label="JV Deal?">
+            <select
+              disabled={locked}
+              value={draft.jvDeal || "No"}
+              onChange={(e) => set("jvDeal", e.target.value)}
+            >
+              {YES_NO.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {draft.jvDeal === "Yes" && (
+            <>
+              <Field label="Partner Name">
+                <input
+                  disabled={locked}
+                  value={draft.jvPartnerName || ""}
+                  onChange={(e) => set("jvPartnerName", e.target.value)}
+                  placeholder="Partner name"
+                />
+              </Field>
+              <Field label="Partner Email">
+                <input
+                  disabled={locked}
+                  type="email"
+                  value={draft.jvPartnerEmail || ""}
+                  onChange={(e) => set("jvPartnerEmail", e.target.value)}
+                  placeholder="partner@email.com"
+                />
+              </Field>
+              <Field label="JV Split ($)">
+                <input
+                  disabled={locked}
+                  value={draft.jvSplit || ""}
+                  onChange={(e) => set("jvSplit", e.target.value)}
+                  placeholder="$0"
                 />
               </Field>
             </>

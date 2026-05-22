@@ -210,6 +210,7 @@ export function useDealForm({
       "mao",
       "contractPrice",
       "assignedPrice",
+      "jvSplit",
     ];
     if (currencyFields.includes(name)) {
       const numericValue = String(value || "").replace(/[^0-9]/g, "");
@@ -234,6 +235,7 @@ export function useDealForm({
       "mao",
       "contractPrice",
       "assignedPrice",
+      "jvSplit",
     ];
     if (currencyFields.includes(name) && value) {
       const numericValue = value.replace(/[^0-9]/g, "");
@@ -420,6 +422,14 @@ export function useDealForm({
       contractFileType: form.contractFileType || "",
       buyerName: form.buyerName?.trim() || "",
       buyerEmail: form.buyerEmail?.trim().toLowerCase() || "",
+      jvDeal: form.jvDeal || "No",
+      jvPartnerName:
+        form.jvDeal === "Yes" ? form.jvPartnerName?.trim() || "" : "",
+      jvPartnerEmail:
+        form.jvDeal === "Yes"
+          ? form.jvPartnerEmail?.trim().toLowerCase() || ""
+          : "",
+      jvSplit: form.jvDeal === "Yes" ? parseNumber(form.jvSplit) : 0,
       closedDate: form.closed === "Yes" ? form.closedDate : "",
       closedInMonth:
         form.closed === "Yes" && form.closedDate

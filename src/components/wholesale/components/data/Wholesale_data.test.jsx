@@ -26,6 +26,10 @@ const deal = {
   assignedPrice: 0,
   buyerName: "",
   buyerEmail: "",
+  jvDeal: "No",
+  jvPartnerName: "",
+  jvPartnerEmail: "",
+  jvSplit: 0,
   notes: "",
   closed: "No",
   closedDate: "",
@@ -181,7 +185,8 @@ describe("Wholesale_data", () => {
 
     const closedSelect = screen
       .getAllByRole("combobox")
-      .find((select) => select.className.includes("badge no"));
+      .filter((select) => select.className.includes("badge no"))
+      .at(-1);
     expect(closedSelect).toBeDefined();
     fireEvent.change(closedSelect, { target: { value: "Yes" } });
 
@@ -193,6 +198,10 @@ describe("Wholesale_data", () => {
       offerStatus: "Offer Sent",
       sellerAccepted: "Yes",
       assigned: "Yes",
+      jvDeal: "No",
+      jvPartnerName: "",
+      jvPartnerEmail: "",
+      jvSplit: 0,
       closed: "Yes",
       closedDate: "2026-04-12",
       closedInMonth: "04",

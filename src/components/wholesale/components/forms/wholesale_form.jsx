@@ -53,6 +53,10 @@ function Wholesale_form({
       (Boolean(form.assignedPrice?.trim()) &&
         Boolean(form.buyerName?.trim()) &&
         Boolean(form.buyerEmail?.trim()))) &&
+    (form.jvDeal !== "Yes" ||
+      (Boolean(form.jvPartnerName?.trim()) &&
+        Boolean(form.jvPartnerEmail?.trim()) &&
+        Boolean(form.jvSplit?.trim()))) &&
     Boolean(form.notes?.trim()) &&
     (form.closed !== "Yes" || Boolean(form.closedDate?.trim()));
 
@@ -382,6 +386,44 @@ function Wholesale_form({
                 type="email"
                 value={form.buyerEmail || ""}
                 onChange={handleChange}
+                required
+              />
+            </>
+          )}
+          <Select
+            label="JV Deal?"
+            name="jvDeal"
+            value={form.jvDeal}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+          />
+          {form.jvDeal === "Yes" && (
+            <>
+              <Field
+                label="JV Partner Name"
+                name="jvPartnerName"
+                value={form.jvPartnerName || ""}
+                onChange={handleChange}
+                placeholder="e.g. Jane Smith"
+                required
+              />
+              <Field
+                label="JV Partner Email"
+                name="jvPartnerEmail"
+                type="email"
+                value={form.jvPartnerEmail || ""}
+                onChange={handleChange}
+                placeholder="e.g. jane@example.com"
+                required
+              />
+              <Field
+                label="JV Split ($)"
+                name="jvSplit"
+                type="text"
+                value={form.jvSplit || ""}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $5,000"
                 required
               />
             </>

@@ -218,6 +218,7 @@ function Wholesale_data({
               <th>Assigned</th>
               {renderSortableHeader("Assigned Price", "assignedPrice")}
               <th>Buyer Info</th>
+              <th>JV Deal</th>
               <th>Closed</th>
               {renderSortableHeader("Closed On", "closedDate")}
               {renderSortableHeader("Gross Revenue", "grossRevenue")}
