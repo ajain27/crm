@@ -462,6 +462,14 @@
     color: #d97706;
   }
 
+  .followup-banner-item--overdue {
+    color: #dc2626;
+  }
+
+  .followup-banner-item--overdue strong {
+    color: #dc2626;
+  }
+
   .followup-banner-contacts {
     display: inline-flex;
     gap: 0.75rem;

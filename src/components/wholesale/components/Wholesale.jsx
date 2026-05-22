@@ -192,7 +192,10 @@ function Wholesale() {
                   </span>
                   <ul className="followup-banner-list">
                     {due.map((l) => (
-                      <li key={l.id} className="followup-banner-item">
+                      <li
+                        key={l.id}
+                        className={`followup-banner-item${l.followUpDate < today ? " followup-banner-item--overdue" : ""}`}
+                      >
                         <strong>
                           {l.followUpDate < today ? "Overdue" : "Today"}
                         </strong>{" "}
