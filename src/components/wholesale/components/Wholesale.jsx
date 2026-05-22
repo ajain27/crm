@@ -170,7 +170,8 @@ function Wholesale() {
         onSignOut={handleSignOut}
         profileMenuRef={profileMenuRef}
         dueLeadsCount={(() => {
-          const today = new Date().toISOString().split("T")[0];
+          const _ld = new Date();
+          const today = `${_ld.getFullYear()}-${String(_ld.getMonth() + 1).padStart(2, "0")}-${String(_ld.getDate()).padStart(2, "0")}`;
           return leads.filter((l) => l.followUpDate && l.followUpDate <= today)
             .length;
         })()}
@@ -179,7 +180,8 @@ function Wholesale() {
       <main className="main">
         {!bannerDismissed &&
           (() => {
-            const today = new Date().toISOString().split("T")[0];
+            const _bd = new Date();
+            const today = `${_bd.getFullYear()}-${String(_bd.getMonth() + 1).padStart(2, "0")}-${String(_bd.getDate()).padStart(2, "0")}`;
             const due = leads.filter(
               (l) => l.followUpDate && l.followUpDate <= today,
             );
