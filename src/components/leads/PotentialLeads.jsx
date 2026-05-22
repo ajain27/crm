@@ -489,13 +489,16 @@ export default function PotentialLeads({
           </div>
 
           <div className="field">
-            <span>Follow-Up Date</span>
+            <span>
+              Follow-Up Date <span className="required-star">*</span>
+            </span>
             <input
               type="date"
               name="followUpDate"
               value={form.followUpDate}
               onChange={handleChange}
               min={minDate}
+              required
             />
           </div>
 
@@ -535,7 +538,12 @@ export default function PotentialLeads({
           <button
             className="primary-btn form-btn"
             type="submit"
-            disabled={!form.address.trim() || !!formError || saving}
+            disabled={
+              !form.address.trim() ||
+              !form.followUpDate ||
+              !!formError ||
+              saving
+            }
           >
             <Plus size={15} />
             {saving ? "Saving…" : "Add Lead"}
