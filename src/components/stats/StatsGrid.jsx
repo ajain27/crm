@@ -31,6 +31,15 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
     (deal) => deal.offerStatus !== "Not Sent" && deal.sellerAccepted === "No",
   ).length;
 
+  const closedJvDeals = filteredDeals.filter(
+    (deal) => deal.closed === "Yes" && deal.jvDeal === "Yes",
+  );
+  const closedJvCount = closedJvDeals.length;
+  const closedJvSplitTotal = closedJvDeals.reduce(
+    (total, deal) => total + Number(deal.jvSplit || 0),
+    0,
+  );
+
   const revenueEligibleDeals = deals.filter(
     (deal) =>
       deal.closed === "Yes" &&
@@ -102,6 +111,7 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
         label="Total Deals"
         subtitle="All time"
         value={deals.length}
+        colorTheme="green"
       />
       <GaugeStat
         label="Offers Made"
@@ -112,7 +122,6 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
       />
       <GaugeStat
         label="Active Deals"
-        // subtitle="Current month"
         value={activeDeals}
         max={Math.max(10, offersThisMonth * 2)}
         colorTheme="orange"
@@ -144,6 +153,21 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
         value={closedDeals}
         max={Math.max(10, assignedDeals)}
         colorTheme="green"
+      />
+      <SimpleStat
+        icon={<ClipboardList size={20} />}
+        label="JV Deals Closed"
+        subtitle="Closed JV deals"
+        value={closedJvCount}
+        colorTheme="orange"
+      />
+      <SimpleStat
+        icon={<DollarSign size={20} />}
+        label="JV Split Total"
+        subtitle="Closed JV deals"
+        numericValue={closedJvSplitTotal}
+        format={currency}
+        colorTheme="orange"
       />
       <SimpleStat
         icon={<DollarSign size={20} />}

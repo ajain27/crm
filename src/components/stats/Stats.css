@@ -76,6 +76,10 @@
     @apply flex flex-col justify-between gap-3 text-slate-900;
   }
 
+  .theme-white {
+    @apply bg-white;
+  }
+
   .theme-orange {
     @apply bg-amber-500;
   }
