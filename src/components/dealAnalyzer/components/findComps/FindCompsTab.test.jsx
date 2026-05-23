@@ -596,7 +596,7 @@ describe("recent searches list", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("renders up to 10 recent entries from the cache", () => {
+  it("paginates recent entries showing 5 per page", () => {
     const entries = Array.from({ length: 10 }, (_, i) => ({
       address: `${i + 1} Recent St`,
       result: { price: 200000 + i * 1000 },
@@ -604,7 +604,19 @@ describe("recent searches list", () => {
     }));
     setCache(entries);
     render(<FindCompsTab tab={tab} />);
-    entries.forEach((e) => {
+    // First 5 visible on page 1
+    entries.slice(0, 5).forEach((e) => {
+      expect(screen.getByText(e.address)).toBeInTheDocument();
+    });
+    // Entries 6-10 not yet visible
+    entries.slice(5).forEach((e) => {
+      expect(screen.queryByText(e.address)).not.toBeInTheDocument();
+    });
+    // Pagination controls present
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    // Navigate to page 2
+    fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+    entries.slice(5).forEach((e) => {
       expect(screen.getByText(e.address)).toBeInTheDocument();
     });
   });

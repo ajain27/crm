@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "/wholesale/",
+  base: "/crm/",
   test: {
     globals: true,
     environment: "jsdom",

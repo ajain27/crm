@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { ExternalLink, Search, MapPin, Clock } from "lucide-react";
+import Pagination from "../../../pagination/Pagination";
 
 const CACHE_KEY = "findComps_cache";
 const MAX_CACHE = 10;
+const COMPS_PER_PAGE = 5;
+const RECENT_PER_PAGE = 5;
 
 function loadCache() {
   try {
@@ -45,6 +48,8 @@ function FindCompsTab({ tab }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [cache, setCache] = useState(loadCache);
   const [recentQuery, setRecentQuery] = useState("");
+  const [compsPage, setCompsPage] = useState(1);
+  const [recentPage, setRecentPage] = useState(1);
 
   function upsertCache(searchAddress, data) {
     setCache((prev) => {
@@ -86,7 +91,7 @@ function FindCompsTab({ tab }) {
 
     try {
       const apiKey = import.meta.env.VITE_RENTCAST_API_KEY;
-      const params = new URLSearchParams({ address: trimmed, compCount: 5 });
+      const params = new URLSearchParams({ address: trimmed, compCount: 20 });
       const res = await fetch(
         `https://api.rentcast.io/v1/avm/value?${params}`,
         { headers: { "X-Api-Key": apiKey } },
@@ -99,6 +104,7 @@ function FindCompsTab({ tab }) {
       upsertCache(trimmed, data);
       setResult(data);
       setStatus("done");
+      setCompsPage(1);
     } catch (err) {
       setErrorMsg(err.message || "Failed to fetch comps. Check your API key.");
       setStatus("error");
@@ -110,12 +116,14 @@ function FindCompsTab({ tab }) {
     setResult(null);
     setAddress("");
     setErrorMsg("");
+    setCompsPage(1);
   }
 
   function handleLoadRecent(entry) {
     setAddress(entry.address);
     setResult(entry.result);
     setStatus("done");
+    setCompsPage(1);
     upsertCache(entry.address, entry.result);
   }
 
@@ -128,6 +136,19 @@ function FindCompsTab({ tab }) {
         e.address.toLowerCase().includes(recentQuery.trim().toLowerCase()),
       )
     : cache;
+
+  const recentTotalPages = Math.ceil(filteredCache.length / RECENT_PER_PAGE);
+  const pagedRecent = filteredCache.slice(
+    (recentPage - 1) * RECENT_PER_PAGE,
+    recentPage * RECENT_PER_PAGE,
+  );
+
+  const comparables = result?.comparables ?? [];
+  const compsTotalPages = Math.ceil(comparables.length / COMPS_PER_PAGE);
+  const pagedComps = comparables.slice(
+    (compsPage - 1) * COMPS_PER_PAGE,
+    compsPage * COMPS_PER_PAGE,
+  );
 
   return (
     <>
@@ -215,25 +236,37 @@ function FindCompsTab({ tab }) {
                 </div>
               </div>
               {filteredCache.length > 0 ? (
-                <ul className="find-comps-recent-list">
-                  {filteredCache.map((entry) => (
-                    <li key={entry.address}>
-                      <button
-                        className="find-comps-recent-item"
-                        onClick={() => handleLoadRecent(entry)}
-                      >
-                        <span className="find-comps-recent-address">
-                          {entry.address}
-                        </span>
-                        {entry.result?.price != null && (
-                          <span className="find-comps-recent-arv">
-                            {fmt(entry.result.price)}
+                <>
+                  <ul className="find-comps-recent-list">
+                    {pagedRecent.map((entry) => (
+                      <li key={entry.address}>
+                        <button
+                          className="find-comps-recent-item"
+                          onClick={() => handleLoadRecent(entry)}
+                        >
+                          <span className="find-comps-recent-address">
+                            {entry.address}
                           </span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                          {entry.result?.price != null && (
+                            <span className="find-comps-recent-arv">
+                              {fmt(entry.result.price)}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <Pagination
+                    currentPage={recentPage}
+                    totalPages={recentTotalPages}
+                    setCurrentPage={setRecentPage}
+                  >
+                    <span className="table-footer-count">
+                      {filteredCache.length} recent search
+                      {filteredCache.length !== 1 ? "es" : ""}
+                    </span>
+                  </Pagination>
+                </>
               ) : (
                 <p className="find-comps-recent-empty">
                   No recent searches match &ldquo;{recentQuery}&rdquo;
@@ -335,10 +368,10 @@ function FindCompsTab({ tab }) {
               </div>
             )}
 
-            {result.comparables?.length > 0 && (
+            {comparables.length > 0 && (
               <div className="find-comps-table-wrap">
                 <span className="find-comps-section-label">
-                  Comparable Sales ({result.comparables.length})
+                  Comparable Sales ({comparables.length})
                 </span>
                 <div className="table-wrap">
                   <table className="compact-table find-comps-table">
@@ -355,7 +388,7 @@ function FindCompsTab({ tab }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {result.comparables.map((c) => (
+                      {pagedComps.map((c) => (
                         <tr key={c.id}>
                           <td className="find-comps-address-cell">
                             {c.formattedAddress}
@@ -395,6 +428,16 @@ function FindCompsTab({ tab }) {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={compsPage}
+                  totalPages={compsTotalPages}
+                  setCurrentPage={setCompsPage}
+                >
+                  <span className="table-footer-count">
+                    {comparables.length} comparable
+                    {comparables.length !== 1 ? "s" : ""}
+                  </span>
+                </Pagination>
               </div>
             )}
 
