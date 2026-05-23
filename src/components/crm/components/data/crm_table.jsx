@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Pagination from "../../../pagination/Pagination";
-import { getContractVersions } from "../wholesaleConfig";
+import { getContractVersions } from "../crmConfig";
 import { useDealsSort } from "./hooks/useDealsSort";
 import { useDealUpdater } from "./hooks/useDealUpdater";
 import { useContractManager } from "./hooks/useContractManager";

@@ -16,9 +16,9 @@ import {
   fetchLeadFile,
   deleteLeadFileById,
 } from "../../../firebase/firestoreService";
-import Wholesale_filters from "./filters/Wholesale_filters";
-import Wholesale_form from "./forms/wholesale_form";
-import Wholesale_data from "./data/Wholesale_data";
+import Crm_filters from "./filters/crm_filters";
+import Wholesale_form from "./forms/crm_form";
+import Wholesale_data from "./data/crm_table";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
@@ -27,7 +27,7 @@ import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
 import ProfileModal from "./ProfileModal";
-import WholesaleHeader from "./WholesaleHeader";
+import CrmHeader from "./CrmHeader";
 import useIdleLogout from "../../../hooks/useIdleLogout";
 import useScrollReveal from "../../../hooks/useScrollReveal";
 import useTheme from "../../../hooks/useTheme";
@@ -37,7 +37,7 @@ import {
   months,
   createDefaultFilters,
   createProfileForm,
-} from "./wholesaleConfig";
+} from "./crmConfig";
 import { useDealsData } from "./hooks/useDealsData";
 import { useDealsFilter } from "./hooks/useDealsFilter";
 import { useDealForm } from "./hooks/useDealForm";
@@ -155,7 +155,7 @@ function Wholesale() {
 
   return (
     <div className="layout layout-no-sidebar">
-      <WholesaleHeader
+      <CrmHeader
         currentUser={currentUser}
         activeView={activeView}
         setActiveView={setActiveView}
@@ -267,7 +267,7 @@ function Wholesale() {
               clearContractFile={clearContractFile}
             />
 
-            <Wholesale_filters
+            <Crm_filters
               filters={filters}
               states={states}
               propertyTypes={propertyTypes}

@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { MAX_PROFILE_IMAGE_SIZE, createProfileForm } from "../wholesaleConfig";
+import { MAX_PROFILE_IMAGE_SIZE, createProfileForm } from "../crmConfig";
 import { updateUserProfile } from "../../../../firebase/firestoreService";
 
-export function useProfileManager({ currentUser, setCurrentUser, sessionStorageKey }) {
+export function useProfileManager({
+  currentUser,
+  setCurrentUser,
+  sessionStorageKey,
+}) {
   const [profileForm, setProfileForm] = useState(() =>
     createProfileForm(currentUser),
   );
@@ -12,7 +16,11 @@ export function useProfileManager({ currentUser, setCurrentUser, sessionStorageK
 
   useEffect(() => {
     setProfileForm(createProfileForm(currentUser));
-  }, [currentUser?.firstName, currentUser?.lastName, currentUser?.profileImage]);
+  }, [
+    currentUser?.firstName,
+    currentUser?.lastName,
+    currentUser?.profileImage,
+  ]);
 
   useEffect(() => {
     function handleClickOutside(event) {

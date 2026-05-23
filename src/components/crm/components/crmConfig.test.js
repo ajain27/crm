@@ -3,7 +3,7 @@ import {
   createEmptyDealForm,
   getSuggestedWholesaleMao,
   getWholesaleRehabDetails,
-} from "./wholesaleConfig";
+} from "./crmConfig";
 
 describe("getWholesaleRehabDetails", () => {
   it("calculates auto rehab from state and rehab type, then adds additional rehab", () => {

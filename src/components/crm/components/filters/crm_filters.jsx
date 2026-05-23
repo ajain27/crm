@@ -2,7 +2,7 @@ import { Search, Plus } from "lucide-react";
 import { Select } from "../../../elements/elements";
 import { useState } from "react";
 
-function Wholesale_filters({
+function Crm_filters({
   filters,
   states,
   propertyTypes,
@@ -146,4 +146,4 @@ function Wholesale_filters({
   );
 }
 
-export default Wholesale_filters;
+export default Crm_filters;

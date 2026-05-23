@@ -6,7 +6,7 @@ import {
   waitFor,
   act,
 } from "@testing-library/react";
-import Wholesale from "./Wholesale";
+import Wholesale from "./Crm";
 
 vi.mock("react-dom/client", () => ({
   createRoot: vi.fn(() => ({ render: vi.fn() })),
@@ -30,15 +30,15 @@ vi.mock("../../../firebase/firestoreService", () => ({
   deleteContractById: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("./filters/Wholesale_filters", () => ({
+vi.mock("./filters/crm_filters", () => ({
   default: () => <div>Filters</div>,
 }));
 
-vi.mock("./forms/wholesale_form", () => ({
+vi.mock("./forms/crm_form", () => ({
   default: () => <div>Add Property Form</div>,
 }));
 
-vi.mock("./data/Wholesale_data", () => ({
+vi.mock("./data/crm_table", () => ({
   default: () => <div>Deals Table</div>,
 }));
 
@@ -85,7 +85,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("Wholesale", () => {
+describe("Crm", () => {
   it("shows account actions in the top-right avatar dropdown", async () => {
     seedCurrentUser();
 

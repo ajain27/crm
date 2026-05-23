@@ -3,7 +3,7 @@ import {
   MAX_CONTRACT_FILE_SIZE,
   createContractVersion,
   getContractVersions,
-} from "../../wholesaleConfig";
+} from "../../crmConfig";
 
 export function useContractManager({
   deals,
@@ -17,7 +17,8 @@ export function useContractManager({
   const [contractDataCache, setContractDataCache] = useState({});
   const [isFetchingContract, setIsFetchingContract] = useState(false);
   const [selectedContractDealId, setSelectedContractDealId] = useState(null);
-  const [selectedContractVersionId, setSelectedContractVersionId] = useState(null);
+  const [selectedContractVersionId, setSelectedContractVersionId] =
+    useState(null);
 
   async function openContract(deal) {
     const versions = getContractVersions(deal);
@@ -83,7 +84,8 @@ export function useContractManager({
 
     const reader = new FileReader();
     reader.onload = async () => {
-      const encodedFile = typeof reader.result === "string" ? reader.result : "";
+      const encodedFile =
+        typeof reader.result === "string" ? reader.result : "";
       const newVersion = createContractVersion({
         name: file.name,
         type: file.type || "application/octet-stream",
@@ -103,12 +105,17 @@ export function useContractManager({
           data: encodedFile,
           uploadedAt: newVersion.uploadedAt,
         });
-        setContractDataCache((prev) => ({ ...prev, [newVersion.id]: encodedFile }));
+        setContractDataCache((prev) => ({
+          ...prev,
+          [newVersion.id]: encodedFile,
+        }));
         await updateDealPatch(deal.id, buildContractPatch(nextVersions));
       } catch (error) {
         console.error("Failed to upload contract", error);
         const detail = error?.message ? `\n\n${error.message}` : "";
-        alert(`Unable to upload contract. Check your database connection.${detail}`);
+        alert(
+          `Unable to upload contract. Check your database connection.${detail}`,
+        );
       } finally {
         setUploadingDealId(null);
       }

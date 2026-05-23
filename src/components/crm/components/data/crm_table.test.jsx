@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import Wholesale_data from "./Wholesale_data";
+import Wholesale_data from "./crm_table";
 
 const deal = {
   id: "d1",

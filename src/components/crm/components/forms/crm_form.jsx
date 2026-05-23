@@ -5,7 +5,7 @@ import { REHAB_OPTIONS } from "../../../dealAnalyzer/components/fixAndFlip/fixAn
 import {
   getSuggestedWholesaleMao,
   getWholesaleRehabDetails,
-} from "../wholesaleConfig";
+} from "../crmConfig";
 
 function Wholesale_form({
   addDeal,

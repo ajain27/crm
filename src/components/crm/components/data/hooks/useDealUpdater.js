@@ -1,4 +1,11 @@
-export function useDealUpdater({ deals, persist, saveDeal, fetchBuyers, saveBuyer, setFilters }) {
+export function useDealUpdater({
+  deals,
+  persist,
+  saveDeal,
+  fetchBuyers,
+  saveBuyer,
+  setFilters,
+}) {
   function updateDealPatch(id, patch) {
     const nextDeals = deals.map((dealItem) =>
       dealItem.id === id ? { ...dealItem, ...patch } : dealItem,
@@ -15,7 +22,9 @@ export function useDealUpdater({ deals, persist, saveDeal, fetchBuyers, saveBuye
       .catch((error) => {
         console.error("Failed to update property", error);
         const detail = error?.message ? `\n\n${error.message}` : "";
-        alert(`Unable to save contract. Check your database connection.${detail}`);
+        alert(
+          `Unable to save contract. Check your database connection.${detail}`,
+        );
       });
   }
 
@@ -26,7 +35,9 @@ export function useDealUpdater({ deals, persist, saveDeal, fetchBuyers, saveBuye
     if (field === "closed" && value === "Yes") {
       const canClose = deal.sellerAccepted === "Yes" && deal.assigned === "Yes";
       if (!canClose) {
-        alert("Cannot Close: Offer must be 'Accepted', and 'Assigned' must be 'Yes'.");
+        alert(
+          "Cannot Close: Offer must be 'Accepted', and 'Assigned' must be 'Yes'.",
+        );
         return;
       }
 
@@ -94,7 +105,10 @@ export function useDealUpdater({ deals, persist, saveDeal, fetchBuyers, saveBuye
         );
 
         if (existingBuyer) {
-          await saveBuyer({ ...existingBuyer, fullName: savedDeal.buyerName.trim() });
+          await saveBuyer({
+            ...existingBuyer,
+            fullName: savedDeal.buyerName.trim(),
+          });
         } else {
           await saveBuyer({
             id: crypto.randomUUID(),

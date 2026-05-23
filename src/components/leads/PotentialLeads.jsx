@@ -15,8 +15,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatPhone, findDuplicateByAddress } from "../../utils/utils";
-import { createEmptyDealForm } from "../wholesale/components/wholesaleConfig";
-import ContractPreviewModal from "../wholesale/components/data/modals/ContractPreviewModal";
+import { createEmptyDealForm } from "../crm/components/crmConfig";
+import ContractPreviewModal from "../crm/components/data/modals/ContractPreviewModal";
 import LeadDetailModal from "./LeadDetailModal";
 import Pagination from "../pagination/Pagination";
 import "./Leads.css";

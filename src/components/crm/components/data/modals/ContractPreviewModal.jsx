@@ -53,7 +53,10 @@ function ContractPreviewModal({
                   type="button"
                   className="secondary-btn contract-version-delete"
                   onClick={() =>
-                    handleDeleteContractVersion(selectedContractDeal, version.id)
+                    handleDeleteContractVersion(
+                      selectedContractDeal,
+                      version.id,
+                    )
                   }
                   aria-label={`Delete ${version.name}`}
                   title={`Delete ${version.name}`}
@@ -66,7 +69,9 @@ function ContractPreviewModal({
         ) : null}
 
         {selectedContractVersion?.name ? (
-          <div className="contract-preview-meta">{selectedContractVersion.name}</div>
+          <div className="contract-preview-meta">
+            {selectedContractVersion.name}
+          </div>
         ) : null}
 
         {isFetchingContract ? (

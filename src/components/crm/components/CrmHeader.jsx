@@ -39,7 +39,7 @@ function buildProfileInitial(currentUser) {
     .toUpperCase();
 }
 
-function WholesaleHeader({
+function CrmHeader({
   currentUser,
   activeView,
   setActiveView,
@@ -159,4 +159,4 @@ function WholesaleHeader({
   );
 }
 
-export default WholesaleHeader;
+export default CrmHeader;

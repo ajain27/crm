@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { createDefaultFilters } from "../wholesaleConfig";
+import { createDefaultFilters } from "../crmConfig";
 
 export function useDealsFilter({ deals }) {
   const [filters, setFilters] = useState(createDefaultFilters);

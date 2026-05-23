@@ -32,9 +32,9 @@
 @import "../components/sidebar/Sidebar.css";
 @import "../components/auth/Auth.css";
 @import "../components/stats/Stats.css";
-@import "../components/wholesale/css/Wholesale_form.css";
-@import "../components/wholesale/css/Wholesale_filters.css";
-@import "../components/wholesale/css/Wholesale_data.css";
+@import "../components/crm/css/crm_form.css";
+@import "../components/crm/css/crm_filters.css";
+@import "../components/crm/css/crm_table.css";
 @import "../components/dealAnalyzer/css/DealAnalyzer.css";
 @import "../components/mortgageCalculator/MortgageCalculator.css";
 @import "../components/buyers/styles/Buyers.css";

@@ -5,7 +5,7 @@ import {
   createDefaultFilters,
   createContractVersion,
   getWholesaleRehabDetails,
-} from "../wholesaleConfig";
+} from "../crmConfig";
 import { findDuplicateByAddress } from "../../../../utils/utils";
 
 export function useDealForm({

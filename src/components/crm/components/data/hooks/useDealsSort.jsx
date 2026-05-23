@@ -2,7 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 
 export function useDealsSort(filteredDeals) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: "closedDate", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "closedDate",
+    direction: "desc",
+  });
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -20,7 +23,9 @@ export function useDealsSort(filteredDeals) {
         case "assignedPrice":
           return Number(deal[sortConfig.key] || 0);
         case "grossRevenue":
-          return Number(deal.assignedPrice || 0) - Number(deal.contractPrice || 0);
+          return (
+            Number(deal.assignedPrice || 0) - Number(deal.contractPrice || 0)
+          );
         case "offerDate":
           return deal.offerDate || "";
         case "closedDate":
@@ -54,7 +59,11 @@ export function useDealsSort(filteredDeals) {
 
   function renderSortableHeader(label, key) {
     const isActive = sortConfig.key === key;
-    const indicator = !isActive ? " ↕" : sortConfig.direction === "asc" ? " ↑" : " ↓";
+    const indicator = !isActive
+      ? " ↕"
+      : sortConfig.direction === "asc"
+        ? " ↑"
+        : " ↓";
     const ariaSort =
       sortConfig.key !== key
         ? "none"
@@ -78,5 +87,11 @@ export function useDealsSort(filteredDeals) {
     );
   }
 
-  return { currentDeals, currentPage, setCurrentPage, totalPages, renderSortableHeader };
+  return {
+    currentDeals,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    renderSortableHeader,
+  };
 }

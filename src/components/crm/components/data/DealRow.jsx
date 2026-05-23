@@ -1,7 +1,7 @@
 import { ReadOnlyCell } from "../../../elements/elements";
 import { Trash2, Edit2, Check, Eye, Upload, Loader2 } from "lucide-react";
 import { currency } from "../../../../utils/utils";
-import { getContractVersions } from "../wholesaleConfig";
+import { getContractVersions } from "../crmConfig";
 
 function toEditableCurrency(value) {
   const amount = Number(value || 0);

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import Wholesale_form from "./wholesale_form";
-import { createEmptyDealForm } from "../wholesaleConfig";
+import Wholesale_form from "./crm_form";
+import { createEmptyDealForm } from "../crmConfig";
 
 function renderForm(overrides = {}) {
   const form = {
