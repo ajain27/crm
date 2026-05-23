@@ -10,36 +10,14 @@ import {
   Plus,
   Tag,
   Search,
-  Upload,
-  Eye,
-  Loader2,
 } from "lucide-react";
 import { formatPhone, findDuplicateByAddress } from "../../utils/utils";
 import { createEmptyDealForm } from "../crm/components/crmConfig";
-import ContractPreviewModal from "../crm/components/data/modals/ContractPreviewModal";
 import LeadDetailModal from "./LeadDetailModal";
 import Pagination from "../pagination/Pagination";
 import "./Leads.css";
 
 const ITEMS_PER_PAGE = 10;
-
-const MAX_FILE_SIZE = 750 * 1024;
-
-function getLeadFiles(lead) {
-  return Array.isArray(lead?.fileVersions)
-    ? lead.fileVersions.filter((f) => f?.id)
-    : [];
-}
-
-function createLeadFile({ name, type, data }) {
-  return {
-    id: crypto.randomUUID(),
-    name,
-    type,
-    data,
-    uploadedAt: new Date().toISOString(),
-  };
-}
 
 const SOURCES = ["MLS / Zillow", "Cold Call", "Propwire", "Auction.com"];
 
@@ -115,128 +93,11 @@ export default function PotentialLeads({
   const [formError, setFormError] = useState("");
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterAgent, setFilterAgent] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [detailLead, setDetailLead] = useState(null);
 
   function resetPage() {
     setCurrentPage(1);
-  }
-
-  // File management
-  const [uploadingLeadId, setUploadingLeadId] = useState(null);
-  const [fileDataCache, setFileDataCache] = useState({});
-  const [isFetchingFile, setIsFetchingFile] = useState(false);
-  const [selectedFileLeadId, setSelectedFileLeadId] = useState(null);
-  const [selectedFileVersionId, setSelectedFileVersionId] = useState(null);
-
-  async function openFiles(lead) {
-    const versions = getLeadFiles(lead);
-    if (versions.length === 0) return;
-    setSelectedFileLeadId(lead.id);
-    setSelectedFileVersionId(versions[0].id);
-    const uncached = versions.filter((v) => !fileDataCache[v.id]);
-    if (uncached.length === 0) return;
-    setIsFetchingFile(true);
-    try {
-      const fetched = await Promise.all(
-        uncached.map((v) => fetchLeadFile(lead.id, v.id)),
-      );
-      setFileDataCache((prev) => {
-        const next = { ...prev };
-        fetched.forEach((doc) => {
-          if (doc?.id) next[doc.id] = doc.data || "";
-        });
-        return next;
-      });
-    } finally {
-      setIsFetchingFile(false);
-    }
-  }
-
-  function handleFileUpload(lead, event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const supported =
-      file.type === "application/pdf" ||
-      file.type.startsWith("image/") ||
-      /\.(odt|odf)$/i.test(file.name);
-    if (!supported) {
-      alert("Please choose a PDF, ODT, or image file.");
-      event.target.value = "";
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      alert(
-        "File must be smaller than 750 KB (Firestore document size limit).",
-      );
-      event.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const data = typeof reader.result === "string" ? reader.result : "";
-      const newFile = createLeadFile({
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        data,
-      });
-      const existing = getLeadFiles(lead);
-      const nextVersions = [newFile, ...existing];
-      setUploadingLeadId(lead.id);
-      try {
-        await saveLeadFile({
-          id: newFile.id,
-          leadId: lead.id,
-          userId: currentUser.id,
-          name: newFile.name,
-          type: newFile.type,
-          data,
-          uploadedAt: newFile.uploadedAt,
-        });
-        setFileDataCache((prev) => ({ ...prev, [newFile.id]: data }));
-        const updated = {
-          ...lead,
-          fileVersions: nextVersions.map(({ data: _d, ...rest }) => rest),
-        };
-        await saveLead(updated);
-        setLeads((prev) => prev.map((l) => (l.id === lead.id ? updated : l)));
-      } catch (err) {
-        alert(`Upload failed. ${err?.message || ""}`);
-      } finally {
-        setUploadingLeadId(null);
-      }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  }
-
-  async function handleDeleteLeadFile(lead, versionId) {
-    const versions = getLeadFiles(lead);
-    const target = versions.find((v) => v.id === versionId);
-    if (!target || !window.confirm(`Delete "${target.name}"?`)) return;
-    try {
-      await deleteLeadFileById(lead.id, versionId);
-      setFileDataCache((prev) => {
-        const n = { ...prev };
-        delete n[versionId];
-        return n;
-      });
-    } catch {
-      /* ignore */
-    }
-    const nextVersions = versions.filter((v) => v.id !== versionId);
-    const updated = { ...lead, fileVersions: nextVersions };
-    await saveLead(updated);
-    setLeads((prev) => prev.map((l) => (l.id === lead.id ? updated : l)));
-    if (selectedFileLeadId === lead.id) {
-      nextVersions.length > 0
-        ? setSelectedFileVersionId((cur) =>
-            cur === versionId ? nextVersions[0].id : cur,
-          )
-        : (setSelectedFileLeadId(null), setSelectedFileVersionId(null));
-    }
   }
 
   function handleChange(e) {
@@ -337,16 +198,6 @@ export default function PotentialLeads({
       if (search && !l.address.toLowerCase().includes(search.toLowerCase()))
         return false;
       if (filterSource && l.source !== filterSource) return false;
-      if (
-        filterAgent &&
-        (l.agentName || "").trim().toLowerCase() !== filterAgent.toLowerCase()
-      )
-        return false;
-      if (filterStatus) {
-        const s = followUpStatus(l.followUpDate);
-        if (filterStatus === "none" && l.followUpDate) return false;
-        if (filterStatus !== "none" && s !== filterStatus) return false;
-      }
       return true;
     })
     .sort((a, b) => {
@@ -362,16 +213,8 @@ export default function PotentialLeads({
     safePage * ITEMS_PER_PAGE,
   );
 
-  const activeFilters = search || filterSource || filterStatus || filterAgent;
+  const activeFilters = search || filterSource;
   const usedSources = [...new Set(leads.map((l) => l.source).filter(Boolean))];
-  const usedAgents = [
-    ...new Map(
-      leads
-        .map((l) => l.agentName)
-        .filter(Boolean)
-        .map((n) => [n.trim().toLowerCase(), n.trim()]),
-    ).values(),
-  ].sort();
 
   return (
     <>
@@ -592,43 +435,12 @@ export default function PotentialLeads({
                 </option>
               ))}
             </select>
-            <select
-              value={filterAgent}
-              onChange={(e) => {
-                setFilterAgent(e.target.value);
-                resetPage();
-              }}
-              className="leads-filter-select"
-            >
-              <option value="">All agents</option>
-              {usedAgents.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
-                resetPage();
-              }}
-              className="leads-filter-select"
-            >
-              <option value="">All statuses</option>
-              <option value="overdue">Overdue</option>
-              <option value="today">Today</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="none">No date set</option>
-            </select>
             {activeFilters && (
               <button
                 className="leads-clear-filters"
                 onClick={() => {
                   setSearch("");
                   setFilterSource("");
-                  setFilterStatus("");
-                  setFilterAgent("");
                   resetPage();
                 }}
               >
@@ -664,15 +476,12 @@ export default function PotentialLeads({
                     <th>Phone</th>
                     <th>Added</th>
                     <th>MLS Link</th>
-                    <th>Files</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((lead) => {
                     const status = followUpStatus(lead.followUpDate);
-                    const leadFiles = getLeadFiles(lead);
-                    const isUploading = uploadingLeadId === lead.id;
                     return (
                       <tr
                         key={lead.id}
@@ -770,42 +579,6 @@ export default function PotentialLeads({
                           )}
                         </td>
                         <td onClick={(e) => e.stopPropagation()}>
-                          <div className="leads-file-actions">
-                            {leadFiles.length > 0 && (
-                              <button
-                                className="secondary-btn contract-action-btn"
-                                title="View files"
-                                onClick={() => openFiles(lead)}
-                              >
-                                <Eye size={14} />
-                              </button>
-                            )}
-                            <label
-                              htmlFor={`lead-file-${lead.id}`}
-                              className="secondary-btn contract-action-btn"
-                              title={isUploading ? "Uploading…" : "Upload file"}
-                              style={
-                                isUploading
-                                  ? { opacity: 0.5, pointerEvents: "none" }
-                                  : undefined
-                              }
-                            >
-                              {isUploading ? (
-                                <Loader2 size={14} className="spin" />
-                              ) : (
-                                <Upload size={14} />
-                              )}
-                            </label>
-                            <input
-                              id={`lead-file-${lead.id}`}
-                              type="file"
-                              accept=".pdf,.odt,.odf,image/*"
-                              className="contract-upload-input"
-                              onChange={(e) => handleFileUpload(lead, e)}
-                            />
-                          </div>
-                        </td>
-                        <td onClick={(e) => e.stopPropagation()}>
                           <button
                             className="leads-crm-btn"
                             title="Add to CRM pipeline"
@@ -842,34 +615,6 @@ export default function PotentialLeads({
         lead={detailLead}
         onSave={handleLeadSave}
       />
-
-      {(() => {
-        const fileLead = leads.find((l) => l.id === selectedFileLeadId);
-        const versions = getLeadFiles(fileLead || {});
-        const selectedVersion =
-          versions.find((v) => v.id === selectedFileVersionId) || null;
-        const mimeType = selectedVersion?.type || "";
-        return (
-          <ContractPreviewModal
-            isOpen={!!selectedFileLeadId}
-            onClose={() => {
-              setSelectedFileLeadId(null);
-              setSelectedFileVersionId(null);
-            }}
-            selectedContractDeal={fileLead || null}
-            contractVersions={versions}
-            selectedContractVersion={selectedVersion}
-            setSelectedContractVersionId={setSelectedFileVersionId}
-            isFetchingContract={isFetchingFile}
-            selectedContractData={fileDataCache[selectedFileVersionId] || ""}
-            isImageContract={mimeType.startsWith("image/")}
-            isPdfContract={mimeType === "application/pdf"}
-            handleDeleteContractVersion={(deal, versionId) =>
-              handleDeleteLeadFile(deal, versionId)
-            }
-          />
-        );
-      })()}
     </>
   );
 }
