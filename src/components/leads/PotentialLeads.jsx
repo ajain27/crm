@@ -27,6 +27,7 @@ function createEmptyForm() {
     source: "",
     agentName: "",
     agentPhone: "",
+    sellerName: "",
     url: "",
     followUpDate: "",
     email: "",
@@ -318,19 +319,39 @@ export default function PotentialLeads({
             </>
           )}
 
-          <div className="field">
-            <span>Listing URL</span>
-            <div className="leads-input-icon-wrap">
-              <Link2 size={15} className="leads-field-icon" />
+          {form.source === "Cold Call" && (
+            <div className="field">
+              <span>Seller Name</span>
               <input
-                type="url"
-                name="url"
-                value={form.url}
-                onChange={handleChange}
-                placeholder="https://zillow.com/…"
+                type="text"
+                name="sellerName"
+                value={form.sellerName || ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    sellerName: e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
+                  }))
+                }
+                placeholder="Seller's name"
               />
             </div>
-          </div>
+          )}
+
+          {form.source !== "Cold Call" && (
+            <div className="field">
+              <span>Listing URL</span>
+              <div className="leads-input-icon-wrap">
+                <Link2 size={15} className="leads-field-icon" />
+                <input
+                  type="url"
+                  name="url"
+                  value={form.url}
+                  onChange={handleChange}
+                  placeholder="https://zillow.com/…"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="field">
             <span>
