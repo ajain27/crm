@@ -196,8 +196,16 @@ export default function PotentialLeads({
 
   const filtered = leads
     .filter((l) => {
-      if (search && !l.address.toLowerCase().includes(search.toLowerCase()))
-        return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const matches =
+          l.address.toLowerCase().includes(q) ||
+          (l.phone || "").toLowerCase().includes(q) ||
+          (l.agentPhone || "").toLowerCase().includes(q) ||
+          (l.sellerName || "").toLowerCase().includes(q) ||
+          (l.agentName || "").toLowerCase().includes(q);
+        if (!matches) return false;
+      }
       if (filterSource && l.source !== filterSource) return false;
       return true;
     })
@@ -396,6 +404,17 @@ export default function PotentialLeads({
             </div>
           </div>
 
+          <div className="field leads-notes-field">
+            <span>Notes</span>
+            <textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="Any initial notes about this lead…"
+              rows={3}
+            />
+          </div>
+
           {formError && (
             <p className="leads-form-error col-span-full">{formError}</p>
           )}
@@ -435,7 +454,7 @@ export default function PotentialLeads({
               <Search size={13} className="leads-search-icon" />
               <input
                 type="text"
-                placeholder="Search address…"
+                placeholder="Search address, name or phone…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="leads-search-input"
@@ -491,10 +510,12 @@ export default function PotentialLeads({
                     <th></th>
                     <th>Address</th>
                     <th>Source</th>
+                    <th>Seller</th>
                     <th>Agent</th>
                     <th>Follow-Up</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>Notes</th>
                     <th>Added</th>
                     <th>MLS Link</th>
                     <th></th>
@@ -528,6 +549,7 @@ export default function PotentialLeads({
                             "—"
                           )}
                         </td>
+                        <td>{lead.sellerName || "—"}</td>
                         <td>
                           {lead.agentName || lead.agentPhone ? (
                             <div className="leads-agent-cell">
@@ -576,6 +598,18 @@ export default function PotentialLeads({
                             >
                               {lead.phone}
                             </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="leads-notes-cell">
+                          {lead.notes ? (
+                            <span
+                              className="leads-notes-preview"
+                              title={lead.notes}
+                            >
+                              {lead.notes}
+                            </span>
                           ) : (
                             "—"
                           )}
