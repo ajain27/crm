@@ -336,6 +336,16 @@
     border-color: color-mix(in srgb, #dc2626 56%, var(--input-border) 44%);
   }
 
+  .deal-analyzer-field-positive > span {
+    color: #16a34a;
+  }
+
+  .deal-analyzer-field-positive input {
+    color: #16a34a;
+    -webkit-text-fill-color: #16a34a;
+    border-color: color-mix(in srgb, #16a34a 56%, var(--input-border) 44%);
+  }
+
   /* ── Rent Estimator ────────────────────────────────────────────── */
 
   .deal-analyzer-rent-estimate-btn {

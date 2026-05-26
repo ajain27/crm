@@ -132,12 +132,20 @@ function SubToTab({ tab }) {
   const termYearsAmount = parseAmount(form.termYears);
   const insuranceAmount = parseAmount(form.insurance);
   const taxAmount = parseAmount(form.tax);
+  const monthlyTaxAmount = taxAmount / 12;
+  const monthlyInsuranceAmount = insuranceAmount / 12;
   const monthlyRentAmount = parseAmount(form.rentEstimate);
   const annualInterestRate = parseAmount(form.interest) / 100;
   const interestRatePercent = parseAmount(form.interest);
   const isEntryFeeHigh =
     propertyValueAmount > 0 && entryFeeAmount > propertyValueAmount * 0.1;
   const isInterestHigh = interestRatePercent > 5;
+  const interestClass =
+    interestRatePercent > 0 && !isInterestHigh
+      ? "deal-analyzer-field-positive"
+      : isInterestHigh
+        ? "deal-analyzer-warning"
+        : "";
   const totalPayments = termYearsAmount * 12;
   const amortizedMonthlyPayment = calculateMonthlyPayment(
     mortgageBalanceAmount,
@@ -160,8 +168,9 @@ function SubToTab({ tab }) {
     ? `(${formatAmount(monthlyPrincipalAmount)} + ${formatAmount(monthlyInterestAmount)})`
     : "";
   const termMonthsValue = totalPayments > 0 ? `(${totalPayments})` : "";
-  const calculatedCashFlow =
-    monthlyRentAmount - (amortizedMonthlyPayment + taxAmount + insuranceAmount);
+  const monthlyPITI =
+    amortizedMonthlyPayment + monthlyTaxAmount + monthlyInsuranceAmount;
+  const calculatedCashFlow = monthlyRentAmount - monthlyPITI;
   const liveCashFlowValue = isFormComplete
     ? formatAmount(calculatedCashFlow)
     : "";
@@ -177,7 +186,7 @@ function SubToTab({ tab }) {
         ? "deal-analyzer-output-negative"
         : "deal-analyzer-output-positive";
   const cashFlowBreakdown = isFormComplete
-    ? `${formatAmount(monthlyRentAmount)} - (${formatAmount(amortizedMonthlyPayment)} + ${formatAmount(taxAmount)} + ${formatAmount(insuranceAmount)}) = ${liveCashFlowValue}`
+    ? `${formatAmount(monthlyRentAmount)} - (${formatAmount(amortizedMonthlyPayment)} + ${formatAmount(monthlyTaxAmount)} + ${formatAmount(monthlyInsuranceAmount)}) = ${liveCashFlowValue}`
     : "";
 
   function handleCalculate() {
@@ -238,6 +247,7 @@ function SubToTab({ tab }) {
         cashFlow: calculatedCashFlow,
         totalEntryAmount: totalEntryAmount,
         principalAndInterest: amortizedMonthlyPayment,
+        piti: monthlyPITI,
       },
     });
   }
@@ -302,6 +312,9 @@ function SubToTab({ tab }) {
             value={form.rehabCost}
             onChange={handleChange}
             onBlur={handleBlur}
+            wrapperClassName={
+              rehabCostAmount > 0 ? "deal-analyzer-warning" : ""
+            }
             required
           />
           <Field
@@ -310,6 +323,9 @@ function SubToTab({ tab }) {
             value={form.mortgageBalance}
             onChange={handleChange}
             onBlur={handleBlur}
+            wrapperClassName={
+              mortgageBalanceAmount > 0 ? "deal-analyzer-warning" : ""
+            }
             required
           />
           <Select
@@ -327,6 +343,11 @@ function SubToTab({ tab }) {
               value={form.arrearsAmount}
               onChange={handleChange}
               onBlur={handleBlur}
+              wrapperClassName={
+                parseAmount(form.arrearsAmount) > 0
+                  ? "deal-analyzer-warning"
+                  : ""
+              }
               required
             />
           ) : null}
@@ -337,7 +358,7 @@ function SubToTab({ tab }) {
             value={form.interest}
             onChange={handleChange}
             onBlur={handleBlur}
-            wrapperClassName={isInterestHigh ? "deal-analyzer-warning" : ""}
+            wrapperClassName={interestClass}
             required
           />
           <label className="field deal-analyzer-term-field">
@@ -366,7 +387,7 @@ function SubToTab({ tab }) {
             </div>
           </label>
           <Field
-            label="Tax"
+            label="Tax (/yr)"
             name="tax"
             value={form.tax}
             onChange={handleChange}
@@ -374,7 +395,7 @@ function SubToTab({ tab }) {
             required
           />
           <Field
-            label="Insurance"
+            label="Insurance (/yr)"
             name="insurance"
             value={form.insurance}
             onChange={handleChange}
@@ -411,7 +432,7 @@ function SubToTab({ tab }) {
           {cashFlowBreakdown ? (
             <div className="deal-analyzer-calculation">
               Cash Flow = Monthly Rent - (Monthly Principal + Interest Payment +
-              Tax + Insurance)
+              Monthly Tax + Monthly Insurance)
               <span>{cashFlowBreakdown}</span>
               {analysisSummary?.cashOnCashReturn != null ? (
                 <span>
@@ -461,7 +482,7 @@ function SubToTab({ tab }) {
               </div>
               <div>
                 <span>Rehab Cost</span>
-                <strong>
+                <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={analysisSummary.raw.rehabCost}
                     format={formatAmount}
@@ -470,7 +491,7 @@ function SubToTab({ tab }) {
               </div>
               <div>
                 <span>Mortgage Balance</span>
-                <strong>
+                <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={analysisSummary.raw.mortgageBalance}
                     format={formatAmount}
@@ -483,7 +504,7 @@ function SubToTab({ tab }) {
               </div>
               <div>
                 <span>Arrears Amount</span>
-                <strong>
+                <strong className="deal-analyzer-return-negative">
                   {analysisSummary.hasArrears === "Yes" ? (
                     <AnimatedAmount
                       value={analysisSummary.raw.arrearsAmount}
@@ -496,7 +517,18 @@ function SubToTab({ tab }) {
               </div>
               <div>
                 <span>Interest</span>
-                <strong>{analysisSummary.interest}</strong>
+                <strong
+                  className={
+                    analysisSummary.cashOnCashReturn != null ||
+                    analysisSummary.interest
+                      ? parseFloat(analysisSummary.interest) < 5
+                        ? "deal-analyzer-return-positive"
+                        : "deal-analyzer-return-negative"
+                      : ""
+                  }
+                >
+                  {analysisSummary.interest}
+                </strong>
               </div>
               <div>
                 <span>Term</span>
@@ -519,7 +551,16 @@ function SubToTab({ tab }) {
                 <strong>{analysisSummary.principalBreakdown || "--"}</strong>
               </div>
               <div>
-                <span>Tax</span>
+                <span>Total PITI (/mo)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={analysisSummary.raw.piti}
+                    format={formatAmount}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Tax (/yr)</span>
                 <strong>
                   <AnimatedAmount
                     value={analysisSummary.raw.tax}
@@ -528,7 +569,7 @@ function SubToTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>Insurance</span>
+                <span>Insurance (/yr)</span>
                 <strong>
                   <AnimatedAmount
                     value={analysisSummary.raw.insurance}
@@ -547,7 +588,7 @@ function SubToTab({ tab }) {
               </div>
               <div>
                 <span>Cash Flow</span>
-                <strong>
+                <strong className="deal-analyzer-return-positive">
                   <AnimatedAmount
                     value={analysisSummary.raw.cashFlow}
                     format={formatAmount}
@@ -556,13 +597,7 @@ function SubToTab({ tab }) {
               </div>
               <div>
                 <span>Total Entry</span>
-                <strong
-                  className={
-                    analysisSummary.verdict === "NO DEAL"
-                      ? "deal-analyzer-return-negative"
-                      : ""
-                  }
-                >
+                <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={analysisSummary.raw.totalEntryAmount}
                     format={formatAmount}

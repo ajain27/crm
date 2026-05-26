@@ -111,8 +111,9 @@ describe("SubToTab", () => {
     expect(screen.getByText("$60,000.00")).toBeInTheDocument();
 
     const cashOnCashLabel = screen.getByText("Cash on Cash Return");
-    const cashOnCashValue = cashOnCashLabel.parentElement.querySelector("strong");
-    expect(cashOnCashValue).toHaveTextContent("13.39%");
+    const cashOnCashValue =
+      cashOnCashLabel.parentElement.querySelector("strong");
+    expect(cashOnCashValue).toHaveTextContent("20.99%");
     expect(cashOnCashValue).toHaveClass("deal-analyzer-return-positive");
   });
 
@@ -151,7 +152,8 @@ describe("SubToTab", () => {
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
 
     const totalEntryLabel = screen.getByText("Total Entry");
-    const totalEntryValue = totalEntryLabel.parentElement.querySelector("strong");
+    const totalEntryValue =
+      totalEntryLabel.parentElement.querySelector("strong");
     expect(totalEntryValue).toHaveTextContent("$59,000.00");
     expect(totalEntryValue).toHaveClass("deal-analyzer-return-negative");
   });
