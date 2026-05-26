@@ -104,6 +104,14 @@ function DealDetailModal({
         offerStatus: value,
         sellerAccepted: "No",
       }));
+    } else if (field === "offerStatus" && value === "Offer Sent") {
+      setDraft((prev) => ({
+        ...prev,
+        offerStatus: value,
+        ...((prev.sellerAccepted || "No") === "No"
+          ? { sellerAccepted: "Waiting" }
+          : {}),
+      }));
     } else {
       setDraft((prev) => ({ ...prev, [field]: value }));
     }

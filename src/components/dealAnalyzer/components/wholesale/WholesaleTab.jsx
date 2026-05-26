@@ -62,7 +62,7 @@ function WholesaleTab({ tab }) {
 
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
   const rehabMultiplier = getRehabMultiplier(form.state);
-  const cheapMarket = isCheapMarket(form.state);
+  // const cheapMarket = isCheapMarket(form.state);
   const autoRehabResult = getAutoRehabCost(form.rehabType, sqft);
   const autoRehabCost =
     autoRehabResult !== null

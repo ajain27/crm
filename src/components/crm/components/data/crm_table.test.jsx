@@ -64,6 +64,7 @@ describe("Wholesale_data", () => {
       expect(saveDeal).toHaveBeenCalledWith({
         ...deal,
         offerStatus: "Offer Sent",
+        sellerAccepted: "Waiting",
       });
     });
     expect(persist).toHaveBeenCalled();

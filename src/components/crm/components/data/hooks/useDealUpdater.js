@@ -55,6 +55,13 @@ export function useDealUpdater({
     const nextDeals = deals.map((dealItem) => {
       if (dealItem.id !== id) return dealItem;
       const nextDeal = { ...dealItem, [field]: value };
+      if (
+        field === "offerStatus" &&
+        value === "Offer Sent" &&
+        (dealItem.sellerAccepted || "No") === "No"
+      ) {
+        nextDeal.sellerAccepted = "Waiting";
+      }
       if (field === "closed") {
         if (value === "Yes") {
           nextDeal.closedDate = resolvedClosedDate;

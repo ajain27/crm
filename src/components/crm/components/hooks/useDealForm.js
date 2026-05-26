@@ -134,7 +134,9 @@ export function useDealForm({
               closedDate: "",
               closedInMonth: "",
             }
-          : {}),
+          : value === "Offer Sent" && prev.sellerAccepted === "No"
+            ? { sellerAccepted: "Waiting" }
+            : {}),
       }));
       return;
     }
