@@ -31,6 +31,7 @@ const buyersCollection = collection(db, "buyers");
 const usersCollection = collection(db, "users");
 const leadsCollection = collection(db, "leads");
 const passwordResetsCollection = collection(db, "passwordResets");
+const pmDealsCollection = collection(db, "pmDeals");
 
 function leadFilesSubcollection(leadId) {
   return collection(db, "leads", leadId, "files");
@@ -38,6 +39,10 @@ function leadFilesSubcollection(leadId) {
 
 function contractsSubcollection(dealId) {
   return collection(db, "properties", dealId, "contracts");
+}
+
+function pmDealFilesSubcollection(pmDealId) {
+  return collection(db, "pmDeals", pmDealId, "files");
 }
 
 function mapSnapshot(snapshot) {
@@ -277,6 +282,55 @@ export async function fetchLeadFile(leadId, id) {
 
 export async function deleteLeadFileById(leadId, id) {
   await deleteDoc(doc(leadFilesSubcollection(leadId), id));
+}
+
+export async function fetchPmDeals(userId) {
+  const snapshot = userId
+    ? await getDocs(query(pmDealsCollection, where("userId", "==", userId)))
+    : await getDocs(pmDealsCollection);
+  return mapSnapshot(snapshot);
+}
+
+export async function savePmDeal(deal) {
+  const dealRef = doc(pmDealsCollection, deal.id);
+  await setDoc(dealRef, deal);
+  return deal;
+}
+
+export async function deletePmDealById(id) {
+  const filesSnapshot = await getDocs(pmDealFilesSubcollection(id));
+  await Promise.all(filesSnapshot.docs.map((d) => deleteDoc(d.ref)));
+  await deleteDoc(doc(pmDealsCollection, id));
+}
+
+export async function savePmDealFile({
+  id,
+  pmDealId,
+  userId,
+  name,
+  type,
+  data,
+  uploadedAt,
+}) {
+  await setDoc(doc(pmDealFilesSubcollection(pmDealId), id), {
+    id,
+    pmDealId,
+    userId,
+    name,
+    type,
+    data,
+    uploadedAt,
+  });
+}
+
+export async function fetchPmDealFile(pmDealId, id) {
+  const snapshot = await getDoc(doc(pmDealFilesSubcollection(pmDealId), id));
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() };
+}
+
+export async function deletePmDealFileById(pmDealId, id) {
+  await deleteDoc(doc(pmDealFilesSubcollection(pmDealId), id));
 }
 
 export async function sendPasswordResetOtp(email) {

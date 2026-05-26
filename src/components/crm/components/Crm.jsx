@@ -15,11 +15,18 @@ import {
   saveLeadFile,
   fetchLeadFile,
   deleteLeadFileById,
+  fetchPmDeals,
+  savePmDeal,
+  deletePmDealById,
+  savePmDealFile,
+  fetchPmDealFile,
+  deletePmDealFileById,
 } from "../../../firebase/firestoreService";
 import Crm_filters from "./filters/crm_filters";
 import Wholesale_form from "./forms/crm_form";
 import Wholesale_data from "./data/crm_table";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
+import PMDealsTab from "../../pmDeals/PMDealsTab";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
@@ -317,12 +324,36 @@ function Wholesale() {
             setDeals={setDeals}
             setActiveView={setActiveView}
           />
+        ) : activeView === "pm-deals" ? (
+          <PMDealsTab
+            tab={{
+              eyebrow: "Private Money",
+              title: "Private money deal tracker",
+              description:
+                "Track borrower details and loan terms. Late interest accrues automatically day by day after the due date.",
+            }}
+            currentUser={currentUser}
+            fetchPmDeals={fetchPmDeals}
+            savePmDeal={savePmDeal}
+            deletePmDealById={deletePmDealById}
+            savePmDealFile={savePmDealFile}
+            fetchPmDealFile={fetchPmDealFile}
+            deletePmDealFileById={deletePmDealFileById}
+          />
         ) : activeView === "buyers" ? (
           <Buyers theme={theme} currentUser={currentUser} />
         ) : activeView === "mortgage" ? (
           <MortgageCalculator />
         ) : (
-          <DealAnalyzer />
+          <DealAnalyzer
+            currentUser={currentUser}
+            fetchPmDeals={fetchPmDeals}
+            savePmDeal={savePmDeal}
+            deletePmDealById={deletePmDealById}
+            savePmDealFile={savePmDealFile}
+            fetchPmDealFile={fetchPmDealFile}
+            deletePmDealFileById={deletePmDealFileById}
+          />
         )}
         <footer
           className="app-footer"

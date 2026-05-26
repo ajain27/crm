@@ -109,6 +109,12 @@ function fmtCurrencyInput(value) {
   return numeric ? "$" + parseInt(numeric, 10).toLocaleString("en-US") : "";
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return "—";
+  const [y, m, d] = dateStr.split("-");
+  return `${m}/${d}/${y}`;
+}
+
 export {
   normalizeDeal,
   getSavedDeals,
@@ -122,5 +128,6 @@ export {
   parsePercent,
   fmt,
   fmtCurrencyInput,
+  formatDate,
   findDuplicateByAddress,
 };

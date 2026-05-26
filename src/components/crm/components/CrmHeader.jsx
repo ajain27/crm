@@ -2,6 +2,7 @@ import {
   BarChart3,
   Calculator,
   Home,
+  Landmark,
   Moon,
   Sun,
   Users,
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
   { id: "leads", label: "Potential Leads", icon: Crosshair },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
+  { id: "pm-deals", label: "PM Deals", icon: Landmark },
   { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
   { id: "buyers", label: "Buyers List", icon: Users },
 ];

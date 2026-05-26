@@ -11,7 +11,11 @@ import {
   Tag,
   Search,
 } from "lucide-react";
-import { formatPhone, findDuplicateByAddress } from "../../utils/utils";
+import {
+  formatPhone,
+  findDuplicateByAddress,
+  formatDate,
+} from "../../utils/utils";
 import { createEmptyDealForm } from "../crm/components/crmConfig";
 import LeadDetailModal from "./LeadDetailModal";
 import Pagination from "../pagination/Pagination";
@@ -60,12 +64,6 @@ function parseAddress(full) {
     return { address: street, city: "", state, zipCode };
   }
   return { address: full, city: "", state: "", zipCode: "" };
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return "—";
-  const [y, m, d] = dateStr.split("-");
-  return `${m}/${d}/${y}`;
 }
 
 function followUpStatus(dateStr) {
