@@ -8,6 +8,7 @@ import {
   Users,
   Crosshair,
   Bell,
+  Building2,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { id: "leads", label: "Potential Leads", icon: Crosshair },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
   { id: "pm-deals", label: "PM Deals", icon: Landmark },
+  { id: "title-companies", label: "Title Companies", icon: Building2 },
   { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
   { id: "buyers", label: "Buyers List", icon: Users },
 ];

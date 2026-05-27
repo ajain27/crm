@@ -1,5 +1,6 @@
 import { Field } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
+import { STATE_OPTIONS } from "../../../constants/stateOptions";
 
 function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
   function handlePhoneChange(e) {
@@ -76,15 +77,23 @@ function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
           onChange={handleChange}
           placeholder="Austin"
         />
-        <Field
-          label="State"
-          name="state"
-          value={form.state}
-          onChange={handleChange}
-          placeholder="TX"
-          maxLength="2"
-          required
-        />
+        <label className="field">
+          <span>
+            State <span className="required-marker">*</span>
+          </span>
+          <select
+            name="state"
+            value={form.state}
+            onChange={handleChange}
+            required
+          >
+            {STATE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {/* Row 4 – Buys (full width) */}
         <div className="field buyer-buys-field">

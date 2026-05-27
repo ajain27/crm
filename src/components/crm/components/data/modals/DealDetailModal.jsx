@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Modal from "../../../../modal/Modal";
+import { getSuggestedWholesaleMao } from "../../crmConfig";
 
 const PROPERTY_TYPES = ["Single Family", "Multi Family", "Land"];
 const OFFER_STATUSES = ["Not Sent", "Offer Sent", "Offer Withdrawn"];
@@ -68,17 +69,15 @@ function DealDetailModal({
     if (deal) setDraft(initDraft(deal));
   }, [deal]);
 
-  // Auto-calculate MAO when inputs change
+  // Auto-calculate MAO when inputs change (mirrors the add-form formula)
   useEffect(() => {
     const arv = parseCurrency(draft.arv);
     if (arv <= 0) return;
-    const rehab = parseCurrency(draft.rehabCost);
-    const extra = parseCurrency(draft.additionalRehabCost);
-    const profit = parseCurrency(draft.desiredProfit);
-    const mao = Math.round(arv * 0.7 - rehab - extra - profit);
-    if (mao > 0) {
-      setDraft((prev) => ({ ...prev, mao: fmtCurrency(String(mao)) }));
-    }
+    const mao = getSuggestedWholesaleMao(draft);
+    setDraft((prev) => ({
+      ...prev,
+      mao: mao > 0 ? fmtCurrency(String(mao)) : "",
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     draft.arv,

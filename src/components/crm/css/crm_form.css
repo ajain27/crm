@@ -54,6 +54,14 @@
     border-color: var(--input-border);
   }
 
+  .field-error,
+  .field span.field-error {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #ef4444;
+    margin-top: -0.25rem;
+  }
+
   .field select {
     appearance: none;
     -webkit-appearance: none;

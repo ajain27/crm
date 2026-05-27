@@ -21,12 +21,16 @@ import {
   savePmDealFile,
   fetchPmDealFile,
   deletePmDealFileById,
+  fetchTitleCompanies,
+  saveTitleCompany,
+  deleteTitleCompanyById,
 } from "../../../firebase/firestoreService";
 import Crm_filters from "./filters/crm_filters";
 import Wholesale_form from "./forms/crm_form";
 import Wholesale_data from "./data/crm_table";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import PMDealsTab from "../../pmDeals/PMDealsTab";
+import TitleCompanies from "../../titleCompanies/TitleCompanies";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
@@ -339,6 +343,13 @@ function Wholesale() {
             savePmDealFile={savePmDealFile}
             fetchPmDealFile={fetchPmDealFile}
             deletePmDealFileById={deletePmDealFileById}
+          />
+        ) : activeView === "title-companies" ? (
+          <TitleCompanies
+            currentUser={currentUser}
+            fetchTitleCompanies={fetchTitleCompanies}
+            saveTitleCompany={saveTitleCompany}
+            deleteTitleCompanyById={deleteTitleCompanyById}
           />
         ) : activeView === "buyers" ? (
           <Buyers theme={theme} currentUser={currentUser} />

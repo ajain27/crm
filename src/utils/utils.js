@@ -79,11 +79,20 @@ function calculateMonthlyPayment(
 }
 
 function findDuplicateByAddress(items, address) {
-  const normalized = address.trim().toLowerCase();
-  return normalized
-    ? (items.find((item) => item.address.trim().toLowerCase() === normalized) ??
-        null)
-    : null;
+  return findDuplicateByField(items, "address", address);
+}
+
+// Generic duplicate finder. Pass excludeId to ignore the record being edited.
+function findDuplicateByField(items, field, value, excludeId = null) {
+  const normalized = (value || "").trim().toLowerCase();
+  if (!normalized) return null;
+  return (
+    items.find(
+      (item) =>
+        item.id !== excludeId &&
+        (item[field] || "").trim().toLowerCase() === normalized,
+    ) ?? null
+  );
 }
 
 function parseCurrency(value) {
@@ -130,4 +139,5 @@ export {
   fmtCurrencyInput,
   formatDate,
   findDuplicateByAddress,
+  findDuplicateByField,
 };
