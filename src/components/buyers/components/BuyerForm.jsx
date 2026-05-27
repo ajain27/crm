@@ -17,8 +17,13 @@ function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
       : [...current, type];
     handleChange({ target: { name: "realEstateType", value: next } });
   }
+
   const isFormComplete =
     Boolean(form.fullName?.trim()) && Boolean(form.state?.trim());
+
+  const selected = Array.isArray(form.realEstateType)
+    ? form.realEstateType
+    : [];
 
   return (
     <section
@@ -27,79 +32,89 @@ function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
       data-reveal="left"
       style={{ "--reveal-delay": "120ms" }}
     >
-      <div>
-        <div className="panel-header">
-          <div>
-            <h2>Add Buyer</h2>
-            <p>Maintain your list of cash buyers and investors.</p>
+      <div className="panel-header">
+        <div>
+          <h2>Add Buyer</h2>
+          <p>Maintain your list of cash buyers and investors.</p>
+        </div>
+      </div>
+
+      <form className="add-form buyer-add-form" onSubmit={addBuyer}>
+        {/* Row 1 – Full Name (full width) */}
+        <Field
+          label="Full Name"
+          name="fullName"
+          value={form.fullName}
+          onChange={handleChange}
+          placeholder="John Smith"
+          required
+        />
+
+        {/* Row 2 – Email | Phone */}
+        <Field
+          label="Email"
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="john@example.com"
+        />
+        <Field
+          label="Phone Number"
+          name="phone"
+          value={form.phone}
+          onChange={handlePhoneChange}
+          placeholder="555-867-5309"
+          maxLength="12"
+        />
+
+        {/* Row 3 – City | State */}
+        <Field
+          label="City (They buy in)"
+          name="city"
+          value={form.city}
+          onChange={handleChange}
+          placeholder="Austin"
+        />
+        <Field
+          label="State"
+          name="state"
+          value={form.state}
+          onChange={handleChange}
+          placeholder="TX"
+          maxLength="2"
+          required
+        />
+
+        {/* Row 4 – Buys (full width) */}
+        <div className="field buyer-buys-field">
+          <span>Property Types They Buy</span>
+          <div className="buyer-type-checkboxes">
+            {propertyTypes.map((type) => (
+              <label
+                key={type}
+                className={`buyer-type-pill${selected.includes(type) ? " buyer-type-pill--active" : ""}`}
+              >
+                <input
+                  type="checkbox"
+                  className="buyer-checkbox"
+                  checked={selected.includes(type)}
+                  onChange={() => handleTypeToggle(type)}
+                />
+                {type}
+              </label>
+            ))}
           </div>
         </div>
-        <form className="add-form buyer-add-form" onSubmit={addBuyer}>
-          <Field
-            label="Full Name"
-            name="fullName"
-            value={form.fullName}
-            onChange={handleChange}
-            required
-          />
-          <Field
-            label="Email"
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-          />
-          <Field
-            label="Phone Number"
-            name="phone"
-            value={form.phone}
-            onChange={handlePhoneChange}
-            maxLength="12"
-          />
-          <Field
-            label="City (They buy in)"
-            name="city"
-            value={form.city}
-            onChange={handleChange}
-          />
-          <div className="state-buys-group">
-            <Field
-              label="State"
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              maxLength="2"
-              required
-            />
-            <div className="field">
-              <span>Buys</span>
-              <div className="buyer-type-checkboxes">
-                {propertyTypes.map((type) => (
-                  <label key={type} className="buyer-type-option">
-                    <input
-                      type="checkbox"
-                      className="buyer-checkbox"
-                      checked={(Array.isArray(form.realEstateType)
-                        ? form.realEstateType
-                        : []
-                      ).includes(type)}
-                      onChange={() => handleTypeToggle(type)}
-                    />
-                    {type}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          <button
-            className="primary-btn form-btn"
-            type="submit"
-            disabled={!isFormComplete}
-          >
-            Save Buyer
-          </button>
-        </form>
-      </div>
+
+        <button
+          className="primary-btn form-btn"
+          type="submit"
+          disabled={!isFormComplete}
+        >
+          Save Buyer
+        </button>
+      </form>
     </section>
   );
 }

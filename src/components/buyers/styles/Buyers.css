@@ -4,49 +4,71 @@
     @apply flex items-center gap-1.5;
   }
 
-  .buyer-add-form .state-buys-group {
-    grid-column: span 2;
+  /* ── Add-buyer form grid ─────────────────────────────── */
+  .buyer-add-form {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .state-buys-group {
-    display: flex;
-    align-items: flex-start;
-    gap: 2.5rem;
+  /* Full Name spans both columns */
+  .buyer-add-form .field:first-of-type {
+    grid-column: 1 / -1;
   }
 
-  .state-buys-group .field:first-child {
-    flex: 0 0 auto;
+  /* Buys row spans both columns */
+  .buyer-buys-field {
+    grid-column: 1 / -1;
   }
 
-  .state-buys-group .field:first-child input {
-    width: 3.5rem;
-    min-width: 0;
-  }
-
-  .state-buys-group .field:last-child {
-    flex: 1;
-    min-width: 0;
-  }
-
+  /* ── Pill-style property type toggles ───────────────── */
   .buyer-type-checkboxes {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem 0.75rem;
-    padding-top: 0.75rem;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
   }
 
-  .buyer-type-option {
-    display: flex;
+  .buyer-type-pill {
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.875rem;
+    gap: 0.35rem;
+    padding: 0.4rem 1rem;
+    border: 1.5px solid var(--input-border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
     color: var(--text);
+    background: var(--panel);
     cursor: pointer;
     user-select: none;
+    transition:
+      background 0.14s,
+      border-color 0.14s,
+      color 0.14s;
   }
 
+  .buyer-type-pill:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+  .buyer-type-pill--active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+
+  .buyer-type-pill--active:hover {
+    color: #fff;
+    opacity: 0.9;
+  }
+
+  /* Hide the native checkbox – pill is the visual indicator */
+  .buyer-type-pill .buyer-checkbox {
+    display: none;
+  }
+
+  /* ── Inline edit styles (table) ─────────────────────── */
   .buyer-type-edit {
     display: flex;
     flex-direction: column;
@@ -54,8 +76,14 @@
     padding: 0.25rem 0;
   }
 
-  .buyer-type-edit .buyer-type-option {
+  .buyer-type-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     font-size: 0.78rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
   }
 
   .editable-input {
@@ -68,5 +96,17 @@
 
   .editable-input.narrow {
     @apply w-[180px];
+  }
+
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .buyer-add-form {
+      grid-template-columns: 1fr;
+    }
+
+    .buyer-add-form .field:first-of-type,
+    .buyer-buys-field {
+      grid-column: 1;
+    }
   }
 }
