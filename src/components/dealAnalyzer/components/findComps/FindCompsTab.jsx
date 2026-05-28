@@ -3,7 +3,7 @@ import { ExternalLink, Search, MapPin, Clock } from "lucide-react";
 import Pagination from "../../../pagination/Pagination";
 
 const CACHE_KEY = "findComps_cache";
-const MAX_CACHE = 10;
+const MAX_CACHE = 100;
 const COMPS_PER_PAGE = 5;
 const RECENT_PER_PAGE = 5;
 
@@ -15,10 +15,30 @@ function loadCache() {
   }
 }
 
-function persistCache(entries) {
+// Always reads from localStorage so it's never stale across remounts.
+function readCache() {
+  return loadCache();
+}
+
+// Writes the new entry to localStorage immediately (sync), then returns the
+// updated list so callers can also update React state.
+function writeCache(searchAddress, data) {
+  const prev = loadCache();
+  const filtered = prev.filter(
+    (e) => e.address.toLowerCase() !== searchAddress.toLowerCase(),
+  );
+  const next = [
+    {
+      address: searchAddress,
+      result: data,
+      searchedAt: new Date().toISOString(),
+    },
+    ...filtered,
+  ].slice(0, MAX_CACHE);
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(next));
   } catch {}
+  return next;
 }
 
 const fmt = (n) => (n != null ? `$${Math.round(n).toLocaleString()}` : "—");
@@ -46,27 +66,17 @@ function FindCompsTab({ tab }) {
   const [status, setStatus] = useState("idle");
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [cache, setCache] = useState(loadCache);
+  const [cache, setCache] = useState(readCache);
   const [recentQuery, setRecentQuery] = useState("");
   const [compsPage, setCompsPage] = useState(1);
   const [recentPage, setRecentPage] = useState(1);
 
-  function upsertCache(searchAddress, data) {
-    setCache((prev) => {
-      const filtered = prev.filter(
-        (e) => e.address.toLowerCase() !== searchAddress.toLowerCase(),
-      );
-      const next = [
-        {
-          address: searchAddress,
-          result: data,
-          searchedAt: new Date().toISOString(),
-        },
-        ...filtered,
-      ].slice(0, MAX_CACHE);
-      persistCache(next);
-      return next;
-    });
+  // Writes synchronously to localStorage first, then syncs React state.
+  // This ensures the entry survives even if the component unmounts before
+  // React can commit the state update (e.g. user navigates mid-fetch).
+  function saveToCache(searchAddress, data) {
+    const next = writeCache(searchAddress, data);
+    setCache(next);
   }
 
   async function handleFindComps() {
@@ -74,12 +84,14 @@ function FindCompsTab({ tab }) {
 
     const trimmed = address.trim();
 
-    // Serve from cache if available
-    const cached = cache.find(
+    // Always read from localStorage directly — never from React state, which
+    // may be stale after a remount or mid-flight navigation.
+    const liveCache = readCache();
+    const cached = liveCache.find(
       (e) => e.address.toLowerCase() === trimmed.toLowerCase(),
     );
     if (cached) {
-      upsertCache(cached.address, cached.result); // bump to top
+      saveToCache(cached.address, cached.result); // bump to top in localStorage + state
       setResult(cached.result);
       setStatus("done");
       return;
@@ -101,7 +113,7 @@ function FindCompsTab({ tab }) {
         throw new Error(err.message || `Error ${res.status}`);
       }
       const data = await res.json();
-      upsertCache(trimmed, data);
+      saveToCache(trimmed, data);
       setResult(data);
       setStatus("done");
       setCompsPage(1);
@@ -124,7 +136,7 @@ function FindCompsTab({ tab }) {
     setResult(entry.result);
     setStatus("done");
     setCompsPage(1);
-    upsertCache(entry.address, entry.result);
+    saveToCache(entry.address, entry.result);
   }
 
   const encoded = encodeURIComponent(address.trim());

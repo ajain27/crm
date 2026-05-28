@@ -15,8 +15,8 @@ const INSPECTION_COST = 450;
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
   "monthlyRent",
-  "monthlyInsurance",
-  "monthlyTaxes",
+  "yearlyInsurance",
+  "yearlyTaxes",
   "annualMiscExpense",
 ]);
 
@@ -27,8 +27,8 @@ const initialForm = {
   agentCommission: "",
   titleFees: "",
   monthlyRent: "",
-  monthlyInsurance: "",
-  monthlyTaxes: "",
+  yearlyInsurance: "",
+  yearlyTaxes: "",
   annualMiscExpense: "",
 };
 
@@ -65,8 +65,8 @@ function RentalCashTab() {
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
   const monthlyRent = parseCurrency(form.monthlyRent);
-  const monthlyInsurance = parseCurrency(form.monthlyInsurance);
-  const monthlyTaxes = parseCurrency(form.monthlyTaxes);
+  const monthlyInsurance = parseCurrency(form.yearlyInsurance) / 12;
+  const monthlyTaxes = parseCurrency(form.yearlyTaxes) / 12;
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
@@ -224,18 +224,18 @@ function RentalCashTab() {
           />
         </label>
         <Field
-          label="Monthly Home Insurance"
-          name="monthlyInsurance"
-          value={form.monthlyInsurance}
+          label="Yearly Home Insurance"
+          name="yearlyInsurance"
+          value={form.yearlyInsurance}
           onChange={handleChange}
-          placeholder="e.g. $100"
+          placeholder="e.g. $1,200"
         />
         <Field
-          label="Monthly Property Taxes"
-          name="monthlyTaxes"
-          value={form.monthlyTaxes}
+          label="Yearly Property Taxes"
+          name="yearlyTaxes"
+          value={form.yearlyTaxes}
           onChange={handleChange}
-          placeholder="e.g. $250"
+          placeholder="e.g. $3,000"
         />
         <Field
           label="Annual Miscellaneous Expense"
@@ -318,7 +318,10 @@ function RentalCashTab() {
             </div>
             {summary.monthlyInsurance > 0 && (
               <div>
-                <span>Home Insurance</span>
+                <span>
+                  Home Insurance{" "}
+                  <span className="deal-analyzer-auto-badge">÷ 12</span>
+                </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={summary.monthlyInsurance}
@@ -329,7 +332,10 @@ function RentalCashTab() {
             )}
             {summary.monthlyTaxes > 0 && (
               <div>
-                <span>Property Taxes</span>
+                <span>
+                  Property Taxes{" "}
+                  <span className="deal-analyzer-auto-badge">÷ 12</span>
+                </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
                 </strong>

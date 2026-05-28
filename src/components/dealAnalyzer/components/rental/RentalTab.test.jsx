@@ -33,8 +33,8 @@ function fillCash({
   agentCommission = "3",
   titleFees = "1",
   monthlyRent = "2000",
-  monthlyInsurance = "100",
-  monthlyTaxes = "100",
+  yearlyInsurance = "1200",
+  yearlyTaxes = "1200",
 } = {}) {
   fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
     target: { value: purchasePrice },
@@ -52,14 +52,14 @@ function fillCash({
   fireEvent.change(screen.getByLabelText(/Estimated Monthly Rent/i), {
     target: { value: monthlyRent },
   });
-  if (monthlyInsurance) {
-    fireEvent.change(screen.getByLabelText(/Monthly Home Insurance/i), {
-      target: { value: monthlyInsurance },
+  if (yearlyInsurance) {
+    fireEvent.change(screen.getByLabelText(/Yearly Home Insurance/i), {
+      target: { value: yearlyInsurance },
     });
   }
-  if (monthlyTaxes) {
-    fireEvent.change(screen.getByLabelText(/Monthly Property Taxes/i), {
-      target: { value: monthlyTaxes },
+  if (yearlyTaxes) {
+    fireEvent.change(screen.getByLabelText(/Yearly Property Taxes/i), {
+      target: { value: yearlyTaxes },
     });
   }
 }
@@ -76,8 +76,8 @@ function fillLoan({
   interestRate = "12",
   loanTermYears = "30",
   monthlyRent = "2000",
-  monthlyInsurance = "100",
-  monthlyTaxes = "100",
+  yearlyInsurance = "1200",
+  yearlyTaxes = "1200",
 } = {}) {
   switchToLoan();
   fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -107,14 +107,14 @@ function fillLoan({
   fireEvent.change(screen.getByLabelText(/Estimated Monthly Rent/i), {
     target: { value: monthlyRent },
   });
-  if (monthlyInsurance) {
-    fireEvent.change(screen.getByLabelText(/Monthly Home Insurance/i), {
-      target: { value: monthlyInsurance },
+  if (yearlyInsurance) {
+    fireEvent.change(screen.getByLabelText(/Yearly Home Insurance/i), {
+      target: { value: yearlyInsurance },
     });
   }
-  if (monthlyTaxes) {
-    fireEvent.change(screen.getByLabelText(/Monthly Property Taxes/i), {
-      target: { value: monthlyTaxes },
+  if (yearlyTaxes) {
+    fireEvent.change(screen.getByLabelText(/Yearly Property Taxes/i), {
+      target: { value: yearlyTaxes },
     });
   }
 }
@@ -196,16 +196,16 @@ describe("input formatting", () => {
     expect(input).toHaveValue("$1,800");
   });
 
-  it("formats Monthly Home Insurance as currency while typing", () => {
+  it("formats Yearly Home Insurance as currency while typing", () => {
     render(<RentalTab tab={tab} />);
-    const input = screen.getByLabelText(/Monthly Home Insurance/i);
+    const input = screen.getByLabelText(/Yearly Home Insurance/i);
     fireEvent.change(input, { target: { value: "100" } });
     expect(input).toHaveValue("$100");
   });
 
-  it("formats Monthly Property Taxes as currency while typing", () => {
+  it("formats Yearly Property Taxes as currency while typing", () => {
     render(<RentalTab tab={tab} />);
-    const input = screen.getByLabelText(/Monthly Property Taxes/i);
+    const input = screen.getByLabelText(/Yearly Property Taxes/i);
     fireEvent.change(input, { target: { value: "200" } });
     expect(input).toHaveValue("$200");
   });
@@ -343,7 +343,7 @@ describe("Calculate button", () => {
 
   it("becomes enabled once purchase price and rent filled (cash mode)", () => {
     render(<RentalTab tab={tab} />);
-    fillCash({ agentCommission: "", monthlyInsurance: "", monthlyTaxes: "" });
+    fillCash({ agentCommission: "", yearlyInsurance: "", yearlyTaxes: "" });
     expect(
       screen.getByRole("button", { name: /Calculate/i }),
     ).not.toBeDisabled();
@@ -364,7 +364,7 @@ describe("Calculate button", () => {
 
   it("becomes enabled once all loan-mode required fields filled", () => {
     render(<RentalTab tab={tab} />);
-    fillLoan({ points: "", monthlyInsurance: "", monthlyTaxes: "" });
+    fillLoan({ points: "", yearlyInsurance: "", yearlyTaxes: "" });
     expect(
       screen.getByRole("button", { name: /Calculate/i }),
     ).not.toBeDisabled();
@@ -433,7 +433,7 @@ describe("cash mode summary", () => {
 
   it("shows purchase price in one-time costs in cash mode", () => {
     render(<RentalTab tab={tab} />);
-    fillCash({ agentCommission: "", monthlyInsurance: "", monthlyTaxes: "" });
+    fillCash({ agentCommission: "", yearlyInsurance: "", yearlyTaxes: "" });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getAllByText("Purchase Price").length).toBeGreaterThanOrEqual(
       1,
@@ -450,7 +450,7 @@ describe("cash mode summary", () => {
 
   it("omits insurance and taxes when not provided", () => {
     render(<RentalTab tab={tab} />);
-    fillCash({ monthlyInsurance: "", monthlyTaxes: "" });
+    fillCash({ yearlyInsurance: "", yearlyTaxes: "" });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.queryByText("Home Insurance")).not.toBeInTheDocument();
     expect(screen.queryByText("Property Taxes")).not.toBeInTheDocument();

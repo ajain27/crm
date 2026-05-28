@@ -485,8 +485,8 @@ describe("localStorage cache", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("caps cache at 10 entries, dropping the oldest", async () => {
-    const existing = Array.from({ length: 10 }, (_, i) => ({
+  it("caps cache at 100 entries, dropping the oldest", async () => {
+    const existing = Array.from({ length: 100 }, (_, i) => ({
       address: `${i} Old St`,
       result: { price: 100000 + i * 1000 },
       searchedAt: new Date().toISOString(),
@@ -505,9 +505,9 @@ describe("localStorage cache", () => {
     );
 
     const stored = JSON.parse(localStorage.getItem(CACHE_KEY));
-    expect(stored).toHaveLength(10);
+    expect(stored).toHaveLength(100);
     expect(stored[0].address).toBe(MOCK_ADDRESS);
-    expect(stored.find((e) => e.address === "9 Old St")).toBeUndefined();
+    expect(stored.find((e) => e.address === "99 Old St")).toBeUndefined();
   });
 
   it("bumps an existing cache entry to the top when searched again", async () => {
