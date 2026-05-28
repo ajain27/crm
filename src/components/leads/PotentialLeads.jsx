@@ -92,6 +92,7 @@ export default function PotentialLeads({
   const [formError, setFormError] = useState("");
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState("");
+  const [filterState, setFilterState] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [detailLead, setDetailLead] = useState(null);
 
@@ -205,6 +206,8 @@ export default function PotentialLeads({
         if (!matches) return false;
       }
       if (filterSource && l.source !== filterSource) return false;
+      if (filterState && parseAddress(l.address).state !== filterState)
+        return false;
       return true;
     })
     .sort((a, b) => {
@@ -220,8 +223,11 @@ export default function PotentialLeads({
     safePage * ITEMS_PER_PAGE,
   );
 
-  const activeFilters = search || filterSource;
+  const activeFilters = search || filterSource || filterState;
   const usedSources = [...new Set(leads.map((l) => l.source).filter(Boolean))];
+  const usedStates = [
+    ...new Set(leads.map((l) => parseAddress(l.address).state).filter(Boolean)),
+  ].sort();
 
   return (
     <>
@@ -473,12 +479,28 @@ export default function PotentialLeads({
                 </option>
               ))}
             </select>
+            <select
+              value={filterState}
+              onChange={(e) => {
+                setFilterState(e.target.value);
+                resetPage();
+              }}
+              className="leads-filter-select"
+            >
+              <option value="">All states</option>
+              {usedStates.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
             {activeFilters && (
               <button
                 className="leads-clear-filters"
                 onClick={() => {
                   setSearch("");
                   setFilterSource("");
+                  setFilterState("");
                   resetPage();
                 }}
               >
