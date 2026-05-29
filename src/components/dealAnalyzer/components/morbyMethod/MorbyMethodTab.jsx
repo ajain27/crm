@@ -403,7 +403,7 @@ function MorbyMethodTab({ tab }) {
             placeholder="e.g. $1,000"
           />
           <Field
-            label="Legal Fees"
+            label="Doc Fees"
             name="legalFees"
             value={form.legalFees}
             onChange={handleChange}
@@ -770,7 +770,7 @@ function MorbyMethodTab({ tab }) {
               )}
               {summary.legalFees > 0 && (
                 <div>
-                  <span>Legal Fees</span>
+                  <span>Doc Fees</span>
                   <strong className="deal-analyzer-return-negative">
                     <AnimatedAmount value={summary.legalFees} format={fmt} />
                   </strong>

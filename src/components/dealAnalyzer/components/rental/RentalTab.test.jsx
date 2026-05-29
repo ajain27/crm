@@ -13,20 +13,20 @@ const tab = {
 // Purchase = $200,000 | Agent Commission = 3% = $6,000
 // Closing Costs = 2% = $4,000 | Title Fees = 1% = $2,000 | Inspection = $450
 // Rent = $2,000 | Prop Mgmt = 10% = $200
-// Insurance = $100 | Taxes = $100
+// Yearly Insurance = $1,200 | Yearly Taxes = $1,200 (added to closing, not monthly)
 // First Month Prop Mgmt = 50% = $1,000 | Adjustment = $800
-// Monthly CF = $2,000 − $200 − $100 − $100 = $1,600
-// Annual CF  = ($1,600 × 12) − $800 = $18,400
-// Total Funds Needed = $200,000 + $4,000 + $2,000 + $6,000 + $450 = $212,450
-// Cash-on-Cash = $18,400 / $212,450 × 100 ≈ 8.7%
-// Cap Rate = ($1,600 × 12 / $200,000) × 100 = 9.6%
+// Monthly CF = $2,000 − $200 = $1,800
+// Annual CF  = ($1,800 × 12) − $800 = $20,800
+// Total Funds Needed = $200,000 + $4,000 + $2,000 + $1,200 + $1,200 + $6,000 + $450 = $214,850
+// Cap Rate = ($1,800 × 12 / $200,000) × 100 = 10.8%
 
 // ─── Loan (DSCR) mode scenario ─────────────────────────────────────────────────
 // Purchase = $200,000 | Down = 20% = $40,000 | Loan = 80% = $160,000
 // Points = 2% → $3,200 | Rate = 12%/yr | Term = 30 yr → PMT amortized
 // Upfront Loan = $40,000 (down) + $3,200 (points) = $43,200
 // Agent Commission = 3% = $6,000 | Closing = $4,000 | Title = $2,000 | Inspection = $450
-// Total Cash Needed = $43,200 + $4,000 + $2,000 + $6,000 + $450 = $55,650
+// Yearly Insurance = $1,200 | Yearly Taxes = $1,200 (added to closing, not monthly)
+// Total Cash Needed = $43,200 + $4,000 + $2,000 + $1,200 + $1,200 + $6,000 + $450 = $58,050
 
 function fillCash({
   purchasePrice = "200000",
@@ -387,27 +387,27 @@ describe("cash mode summary", () => {
 
   it("calculates monthly cash flow (no mortgage in cash mode)", () => {
     render(<RentalTab tab={tab} />);
-    // Rent=$2,000 − PropMgmt=$200 − Insurance=$100 − Taxes=$100 = $1,600
+    // Rent=$2,000 − PropMgmt=$200 = $1,800 (insurance/taxes moved to closing)
     fillCash();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getAllByText("$1,600.00").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("$1,800.00").length).toBeGreaterThanOrEqual(1);
   });
 
   it("calculates annual cash flow in cash mode", () => {
     render(<RentalTab tab={tab} />);
-    // ($1,600 × 12) − $800 adjustment = $18,400
+    // ($1,800 × 12) − $800 adjustment = $20,800
     fillCash();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("$18,400.00")).toBeInTheDocument();
+    expect(screen.getByText("$20,800.00")).toBeInTheDocument();
   });
 
   it("shows Total Funds Needed including full purchase price in cash mode", () => {
     render(<RentalTab tab={tab} />);
-    // $200,000 + $4,000 (closing) + $2,000 (title) + $6,000 (commission) + $450 (inspection) = $212,450
+    // $200,000 + $4,000 + $2,000 + $1,200 (ins) + $1,200 (tax) + $6,000 + $450 = $214,850
     fillCash();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("Total Funds Needed")).toBeInTheDocument();
-    expect(screen.getByText("$212,450.00")).toBeInTheDocument();
+    expect(screen.getByText("$214,850.00")).toBeInTheDocument();
   });
 
   it("does not show DSCR in cash mode", () => {
@@ -419,10 +419,10 @@ describe("cash mode summary", () => {
 
   it("calculates cap rate in cash mode", () => {
     render(<RentalTab tab={tab} />);
-    // NOI = $1,600/mo | ($1,600 × 12 / $200,000) × 100 = 9.6%
+    // NOI = $1,800/mo | ($1,800 × 12 / $200,000) × 100 = 10.8%
     fillCash();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("9.6%")).toBeInTheDocument();
+    expect(screen.getByText("10.8%")).toBeInTheDocument();
   });
 
   it("shows closing cost and inspection in one-time costs", () => {
@@ -445,6 +445,10 @@ describe("cash mode summary", () => {
   it("shows negative cash flow when expenses exceed rent", () => {
     render(<RentalTab tab={tab} />);
     fillCash({ monthlyRent: "100" });
+    // Add a large annual misc expense ($24,000/yr = $2,000/mo) to push cash flow negative
+    fireEvent.change(screen.getByLabelText(/Annual Miscellaneous Expense/i), {
+      target: { value: "24000" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     const verdictEl = document.querySelector(".deal-analyzer-verdict-negative");
     expect(verdictEl).toBeTruthy();
@@ -495,10 +499,10 @@ describe("loan mode summary", () => {
 
   it("includes down payment, upfront costs, closing, title, commission and inspection in total", () => {
     render(<RentalTab tab={tab} />);
-    // Down $40k + Points $3.2k + Closing $4k + Title $2k + Commission $6k + Inspection $450 = $55,650
+    // Down $40k + Points $3.2k + Closing $4k + Title $2k + Ins $1.2k + Tax $1.2k + Commission $6k + Inspection $450 = $58,050
     fillLoan();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("$55,650.00")).toBeInTheDocument();
+    expect(screen.getByText("$58,050.00")).toBeInTheDocument();
   });
 
   it("shows DSCR in loan mode", () => {
@@ -524,10 +528,10 @@ describe("loan mode summary", () => {
 
   it("calculates cap rate the same as cash mode", () => {
     render(<RentalTab tab={tab} />);
-    // NOI = $1,600; ($1,600 × 12 / $200,000) × 100 = 9.6%
+    // NOI = $1,800; ($1,800 × 12 / $200,000) × 100 = 10.8%
     fillLoan();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("9.6%")).toBeInTheDocument();
+    expect(screen.getByText("10.8%")).toBeInTheDocument();
   });
 
   it("clears summary when switching finance type", () => {

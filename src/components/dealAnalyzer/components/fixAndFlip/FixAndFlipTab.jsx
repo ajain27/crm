@@ -364,7 +364,7 @@ function FixAndFlipTab({ tab }) {
             placeholder="e.g. $1,500"
           />
           <Field
-            label="Legal Fees"
+            label="Doc Fees"
             name="legalFees"
             value={form.legalFees}
             onChange={handleChange}
@@ -490,7 +490,7 @@ function FixAndFlipTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>Legal Fees</span>
+                <span>Doc Fees</span>
                 <strong>
                   <AnimatedAmount value={summary.legalFees} format={fmt} />
                 </strong>

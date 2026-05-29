@@ -128,7 +128,7 @@ describe("input formatting", () => {
     fireEvent.change(origination, { target: { value: "1500" } });
     expect(origination).toHaveValue("$1,500");
 
-    const legal = screen.getByLabelText(/Legal Fees/i);
+    const legal = screen.getByLabelText(/Doc Fees/i);
     fireEvent.change(legal, { target: { value: "1000" } });
     expect(legal).toHaveValue("$1,000");
 
@@ -248,7 +248,7 @@ describe("live readonly fields", () => {
     fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
       target: { value: "1500" },
     });
-    fireEvent.change(screen.getByLabelText(/Legal Fees/i), {
+    fireEvent.change(screen.getByLabelText(/Doc Fees/i), {
       target: { value: "1000" },
     });
     fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), {
@@ -374,7 +374,7 @@ describe("summary calculations", () => {
     fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
       target: { value: "1500" },
     });
-    fireEvent.change(screen.getByLabelText(/Legal Fees/i), {
+    fireEvent.change(screen.getByLabelText(/Doc Fees/i), {
       target: { value: "1000" },
     });
     fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), {
@@ -415,7 +415,7 @@ describe("summary calculations", () => {
     fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
       target: { value: "1500" },
     });
-    fireEvent.change(screen.getByLabelText(/Legal Fees/i), {
+    fireEvent.change(screen.getByLabelText(/Doc Fees/i), {
       target: { value: "1000" },
     });
     fireEvent.change(screen.getByLabelText(/Appraisal Fees/i), {

@@ -65,8 +65,8 @@ function RentalCashTab() {
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
   const monthlyRent = parseCurrency(form.monthlyRent);
-  const monthlyInsurance = parseCurrency(form.yearlyInsurance) / 12;
-  const monthlyTaxes = parseCurrency(form.yearlyTaxes) / 12;
+  const yearlyInsurance = parseCurrency(form.yearlyInsurance);
+  const yearlyTaxes = parseCurrency(form.yearlyTaxes);
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
@@ -76,20 +76,16 @@ function RentalCashTab() {
     firstMonthPropMgmtFee - propMgmtFee,
   );
 
-  const noi =
-    monthlyRent -
-    propMgmtFee -
-    monthlyInsurance -
-    monthlyTaxes -
-    monthlyMiscExpense;
-  const totalMonthlyExpenses =
-    propMgmtFee + monthlyInsurance + monthlyTaxes + monthlyMiscExpense;
+  const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
+  const totalMonthlyExpenses = propMgmtFee + monthlyMiscExpense;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
   const totalFundsNeeded =
     purchasePrice +
     closingCosts +
     titleFees +
+    yearlyInsurance +
+    yearlyTaxes +
     agentCommissionAmt +
     INSPECTION_COST;
   const cashOnCash =
@@ -111,8 +107,8 @@ function RentalCashTab() {
       propMgmtFee,
       firstMonthPropMgmtFee,
       firstMonthMgmtAdjustment,
-      monthlyInsurance,
-      monthlyTaxes,
+      yearlyInsurance,
+      yearlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
       noi,
@@ -316,31 +312,6 @@ function RentalCashTab() {
                 <AnimatedAmount value={summary.propMgmtFee} format={fmt} />
               </strong>
             </div>
-            {summary.monthlyInsurance > 0 && (
-              <div>
-                <span>
-                  Home Insurance{" "}
-                  <span className="deal-analyzer-auto-badge">÷ 12</span>
-                </span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.monthlyInsurance}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.monthlyTaxes > 0 && (
-              <div>
-                <span>
-                  Property Taxes{" "}
-                  <span className="deal-analyzer-auto-badge">÷ 12</span>
-                </span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
-                </strong>
-              </div>
-            )}
             {summary.monthlyMiscExpense > 0 && (
               <div>
                 <span>
@@ -412,6 +383,25 @@ function RentalCashTab() {
                 />
               </strong>
             </div>
+            {summary.yearlyInsurance > 0 && (
+              <div>
+                <span>Yearly Home Insurance</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.yearlyInsurance}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
+            {summary.yearlyTaxes > 0 && (
+              <div>
+                <span>Yearly Property Taxes</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.yearlyTaxes} format={fmt} />
+                </strong>
+              </div>
+            )}
             <div>
               <span>Inspection Cost</span>
               <strong className="deal-analyzer-return-negative">
@@ -486,17 +476,9 @@ function RentalCashTab() {
             style={{ marginTop: "1rem" }}
           >
             Monthly Cash Flow = Rent − Prop. Mgmt
-            {summary.monthlyInsurance > 0 ? " − Insurance" : ""}
-            {summary.monthlyTaxes > 0 ? " − Taxes" : ""}
             {summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
             <span>
               {fmt(summary.monthlyRent)} − {fmt(summary.propMgmtFee)}
-              {summary.monthlyInsurance > 0
-                ? ` − ${fmt(summary.monthlyInsurance)}`
-                : ""}
-              {summary.monthlyTaxes > 0
-                ? ` − ${fmt(summary.monthlyTaxes)}`
-                : ""}
               {summary.monthlyMiscExpense > 0
                 ? ` − ${fmt(summary.monthlyMiscExpense)}`
                 : ""}{" "}
