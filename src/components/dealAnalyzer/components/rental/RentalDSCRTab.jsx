@@ -121,8 +121,9 @@ function RentalDSCRTab() {
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
   const pointsCost = effectiveLoanAmount * (pointsPct / 100);
-  const miscFees = originationFees + legalFees + appraisalFees;
-  const upfrontLoanCosts = pointsCost + miscFees;
+  const lenderCosts =
+    originationFees + legalFees + appraisalFees + underwritingFees;
+  const upfrontLoanCosts = pointsCost + lenderCosts;
   const loanOutOfPocket = effectiveDownPayment + upfrontLoanCosts;
   const loanMortgage = calcPMT(
     interestRatePct,
@@ -148,7 +149,6 @@ function RentalDSCRTab() {
     loanOutOfPocket +
     closingCosts +
     titleFees +
-    underwritingFees +
     agentCommissionAmt +
     INSPECTION_COST;
   const cashOnCash =
@@ -190,7 +190,7 @@ function RentalDSCRTab() {
       interestRatePct,
       loanTermYears,
       loanMortgage,
-      miscFees,
+      lenderCosts,
       originationFees,
       legalFees,
       appraisalFees,
@@ -361,10 +361,10 @@ function RentalDSCRTab() {
           onChange={handleChange}
           placeholder="e.g. $500"
         />
-        {miscFees > 0 && (
+        {lenderCosts > 0 && (
           <label className="field deal-analyzer-output">
-            <span>Total Misc Fees</span>
-            <input value={fmt(miscFees)} readOnly tabIndex={-1} />
+            <span>Total Lender Cost</span>
+            <input value={fmt(lenderCosts)} readOnly tabIndex={-1} />
           </label>
         )}
         <label className="field deal-analyzer-output">
