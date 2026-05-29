@@ -305,7 +305,9 @@ describe("live readonly fields", () => {
       target: { value: "200000" },
     });
     // 20% of $200,000 = $40,000
-    expect(screen.getByLabelText(/Down Payment/i)).toHaveValue("$40,000.00");
+    expect(screen.getByLabelText(/Down Payment.*20%/i)).toHaveValue(
+      "$40,000.00",
+    );
   });
 
   it("calculates Monthly Mortgage (PMT) in loan mode", () => {

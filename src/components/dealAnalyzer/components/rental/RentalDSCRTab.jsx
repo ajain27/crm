@@ -24,6 +24,7 @@ function calcPMT(annualRatePct, termYears, principal) {
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "extraDownPayment",
   "underwritingFees",
   "monthlyRent",
   "yearlyInsurance",
@@ -49,6 +50,7 @@ const initialForm = {
   points: "",
   interestRate: "",
   loanTermYears: "",
+  extraDownPayment: "",
   originationFees: "",
   legalFees: "",
   appraisalFees: "",
@@ -109,17 +111,24 @@ function RentalDSCRTab() {
 
   const lenderFunds = purchasePrice * LENDER_LTC;
   const downPayment = purchasePrice * (1 - LENDER_LTC);
+  const extraDownPaymentAmt = parseCurrency(form.extraDownPayment);
+  const effectiveLoanAmount = Math.max(0, lenderFunds - extraDownPaymentAmt);
+  const effectiveDownPayment = downPayment + extraDownPaymentAmt;
   const pointsPct = parsePercent(form.points);
   const interestRatePct = parsePercent(form.interestRate);
   const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
   const originationFees = parseCurrency(form.originationFees);
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
-  const pointsCost = lenderFunds * (pointsPct / 100);
+  const pointsCost = effectiveLoanAmount * (pointsPct / 100);
   const miscFees = originationFees + legalFees + appraisalFees;
   const upfrontLoanCosts = pointsCost + miscFees;
-  const loanOutOfPocket = downPayment + upfrontLoanCosts;
-  const loanMortgage = calcPMT(interestRatePct, loanTermYears, lenderFunds);
+  const loanOutOfPocket = effectiveDownPayment + upfrontLoanCosts;
+  const loanMortgage = calcPMT(
+    interestRatePct,
+    loanTermYears,
+    effectiveLoanAmount,
+  );
 
   const noi =
     monthlyRent -
@@ -173,6 +182,9 @@ function RentalDSCRTab() {
       monthlyMiscExpense,
       lenderFunds,
       downPayment,
+      extraDownPaymentAmt,
+      effectiveLoanAmount,
+      effectiveDownPayment,
       pointsPct,
       pointsCost,
       interestRatePct,
@@ -280,6 +292,22 @@ function RentalDSCRTab() {
             tabIndex={-1}
           />
         </label>
+        <Field
+          label="Extra Down Payment"
+          name="extraDownPayment"
+          value={form.extraDownPayment}
+          onChange={handleChange}
+          placeholder="e.g. $10,000"
+        />
+        {extraDownPaymentAmt > 0 && (
+          <label className="field deal-analyzer-output">
+            <span>
+              Effective Loan Amount{" "}
+              <span className="deal-analyzer-auto-badge">auto</span>
+            </span>
+            <input value={fmt(effectiveLoanAmount)} readOnly tabIndex={-1} />
+          </label>
+        )}
         <Field
           label="Points (%)"
           name="points"
@@ -469,7 +497,11 @@ function RentalDSCRTab() {
               <div>
                 <span>
                   Monthly Mortgage (DSCR {summary.interestRatePct}%,{" "}
-                  {summary.loanTermYears} yr)
+                  {summary.loanTermYears} yr
+                  {summary.extraDownPaymentAmt > 0
+                    ? `, ${fmt(summary.effectiveLoanAmount)} loan`
+                    : ""}
+                  )
                 </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.loanMortgage} format={fmt} />
@@ -537,11 +569,32 @@ function RentalDSCRTab() {
               Total Cash Needed to Buy
             </div>
             <div>
-              <span>Down Payment ({DOWN_PCT}% of purchase)</span>
+              <span>
+                Down Payment ({DOWN_PCT}% of purchase)
+                {summary.extraDownPaymentAmt > 0 && (
+                  <span
+                    className="deal-analyzer-auto-badge"
+                    style={{ marginLeft: "0.35rem" }}
+                  >
+                    base
+                  </span>
+                )}
+              </span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.downPayment} format={fmt} />
               </strong>
             </div>
+            {summary.extraDownPaymentAmt > 0 && (
+              <div>
+                <span>Extra Down Payment</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.extraDownPaymentAmt}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
             {summary.pointsCost > 0 && (
               <div>
                 <span>Points ({summary.pointsPct}%)</span>
