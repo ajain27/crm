@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { ExternalLink, Search, MapPin, Clock } from "lucide-react";
+import { ExternalLink, Search, MapPin, Trash2 } from "lucide-react";
 import Pagination from "../../../pagination/Pagination";
 
 const CACHE_KEY = "findComps_cache";
 const MAX_CACHE = 100;
 const COMPS_PER_PAGE = 5;
-const RECENT_PER_PAGE = 5;
+const MAX_SUGGESTIONS = 8;
 
 function loadCache() {
   try {
@@ -15,13 +15,10 @@ function loadCache() {
   }
 }
 
-// Always reads from localStorage so it's never stale across remounts.
 function readCache() {
   return loadCache();
 }
 
-// Writes the new entry to localStorage immediately (sync), then returns the
-// updated list so callers can also update React state.
 function writeCache(searchAddress, data) {
   const prev = loadCache();
   const filtered = prev.filter(
@@ -39,6 +36,15 @@ function writeCache(searchAddress, data) {
     localStorage.setItem(CACHE_KEY, JSON.stringify(next));
   } catch {}
   return next;
+}
+
+function deleteFromCache(searchAddress) {
+  const next = loadCache().filter(
+    (e) => e.address.toLowerCase() !== searchAddress.toLowerCase(),
+  );
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+  } catch {}
 }
 
 const fmt = (n) => (n != null ? `$${Math.round(n).toLocaleString()}` : "—");
@@ -66,34 +72,75 @@ function FindCompsTab({ tab }) {
   const [status, setStatus] = useState("idle");
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [cache, setCache] = useState(readCache);
-  const [recentQuery, setRecentQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
   const [compsPage, setCompsPage] = useState(1);
-  const [recentPage, setRecentPage] = useState(1);
 
-  // Writes synchronously to localStorage first, then syncs React state.
-  // This ensures the entry survives even if the component unmounts before
-  // React can commit the state update (e.g. user navigates mid-fetch).
   function saveToCache(searchAddress, data) {
-    const next = writeCache(searchAddress, data);
-    setCache(next);
+    writeCache(searchAddress, data);
+  }
+
+  function handleDeleteSuggestion(e, entryAddress) {
+    e.preventDefault();
+    e.stopPropagation();
+    deleteFromCache(entryAddress);
+    setSuggestions((prev) => prev.filter((s) => s.address !== entryAddress));
+    if (
+      status === "done" &&
+      address.toLowerCase() === entryAddress.toLowerCase()
+    ) {
+      setResult(null);
+      setStatus("idle");
+    }
+  }
+
+  function handleAddressChange(e) {
+    const value = e.target.value;
+    setAddress(value);
+
+    // Clear any displayed result when the user edits the address
+    if (status === "done" || status === "error") {
+      setResult(null);
+      setStatus("idle");
+      setErrorMsg("");
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setSuggestions([]);
+      return;
+    }
+
+    const q = trimmed.toLowerCase();
+    const matches = readCache()
+      .filter((entry) => entry.address.toLowerCase().includes(q))
+      .slice(0, MAX_SUGGESTIONS);
+    setSuggestions(matches);
+  }
+
+  function handleSelectSuggestion(entry) {
+    setAddress(entry.address);
+    setSuggestions([]);
+    saveToCache(entry.address, entry.result);
+    setResult(entry.result);
+    setStatus("done");
+    setCompsPage(1);
   }
 
   async function handleFindComps() {
-    if (!address.trim()) return;
-
     const trimmed = address.trim();
+    if (!trimmed) return;
 
-    // Always read from localStorage directly — never from React state, which
-    // may be stale after a remount or mid-flight navigation.
-    const liveCache = readCache();
-    const cached = liveCache.find(
-      (e) => e.address.toLowerCase() === trimmed.toLowerCase(),
+    setSuggestions([]);
+
+    // Check cache for exact match before hitting the API
+    const cached = readCache().find(
+      (entry) => entry.address.toLowerCase() === trimmed.toLowerCase(),
     );
     if (cached) {
-      saveToCache(cached.address, cached.result); // bump to top in localStorage + state
+      saveToCache(cached.address, cached.result);
       setResult(cached.result);
       setStatus("done");
+      setCompsPage(1);
       return;
     }
 
@@ -129,31 +176,12 @@ function FindCompsTab({ tab }) {
     setAddress("");
     setErrorMsg("");
     setCompsPage(1);
-  }
-
-  function handleLoadRecent(entry) {
-    setAddress(entry.address);
-    setResult(entry.result);
-    setStatus("done");
-    setCompsPage(1);
-    saveToCache(entry.address, entry.result);
+    setSuggestions([]);
   }
 
   const encoded = encodeURIComponent(address.trim());
   const compLinks = getCompLinks(encoded);
   const sp = result?.subjectProperty;
-
-  const filteredCache = recentQuery.trim()
-    ? cache.filter((e) =>
-        e.address.toLowerCase().includes(recentQuery.trim().toLowerCase()),
-      )
-    : cache;
-
-  const recentTotalPages = Math.ceil(filteredCache.length / RECENT_PER_PAGE);
-  const pagedRecent = filteredCache.slice(
-    (recentPage - 1) * RECENT_PER_PAGE,
-    recentPage * RECENT_PER_PAGE,
-  );
 
   const comparables = result?.comparables ?? [];
   const compsTotalPages = Math.ceil(comparables.length / COMPS_PER_PAGE);
@@ -208,84 +236,68 @@ function FindCompsTab({ tab }) {
                   type="text"
                   style={{ paddingLeft: "2.25rem" }}
                   value={address}
-                  onChange={(e) => {
-                    setAddress(e.target.value);
-                    if (status === "done" || status === "error")
-                      setStatus("idle");
+                  onChange={handleAddressChange}
+                  onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setSuggestions([]);
+                    if (e.key === "Enter" && status !== "done")
+                      handleFindComps();
                   }}
-                  onKeyDown={(e) => e.key === "Enter" && handleFindComps()}
                   placeholder="e.g. 5500 Grand Lake Dr, San Antonio, TX 78244"
                   disabled={status === "loading"}
                 />
               </div>
-            </div>
-            <button
-              className="primary-btn find-comps-btn"
-              type="button"
-              onClick={handleFindComps}
-              disabled={!address.trim() || status === "loading"}
-            >
-              <Search size={16} />
-              {status === "loading" ? "Searching…" : "Find Comps"}
-            </button>
-          </div>
 
-          {status === "idle" && cache.length > 0 && !address.trim() && (
-            <div className="find-comps-recent">
-              <div className="find-comps-recent-header">
-                <span className="find-comps-recent-label">
-                  <Clock size={12} />
-                  Recent searches
-                </span>
-                <div className="find-comps-recent-search">
-                  <Search size={13} className="find-comps-recent-search-icon" />
-                  <input
-                    type="text"
-                    placeholder="Filter by address…"
-                    value={recentQuery}
-                    onChange={(e) => setRecentQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-              {filteredCache.length > 0 ? (
-                <>
-                  <ul className="find-comps-recent-list">
-                    {pagedRecent.map((entry) => (
-                      <li key={entry.address}>
-                        <button
-                          className="find-comps-recent-item"
-                          onClick={() => handleLoadRecent(entry)}
-                        >
-                          <span className="find-comps-recent-address">
-                            {entry.address}
-                          </span>
+              {suggestions.length > 0 && (
+                <ul className="find-comps-suggestions-list">
+                  {suggestions.map((entry) => (
+                    <li key={entry.address}>
+                      <button
+                        className="find-comps-recent-item"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectSuggestion(entry);
+                        }}
+                      >
+                        <span className="find-comps-recent-address">
+                          {entry.address}
+                        </span>
+                        <span className="find-comps-suggestion-meta">
                           {entry.result?.price != null && (
                             <span className="find-comps-recent-arv">
                               {fmt(entry.result.price)}
                             </span>
                           )}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  <Pagination
-                    currentPage={recentPage}
-                    totalPages={recentTotalPages}
-                    setCurrentPage={setRecentPage}
-                  >
-                    <span className="table-footer-count">
-                      {filteredCache.length} recent search
-                      {filteredCache.length !== 1 ? "es" : ""}
-                    </span>
-                  </Pagination>
-                </>
-              ) : (
-                <p className="find-comps-recent-empty">
-                  No recent searches match &ldquo;{recentQuery}&rdquo;
-                </p>
+                          <span
+                            className="find-comps-suggestion-delete"
+                            role="button"
+                            aria-label={`Delete ${entry.address}`}
+                            onMouseDown={(e) =>
+                              handleDeleteSuggestion(e, entry.address)
+                            }
+                          >
+                            <Trash2 size={13} />
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-          )}
+
+            <button
+              className="primary-btn find-comps-btn"
+              type="button"
+              onClick={handleFindComps}
+              disabled={
+                !address.trim() || status === "loading" || status === "done"
+              }
+            >
+              <Search size={16} />
+              {status === "loading" ? "Searching…" : "Find Comps"}
+            </button>
+          </div>
         </div>
 
         {status === "loading" && (

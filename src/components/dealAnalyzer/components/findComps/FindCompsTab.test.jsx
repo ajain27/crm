@@ -539,46 +539,10 @@ describe("localStorage cache", () => {
   });
 });
 
-// ─── Recent searches list ──────────────────────────────────────────────────────
+// ─── Auto-search from cache on typing ─────────────────────────────────────────
 
-describe("recent searches list", () => {
-  it("shows recent searches when cache is populated and input is empty", () => {
-    setCache([
-      {
-        address: MOCK_ADDRESS,
-        result: { price: 250000 },
-        searchedAt: new Date().toISOString(),
-      },
-    ]);
-    render(<FindCompsTab tab={tab} />);
-    expect(screen.getByText("Recent searches")).toBeInTheDocument();
-    expect(screen.getByText(MOCK_ADDRESS)).toBeInTheDocument();
-    expect(screen.getByText("$250,000")).toBeInTheDocument();
-  });
-
-  it("does not show recent searches when cache is empty", () => {
-    render(<FindCompsTab tab={tab} />);
-    expect(screen.queryByText("Recent searches")).not.toBeInTheDocument();
-  });
-
-  it("hides recent searches once the user starts typing", () => {
-    setCache([
-      {
-        address: MOCK_ADDRESS,
-        result: { price: 250000 },
-        searchedAt: new Date().toISOString(),
-      },
-    ]);
-    render(<FindCompsTab tab={tab} />);
-    expect(screen.getByText("Recent searches")).toBeInTheDocument();
-
-    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
-      target: { value: "a" },
-    });
-    expect(screen.queryByText("Recent searches")).not.toBeInTheDocument();
-  });
-
-  it("clicking a recent entry loads its result without an API call", async () => {
+describe("auto-search from cache on typing", () => {
+  it("shows suggestions from cache as user types a partial address", () => {
     setCache([
       {
         address: MOCK_ADDRESS,
@@ -587,37 +551,88 @@ describe("recent searches list", () => {
       },
     ]);
     render(<FindCompsTab tab={tab} />);
-    fireEvent.click(screen.getByText(MOCK_ADDRESS));
+    // Type only the first word of the address
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS.split(" ")[0] },
+    });
+
+    expect(screen.getByText(MOCK_ADDRESS)).toBeInTheDocument();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("selecting a suggestion loads cached result without an API call", async () => {
+    setCache([
+      {
+        address: MOCK_ADDRESS,
+        result: mockResult,
+        searchedAt: new Date().toISOString(),
+      },
+    ]);
+    render(<FindCompsTab tab={tab} />);
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS.split(" ")[0] },
+    });
+
+    fireEvent.mouseDown(screen.getByText(MOCK_ADDRESS));
 
     await waitFor(() =>
       expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
     );
-    expect(screen.getByText("$250,000")).toBeInTheDocument();
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("paginates recent entries showing 5 per page", () => {
-    const entries = Array.from({ length: 10 }, (_, i) => ({
-      address: `${i + 1} Recent St`,
-      result: { price: 200000 + i * 1000 },
-      searchedAt: new Date().toISOString(),
-    }));
-    setCache(entries);
+  it("disables Find Comps button after a suggestion is selected", async () => {
+    setCache([
+      {
+        address: MOCK_ADDRESS,
+        result: mockResult,
+        searchedAt: new Date().toISOString(),
+      },
+    ]);
     render(<FindCompsTab tab={tab} />);
-    // First 5 visible on page 1
-    entries.slice(0, 5).forEach((e) => {
-      expect(screen.getByText(e.address)).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS.split(" ")[0] },
     });
-    // Entries 6-10 not yet visible
-    entries.slice(5).forEach((e) => {
-      expect(screen.queryByText(e.address)).not.toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByText(MOCK_ADDRESS));
+
+    await waitFor(() =>
+      expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: /Find Comps/i })).toBeDisabled();
+  });
+
+  it("enables Find Comps button when address is not in cache", () => {
+    render(<FindCompsTab tab={tab} />);
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: "999 Unknown St, Nowhere, TX 00000" },
     });
-    // Pagination controls present
-    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
-    // Navigate to page 2
-    fireEvent.click(screen.getByRole("button", { name: /Next/i }));
-    entries.slice(5).forEach((e) => {
-      expect(screen.getByText(e.address)).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /Find Comps/i }),
+    ).not.toBeDisabled();
+  });
+
+  it("clears results when address is cleared", async () => {
+    setCache([
+      {
+        address: MOCK_ADDRESS,
+        result: mockResult,
+        searchedAt: new Date().toISOString(),
+      },
+    ]);
+    render(<FindCompsTab tab={tab} />);
+    // Select via suggestion
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS.split(" ")[0] },
     });
+    fireEvent.mouseDown(screen.getByText(MOCK_ADDRESS));
+    await waitFor(() =>
+      expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: "" },
+    });
+    expect(screen.queryByText("Estimated ARV")).not.toBeInTheDocument();
   });
 });

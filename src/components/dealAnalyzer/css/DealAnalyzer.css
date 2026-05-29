@@ -453,6 +453,44 @@
     @apply inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap px-5;
   }
 
+  /* Suggestions dropdown */
+  .find-comps-suggestion-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .find-comps-suggestion-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+    border-radius: 0.35rem;
+    color: var(--muted);
+    transition:
+      color 0.15s,
+      background 0.15s;
+  }
+
+  .find-comps-suggestion-delete:hover {
+    color: #dc2626;
+    background: color-mix(in srgb, #dc2626 12%, transparent);
+  }
+
+  .find-comps-suggestions-list {
+    @apply mt-1.5 flex flex-col gap-0.5;
+    border: 1px solid var(--input-border);
+    border-radius: 0.6rem;
+    list-style: none;
+    margin-top: 0.375rem;
+    overflow: hidden;
+    padding: 0.25rem;
+    background: var(--panel);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+
   /* Recent searches */
   .find-comps-recent {
     @apply mt-4;
