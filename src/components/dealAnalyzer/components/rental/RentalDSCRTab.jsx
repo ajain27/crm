@@ -6,6 +6,10 @@ import {
   fmt,
   fmtCurrencyInput,
 } from "../../../../utils/utils";
+import AdditionalLenders, {
+  calcLenderMonthlyPayment,
+  calcLenderTotal,
+} from "../additionalLenders/AdditionalLenders";
 
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
@@ -63,6 +67,7 @@ const initialForm = {
 function RentalDSCRTab() {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
+  const [lenders, setLenders] = useState([]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -131,11 +136,13 @@ function RentalDSCRTab() {
     effectiveLoanAmount,
   );
 
+  const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
   const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
-  const totalMonthlyExpenses = loanMortgage + propMgmtFee + monthlyMiscExpense;
+  const totalMonthlyExpenses =
+    loanMortgage + lenderMonthlyPayment + propMgmtFee + monthlyMiscExpense;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
-  const totalFundsNeeded =
+  const grossCashNeeded =
     loanOutOfPocket +
     closingCosts +
     titleFees +
@@ -143,10 +150,13 @@ function RentalDSCRTab() {
     yearlyTaxes +
     agentCommissionAmt +
     INSPECTION_COST;
+  const lenderTotal = calcLenderTotal(lenders);
+  const totalFundsNeeded = Math.max(0, grossCashNeeded - lenderTotal);
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
-  const dscr = loanMortgage > 0 ? noi / loanMortgage : 0;
+  const totalDebtService = loanMortgage + lenderMonthlyPayment;
+  const dscr = totalDebtService > 0 ? noi / totalDebtService : 0;
 
   const isFormComplete =
     form.purchasePrice?.trim() &&
@@ -182,6 +192,10 @@ function RentalDSCRTab() {
       interestRatePct,
       loanTermYears,
       loanMortgage,
+      lenders,
+      lenderMonthlyPayment,
+      lenderTotal,
+      grossCashNeeded,
       lenderCosts,
       originationFees,
       legalFees,
@@ -372,6 +386,12 @@ function RentalDSCRTab() {
         </label>
       </div>
 
+      <AdditionalLenders
+        lenders={lenders}
+        setLenders={setLenders}
+        onMutate={() => setSummary(null)}
+      />
+
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
       <div className="deal-analyzer-form-grid">
         <Field
@@ -497,6 +517,20 @@ function RentalDSCRTab() {
                 </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.loanMortgage} format={fmt} />
+                </strong>
+              </div>
+            )}
+            {summary.lenderMonthlyPayment > 0 && (
+              <div>
+                <span>
+                  Additional Lender Payment ({summary.lenders.length} lender
+                  {summary.lenders.length !== 1 ? "s" : ""})
+                </span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.lenderMonthlyPayment}
+                    format={fmt}
+                  />
                 </strong>
               </div>
             )}
@@ -669,6 +703,28 @@ function RentalDSCRTab() {
                 <AnimatedAmount value={summary.inspectionCost} format={fmt} />
               </strong>
             </div>
+            {summary.lenderTotal > 0 && (
+              <>
+                <div>
+                  <span>Subtotal Before Lender Contributions</span>
+                  <strong>
+                    <AnimatedAmount
+                      value={summary.grossCashNeeded}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+                <div>
+                  <span>
+                    Additional Lender Contributions ({summary.lenders.length}{" "}
+                    lender{summary.lenders.length !== 1 ? "s" : ""})
+                  </span>
+                  <strong className="deal-analyzer-return-positive">
+                    −<AnimatedAmount value={summary.lenderTotal} format={fmt} />
+                  </strong>
+                </div>
+              </>
+            )}
             <div>
               <span>Total Cash Needed to Buy</span>
               <strong className="deal-analyzer-return-negative">

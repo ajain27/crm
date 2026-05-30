@@ -6,6 +6,10 @@ import {
   fmt,
   fmtCurrencyInput,
 } from "../../../../utils/utils";
+import AdditionalLenders, {
+  calcLenderMonthlyPayment,
+  calcLenderTotal,
+} from "../additionalLenders/AdditionalLenders";
 
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
@@ -70,6 +74,7 @@ const initialForm = {
 function MorbyMethodTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
+  const [lenders, setLenders] = useState([]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -144,8 +149,12 @@ function MorbyMethodTab({ tab }) {
     titleFees +
     agentCommissionAmt +
     INSPECTION_COST;
+  const lenderTotal = calcLenderTotal(lenders);
   const sellerCovers = Math.min(sellerCarryback, totalUpfrontNeeded);
-  const buyerCashToClose = Math.max(0, totalUpfrontNeeded - sellerCarryback);
+  const buyerCashToClose = Math.max(
+    0,
+    totalUpfrontNeeded - sellerCarryback - lenderTotal,
+  );
   const sellerExcess = Math.max(0, sellerCarryback - totalUpfrontNeeded);
 
   // — Income & expenses
@@ -161,13 +170,15 @@ function MorbyMethodTab({ tab }) {
     firstMonthPropMgmtFee - propMgmtFee,
   );
 
+  const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
   const noi =
     monthlyRent -
     propMgmtFee -
     monthlyInsurance -
     monthlyTaxes -
     monthlyMiscExpense;
-  const totalMonthlyDebtService = dscrMonthlyPayment + sellerCarrybackMonthly;
+  const totalMonthlyDebtService =
+    dscrMonthlyPayment + sellerCarrybackMonthly + lenderMonthlyPayment;
   const totalMonthlyExpenses =
     totalMonthlyDebtService +
     propMgmtFee +
@@ -219,6 +230,10 @@ function MorbyMethodTab({ tab }) {
       sellerCarrybackRatePct,
       sellerCarrybackTermYears,
       sellerCarrybackMonthly,
+      // Additional lenders
+      lenders,
+      lenderMonthlyPayment,
+      lenderTotal,
       // Buyer close
       totalUpfrontNeeded,
       sellerCovers,
@@ -506,6 +521,12 @@ function MorbyMethodTab({ tab }) {
           )}
         </div>
 
+        <AdditionalLenders
+          lenders={lenders}
+          setLenders={setLenders}
+          onMutate={() => setSummary(null)}
+        />
+
         {/* — Income & Expenses */}
         <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
         <div className="deal-analyzer-form-grid">
@@ -670,6 +691,20 @@ function MorbyMethodTab({ tab }) {
                   <strong className="deal-analyzer-return-negative">
                     <AnimatedAmount
                       value={summary.sellerCarrybackMonthly}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.lenderMonthlyPayment > 0 && (
+                <div>
+                  <span>
+                    Additional Lender Payment ({summary.lenders.length} lender
+                    {summary.lenders.length !== 1 ? "s" : ""})
+                  </span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.lenderMonthlyPayment}
                       format={fmt}
                     />
                   </strong>
@@ -860,6 +895,17 @@ function MorbyMethodTab({ tab }) {
                   <span>Seller Excess (reserves / rehab)</span>
                   <strong className="deal-analyzer-return-positive">
                     <AnimatedAmount value={summary.sellerExcess} format={fmt} />
+                  </strong>
+                </div>
+              )}
+              {summary.lenderTotal > 0 && (
+                <div>
+                  <span>
+                    Additional Lender Contributions ({summary.lenders.length}{" "}
+                    lender{summary.lenders.length !== 1 ? "s" : ""})
+                  </span>
+                  <strong className="deal-analyzer-return-positive">
+                    <AnimatedAmount value={summary.lenderTotal} format={fmt} />
                   </strong>
                 </div>
               )}
