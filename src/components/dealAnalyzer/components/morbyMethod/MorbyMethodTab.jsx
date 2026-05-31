@@ -141,12 +141,27 @@ function MorbyMethodTab({ tab }) {
     sellerCarryback,
   );
 
+  // — Income & expenses (insurance + taxes moved to upfront costs)
+  const monthlyRent = parseCurrency(form.monthlyRent);
+  const yearlyInsurance = parseCurrency(form.yearlyInsurance);
+  const yearlyTaxes = parseCurrency(form.yearlyTaxes);
+  const annualMiscExpense = parseCurrency(form.annualMiscExpense);
+  const monthlyMiscExpense = annualMiscExpense / 12;
+  const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
+  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
+  const firstMonthMgmtAdjustment = Math.max(
+    0,
+    firstMonthPropMgmtFee - propMgmtFee,
+  );
+
   // — What buyer actually brings to close
   const totalUpfrontNeeded =
     downPaymentRequired +
     dscrUpfrontCosts +
     closingCosts +
     titleFees +
+    yearlyInsurance +
+    yearlyTaxes +
     agentCommissionAmt +
     INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
@@ -157,34 +172,12 @@ function MorbyMethodTab({ tab }) {
   );
   const sellerExcess = Math.max(0, sellerCarryback - totalUpfrontNeeded);
 
-  // — Income & expenses
-  const monthlyRent = parseCurrency(form.monthlyRent);
-  const monthlyInsurance = parseCurrency(form.yearlyInsurance) / 12;
-  const monthlyTaxes = parseCurrency(form.yearlyTaxes) / 12;
-  const annualMiscExpense = parseCurrency(form.annualMiscExpense);
-  const monthlyMiscExpense = annualMiscExpense / 12;
-  const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
-  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
-  const firstMonthMgmtAdjustment = Math.max(
-    0,
-    firstMonthPropMgmtFee - propMgmtFee,
-  );
-
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
-  const noi =
-    monthlyRent -
-    propMgmtFee -
-    monthlyInsurance -
-    monthlyTaxes -
-    monthlyMiscExpense;
+  const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
   const totalMonthlyDebtService =
     dscrMonthlyPayment + sellerCarrybackMonthly + lenderMonthlyPayment;
   const totalMonthlyExpenses =
-    totalMonthlyDebtService +
-    propMgmtFee +
-    monthlyInsurance +
-    monthlyTaxes +
-    monthlyMiscExpense;
+    totalMonthlyDebtService + propMgmtFee + monthlyMiscExpense;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
 
@@ -244,8 +237,8 @@ function MorbyMethodTab({ tab }) {
       propMgmtFee,
       firstMonthPropMgmtFee,
       firstMonthMgmtAdjustment,
-      monthlyInsurance,
-      monthlyTaxes,
+      yearlyInsurance,
+      yearlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
       noi,
@@ -716,31 +709,6 @@ function MorbyMethodTab({ tab }) {
                   <AnimatedAmount value={summary.propMgmtFee} format={fmt} />
                 </strong>
               </div>
-              {summary.monthlyInsurance > 0 && (
-                <div>
-                  <span>
-                    Home Insurance{" "}
-                    <span className="deal-analyzer-auto-badge">÷ 12</span>
-                  </span>
-                  <strong className="deal-analyzer-return-negative">
-                    <AnimatedAmount
-                      value={summary.monthlyInsurance}
-                      format={fmt}
-                    />
-                  </strong>
-                </div>
-              )}
-              {summary.monthlyTaxes > 0 && (
-                <div>
-                  <span>
-                    Property Taxes{" "}
-                    <span className="deal-analyzer-auto-badge">÷ 12</span>
-                  </span>
-                  <strong className="deal-analyzer-return-negative">
-                    <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
-                  </strong>
-                </div>
-              )}
               {summary.monthlyMiscExpense > 0 && (
                 <div>
                   <span>
@@ -869,6 +837,25 @@ function MorbyMethodTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.yearlyInsurance > 0 && (
+                <div>
+                  <span>Yearly Home Insurance</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.yearlyInsurance}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.yearlyTaxes > 0 && (
+                <div>
+                  <span>Yearly Property Taxes</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount value={summary.yearlyTaxes} format={fmt} />
+                  </strong>
+                </div>
+              )}
               <div>
                 <span>Inspection</span>
                 <strong className="deal-analyzer-return-negative">
@@ -1016,19 +1003,11 @@ function MorbyMethodTab({ tab }) {
               style={{ marginTop: "1rem" }}
             >
               Monthly Cash Flow = Rent − DSCR Payment − Seller Note − Prop. Mgmt
-              {summary.monthlyInsurance > 0 ? " − Insurance" : ""}
-              {summary.monthlyTaxes > 0 ? " − Taxes" : ""}
               {summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
               <span>
                 {fmt(summary.monthlyRent)} − {fmt(summary.dscrMonthlyPayment)} −{" "}
                 {fmt(summary.sellerCarrybackMonthly)} −{" "}
                 {fmt(summary.propMgmtFee)}
-                {summary.monthlyInsurance > 0
-                  ? ` − ${fmt(summary.monthlyInsurance)}`
-                  : ""}
-                {summary.monthlyTaxes > 0
-                  ? ` − ${fmt(summary.monthlyTaxes)}`
-                  : ""}
                 {summary.monthlyMiscExpense > 0
                   ? ` − ${fmt(summary.monthlyMiscExpense)}`
                   : ""}{" "}
