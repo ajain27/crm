@@ -14,16 +14,26 @@
   }
 
   .clear-filters-btn {
-    @apply gap-2.5 font-semibold;
+    @apply inline-flex items-center gap-2.5 font-semibold;
     background: color-mix(in srgb, var(--panel) 88%, var(--blue-light) 12%);
     border-color: color-mix(in srgb, var(--line) 68%, var(--blue) 32%);
     color: color-mix(in srgb, var(--nav-text) 78%, var(--blue) 22%);
+    transition:
+      opacity 0.15s,
+      background 0.15s,
+      border-color 0.15s,
+      color 0.15s;
   }
 
-  .clear-filters-btn:hover {
+  .clear-filters-btn:hover:not(:disabled) {
     background: color-mix(in srgb, var(--panel) 80%, var(--blue-light) 20%);
     border-color: color-mix(in srgb, var(--line) 58%, var(--blue) 42%);
     color: var(--blue);
+  }
+
+  .clear-filters-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .search-container {

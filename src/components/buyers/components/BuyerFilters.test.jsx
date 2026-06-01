@@ -38,7 +38,15 @@ describe("BuyerFilters", () => {
   it("Clear Filters resets filters and clears selection", () => {
     const setFilters = vi.fn();
     const onClearSelection = vi.fn();
-    render(<BuyerFilters {...baseProps({ setFilters, onClearSelection })} />);
+    render(
+      <BuyerFilters
+        {...baseProps({
+          filters: { state: "TX", realEstateType: "All", search: "" },
+          setFilters,
+          onClearSelection,
+        })}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Clear Filters/i }));
     expect(setFilters).toHaveBeenCalledWith({
       state: "All",
@@ -46,6 +54,13 @@ describe("BuyerFilters", () => {
       search: "",
     });
     expect(onClearSelection).toHaveBeenCalled();
+  });
+
+  it("Clear Filters button is disabled when no filters are active", () => {
+    render(<BuyerFilters {...baseProps()} />);
+    expect(
+      screen.getByRole("button", { name: /Clear Filters/i }),
+    ).toBeDisabled();
   });
 
   it("search icon expands the input on click", () => {

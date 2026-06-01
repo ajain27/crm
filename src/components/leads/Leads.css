@@ -170,14 +170,23 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     transition:
       color 0.15s,
-      border-color 0.15s;
+      border-color 0.15s,
+      opacity 0.15s;
   }
 
-  .leads-clear-filters:hover {
+  .leads-clear-filters:hover:not(:disabled) {
     color: var(--text);
     border-color: var(--text);
+  }
+
+  .leads-clear-filters:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   /* Table */

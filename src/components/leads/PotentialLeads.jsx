@@ -11,6 +11,7 @@ import {
   Tag,
   Search,
 } from "lucide-react";
+import ClearFiltersButton from "../elements/ClearFiltersButton";
 import {
   formatPhone,
   findDuplicateByAddress,
@@ -494,19 +495,17 @@ export default function PotentialLeads({
                 </option>
               ))}
             </select>
-            {activeFilters && (
-              <button
-                className="leads-clear-filters"
-                onClick={() => {
-                  setSearch("");
-                  setFilterSource("");
-                  setFilterState("");
-                  resetPage();
-                }}
-              >
-                Clear
-              </button>
-            )}
+            <ClearFiltersButton
+              onClear={() => {
+                setSearch("");
+                setFilterSource("");
+                setFilterState("");
+                resetPage();
+              }}
+              hasActiveFilters={Boolean(activeFilters)}
+              className="leads-clear-filters"
+              iconSize={13}
+            />
           </div>
         </div>
 

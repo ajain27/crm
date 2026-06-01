@@ -1,5 +1,6 @@
-import { Search, RefreshCw, Mail, Trash2, X } from "lucide-react";
+import { Search, Mail, Trash2, X } from "lucide-react";
 import { Select } from "../../elements/elements";
+import ClearFiltersButton from "../../elements/ClearFiltersButton";
 import { useEffect, useRef, useState } from "react";
 
 function BuyerFilters({
@@ -110,9 +111,15 @@ function BuyerFilters({
           onChange={handleFilter}
           options={types}
         />
-        <button className="secondary-btn" onClick={clearFilters}>
-          <RefreshCw size={16} /> Clear Filters
-        </button>
+        <ClearFiltersButton
+          onClear={clearFilters}
+          hasActiveFilters={
+            filters.state !== "All" ||
+            filters.realEstateType !== "All" ||
+            Boolean(filters.search)
+          }
+          iconSize={16}
+        />
         {selectedCount > 0 && (
           <div className="buyer-bulk-actions">
             <button

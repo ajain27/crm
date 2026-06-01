@@ -1,5 +1,6 @@
 import { Trash2, Eye, Upload, Loader2 } from "lucide-react";
 import { fmt, formatDate, parseCurrency } from "../../utils/utils";
+import ClearFiltersButton from "../elements/ClearFiltersButton";
 
 function addMonths(dateStr, months) {
   if (!dateStr || months <= 0) return "";
@@ -114,17 +115,14 @@ export default function PMDealsTable({
                 color: "var(--text)",
               }}
             />
-            {(filterBorrower || filterCompany) && (
-              <button
-                className="secondary-btn"
-                onClick={() => {
-                  setFilterBorrower("");
-                  setFilterCompany("");
-                }}
-              >
-                Clear
-              </button>
-            )}
+            <ClearFiltersButton
+              onClear={() => {
+                setFilterBorrower("");
+                setFilterCompany("");
+              }}
+              hasActiveFilters={Boolean(filterBorrower || filterCompany)}
+              label="Clear"
+            />
           </div>
         )}
       </div>

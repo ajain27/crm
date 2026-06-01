@@ -1,5 +1,6 @@
 import { Search, Plus } from "lucide-react";
 import { Select } from "../../../elements/elements";
+import ClearFiltersButton from "../../../elements/ClearFiltersButton";
 import { useState } from "react";
 
 function Crm_filters({
@@ -120,10 +121,8 @@ function Crm_filters({
             }
             options={["All", "No", "Yes"]}
           />
-          <button
-            type="button"
-            className="secondary-btn clear-filters-btn"
-            onClick={() =>
+          <ClearFiltersButton
+            onClear={() =>
               setFilters({
                 state: "All",
                 propertyType: "All",
@@ -137,9 +136,20 @@ function Crm_filters({
                 year: "All",
               })
             }
-          >
-            <RefreshCw size={16} /> Clear Filters
-          </button>
+            hasActiveFilters={
+              filters.state !== "All" ||
+              filters.propertyType !== "All" ||
+              filters.offerAccepted !== "All" ||
+              filters.offerStatus !== "All" ||
+              filters.assigned !== "All" ||
+              filters.closed !== "All" ||
+              filters.offerMonth !== "All" ||
+              filters.closedMonth !== "All" ||
+              filters.year !== "All" ||
+              Boolean(filters.search)
+            }
+            iconSize={16}
+          />
         </div>
       </section>
     </div>
