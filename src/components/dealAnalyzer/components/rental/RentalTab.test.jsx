@@ -140,12 +140,22 @@ describe("rendering", () => {
     expect(screen.queryByText("Monthly Cash Flow")).not.toBeInTheDocument();
   });
 
-  it("renders Cash and Loan toggle buttons", () => {
+  it("renders Cash, Loan and HELOC toggle buttons", () => {
     render(<RentalTab tab={tab} />);
     expect(screen.getByRole("button", { name: /^Cash$/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Loan \(DSCR\)/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^HELOC$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows HELOC fields after switching to HELOC mode", () => {
+    render(<RentalTab tab={tab} />);
+    fireEvent.click(screen.getByRole("button", { name: /^HELOC$/i }));
+    expect(screen.getByLabelText(/HELOC Interest Rate/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Term \(Years\)/i)).toBeInTheDocument();
   });
 
   it("defaults to Cash mode — no loan fields shown", () => {

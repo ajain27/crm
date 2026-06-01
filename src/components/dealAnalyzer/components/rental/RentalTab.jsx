@@ -1,6 +1,7 @@
 import { useState } from "react";
 import RentalCashTab from "./RentalCashTab";
 import RentalDSCRTab from "./RentalDSCRTab";
+import RentalHELOCTab from "./RentalHELOCTab";
 
 function RentalTab({ tab }) {
   const [financeType, setFinanceType] = useState("cash");
@@ -58,9 +59,18 @@ function RentalTab({ tab }) {
         >
           Loan (DSCR)
         </button>
+        <button
+          type="button"
+          className={`deal-tab-btn${financeType === "heloc" ? " deal-tab-btn--active" : ""}`}
+          onClick={() => switchFinanceType("heloc")}
+        >
+          HELOC
+        </button>
       </div>
 
-      {financeType === "cash" ? <RentalCashTab /> : <RentalDSCRTab />}
+      {financeType === "cash" && <RentalCashTab />}
+      {financeType === "loan" && <RentalDSCRTab />}
+      {financeType === "heloc" && <RentalHELOCTab />}
     </>
   );
 }
