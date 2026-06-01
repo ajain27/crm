@@ -1,0 +1,118 @@
+import { Field } from "../../../../elements/elements";
+import { fmt } from "../../../../../utils/utils";
+import { DSCR_LTV, DOWN_PCT } from "../morbyMethodConfig";
+
+export default function DSCRSection({
+  form,
+  onChange,
+  onBlur,
+  dscrLoanAmount,
+  downPaymentRequired,
+  dscrMonthlyPayment,
+  dscrMiscFees,
+}) {
+  return (
+    <>
+      <div className="deal-analyzer-section-label">
+        DSCR First Lien{" "}
+        <span className="deal-analyzer-auto-badge">{DSCR_LTV * 100}% LTV</span>
+      </div>
+      <div className="deal-analyzer-form-grid">
+        <label className="field deal-analyzer-output">
+          <span>
+            Loan Amount{" "}
+            <span className="deal-analyzer-auto-badge">
+              {DSCR_LTV * 100}% of price
+            </span>
+          </span>
+          <input
+            value={dscrLoanAmount > 0 ? fmt(dscrLoanAmount) : ""}
+            readOnly
+            tabIndex={-1}
+          />
+        </label>
+        <label className="field deal-analyzer-output">
+          <span>
+            Down Payment Required{" "}
+            <span className="deal-analyzer-auto-badge">{DOWN_PCT}%</span>
+          </span>
+          <input
+            value={downPaymentRequired > 0 ? fmt(downPaymentRequired) : ""}
+            readOnly
+            tabIndex={-1}
+          />
+        </label>
+        <Field
+          label="Interest Rate (% / year)"
+          name="dscrRate"
+          value={form.dscrRate}
+          onChange={onChange}
+          onBlur={onBlur}
+          placeholder="e.g. 7.5"
+          required
+        />
+        <Field
+          label="Loan Term (Years)"
+          name="dscrTermYears"
+          value={form.dscrTermYears}
+          onChange={onChange}
+          placeholder="e.g. 30"
+          required
+        />
+        <Field
+          label="Points (%)"
+          name="dscrPoints"
+          value={form.dscrPoints}
+          onChange={onChange}
+          onBlur={onBlur}
+          placeholder="e.g. 2"
+        />
+        <Field
+          label="Origination Fees"
+          name="originationFees"
+          value={form.originationFees}
+          onChange={onChange}
+          placeholder="e.g. $1,000"
+        />
+        <Field
+          label="Doc Fees"
+          name="legalFees"
+          value={form.legalFees}
+          onChange={onChange}
+          placeholder="e.g. $500"
+        />
+        <Field
+          label="Appraisal Fees"
+          name="appraisalFees"
+          value={form.appraisalFees}
+          onChange={onChange}
+          placeholder="e.g. $500"
+        />
+        <Field
+          label="Underwriting Fees"
+          name="underwritingFees"
+          value={form.underwritingFees}
+          onChange={onChange}
+          placeholder="e.g. $500"
+        />
+        {dscrMiscFees > 0 && (
+          <label className="field deal-analyzer-output">
+            <span>Total Misc Fees</span>
+            <input value={fmt(dscrMiscFees)} readOnly tabIndex={-1} />
+          </label>
+        )}
+        <label className="field deal-analyzer-output">
+          <span>
+            Monthly Payment{" "}
+            <span className="deal-analyzer-auto-badge">auto</span>
+          </span>
+          <input
+            value={dscrMonthlyPayment > 0 ? fmt(dscrMonthlyPayment) : ""}
+            readOnly
+            tabIndex={-1}
+          />
+        </label>
+      </div>
+    </>
+  );
+}
