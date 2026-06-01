@@ -9,8 +9,10 @@ import {
   Crosshair,
   Bell,
   Building2,
+  TrendingUp,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
+import { usePrimeRate } from "../../../hooks/usePrimeRate";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -59,11 +61,29 @@ function CrmHeader({
 }) {
   const displayName = buildDisplayName(currentUser);
   const profileInitial = buildProfileInitial(currentUser);
+  const primeRate = usePrimeRate();
+
+  const primeTooltip = primeRate.asOf
+    ? `US prime rate as of ${primeRate.asOf}${
+        primeRate.source === "fallback"
+          ? " (local fallback — set VITE_FRED_API_KEY for live data)"
+          : ""
+      }`
+    : "US prime rate";
 
   return (
     <div className="app-topbar">
       <div className="app-topbar-row1">
         <div className="app-topbar-spacer">
+          <span
+            className="header-prime-rate"
+            title={primeTooltip}
+            aria-label={`Prime rate ${primeRate.rate}%`}
+          >
+            <TrendingUp size={14} />
+            <span className="header-prime-rate-label">Prime</span>
+            <strong>{primeRate.rate.toFixed(2)}%</strong>
+          </span>
           <button
             type="button"
             className="ghost-btn header-theme-toggle"

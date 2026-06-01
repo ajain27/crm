@@ -123,4 +123,15 @@ describe("CrmHeader", () => {
     );
     expect(screen.getAllByText("user@e.com").length).toBeGreaterThan(0);
   });
+
+  it("displays the current prime rate badge", () => {
+    render(<CrmHeader {...baseProps()} />);
+    expect(screen.getByText("Prime")).toBeInTheDocument();
+    expect(screen.getByText(/\d+\.\d{2}%/)).toBeInTheDocument();
+  });
+
+  it("prime rate badge has an accessible label", () => {
+    render(<CrmHeader {...baseProps()} />);
+    expect(screen.getByLabelText(/Prime rate \d+\.?\d*%/i)).toBeInTheDocument();
+  });
 });
