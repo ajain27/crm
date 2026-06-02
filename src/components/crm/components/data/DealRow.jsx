@@ -39,6 +39,18 @@ function DealRow({
     deal.offerStatus === "Offer Sent" && deal.sellerAccepted === "No";
   const isWithdrawn = deal.offerStatus === "Offer Withdrawn";
 
+  // Expressed as a data attribute (not a className) so the row's React-controlled
+  // className stays constant and never clobbers the imperatively-added
+  // `is-revealed` reveal class when the deal's status changes.
+  const rowStatus =
+    deal.closed === "Yes"
+      ? "closed"
+      : isRejected
+        ? "rejected"
+        : isWithdrawn
+          ? "withdrawn"
+          : undefined;
+
   function handleTrClick(e) {
     const tag = e.target.tagName.toLowerCase();
     if (
@@ -52,8 +64,9 @@ function DealRow({
     <tr
       data-deal-id={deal.id}
       data-reveal
+      data-status={rowStatus}
       style={{ "--reveal-delay": `${index * 35}ms` }}
-      className={`clickable-row ${deal.closed === "Yes" ? "closed-row" : isRejected ? "rejected-row" : isWithdrawn ? "withdrawn-row" : ""}`}
+      className="clickable-row"
       onClick={handleTrClick}
     >
       <td className="text-center" onClick={(e) => e.stopPropagation()}>

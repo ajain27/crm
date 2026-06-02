@@ -82,22 +82,22 @@ describe("DealRow", () => {
     expect(onRowDetailClick).toHaveBeenCalledWith(deal);
   });
 
-  it("applies closed-row class when deal is closed", () => {
+  it("marks the row closed when deal is closed", () => {
     const { container } = renderRow({ deal: { ...deal, closed: "Yes" } });
-    expect(container.querySelector(".closed-row")).toBeTruthy();
+    expect(container.querySelector('[data-status="closed"]')).toBeTruthy();
   });
 
-  it("applies rejected-row class when offer sent but seller said no", () => {
+  it("marks the row rejected when offer sent but seller said no", () => {
     const { container } = renderRow({
       deal: { ...deal, offerStatus: "Offer Sent", sellerAccepted: "No" },
     });
-    expect(container.querySelector(".rejected-row")).toBeTruthy();
+    expect(container.querySelector('[data-status="rejected"]')).toBeTruthy();
   });
 
-  it("applies withdrawn-row class when offer withdrawn", () => {
+  it("marks the row withdrawn when offer withdrawn", () => {
     const { container } = renderRow({
       deal: { ...deal, offerStatus: "Offer Withdrawn" },
     });
-    expect(container.querySelector(".withdrawn-row")).toBeTruthy();
+    expect(container.querySelector('[data-status="withdrawn"]')).toBeTruthy();
   });
 });

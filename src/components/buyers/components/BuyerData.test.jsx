@@ -98,7 +98,7 @@ describe("BuyerData", () => {
         />,
       );
       const row = screen.getByText("Jane Doe").closest("tr");
-      expect(row.className).toContain("buyer-row-selected");
+      expect(row.getAttribute("data-selected")).toBe("true");
     });
   });
   it("calls updateBuyer when the email is edited", () => {

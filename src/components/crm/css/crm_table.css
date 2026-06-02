@@ -223,33 +223,33 @@
     border-color: var(--input-border);
   }
 
-  .closed-row .table-input {
+  [data-status="closed"] .table-input {
     @apply border-transparent bg-transparent p-0 shadow-none;
   }
 
-  .rejected-row td {
+  [data-status="rejected"] td {
     background: color-mix(in srgb, #dc2626 18%, var(--panel) 82%) !important;
   }
 
-  .rejected-row input:not(.row-checkbox),
-  .rejected-row select,
-  .rejected-row button:not(.danger-btn):not(.note-btn) {
+  [data-status="rejected"] input:not(.row-checkbox),
+  [data-status="rejected"] select,
+  [data-status="rejected"] button:not(.danger-btn):not(.note-btn) {
     pointer-events: none;
     opacity: 0.5;
   }
 
-  .withdrawn-row td {
+  [data-status="withdrawn"] td {
     background: color-mix(in srgb, #9a3412 18%, var(--panel) 82%) !important;
   }
 
-  .withdrawn-row input:not(.row-checkbox),
-  .withdrawn-row select,
-  .withdrawn-row button:not(.danger-btn):not(.note-btn) {
+  [data-status="withdrawn"] input:not(.row-checkbox),
+  [data-status="withdrawn"] select,
+  [data-status="withdrawn"] button:not(.danger-btn):not(.note-btn) {
     pointer-events: none;
     opacity: 0.5;
   }
 
-  .withdrawn-row:hover td {
+  [data-status="withdrawn"]:hover td {
     background: color-mix(in srgb, #9a3412 24%, var(--panel) 76%) !important;
   }
 
@@ -303,10 +303,18 @@
     opacity: 1;
   }
 
+  /* Floating selection toolbar: fixed so toggling selection never reflows the
+     table (which would shift the row out from under the cursor). */
   .bulk-delete-bar {
-    @apply flex flex-wrap items-center gap-3 px-4 py-2 text-sm font-semibold;
+    @apply fixed flex flex-nowrap items-center gap-3 px-5 py-2.5 text-sm font-semibold;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
     background: color-mix(in srgb, #dc2626 10%, var(--panel) 90%);
-    border-bottom: 1px solid color-mix(in srgb, #dc2626 30%, transparent 70%);
+    border: 1px solid color-mix(in srgb, #dc2626 30%, transparent 70%);
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
     color: #dc2626;
     white-space: nowrap;
   }
@@ -659,7 +667,7 @@
     cursor: pointer;
   }
 
-  .clickable-row:not(.rejected-row):hover td {
+  .clickable-row:not([data-status="rejected"]):hover td {
     background: color-mix(
       in srgb,
       var(--blue-light) 22%,
@@ -667,11 +675,11 @@
     ) !important;
   }
 
-  :root:not(.dark) .clickable-row:not(.rejected-row):hover td {
+  :root:not(.dark) .clickable-row:not([data-status="rejected"]):hover td {
     background: #e8f0fe !important;
   }
 
-  .rejected-row:hover td {
+  [data-status="rejected"]:hover td {
     background: color-mix(in srgb, #dc2626 24%, var(--panel) 76%) !important;
   }
 }

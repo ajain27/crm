@@ -159,7 +159,7 @@
     accent-color: var(--blue);
   }
 
-  .buyer-row-selected {
+  .compact-table tr[data-selected="true"] {
     background: color-mix(in srgb, var(--blue) 6%, transparent 94%) !important;
   }
 

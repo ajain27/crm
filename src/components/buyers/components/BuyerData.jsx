@@ -133,10 +133,8 @@ function BuyerData({
               <tr
                 key={buyer.id}
                 data-reveal
+                data-selected={selectedIds.has(buyer.id) ? "true" : undefined}
                 style={{ "--reveal-delay": `${index * 35}ms` }}
-                className={
-                  selectedIds.has(buyer.id) ? "buyer-row-selected" : ""
-                }
               >
                 <td className="buyer-checkbox-cell">
                   <input
