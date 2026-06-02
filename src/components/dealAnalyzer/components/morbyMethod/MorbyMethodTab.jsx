@@ -76,7 +76,8 @@ function MorbyMethodTab({ tab }) {
   );
   const dscrPointsPct = parsePercent(form.dscrPoints);
   const dscrPointsCost = dscrLoanAmount * (dscrPointsPct / 100);
-  const originationFees = parseCurrency(form.originationFees);
+  const originationFeesPct = parsePercent(form.originationFeesPct);
+  const originationFees = dscrLoanAmount * (originationFeesPct / 100);
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
   const underwritingFees = parseCurrency(form.underwritingFees);
@@ -165,6 +166,7 @@ function MorbyMethodTab({ tab }) {
       dscrMonthlyPayment,
       dscrPointsPct,
       dscrPointsCost,
+      originationFeesPct,
       originationFees,
       legalFees,
       appraisalFees,

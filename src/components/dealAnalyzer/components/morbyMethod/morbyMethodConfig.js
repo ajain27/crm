@@ -17,7 +17,6 @@ export function calcPMT(annualRatePct, termYears, principal) {
 export const CURRENCY_FIELDS = new Set([
   "purchasePrice",
   "sellerCarryback",
-  "originationFees",
   "legalFees",
   "appraisalFees",
   "underwritingFees",
@@ -33,6 +32,7 @@ export const PERCENT_FIELDS = new Set([
   "dscrRate",
   "dscrPoints",
   "sellerCarrybackRate",
+  "originationFeesPct",
 ]);
 
 export const initialForm = {
@@ -42,7 +42,7 @@ export const initialForm = {
   dscrRate: "",
   dscrTermYears: "",
   dscrPoints: "",
-  originationFees: "",
+  originationFeesPct: "",
   legalFees: "",
   appraisalFees: "",
   underwritingFees: "",

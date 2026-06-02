@@ -326,6 +326,11 @@
     -webkit-text-fill-color: #dc2626;
   }
 
+  .deal-analyzer-output-red input[readonly] {
+    color: var(--red);
+    -webkit-text-fill-color: var(--red);
+  }
+
   .deal-analyzer-warning > span {
     color: #dc2626;
   }

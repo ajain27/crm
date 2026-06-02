@@ -68,17 +68,19 @@ export default function DSCRSection({
           placeholder="e.g. 2"
         />
         <Field
-          label="Origination Fees"
-          name="originationFees"
-          value={form.originationFees}
+          label="Origination Fees %"
+          name="originationFeesPct"
+          value={form.originationFeesPct}
           onChange={onChange}
-          placeholder="e.g. $1,000"
+          onBlur={onBlur}
+          placeholder="e.g. 1.5"
         />
         <Field
           label="Doc Fees"
           name="legalFees"
           value={form.legalFees}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder="e.g. $500"
         />
         <Field
@@ -86,6 +88,7 @@ export default function DSCRSection({
           name="appraisalFees"
           value={form.appraisalFees}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder="e.g. $500"
         />
         <Field
@@ -93,11 +96,12 @@ export default function DSCRSection({
           name="underwritingFees"
           value={form.underwritingFees}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder="e.g. $500"
         />
         {dscrMiscFees > 0 && (
-          <label className="field deal-analyzer-output">
-            <span>Total Misc Fees</span>
+          <label className="field deal-analyzer-output deal-analyzer-output-red">
+            <span>Total Lender Cost</span>
             <input value={fmt(dscrMiscFees)} readOnly tabIndex={-1} />
           </label>
         )}

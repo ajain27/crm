@@ -34,7 +34,6 @@ const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "yearlyTaxes",
   "annualMiscExpense",
-  "originationFees",
   "legalFees",
   "appraisalFees",
 ]);
@@ -44,6 +43,7 @@ const PERCENT_FIELDS = new Set([
   "titleFees",
   "points",
   "interestRate",
+  "originationFeesPct",
 ]);
 
 const initialForm = {
@@ -55,7 +55,7 @@ const initialForm = {
   interestRate: "",
   loanTermYears: "",
   extraDownPayment: "",
-  originationFees: "",
+  originationFeesPct: "",
   legalFees: "",
   appraisalFees: "",
   monthlyRent: "",
@@ -122,7 +122,8 @@ function RentalDSCRTab() {
   const pointsPct = parsePercent(form.points);
   const interestRatePct = parsePercent(form.interestRate);
   const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
-  const originationFees = parseCurrency(form.originationFees);
+  const originationFeesPct = parsePercent(form.originationFeesPct);
+  const originationFees = effectiveLoanAmount * (originationFeesPct / 100);
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
   const pointsCost = effectiveLoanAmount * (pointsPct / 100);
@@ -197,6 +198,7 @@ function RentalDSCRTab() {
       lenderTotal,
       grossCashNeeded,
       lenderCosts,
+      originationFeesPct,
       originationFees,
       legalFees,
       appraisalFees,
@@ -340,11 +342,12 @@ function RentalDSCRTab() {
           required
         />
         <Field
-          label="Origination Fees"
-          name="originationFees"
-          value={form.originationFees}
+          label="Origination Fees %"
+          name="originationFeesPct"
+          value={form.originationFeesPct}
           onChange={handleChange}
-          placeholder="e.g. $1,500"
+          onBlur={handleBlur}
+          placeholder="e.g. 1.5"
         />
         <Field
           label="Doc Fees"
@@ -368,7 +371,7 @@ function RentalDSCRTab() {
           placeholder="e.g. $500"
         />
         {lenderCosts > 0 && (
-          <label className="field deal-analyzer-output">
+          <label className="field deal-analyzer-output deal-analyzer-output-red">
             <span>Total Lender Cost</span>
             <input value={fmt(lenderCosts)} readOnly tabIndex={-1} />
           </label>

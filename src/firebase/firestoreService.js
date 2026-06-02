@@ -33,6 +33,7 @@ const leadsCollection = collection(db, "leads");
 const passwordResetsCollection = collection(db, "passwordResets");
 const pmDealsCollection = collection(db, "pmDeals");
 const titleCompaniesCollection = collection(db, "titleCompanies");
+const rentalsCollection = collection(db, "rentals");
 
 function leadFilesSubcollection(leadId) {
   return collection(db, "leads", leadId, "files");
@@ -319,6 +320,22 @@ export async function saveTitleCompany(company) {
 
 export async function deleteTitleCompanyById(id) {
   await deleteDoc(doc(titleCompaniesCollection, id));
+}
+
+export async function fetchRentals(userId) {
+  const snapshot = userId
+    ? await getDocs(query(rentalsCollection, where("userId", "==", userId)))
+    : await getDocs(rentalsCollection);
+  return mapSnapshot(snapshot);
+}
+
+export async function saveRental(rental) {
+  await setDoc(doc(rentalsCollection, rental.id), rental);
+  return rental;
+}
+
+export async function deleteRentalById(id) {
+  await deleteDoc(doc(rentalsCollection, id));
 }
 
 export async function savePmDealFile({

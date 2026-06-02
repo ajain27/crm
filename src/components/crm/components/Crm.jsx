@@ -24,6 +24,9 @@ import {
   fetchTitleCompanies,
   saveTitleCompany,
   deleteTitleCompanyById,
+  fetchRentals,
+  saveRental,
+  deleteRentalById,
 } from "../../../firebase/firestoreService";
 import Crm_filters from "./filters/crm_filters";
 import Wholesale_form from "./forms/crm_form";
@@ -31,6 +34,7 @@ import Wholesale_data from "./data/crm_table";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import PMDealsTab from "../../pmDeals/PMDealsTab";
 import TitleCompanies from "../../titleCompanies/TitleCompanies";
+import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
@@ -190,6 +194,7 @@ function Wholesale() {
       />
       <main className="main">
         {!bannerDismissed &&
+          activeView !== "rental-management" &&
           (() => {
             const _bd = new Date();
             const today = `${_bd.getFullYear()}-${String(_bd.getMonth() + 1).padStart(2, "0")}-${String(_bd.getDate()).padStart(2, "0")}`;
@@ -350,6 +355,13 @@ function Wholesale() {
             fetchTitleCompanies={fetchTitleCompanies}
             saveTitleCompany={saveTitleCompany}
             deleteTitleCompanyById={deleteTitleCompanyById}
+          />
+        ) : activeView === "rental-management" ? (
+          <RentalManagement
+            currentUser={currentUser}
+            fetchRentals={fetchRentals}
+            saveRental={saveRental}
+            deleteRentalById={deleteRentalById}
           />
         ) : activeView === "buyers" ? (
           <Buyers theme={theme} currentUser={currentUser} />
