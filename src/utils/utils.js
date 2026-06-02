@@ -124,6 +124,34 @@ function formatDate(dateStr) {
   return `${m}/${d}/${y}`;
 }
 
+// Input types whose value is free text and should have surrounding whitespace
+// stripped once the user leaves the field.
+const TRIMMABLE_INPUT_TYPES = new Set([
+  "text",
+  "email",
+  "search",
+  "tel",
+  "url",
+]);
+
+// Returns an onBlur handler that strips surrounding whitespace from free-text
+// inputs and reports the cleaned value through the given onChange handler.
+function trimFieldOnBlur(onChange) {
+  return (event) => {
+    const { type, name, value } = event.target;
+    if (
+      onChange &&
+      typeof value === "string" &&
+      TRIMMABLE_INPUT_TYPES.has(type)
+    ) {
+      const trimmed = value.trim();
+      if (trimmed !== value) {
+        onChange({ target: { name, value: trimmed } });
+      }
+    }
+  };
+}
+
 export {
   normalizeDeal,
   getSavedDeals,
@@ -140,4 +168,5 @@ export {
   formatDate,
   findDuplicateByAddress,
   findDuplicateByField,
+  trimFieldOnBlur,
 };

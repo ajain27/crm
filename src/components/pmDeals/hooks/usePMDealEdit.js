@@ -44,6 +44,11 @@ export function usePMDealEdit({ setDeals, savePmDeal }) {
     if (name === "interestRate" && value) {
       const n = value.replace(/[^0-9.]/g, "");
       if (n) setEditForm((p) => ({ ...p, interestRate: `${n}%` }));
+      return;
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed !== value) setEditForm((p) => ({ ...p, [name]: trimmed }));
     }
   }
 

@@ -1,4 +1,5 @@
 import Modal from "../../modal/Modal";
+import { trimFieldOnBlur } from "../../../utils/utils";
 
 function ProfileModal({
   currentUser,
@@ -75,6 +76,12 @@ function ProfileModal({
                 firstName: event.target.value,
               }))
             }
+            onBlur={trimFieldOnBlur((event) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                firstName: event.target.value,
+              })),
+            )}
             placeholder="First name"
           />
         </label>
@@ -89,6 +96,12 @@ function ProfileModal({
                 lastName: event.target.value,
               }))
             }
+            onBlur={trimFieldOnBlur((event) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                lastName: event.target.value,
+              })),
+            )}
             placeholder="Last name"
           />
         </label>

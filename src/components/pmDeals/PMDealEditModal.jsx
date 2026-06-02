@@ -44,6 +44,7 @@ export default function PMDealEditModal({
               name="propertyAddress"
               value={editForm.propertyAddress}
               onChange={onChange}
+              onBlur={onBlur}
               placeholder="123 Main St, Austin, TX"
             />
           </div>
@@ -53,6 +54,7 @@ export default function PMDealEditModal({
               name="borrowerName"
               value={editForm.borrowerName}
               onChange={onChange}
+              onBlur={onBlur}
               placeholder="John Smith"
             />
           </div>
@@ -62,6 +64,7 @@ export default function PMDealEditModal({
               name="borrowerCompany"
               value={editForm.borrowerCompany}
               onChange={onChange}
+              onBlur={onBlur}
               placeholder="Acme LLC"
             />
           </div>

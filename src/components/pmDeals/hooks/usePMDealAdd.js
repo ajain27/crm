@@ -39,6 +39,11 @@ export function usePMDealAdd({ setDeals, currentUser, savePmDeal, today }) {
     if (name === "interestRate" && value) {
       const n = value.replace(/[^0-9.]/g, "");
       if (n) setForm((p) => ({ ...p, interestRate: `${n}%` }));
+      return;
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed !== value) setForm((p) => ({ ...p, [name]: trimmed }));
     }
   }
 

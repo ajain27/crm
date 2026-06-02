@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   normalizeDeal,
   getSavedDeals,
@@ -15,6 +15,7 @@ import {
   formatDate,
   findDuplicateByAddress,
   findDuplicateByField,
+  trimFieldOnBlur,
 } from "./utils";
 
 beforeEach(() => {
@@ -252,5 +253,54 @@ describe("findDuplicateByAddress", () => {
   it("delegates to findDuplicateByField with 'address'", () => {
     const items = [{ id: "1", address: "X St" }];
     expect(findDuplicateByAddress(items, "x st")).toEqual(items[0]);
+  });
+});
+
+describe("trimFieldOnBlur", () => {
+  it("reports the trimmed value through onChange for text inputs", () => {
+    const onChange = vi.fn();
+    trimFieldOnBlur(onChange)({
+      target: { type: "text", name: "fullName", value: "  John Smith  " },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      target: { name: "fullName", value: "John Smith" },
+    });
+  });
+
+  it("trims email inputs too", () => {
+    const onChange = vi.fn();
+    trimFieldOnBlur(onChange)({
+      target: { type: "email", name: "email", value: "a@b.com " },
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      target: { name: "email", value: "a@b.com" },
+    });
+  });
+
+  it("does not call onChange when nothing needs trimming", () => {
+    const onChange = vi.fn();
+    trimFieldOnBlur(onChange)({
+      target: { type: "text", name: "fullName", value: "John" },
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("ignores non-text input types like number and date", () => {
+    const onChange = vi.fn();
+    trimFieldOnBlur(onChange)({
+      target: { type: "number", name: "arv", value: "100 " },
+    });
+    trimFieldOnBlur(onChange)({
+      target: { type: "date", name: "lendDate", value: "2026-01-01" },
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op when no onChange handler is provided", () => {
+    expect(() =>
+      trimFieldOnBlur(undefined)({
+        target: { type: "text", name: "x", value: " y " },
+      }),
+    ).not.toThrow();
   });
 });

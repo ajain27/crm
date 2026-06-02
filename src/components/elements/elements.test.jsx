@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import {
   SimpleStat,
   AnimatedAmount,
@@ -84,6 +84,59 @@ describe("Field", () => {
     );
     expect(screen.getByText("*")).toBeInTheDocument();
     expect(screen.getByLabelText(/Name/i)).toBeRequired();
+  });
+
+  it("trims surrounding whitespace on blur and reports the clean value", () => {
+    const onChange = vi.fn();
+    render(
+      <Field
+        label="Name"
+        name="name"
+        value="  John Smith  "
+        onChange={onChange}
+      />,
+    );
+    fireEvent.blur(screen.getByLabelText(/Name/i));
+    expect(onChange).toHaveBeenCalledWith({
+      target: { name: "name", value: "John Smith" },
+    });
+  });
+
+  it("does not fire onChange on blur when there is no surrounding whitespace", () => {
+    const onChange = vi.fn();
+    render(<Field label="Name" name="name" value="John" onChange={onChange} />);
+    fireEvent.blur(screen.getByLabelText(/Name/i));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("preserves a caller-supplied onBlur handler", () => {
+    const onBlur = vi.fn();
+    render(
+      <Field
+        label="Name"
+        name="name"
+        value="x"
+        onChange={() => {}}
+        onBlur={onBlur}
+      />,
+    );
+    fireEvent.blur(screen.getByLabelText(/Name/i));
+    expect(onBlur).toHaveBeenCalled();
+  });
+
+  it("does not trim non-text inputs like numbers", () => {
+    const onChange = vi.fn();
+    render(
+      <Field
+        label="ARV"
+        name="arv"
+        type="number"
+        value="100"
+        onChange={onChange}
+      />,
+    );
+    fireEvent.blur(screen.getByLabelText(/ARV/i));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
 

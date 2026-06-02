@@ -33,6 +33,7 @@ export default function PMDealAddForm({
             name="propertyAddress"
             value={form.propertyAddress}
             onChange={onChange}
+            onBlur={onBlur}
             placeholder="123 Main St, Austin, TX"
             required
           />
@@ -44,6 +45,7 @@ export default function PMDealAddForm({
             name="borrowerCompany"
             value={form.borrowerCompany}
             onChange={onChange}
+            onBlur={onBlur}
             placeholder="Acme LLC"
           />
         </div>
@@ -54,6 +56,7 @@ export default function PMDealAddForm({
             name="borrowerName"
             value={form.borrowerName}
             onChange={onChange}
+            onBlur={onBlur}
             placeholder="John Smith"
           />
         </div>

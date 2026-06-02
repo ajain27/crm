@@ -16,6 +16,7 @@ import {
   formatPhone,
   findDuplicateByAddress,
   formatDate,
+  trimFieldOnBlur,
 } from "../../utils/utils";
 import { createEmptyDealForm } from "../crm/components/crmConfig";
 import LeadDetailModal from "./LeadDetailModal";
@@ -108,7 +109,8 @@ export default function PotentialLeads({
   }
 
   function handleAddressBlur(e) {
-    const duplicate = findDuplicateByAddress(leads, e.target.value);
+    trimFieldOnBlur(handleChange)(e);
+    const duplicate = findDuplicateByAddress(leads, e.target.value.trim());
     if (duplicate) {
       setFormError(`"${duplicate.address}" is already in your lead list.`);
     }
@@ -307,6 +309,7 @@ export default function PotentialLeads({
                       agentName: e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
                     }))
                   }
+                  onBlur={trimFieldOnBlur(handleChange)}
                   placeholder="Listing agent's name"
                 />
               </div>
@@ -345,6 +348,7 @@ export default function PotentialLeads({
                     sellerName: e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
                   }))
                 }
+                onBlur={trimFieldOnBlur(handleChange)}
                 placeholder="Seller's name"
               />
             </div>
@@ -360,6 +364,7 @@ export default function PotentialLeads({
                   name="url"
                   value={form.url}
                   onChange={handleChange}
+                  onBlur={trimFieldOnBlur(handleChange)}
                   placeholder="https://zillow.com/…"
                 />
               </div>
@@ -389,6 +394,7 @@ export default function PotentialLeads({
                 name="email"
                 value={form.email}
                 onChange={handleChange}
+                onBlur={trimFieldOnBlur(handleChange)}
                 placeholder="seller@email.com"
               />
             </div>

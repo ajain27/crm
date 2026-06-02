@@ -1,4 +1,5 @@
 import { useCountUp } from "../../hooks/useCountUp";
+import { trimFieldOnBlur } from "../../utils/utils";
 
 export function SimpleStat({
   icon,
@@ -99,14 +100,33 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
   );
 }
 
-function Field({ label, required, wrapperClassName = "", ...props }) {
+function Field({
+  label,
+  required,
+  wrapperClassName = "",
+  onChange,
+  onBlur,
+  ...props
+}) {
+  const trimOnBlur = trimFieldOnBlur(onChange);
+  function handleBlur(event) {
+    trimOnBlur(event);
+    onBlur?.(event);
+  }
+
   return (
     <label className={`field ${wrapperClassName}`.trim()}>
       <span>
         {label}
         {required && <span className="required-marker">*</span>}
       </span>
-      <input required={required} id={props.id || props.name} {...props} />
+      <input
+        required={required}
+        id={props.id || props.name}
+        onChange={onChange}
+        onBlur={handleBlur}
+        {...props}
+      />
     </label>
   );
 }
