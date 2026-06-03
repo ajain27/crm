@@ -128,8 +128,8 @@ function RentalDSCRTab() {
   const appraisalFees = parseCurrency(form.appraisalFees);
   const pointsCost = effectiveLoanAmount * (pointsPct / 100);
   const lenderCosts =
-    originationFees + legalFees + appraisalFees + underwritingFees;
-  const upfrontLoanCosts = pointsCost + lenderCosts;
+    pointsCost + originationFees + legalFees + appraisalFees + underwritingFees;
+  const upfrontLoanCosts = lenderCosts;
   const loanOutOfPocket = effectiveDownPayment + upfrontLoanCosts;
   const loanMortgage = calcPMT(
     interestRatePct,
@@ -609,7 +609,7 @@ function RentalDSCRTab() {
             )}
             {summary.originationFees > 0 && (
               <div>
-                <span>Origination Fees</span>
+                <span>Origination Fees ({summary.originationFeesPct}%)</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={summary.originationFees}

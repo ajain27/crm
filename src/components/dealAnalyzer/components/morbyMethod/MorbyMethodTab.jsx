@@ -82,8 +82,12 @@ function MorbyMethodTab({ tab }) {
   const appraisalFees = parseCurrency(form.appraisalFees);
   const underwritingFees = parseCurrency(form.underwritingFees);
   const dscrMiscFees =
-    originationFees + legalFees + appraisalFees + underwritingFees;
-  const dscrUpfrontCosts = dscrPointsCost + dscrMiscFees;
+    dscrPointsCost +
+    originationFees +
+    legalFees +
+    appraisalFees +
+    underwritingFees;
+  const dscrUpfrontCosts = dscrMiscFees;
 
   // — Seller carryback (2nd lien promissory note)
   const sellerCarryback = parseCurrency(form.sellerCarryback);

@@ -153,7 +153,7 @@ export default function MorbyMethodSummary({ summary }) {
         )}
         {summary.originationFees > 0 && (
           <div>
-            <span>Origination Fees</span>
+            <span>Origination Fees ({summary.originationFeesPct}%)</span>
             <strong className="deal-analyzer-return-negative">
               <AnimatedAmount value={summary.originationFees} format={fmt} />
             </strong>
