@@ -1,15 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  Trash2,
-  Plus,
-  KeyRound,
-  Home,
-  DollarSign,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-import Modal from "../modal/Modal";
-import { Field, Select, SimpleStat } from "../elements/elements";
+import { Trash2, KeyRound } from "lucide-react";
+import { Select } from "../elements/elements";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import {
   formatPhone,
@@ -18,21 +9,29 @@ import {
   currency,
   findDuplicateByField,
 } from "../../utils/utils";
-import { STATE_OPTIONS } from "../../constants/stateOptions";
+import {
+  TENANT_TYPES,
+  createEmptyTenant,
+  calculateTenantTotalRent,
+  getCurrentTenant,
+  normalizeRentalForm,
+} from "./rentalUtils";
+import RentalStatsGrid from "./RentalStatsGrid";
+import RentalAddForm from "./RentalAddForm";
+import RentalEditModal from "./RentalEditModal";
 import "./RentalManagement.css";
-
-const TENANT_TYPES = ["Regular", "Section 8"];
 
 function createEmptyForm() {
   return {
     address: "",
     city: "",
     state: "",
+    purchaseDate: "",
+    monthlyMortgage: "",
+    monthlyRent: "",
     tenantName: "",
     tenantPhone: "",
     tenantEmail: "",
-    monthlyMortgage: "",
-    monthlyRent: "",
     tenantType: "Regular",
   };
 }
@@ -41,25 +40,27 @@ function isComplete(form) {
   return form.address.trim() && form.state.trim();
 }
 
-function normalizeForm(form) {
-  return {
-    address: form.address.trim(),
-    city: form.city.trim(),
-    state: form.state,
-    tenantName: form.tenantName.trim(),
-    tenantPhone: form.tenantPhone,
-    tenantEmail: form.tenantEmail.trim(),
-    monthlyMortgage: form.monthlyMortgage,
-    monthlyRent: form.monthlyRent,
-    tenantType: form.tenantType || "Regular",
-  };
-}
+const normalizeForm = normalizeRentalForm;
 
-function applyFieldChange(prev, name, value) {
-  if (name === "tenantPhone")
-    return { ...prev, tenantPhone: formatPhone(value) };
+function applyFieldChange(prev, name, value, tenantId) {
+  // Handle tenant array fields in edit form (check this first)
+  if (tenantId && prev.tenants) {
+    const updatedTenants = prev.tenants.map((t) => {
+      if (t.id !== tenantId) return t;
+      if (name === "phone") return { ...t, phone: formatPhone(value) };
+      if (name === "monthlyRent")
+        return { ...t, monthlyRent: fmtCurrencyInput(value) };
+      return { ...t, [name]: value };
+    });
+    return { ...prev, tenants: updatedTenants };
+  }
+  // Handle form-level fields
   if (name === "monthlyMortgage" || name === "monthlyRent") {
     return { ...prev, [name]: fmtCurrencyInput(value) };
+  }
+  // Handle single tenant phone field in add form
+  if (name === "tenantPhone") {
+    return { ...prev, tenantPhone: formatPhone(value) };
   }
   return { ...prev, [name]: value };
 }
@@ -71,7 +72,7 @@ export default function RentalManagement({
   deleteRentalById,
 }) {
   const [rentals, setRentals] = useState([]);
-  const [form, setForm] = useState(createEmptyForm);
+  const [form, setForm] = useState(createEmptyForm());
   const [addressError, setAddressError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -94,7 +95,8 @@ export default function RentalManagement({
   function handleChange(e) {
     const { name, value } = e.target;
     if (name === "address") setAddressError("");
-    setForm((p) => applyFieldChange(p, name, value));
+    const tenantId = e.target.dataset.tenantId;
+    setForm((p) => applyFieldChange(p, name, value, tenantId));
   }
 
   function handleAddressBlur(e) {
@@ -113,7 +115,7 @@ export default function RentalManagement({
         id: crypto.randomUUID(),
         userId: currentUser?.id || "",
         createdAt: new Date().toISOString(),
-        ...normalizeForm(form),
+        ...normalizeForm(form, true),
       };
       await saveRental(rental);
       setRentals((p) => [rental, ...p]);
@@ -133,16 +135,38 @@ export default function RentalManagement({
 
   function openEdit(rental) {
     setEditingRental(rental);
+
+    // Handle tenants - support both new format (tenants array) and old format (property-level fields)
+    let tenants = rental.tenants;
+    if (!tenants || tenants.length === 0) {
+      // Create tenant from property-level fields (backward compatibility)
+      if (rental.tenantName || rental.tenantPhone || rental.tenantEmail) {
+        tenants = [
+          {
+            id: crypto.randomUUID(),
+            name: rental.tenantName || "",
+            phone: rental.tenantPhone || "",
+            email: rental.tenantEmail || "",
+            type: rental.tenantType || "Regular",
+            monthlyRent: rental.monthlyRent || "",
+            leaseStartDate: "",
+            leaseEndDate: "",
+            isCurrent: true,
+          },
+        ];
+      } else {
+        tenants = [createEmptyTenant()];
+      }
+    }
+
     setEditForm({
       address: rental.address || "",
       city: rental.city || "",
       state: rental.state || "",
-      tenantName: rental.tenantName || "",
-      tenantPhone: rental.tenantPhone || "",
-      tenantEmail: rental.tenantEmail || "",
+      purchaseDate: rental.purchaseDate || "",
       monthlyMortgage: rental.monthlyMortgage || "",
       monthlyRent: rental.monthlyRent || "",
-      tenantType: rental.tenantType || "Regular",
+      tenants,
     });
   }
 
@@ -153,14 +177,29 @@ export default function RentalManagement({
 
   function handleEditChange(e) {
     const { name, value } = e.target;
-    setEditForm((p) => applyFieldChange(p, name, value));
+    const tenantId = e.target.dataset.tenantId;
+    setEditForm((p) => applyFieldChange(p, name, value, tenantId));
+  }
+
+  function handleEditAddTenant() {
+    setEditForm((p) => ({
+      ...p,
+      tenants: [...p.tenants, createEmptyTenant()],
+    }));
+  }
+
+  function handleEditRemoveTenant(tenantId) {
+    setEditForm((p) => ({
+      ...p,
+      tenants: p.tenants.filter((t) => t.id !== tenantId),
+    }));
   }
 
   async function handleEditSave() {
     if (!editingRental) return;
     setEditSaving(true);
     try {
-      const updated = { ...editingRental, ...normalizeForm(editForm) };
+      const updated = { ...editingRental, ...normalizeForm(editForm, false) };
       await saveRental(updated);
       setRentals((p) => p.map((r) => (r.id === updated.id ? updated : r)));
       closeEdit();
@@ -202,14 +241,23 @@ export default function RentalManagement({
     return rentals.filter((r) => {
       if (filterState !== "All" && r.state !== filterState) return false;
       if (filterCity !== "All" && r.city !== filterCity) return false;
-      if (
-        filterTenantType !== "All" &&
-        (r.tenantType || "Regular") !== filterTenantType
-      )
-        return false;
+      if (filterTenantType !== "All") {
+        const currentTenant = getCurrentTenant(r.tenants);
+        if (
+          !currentTenant ||
+          (currentTenant.type || "Regular") !== filterTenantType
+        )
+          return false;
+      }
       if (term) {
+        const tenantNames = (r.tenants || [])
+          .map((t) => t.name || "")
+          .join(" ");
+        const tenantEmails = (r.tenants || [])
+          .map((t) => t.email || "")
+          .join(" ");
         const haystack =
-          `${r.address || ""} ${r.tenantName || ""} ${r.tenantEmail || ""}`.toLowerCase();
+          `${r.address || ""} ${tenantNames} ${tenantEmails}`.toLowerCase();
         if (!haystack.includes(term)) return false;
       }
       return true;
@@ -229,21 +277,72 @@ export default function RentalManagement({
     setSearch("");
   }
 
-  const totalRent = filtered.reduce(
-    (sum, r) => sum + parseCurrency(r.monthlyRent),
-    0,
-  );
+  // Calculate stats using current tenant for each property
+  const totalRent = filtered.reduce((sum, r) => {
+    const currentTenant = getCurrentTenant(r.tenants);
+    // Use tenant's rent if available, otherwise fall back to property-level rent
+    const tenantRent = parseCurrency(
+      currentTenant?.monthlyRent || r.monthlyRent || "0",
+    );
+    return sum + tenantRent;
+  }, 0);
+
   const totalMortgage = filtered.reduce(
     (sum, r) => sum + parseCurrency(r.monthlyMortgage),
     0,
   );
   const netCashflow = totalRent - totalMortgage;
-  const section8Count = filtered.filter(
-    (r) => r.tenantType === "Section 8",
-  ).length;
-  const regularCount = filtered.filter(
-    (r) => (r.tenantType || "Regular") === "Regular",
-  ).length;
+  const section8Count = filtered.filter((r) => {
+    const currentTenant = getCurrentTenant(r.tenants);
+    return currentTenant && currentTenant.type === "Section 8";
+  }).length;
+  const regularCount = filtered.filter((r) => {
+    const currentTenant = getCurrentTenant(r.tenants);
+    return currentTenant && (currentTenant.type || "Regular") === "Regular";
+  }).length;
+
+  // Accumulated gross rent collected across all tenants in filtered properties
+  const accumulatedRentCollected = filtered.reduce((sum, r) => {
+    return (
+      sum +
+      (r.tenants || []).reduce((tenantSum, tenant) => {
+        return tenantSum + calculateTenantTotalRent(tenant, r.monthlyRent);
+      }, 0)
+    );
+  }, 0);
+
+  // Total rent across all rentals (unfiltered, current tenants only)
+  const totalRentAllProperties = rentals.reduce((sum, r) => {
+    const currentTenant = getCurrentTenant(r.tenants);
+    // Use tenant's rent if available, otherwise fall back to property-level rent
+    const tenantRent = parseCurrency(
+      currentTenant?.monthlyRent || r.monthlyRent || "0",
+    );
+    return sum + tenantRent;
+  }, 0);
+
+  // Net rent across all properties: (monthly rent - monthly mortgage) × months since purchase
+  const netCashflowAllProperties = rentals.reduce((sum, r) => {
+    const purchaseDate = r.purchaseDate;
+    if (!purchaseDate) return sum;
+
+    const startDate = new Date(purchaseDate + "T00:00:00");
+    const endDate = new Date();
+
+    // Calculate months from purchase date to today
+    const months =
+      (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+      (endDate.getMonth() - startDate.getMonth()) +
+      1;
+
+    const monthlyRent = parseCurrency(
+      totalRentAllProperties > 0 ? r.monthlyRent : "0",
+    );
+    const monthlyMortgage = parseCurrency(r.monthlyMortgage || "0");
+    const monthlyNet = monthlyRent - monthlyMortgage;
+
+    return sum + monthlyNet * Math.max(1, months);
+  }, 0);
 
   const statsSubtitle = hasActiveFilters ? "Current filters" : "All properties";
 
@@ -257,172 +356,29 @@ export default function RentalManagement({
       </header>
 
       {/* ── Stats ────────────────────────────────────────── */}
-      <section
-        className="stats-grid"
-        data-reveal-group
-        style={{ "--reveal-delay": "60ms" }}
-      >
-        <SimpleStat
-          icon={<Home size={20} />}
-          label="Properties"
-          subtitle={statsSubtitle}
-          value={filtered.length}
-          colorTheme="green"
-        />
-        <SimpleStat
-          icon={<DollarSign size={20} />}
-          label="Monthly Rent"
-          subtitle={statsSubtitle}
-          numericValue={totalRent}
-          format={currency}
-          colorTheme="green"
-        />
-        <SimpleStat
-          icon={<DollarSign size={20} />}
-          label="Monthly Mortgage"
-          subtitle={statsSubtitle}
-          numericValue={totalMortgage}
-          format={currency}
-          colorTheme="orange"
-        />
-        <SimpleStat
-          icon={<TrendingUp size={20} />}
-          label="Net Cashflow"
-          subtitle="Rent − mortgage"
-          numericValue={netCashflow}
-          format={currency}
-          colorTheme={netCashflow < 0 ? "red" : "green"}
-          valueClassName={netCashflow < 0 ? "rm-negative" : undefined}
-        />
-        <SimpleStat
-          icon={<Users size={20} />}
-          label="Section 8"
-          subtitle={statsSubtitle}
-          value={section8Count}
-          colorTheme="orange"
-        />
-        <SimpleStat
-          icon={<Users size={20} />}
-          label="Regular"
-          subtitle={statsSubtitle}
-          value={regularCount}
-          colorTheme="green"
-        />
-      </section>
+      <RentalStatsGrid
+        propertiesCount={filtered.length}
+        totalRent={totalRent}
+        totalMortgage={totalMortgage}
+        netCashflow={netCashflow}
+        section8Count={section8Count}
+        regularCount={regularCount}
+        totalRentAllProperties={totalRentAllProperties}
+        netCashflowAllProperties={netCashflowAllProperties}
+        accumulatedRentCollected={accumulatedRentCollected}
+        statsSubtitle={statsSubtitle}
+      />
 
       {/* ── Add form ─────────────────────────────────────── */}
-      <section
-        className="panel"
-        data-reveal="left"
-        style={{ "--reveal-delay": "120ms" }}
-      >
-        <div className="panel-header">
-          <div>
-            <h2>Add Rental Property</h2>
-            <p>Property address and state are required.</p>
-          </div>
-        </div>
-
-        <form className="add-form" onSubmit={handleAdd}>
-          <Field
-            label="Property Address"
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-            onBlur={handleAddressBlur}
-            placeholder="123 Main St"
-            required
-          />
-          <Field
-            label="City"
-            name="city"
-            value={form.city}
-            onChange={handleChange}
-            placeholder="Austin"
-          />
-          <label className="field">
-            <span>
-              State <span className="required-marker">*</span>
-            </span>
-            <select name="state" value={form.state} onChange={handleChange}>
-              {STATE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Type of Tenant</span>
-            <select
-              name="tenantType"
-              value={form.tenantType}
-              onChange={handleChange}
-            >
-              {TENANT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <Field
-            label="Tenant Name"
-            name="tenantName"
-            value={form.tenantName}
-            onChange={handleChange}
-            placeholder="John Smith"
-          />
-          <Field
-            label="Tenant Phone"
-            name="tenantPhone"
-            value={form.tenantPhone}
-            onChange={handleChange}
-            placeholder="555-867-5309"
-            maxLength={12}
-          />
-          <Field
-            label="Tenant Email"
-            name="tenantEmail"
-            type="email"
-            value={form.tenantEmail}
-            onChange={handleChange}
-            placeholder="john@example.com"
-          />
-          <Field
-            label="Monthly Rent"
-            name="monthlyRent"
-            value={form.monthlyRent}
-            onChange={handleChange}
-            placeholder="$2,000"
-            inputMode="numeric"
-          />
-          <Field
-            label="Monthly Mortgage"
-            name="monthlyMortgage"
-            value={form.monthlyMortgage}
-            onChange={handleChange}
-            placeholder="$1,200"
-            inputMode="numeric"
-          />
-
-          {addressError && (
-            <span className="field-error rm-address-error">{addressError}</span>
-          )}
-
-          <div className="rm-submit-row">
-            <button
-              className="primary-btn"
-              type="submit"
-              disabled={!isComplete(form) || !!addressError || saving}
-            >
-              <Plus size={14} />
-              {saving ? "Saving…" : "Add Property"}
-            </button>
-          </div>
-        </form>
-      </section>
+      <RentalAddForm
+        form={form}
+        onChange={handleChange}
+        onBlur={handleAddressBlur}
+        onSubmit={handleAdd}
+        addressError={addressError}
+        saving={saving}
+        isComplete={isComplete}
+      />
 
       {/* ── Filters + table ──────────────────────────────── */}
       <section
@@ -506,6 +462,7 @@ export default function RentalManagement({
                   <th>Rent</th>
                   <th>Mortgage</th>
                   <th>Cashflow</th>
+                  <th>Accumulated Rent</th>
                   <th></th>
                 </tr>
               </thead>
@@ -514,11 +471,23 @@ export default function RentalManagement({
                   const cashflow =
                     parseCurrency(rental.monthlyRent) -
                     parseCurrency(rental.monthlyMortgage);
+                  const currentTenant = getCurrentTenant(rental.tenants);
+                  const hasMultipleTenants = (rental.tenants || []).length > 1;
+                  const propertyAccumulatedRent = (rental.tenants || []).reduce(
+                    (sum, tenant) => {
+                      return (
+                        sum +
+                        calculateTenantTotalRent(tenant, rental.monthlyRent)
+                      );
+                    },
+                    0,
+                  );
                   return (
                     <tr
                       key={rental.id}
                       className="rm-row"
                       onClick={() => openEdit(rental)}
+                      data-status={hasMultipleTenants ? "multiple-tenants" : ""}
                     >
                       <td className="rm-name">{rental.address}</td>
                       <td className="rm-muted">{rental.city || "—"}</td>
@@ -527,18 +496,31 @@ export default function RentalManagement({
                           {rental.state || "—"}
                         </span>
                       </td>
-                      <td>{rental.tenantName || "—"}</td>
-                      <td className="rm-muted">{rental.tenantPhone || "—"}</td>
-                      <td className="rm-muted">{rental.tenantEmail || "—"}</td>
+                      <td>
+                        <div className="rm-tenant-display">
+                          <span>{currentTenant?.name || "—"}</span>
+                          {hasMultipleTenants && !currentTenant?.isCurrent && (
+                            <span className="rm-previous-tenant">
+                              Previous Tenant
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="rm-muted">
+                        {currentTenant?.phone || "—"}
+                      </td>
+                      <td className="rm-muted">
+                        {currentTenant?.email || "—"}
+                      </td>
                       <td>
                         <span
                           className={`rm-type-badge${
-                            rental.tenantType === "Section 8"
+                            currentTenant?.type === "Section 8"
                               ? " rm-type-badge--section8"
                               : ""
                           }`}
                         >
-                          {rental.tenantType || "Regular"}
+                          {currentTenant?.type || "Regular"}
                         </span>
                       </td>
                       <td>{currency(parseCurrency(rental.monthlyRent))}</td>
@@ -547,6 +529,9 @@ export default function RentalManagement({
                         className={cashflow < 0 ? "rm-negative" : "rm-positive"}
                       >
                         {currency(cashflow)}
+                      </td>
+                      <td className="rm-positive">
+                        {currency(propertyAccumulatedRent)}
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <button
@@ -567,116 +552,17 @@ export default function RentalManagement({
       </section>
 
       {/* ── Edit modal ───────────────────────────────────── */}
-      <Modal
+      <RentalEditModal
         isOpen={!!editingRental}
+        editingRental={editingRental}
+        editForm={editForm}
+        editSaving={editSaving}
+        onChange={handleEditChange}
+        onAddTenant={handleEditAddTenant}
+        onRemoveTenant={handleEditRemoveTenant}
         onClose={closeEdit}
-        title={editingRental?.address || "Edit Rental Property"}
-        style={{ maxWidth: 560 }}
-        actions={
-          <>
-            <button className="secondary-btn" onClick={closeEdit}>
-              Cancel
-            </button>
-            <button
-              className="primary-btn"
-              onClick={handleEditSave}
-              disabled={
-                editSaving ||
-                !editForm?.address?.trim() ||
-                !editForm?.state?.trim()
-              }
-            >
-              {editSaving ? "Saving…" : "Save Changes"}
-            </button>
-          </>
-        }
-      >
-        {editForm && (
-          <div className="rm-modal-body">
-            <Field
-              label="Property Address"
-              name="address"
-              value={editForm.address}
-              onChange={handleEditChange}
-              placeholder="123 Main St"
-            />
-            <Field
-              label="City"
-              name="city"
-              value={editForm.city}
-              onChange={handleEditChange}
-              placeholder="Austin"
-            />
-            <label className="field">
-              <span>State</span>
-              <select
-                name="state"
-                value={editForm.state}
-                onChange={handleEditChange}
-              >
-                {STATE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span>Type of Tenant</span>
-              <select
-                name="tenantType"
-                value={editForm.tenantType}
-                onChange={handleEditChange}
-              >
-                {TENANT_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Field
-              label="Tenant Name"
-              name="tenantName"
-              value={editForm.tenantName}
-              onChange={handleEditChange}
-              placeholder="John Smith"
-            />
-            <Field
-              label="Tenant Phone"
-              name="tenantPhone"
-              value={editForm.tenantPhone}
-              onChange={handleEditChange}
-              placeholder="555-867-5309"
-              maxLength={12}
-            />
-            <Field
-              label="Tenant Email"
-              name="tenantEmail"
-              type="email"
-              value={editForm.tenantEmail}
-              onChange={handleEditChange}
-              placeholder="john@example.com"
-            />
-            <Field
-              label="Monthly Rent"
-              name="monthlyRent"
-              value={editForm.monthlyRent}
-              onChange={handleEditChange}
-              placeholder="$2,000"
-              inputMode="numeric"
-            />
-            <Field
-              label="Monthly Mortgage"
-              name="monthlyMortgage"
-              value={editForm.monthlyMortgage}
-              onChange={handleEditChange}
-              placeholder="$1,200"
-              inputMode="numeric"
-            />
-          </div>
-        )}
-      </Modal>
+        onSave={handleEditSave}
+      />
     </>
   );
 }

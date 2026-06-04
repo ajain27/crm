@@ -136,7 +136,7 @@ export default function PMDealsTable({
           <p>No deals match your filters.</p>
         </div>
       ) : (
-        <div className="table-wrap" style={{ overflowX: "auto" }}>
+        <div className="table-wrap">
           <table className="compact-table">
             <thead>
               <tr>

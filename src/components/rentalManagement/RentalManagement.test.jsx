@@ -21,24 +21,40 @@ const sampleRentals = [
     address: "111 A St",
     city: "Austin",
     state: "TX",
-    tenantName: "Reg Tenant",
-    tenantPhone: "555-111-2222",
-    tenantEmail: "reg@example.com",
-    tenantType: "Regular",
     monthlyRent: "$2,000",
     monthlyMortgage: "$1,000",
+    tenants: [
+      {
+        id: "t1",
+        name: "Reg Tenant",
+        phone: "555-111-2222",
+        email: "reg@example.com",
+        type: "Regular",
+        leaseStartDate: "2024-01-01",
+        leaseEndDate: "2025-12-31",
+        isCurrent: true,
+      },
+    ],
   },
   {
     id: "r2",
     address: "222 B St",
     city: "Dallas",
     state: "TX",
-    tenantName: "S8 Tenant",
-    tenantPhone: "555-333-4444",
-    tenantEmail: "s8@example.com",
-    tenantType: "Section 8",
     monthlyRent: "$1,500",
     monthlyMortgage: "$900",
+    tenants: [
+      {
+        id: "t2",
+        name: "S8 Tenant",
+        phone: "555-333-4444",
+        email: "s8@example.com",
+        type: "Section 8",
+        leaseStartDate: "2023-06-01",
+        leaseEndDate: "2024-12-31",
+        isCurrent: true,
+      },
+    ],
   },
 ];
 
@@ -78,7 +94,7 @@ describe("RentalManagement", () => {
     expect(saveRental.mock.calls[0][0]).toMatchObject({
       address: "500 Oak Ave",
       state: "TX",
-      tenantType: "Regular",
+      tenants: expect.any(Array),
     });
   });
 
