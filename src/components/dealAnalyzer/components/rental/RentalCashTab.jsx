@@ -18,6 +18,7 @@ const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "yearlyTaxes",
   "annualMiscExpense",
+  "sellerCredit",
 ]);
 
 const PERCENT_FIELDS = new Set(["agentCommission", "titleFees"]);
@@ -26,6 +27,7 @@ const initialForm = {
   purchasePrice: "",
   agentCommission: "",
   titleFees: "",
+  sellerCredit: "",
   monthlyRent: "",
   yearlyInsurance: "",
   yearlyTaxes: "",
@@ -64,6 +66,7 @@ function RentalCashTab() {
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
+  const sellerCredit = parseCurrency(form.sellerCredit);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const yearlyInsurance = parseCurrency(form.yearlyInsurance);
   const yearlyTaxes = parseCurrency(form.yearlyTaxes);
@@ -87,7 +90,8 @@ function RentalCashTab() {
     yearlyInsurance +
     yearlyTaxes +
     agentCommissionAmt +
-    INSPECTION_COST;
+    INSPECTION_COST -
+    sellerCredit;
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
@@ -103,6 +107,7 @@ function RentalCashTab() {
       closingCosts,
       titleFeesPct,
       titleFees,
+      sellerCredit,
       monthlyRent,
       propMgmtFee,
       firstMonthPropMgmtFee,
@@ -191,6 +196,13 @@ function RentalCashTab() {
             <input value={fmt(titleFees)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Seller Credit"
+          name="sellerCredit"
+          value={form.sellerCredit}
+          onChange={handleChange}
+          placeholder="e.g. $5,000"
+        />
       </div>
 
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
@@ -358,6 +370,14 @@ function RentalCashTab() {
                 <span>Title Fees ({summary.titleFeesPct}%)</span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount value={summary.titleFees} format={fmt} />
+                </strong>
+              </div>
+            )}
+            {summary.sellerCredit > 0 && (
+              <div>
+                <span>Seller Credit</span>
+                <strong className="deal-analyzer-return-positive">
+                  -<AnimatedAmount value={summary.sellerCredit} format={fmt} />
                 </strong>
               </div>
             )}
