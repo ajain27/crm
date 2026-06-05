@@ -191,6 +191,7 @@ function Wholesale() {
             .length;
         })()}
         onBellClick={() => setActiveView("leads")}
+        onLockedTabClick={() => {}}
       />
       <main className="main">
         {!bannerDismissed &&

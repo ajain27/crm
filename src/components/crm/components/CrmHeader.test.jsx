@@ -22,6 +22,7 @@ const baseProps = (overrides = {}) => ({
   profileMenuRef: { current: null },
   dueLeadsCount: 0,
   onBellClick: vi.fn(),
+  onLockedTabClick: vi.fn(),
   ...overrides,
 });
 
@@ -39,8 +40,8 @@ describe("CrmHeader", () => {
   it("calls setActiveView when a nav item is clicked", () => {
     const setActiveView = vi.fn();
     render(<CrmHeader {...baseProps({ setActiveView })} />);
-    fireEvent.click(screen.getByRole("button", { name: /Buyers List/i }));
-    expect(setActiveView).toHaveBeenCalledWith("buyers");
+    fireEvent.click(screen.getByRole("button", { name: /Potential Leads/i }));
+    expect(setActiveView).toHaveBeenCalledWith("leads");
   });
 
   it("renders initial 'J' avatar fallback when no image", () => {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   BarChart3,
   Calculator,
@@ -11,19 +12,97 @@ import {
   Building2,
   KeyRound,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
+
+function LockedTabModal({ tabId, onUnlock, onClose }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    // Simulate password verification - in a real app, this would call an API
+    setTimeout(() => {
+      // Accept any non-empty password for now (you can customize this)
+      if (password.trim()) {
+        onUnlock(tabId);
+      } else {
+        setError("Please enter a password");
+      }
+      setLoading(false);
+    }, 500);
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Access Restricted</h2>
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="locked-tab-form">
+          <p>
+            This section requires authentication. Please enter your password to
+            continue.
+          </p>
+          <label className="field">
+            <span>Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              autoFocus
+              disabled={loading}
+            />
+          </label>
+          {error && <span className="field-error">{error}</span>}
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="primary-btn" disabled={loading}>
+              {loading ? "Verifying…" : "Unlock"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
   { id: "leads", label: "Potential Leads", icon: Crosshair },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
-  { id: "pm-deals", label: "PM Deals", icon: Landmark },
+  { id: "pm-deals", label: "PM Deals", icon: Landmark, locked: true },
   { id: "title-companies", label: "Title Companies", icon: Building2 },
-  { id: "rental-management", label: "Rental Management", icon: KeyRound },
+  {
+    id: "rental-management",
+    label: "Rental Management",
+    icon: KeyRound,
+    locked: true,
+  },
   { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
-  { id: "buyers", label: "Buyers List", icon: Users },
+  { id: "buyers", label: "Buyers List", icon: Users, locked: true },
 ];
 
 function buildDisplayName(currentUser) {
@@ -60,10 +139,12 @@ function CrmHeader({
   profileMenuRef,
   dueLeadsCount,
   onBellClick,
+  onLockedTabClick,
 }) {
   const displayName = buildDisplayName(currentUser);
   const profileInitial = buildProfileInitial(currentUser);
   const primeRate = usePrimeRate();
+  const [lockedTabId, setLockedTabId] = useState(null);
 
   const primeTooltip = primeRate.asOf
     ? `US prime rate as of ${primeRate.asOf}${
@@ -169,18 +250,40 @@ function CrmHeader({
       </div>
 
       <div className="app-topbar-nav">
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+        {NAV_ITEMS.map(({ id, label, icon: Icon, locked }) => (
           <button
             key={id}
             type="button"
-            className={`app-topbar-nav-item${activeView === id ? " active" : ""}`}
-            onClick={() => setActiveView(id)}
+            className={`app-topbar-nav-item${activeView === id ? " active" : ""}${locked ? " locked" : ""}`}
+            onClick={() => {
+              if (locked && !currentUser?.isAdmin) {
+                setLockedTabId(id);
+                onLockedTabClick?.(id);
+              } else {
+                setActiveView(id);
+              }
+            }}
+            title={
+              locked && !currentUser?.isAdmin ? "Locked - Click to unlock" : ""
+            }
           >
             <Icon size={14} />
             {label}
+            {locked && !currentUser?.isAdmin && <Lock size={12} />}
           </button>
         ))}
       </div>
+
+      {lockedTabId && !currentUser?.isAdmin && (
+        <LockedTabModal
+          tabId={lockedTabId}
+          onUnlock={(tabId) => {
+            setLockedTabId(null);
+            setActiveView(tabId);
+          }}
+          onClose={() => setLockedTabId(null)}
+        />
+      )}
     </div>
   );
 }
