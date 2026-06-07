@@ -650,7 +650,7 @@
     border-radius: 0.5rem;
     border: 1px solid var(--line);
     background: transparent;
-    padding: 0.5rem 0.625rem;
+    padding: 0.75rem 1rem;
     font-size: 0.875rem;
     color: var(--text);
     outline: none;
