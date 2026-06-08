@@ -7,7 +7,6 @@ import NovationTab from "./novation/NovationTab";
 import RentalTab from "./rental/RentalTab";
 import FindCompsTab from "./findComps/FindCompsTab";
 import MorbyMethodTab from "./morbyMethod/MorbyMethodTab";
-import PMDealsTab from "../../pmDeals/PMDealsTab";
 
 const analyzerTabs = [
   {
@@ -115,30 +114,9 @@ const analyzerTabs = [
       "Verify DSCR ratio and cash-on-cash return targets",
     ],
   },
-  {
-    id: "pm-deals",
-    label: "PM Deals",
-    eyebrow: "Private Money",
-    title: "Private money deal tracker",
-    description:
-      "Track borrower details and loan terms. Late interest accrues automatically day by day after the due date.",
-    prompts: [
-      "Verify borrower's ability to repay at maturity",
-      "Confirm lien position and collateral value cover the loan",
-      "Late interest compounds daily — follow up before the due date",
-    ],
-  },
 ];
 
-function DealAnalyzer({
-  currentUser,
-  fetchPmDeals,
-  savePmDeal,
-  deletePmDealById,
-  savePmDealFile,
-  fetchPmDealFile,
-  deletePmDealFileById,
-}) {
+function DealAnalyzer() {
   const [activeTab, setActiveTab] = useState("find-comps");
   const currentTab =
     analyzerTabs.find((tab) => tab.id === activeTab) || analyzerTabs[0];
@@ -188,18 +166,6 @@ function DealAnalyzer({
           {activeTab === "rental" && <RentalTab tab={currentTab} />}
           {activeTab === "find-comps" && <FindCompsTab tab={currentTab} />}
           {activeTab === "morby-method" && <MorbyMethodTab tab={currentTab} />}
-          {activeTab === "pm-deals" && (
-            <PMDealsTab
-              tab={currentTab}
-              currentUser={currentUser}
-              fetchPmDeals={fetchPmDeals}
-              savePmDeal={savePmDeal}
-              deletePmDealById={deletePmDealById}
-              savePmDealFile={savePmDealFile}
-              fetchPmDealFile={fetchPmDealFile}
-              deletePmDealFileById={deletePmDealFileById}
-            />
-          )}
         </div>
       </section>
     </>

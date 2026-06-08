@@ -26,7 +26,7 @@
   }
 
   .deal-analyzer-hero {
-    @apply rounded-[24px] border p-6;
+    @apply w-full rounded-[24px] border p-6;
     background:
       radial-gradient(
         circle at top right,
@@ -77,7 +77,7 @@
   }
 
   .deal-analyzer-form {
-    @apply rounded-[24px] border bg-app-panel;
+    @apply w-full rounded-[24px] border bg-app-panel;
     border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
   }
 

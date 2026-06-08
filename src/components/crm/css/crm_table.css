@@ -34,7 +34,7 @@
 
   table {
     @apply w-full border-collapse;
-    min-width: 1400px;
+    min-width: 1900px;
   }
 
   th {

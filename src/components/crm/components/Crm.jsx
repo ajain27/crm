@@ -369,15 +369,7 @@ function Wholesale() {
         ) : activeView === "mortgage" ? (
           <MortgageCalculator />
         ) : (
-          <DealAnalyzer
-            currentUser={currentUser}
-            fetchPmDeals={fetchPmDeals}
-            savePmDeal={savePmDeal}
-            deletePmDealById={deletePmDealById}
-            savePmDealFile={savePmDealFile}
-            fetchPmDealFile={fetchPmDealFile}
-            deletePmDealFileById={deletePmDealFileById}
-          />
+          <DealAnalyzer />
         )}
         <footer
           className="app-footer"

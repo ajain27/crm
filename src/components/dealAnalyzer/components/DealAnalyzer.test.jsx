@@ -25,9 +25,6 @@ vi.mock("./findComps/FindCompsTab", () => ({
 vi.mock("./morbyMethod/MorbyMethodTab", () => ({
   default: () => <div>morby-stub</div>,
 }));
-vi.mock("../../pmDeals/PMDealsTab", () => ({
-  default: () => <div>pm-deals-stub</div>,
-}));
 
 const { default: DealAnalyzer } = await import("./DealAnalyzer");
 
@@ -75,11 +72,5 @@ describe("DealAnalyzer", () => {
         .getByRole("tab", { name: "Wholesale" })
         .getAttribute("aria-selected"),
     ).toBe("false");
-  });
-
-  it("renders PM Deals tab with passed props", () => {
-    render(<DealAnalyzer currentUser={{ id: "u1" }} />);
-    fireEvent.click(screen.getByRole("tab", { name: /PM Deals/i }));
-    expect(screen.getByText("pm-deals-stub")).toBeInTheDocument();
   });
 });
