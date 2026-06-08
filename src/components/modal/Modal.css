@@ -1,27 +1,41 @@
 @layer components {
   .modal-overlay {
-    @apply fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/40 backdrop-blur-[4px];
+    @apply fixed inset-0 z-[9999] bg-slate-900/40 backdrop-blur-[4px];
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 3rem 1rem;
+    justify-content: center;
+    padding: 0.5rem;
+    overflow: hidden;
   }
 
   .modal {
-    @apply w-[90%] rounded-2xl bg-app-panel p-6 shadow-app-panel;
-    margin: 0 auto;
+    @apply w-[90%] rounded-2xl bg-app-panel shadow-app-panel;
+    padding: 1rem;
+    margin: 0;
+    height: 96vh;
+    max-height: 96vh;
+    display: flex;
+    flex-direction: column;
   }
 
   .modal-header {
-    @apply mb-6 flex items-center justify-between;
+    @apply mb-3 flex items-center justify-between gap-2 flex-shrink-0;
   }
 
   .modal-close {
-    @apply bg-transparent p-1 text-app-muted;
+    @apply bg-transparent p-0 text-app-muted flex-shrink-0;
   }
 
   .modal h2 {
-    @apply mb-4 mt-0 text-xl text-app-text;
+    @apply mt-0 text-base text-app-text;
+    margin-bottom: 0;
+  }
+
+  .modal > :not(.modal-header):not(.modal-actions) {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
   }
 
   .modal textarea {
