@@ -179,7 +179,11 @@ describe("Buyers component", () => {
       fireEvent.click(
         screen.getByRole("button", { name: /Compose Email \(1\)/i }),
       );
-      fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+
+      expect(screen.getByText(/1 buyer selected/i)).toBeInTheDocument();
+      const cancelButtons = screen.getAllByRole("button", { name: /Cancel/i });
+      const modalCancelButton = cancelButtons[cancelButtons.length - 1];
+      fireEvent.click(modalCancelButton);
 
       expect(screen.queryByText(/1 buyer selected/i)).not.toBeInTheDocument();
     });

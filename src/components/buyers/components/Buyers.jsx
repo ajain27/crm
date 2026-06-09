@@ -323,6 +323,7 @@ function Buyers({ currentUser = { id: "" } }) {
         addBuyer={addBuyer}
         form={form}
         handleChange={handleChange}
+        onCancel={() => setForm(emptyBuyerForm)}
         propertyTypes={PROPERTY_TYPES}
       />
 

@@ -2,7 +2,13 @@ import { Field } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
 import { STATE_OPTIONS } from "../../../constants/stateOptions";
 
-function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
+function BuyerForm({
+  addBuyer,
+  form,
+  handleChange,
+  onCancel,
+  propertyTypes = [],
+}) {
   function handlePhoneChange(e) {
     handleChange({
       target: { name: "phone", value: formatPhone(e.target.value) },
@@ -126,13 +132,22 @@ function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
           textarea
         />
 
-        <button
-          className="primary-btn form-btn"
-          type="submit"
-          disabled={!isFormComplete}
-        >
-          Save Buyer
-        </button>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button
+            className="secondary-btn form-btn"
+            type="button"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className="primary-btn form-btn"
+            type="submit"
+            disabled={!isFormComplete}
+          >
+            Save Buyer
+          </button>
+        </div>
       </form>
     </section>
   );
