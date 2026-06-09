@@ -79,6 +79,7 @@ function BuyerData({
               <th>City</th>
               <th>Buys</th>
               <th>Phone Number</th>
+              <th>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -86,7 +87,7 @@ function BuyerData({
             filteredBuyers.length > paginatedBuyers.length && (
               <thead>
                 <tr>
-                  <td colSpan={8} className="buyer-select-all-banner">
+                  <td colSpan={9} className="buyer-select-all-banner">
                     {selectedIds.size === filteredBuyers.length ? (
                       <>
                         All <strong>{filteredBuyers.length}</strong> buyers are
@@ -118,7 +119,7 @@ function BuyerData({
             {paginatedBuyers.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   style={{
                     textAlign: "center",
                     padding: "2rem",
@@ -279,6 +280,54 @@ function BuyerData({
                         className="ghost-btn icon-button"
                         onClick={() => startEditingField(buyer, "phone")}
                         title="Edit Phone"
+                      >
+                        <Edit2 size={16} color="var(--muted)" />
+                      </button>
+                    </div>
+                  )}
+                </td>
+                <td>
+                  {editingBuyerId === buyer.id && editingField === "notes" ? (
+                    <div className="inline-edit-row">
+                      <textarea
+                        id={`edit-notes-${buyer.id}`}
+                        className="editable-input wide"
+                        value={editFieldValue}
+                        onChange={(e) => setEditFieldValue(e.target.value)}
+                        autoFocus
+                        rows={3}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setEditingBuyerId(null);
+                            setEditingField(null);
+                          }
+                        }}
+                      />
+                      <button
+                        className="ghost-btn icon-button"
+                        onClick={() => saveField(buyer.id)}
+                        title="Save"
+                      >
+                        <Check size={16} color="var(--green)" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="field-with-action">
+                      <span
+                        className="table-text"
+                        style={{
+                          maxWidth: "120px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "block",
+                        }}
+                      >
+                        {buyer.notes || "—"}
+                      </span>
+                      <button
+                        className="ghost-btn icon-button"
+                        onClick={() => startEditingField(buyer, "notes")}
+                        title="Edit Notes"
                       >
                         <Edit2 size={16} color="var(--muted)" />
                       </button>

@@ -9,6 +9,7 @@ const emptyForm = {
   city: "",
   state: "",
   realEstateType: [],
+  notes: "",
 };
 
 describe("BuyerForm", () => {

@@ -34,7 +34,7 @@
 
   table {
     @apply w-full border-collapse;
-    min-width: 1900px;
+    min-width: auto;
   }
 
   th {
@@ -88,11 +88,11 @@
   }
 
   .compact-table th {
-    @apply px-[14px] py-3;
+    @apply px-[6px] py-3;
   }
 
   .compact-table td {
-    @apply px-[14px] py-2;
+    @apply px-[6px] py-2;
   }
 
   .compact-table .readonly-input {

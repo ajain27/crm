@@ -21,6 +21,7 @@ const emptyBuyerForm = {
   city: "",
   state: "",
   realEstateType: [],
+  notes: "",
 };
 
 function Buyers({ currentUser = { id: "" } }) {

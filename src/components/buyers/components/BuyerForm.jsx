@@ -116,6 +116,16 @@ function BuyerForm({ addBuyer, form, handleChange, propertyTypes = [] }) {
           </div>
         </div>
 
+        {/* Row 5 – Notes (full width) */}
+        <Field
+          label="Notes"
+          name="notes"
+          value={form.notes}
+          onChange={handleChange}
+          placeholder="Add any notes about this buyer..."
+          textarea
+        />
+
         <button
           className="primary-btn form-btn"
           type="submit"
