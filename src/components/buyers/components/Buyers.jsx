@@ -218,38 +218,40 @@ function Buyers({ currentUser = { id: "" } }) {
 
   const filteredBuyers = useMemo(() => {
     const query = filters.search.toLowerCase();
-    return buyers.filter((buyer) => {
-      const matchesState =
-        filters.state === "All" || buyer.state === filters.state;
-      const buyerTypes = Array.isArray(buyer.realEstateType)
-        ? buyer.realEstateType
-        : buyer.realEstateType
-          ? [buyer.realEstateType]
-          : [];
-      const matchesType =
-        filters.realEstateType === "All" ||
-        buyerTypes.includes(filters.realEstateType);
-      const matchesSearch =
-        !query ||
-        (() => {
-          const searchText = [
-            buyer.fullName,
-            buyer.email,
-            buyer.phone,
-            buyer.city,
-          ]
-            .join(" ")
-            .toLowerCase()
-            .replace(/,/g, "");
-          const searchTerms = query
-            .split(/\s+/)
-            .filter(Boolean)
-            .map((term) => term.replace(/,/g, ""));
-          return searchTerms.every((term) => searchText.includes(term));
-        })();
+    return buyers
+      .filter((buyer) => {
+        const matchesState =
+          filters.state === "All" || buyer.state === filters.state;
+        const buyerTypes = Array.isArray(buyer.realEstateType)
+          ? buyer.realEstateType
+          : buyer.realEstateType
+            ? [buyer.realEstateType]
+            : [];
+        const matchesType =
+          filters.realEstateType === "All" ||
+          buyerTypes.includes(filters.realEstateType);
+        const matchesSearch =
+          !query ||
+          (() => {
+            const searchText = [
+              buyer.fullName,
+              buyer.email,
+              buyer.phone,
+              buyer.city,
+            ]
+              .join(" ")
+              .toLowerCase()
+              .replace(/,/g, "");
+            const searchTerms = query
+              .split(/\s+/)
+              .filter(Boolean)
+              .map((term) => term.replace(/,/g, ""));
+            return searchTerms.every((term) => searchText.includes(term));
+          })();
 
-      return matchesState && matchesType && matchesSearch;
-    });
+        return matchesState && matchesType && matchesSearch;
+      })
+      .sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
   }, [buyers, filters]);
 
   const buyersWithEmail = useMemo(
