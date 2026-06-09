@@ -14,6 +14,35 @@ export function calcPMT(annualRatePct, termYears, principal) {
   return (principal * r * factor) / (factor - 1);
 }
 
+export function calcBalloonBalance(
+  annualRatePct,
+  termYears,
+  principal,
+  balloonYears,
+) {
+  if (
+    principal <= 0 ||
+    termYears <= 0 ||
+    balloonYears <= 0 ||
+    balloonYears > termYears
+  )
+    return 0;
+  if (annualRatePct <= 0) {
+    const monthlyPayment = principal / (termYears * 12);
+    const balloonMonths = balloonYears * 12;
+    return Math.max(0, principal - monthlyPayment * balloonMonths);
+  }
+  const r = annualRatePct / 100 / 12;
+  const n = termYears * 12;
+  const balloonMonths = balloonYears * 12;
+  const factor = Math.pow(1 + r, n);
+  const monthlyPayment = (principal * r * factor) / (factor - 1);
+  const balloonFactor = Math.pow(1 + r, balloonMonths);
+  const remainingBalance =
+    principal * balloonFactor - monthlyPayment * ((balloonFactor - 1) / r);
+  return Math.max(0, remainingBalance);
+}
+
 export const CURRENCY_FIELDS = new Set([
   "purchasePrice",
   "sellerCarryback",
@@ -49,6 +78,7 @@ export const initialForm = {
   sellerCarryback: "",
   sellerCarrybackRate: "",
   sellerCarrybackTermYears: "",
+  sellerCarrybackBalloonYears: "",
   monthlyRent: "",
   yearlyInsurance: "",
   yearlyTaxes: "",

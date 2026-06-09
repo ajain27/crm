@@ -109,7 +109,7 @@ describe("MorbyMethodTab", () => {
     fireEvent.change(screen.getByLabelText(/Seller Carryback Amount/i), {
       target: { value: "200000" },
     });
-    // 60k down + small upfront — 200k seller covers it
+    // 60k down + upfront costs — 200k seller carryback covers it
     expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
   });
 });

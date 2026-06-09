@@ -15,6 +15,7 @@ import {
   INSPECTION_COST,
   DSCR_LTV,
   calcPMT,
+  calcBalloonBalance,
   CURRENCY_FIELDS,
   PERCENT_FIELDS,
   initialForm,
@@ -41,7 +42,11 @@ function MorbyMethodTab({ tab }) {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
       return;
     }
-    if (name === "dscrTermYears" || name === "sellerCarrybackTermYears") {
+    if (
+      name === "dscrTermYears" ||
+      name === "sellerCarrybackTermYears" ||
+      name === "sellerCarrybackBalloonYears"
+    ) {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9]/g, "") }));
       return;
     }
@@ -94,11 +99,22 @@ function MorbyMethodTab({ tab }) {
   const sellerCarrybackRatePct = parsePercent(form.sellerCarrybackRate);
   const sellerCarrybackTermYears =
     parseInt(form.sellerCarrybackTermYears || "0", 10) || 0;
+  const sellerCarrybackBalloonYears =
+    parseInt(form.sellerCarrybackBalloonYears || "0", 10) || 0;
   const sellerCarrybackMonthly = calcPMT(
     sellerCarrybackRatePct,
     sellerCarrybackTermYears,
     sellerCarryback,
   );
+  const sellerCarrybackBalloon =
+    sellerCarrybackBalloonYears > 0
+      ? calcBalloonBalance(
+          sellerCarrybackRatePct,
+          sellerCarrybackTermYears,
+          sellerCarryback,
+          sellerCarrybackBalloonYears,
+        )
+      : 0;
 
   // — Income & expenses (insurance + taxes moved to upfront costs)
   const monthlyRent = parseCurrency(form.monthlyRent);
@@ -124,12 +140,10 @@ function MorbyMethodTab({ tab }) {
     agentCommissionAmt +
     INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
-  const sellerCovers = Math.min(sellerCarryback, totalUpfrontNeeded);
   const buyerCashToClose = Math.max(
     0,
     totalUpfrontNeeded - sellerCarryback - lenderTotal,
   );
-  const sellerExcess = Math.max(0, sellerCarryback - totalUpfrontNeeded);
 
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
   const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
@@ -180,14 +194,14 @@ function MorbyMethodTab({ tab }) {
       sellerCarryback,
       sellerCarrybackRatePct,
       sellerCarrybackTermYears,
+      sellerCarrybackBalloonYears,
+      sellerCarrybackBalloon,
       sellerCarrybackMonthly,
       lenders,
       lenderMonthlyPayment,
       lenderTotal,
       totalUpfrontNeeded,
-      sellerCovers,
       buyerCashToClose,
-      sellerExcess,
       monthlyRent,
       propMgmtFee,
       firstMonthPropMgmtFee,
@@ -269,10 +283,10 @@ function MorbyMethodTab({ tab }) {
           onBlur={handleBlur}
           sellerCarryback={sellerCarryback}
           sellerCarrybackTermYears={sellerCarrybackTermYears}
+          sellerCarrybackBalloonYears={sellerCarrybackBalloonYears}
+          sellerCarrybackBalloon={sellerCarrybackBalloon}
           sellerCarrybackMonthly={sellerCarrybackMonthly}
-          sellerCovers={sellerCovers}
           buyerCashToClose={buyerCashToClose}
-          sellerExcess={sellerExcess}
           purchasePrice={purchasePrice}
         />
 
