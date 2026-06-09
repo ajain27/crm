@@ -1,10 +1,31 @@
 import { useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
-import { parseCurrency, fmt, fmtCurrencyInput } from "../../../../utils/utils";
+import { STATE_OPTIONS } from "../../../../constants/stateOptions";
+import {
+  REHAB_OPTIONS,
+  getAutoRehabCost,
+  getRehabMultiplier,
+  parseCurrency,
+  fmt,
+  fmtCurrencyInput,
+} from "../fixAndFlip/fixAndFlipConfig";
 
-const CURRENCY_FIELDS = new Set(["arv", "wholesaleFee"]);
+const CURRENCY_FIELDS = new Set([
+  "arv",
+  "wholesaleFee",
+  "rehabCost",
+  "additionalRehabCost",
+]);
 
-const initialForm = { arv: "", wholesaleFee: "" };
+const initialForm = {
+  state: "",
+  arv: "",
+  wholesaleFee: "",
+  rehabType: "",
+  squareFootage: "",
+  rehabCost: "",
+  additionalRehabCost: "",
+};
 
 function NovationTab({ tab }) {
   const [form, setForm] = useState(initialForm);
@@ -17,18 +38,54 @@ function NovationTab({ tab }) {
       setForm((prev) => ({ ...prev, [name]: fmtCurrencyInput(value) }));
       return;
     }
+    if (name === "squareFootage") {
+      setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9]/g, "") }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   const arv = parseCurrency(form.arv);
   const wholesaleFee = parseCurrency(form.wholesaleFee);
-  const mao = arv * 0.9 - wholesaleFee;
+  const sqft = parseInt(form.squareFootage || "0", 10) || 0;
+  const rehabMultiplier = getRehabMultiplier(form.state);
+  const autoRehabResult = getAutoRehabCost(form.rehabType, sqft);
+  const autoRehabCost =
+    autoRehabResult !== null
+      ? Math.round(autoRehabResult.cost * rehabMultiplier)
+      : null;
+  const rehabCost =
+    autoRehabCost !== null ? autoRehabCost : parseCurrency(form.rehabCost);
+  const additionalRehab = parseCurrency(form.additionalRehabCost);
+  const totalRehab = rehabCost + additionalRehab;
+  const totalExpenses = wholesaleFee + totalRehab;
+  const mao = arv * 0.9 - totalExpenses;
 
-  const isFormComplete = form.arv?.trim() && form.wholesaleFee?.trim();
+  const rehabCostReady =
+    form.rehabType === "no-rehab" ||
+    autoRehabCost !== null ||
+    form.rehabCost?.trim();
+  const isManualRehab = sqft > 5500 || !form.rehabType;
+
+  const isFormComplete =
+    form.state?.trim() &&
+    form.arv?.trim() &&
+    form.wholesaleFee?.trim() &&
+    rehabCostReady;
 
   function handleCalculate() {
     if (!isFormComplete) return;
-    setSummary({ arv, wholesaleFee, mao });
+    setSummary({
+      arv,
+      wholesaleFee,
+      rehabType: form.rehabType,
+      sqft,
+      rehabCost,
+      additionalRehab,
+      totalRehab,
+      totalExpenses,
+      mao,
+    });
   }
 
   return (
@@ -60,11 +117,26 @@ function NovationTab({ tab }) {
         <div className="panel-header deal-analyzer-form-header">
           <div>
             <h2>Novation Inputs</h2>
-            <p>Enter the ARV and your wholesale fee to calculate the MAO.</p>
+            <p>
+              Enter the property location, ARV, wholesale fee, and estimated
+              rehab costs to calculate the list price profit.
+            </p>
           </div>
         </div>
 
+        {/* — Property & Deal */}
+        <div className="deal-analyzer-section-label">Property &amp; Deal</div>
         <div className="deal-analyzer-form-grid">
+          <label className="field">
+            <span>State</span>
+            <select name="state" value={form.state} onChange={handleChange}>
+              {STATE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Field
             label="ARV"
             name="arv"
@@ -80,6 +152,48 @@ function NovationTab({ tab }) {
             onChange={handleChange}
             placeholder="e.g. $10,000"
             required
+          />
+        </div>
+
+        {/* — Rehab */}
+        <div className="deal-analyzer-section-label">Rehab Scope</div>
+        <div className="deal-analyzer-form-grid">
+          <label className="field">
+            <span>Rehab Type</span>
+            <select
+              name="rehabType"
+              value={form.rehabType}
+              onChange={handleChange}
+            >
+              {REHAB_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Field
+            label="Square Footage"
+            name="squareFootage"
+            value={form.squareFootage}
+            onChange={handleChange}
+            placeholder="e.g. 2000"
+          />
+          <Field
+            label="Rehab Cost"
+            name="rehabCost"
+            value={autoRehabCost !== null ? fmt(autoRehabCost) : form.rehabCost}
+            onChange={handleChange}
+            placeholder="e.g. $50,000"
+            disabled={autoRehabCost !== null && !isManualRehab}
+            required={rehabCostReady === false}
+          />
+          <Field
+            label="Additional Rehab Costs (optional)"
+            name="additionalRehabCost"
+            value={form.additionalRehabCost}
+            onChange={handleChange}
+            placeholder="e.g. $5,000"
           />
         </div>
 
@@ -100,12 +214,12 @@ function NovationTab({ tab }) {
               className={`deal-analyzer-verdict ${summary.mao > 0 ? "deal-analyzer-verdict-positive" : "deal-analyzer-verdict-negative"}`}
             >
               <div>
-                <span>Maximum Allowable Offer (MAO)</span>
+                <span>List Price Profit Potential</span>
                 <strong>
                   <AnimatedAmount value={summary.mao} format={fmt} />
                 </strong>
               </div>
-              <strong>{summary.mao > 0 ? "Viable Deal" : "No Room"}</strong>
+              <strong>{summary.mao > 0 ? "Profitable" : "No Profit"}</strong>
             </div>
 
             <div
@@ -119,7 +233,7 @@ function NovationTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>90% of ARV </span>
+                <span>90% of ARV</span>
                 <strong>
                   <AnimatedAmount value={summary.arv * 0.9} format={fmt} />
                 </strong>
@@ -131,7 +245,19 @@ function NovationTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>MAO</span>
+                <span>Total Rehab Cost</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.totalRehab} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Total Expenses</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.totalExpenses} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>List Price Profit</span>
                 <strong
                   className={
                     summary.mao >= 0
@@ -148,10 +274,10 @@ function NovationTab({ tab }) {
               className="deal-analyzer-calculation"
               style={{ marginTop: "1rem" }}
             >
-              MAO = ARV × 90% − Wholesale Fee
+              List Price Profit = (ARV × 90%) − Wholesale Fee − Rehab Costs
               <span>
-                {fmt(summary.arv)} × 90% − {fmt(summary.wholesaleFee)} ={" "}
-                {fmt(summary.mao)}
+                ({fmt(summary.arv)} × 90%) − {fmt(summary.wholesaleFee)} −{" "}
+                {fmt(summary.totalRehab)} = {fmt(summary.mao)}
               </span>
             </div>
           </div>

@@ -14,12 +14,23 @@ const tab = {
 // 90% of ARV  = $180,000
 // MAO         = $180,000 − $10,000 = $170,000
 
-function fillFields({ arv = "200000", wholesaleFee = "10000" } = {}) {
+function fillFields({
+  state = "TX",
+  arv = "200000",
+  wholesaleFee = "10000",
+  rehabType = "no-rehab",
+} = {}) {
+  fireEvent.change(screen.getByLabelText(/^State/i), {
+    target: { value: state },
+  });
   fireEvent.change(screen.getByLabelText(/^ARV/i), {
     target: { value: arv },
   });
   fireEvent.change(screen.getByLabelText(/Wholesale Fee/i), {
     target: { value: wholesaleFee },
+  });
+  fireEvent.change(screen.getByLabelText(/Rehab Type/i), {
+    target: { value: rehabType },
   });
 }
 
@@ -45,8 +56,9 @@ describe("rendering", () => {
 
   it("does not show summary on initial render", () => {
     render(<NovationTab tab={tab} />);
+    // Check that summary section is not shown (the verdict div with profit value)
     expect(
-      screen.queryByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.queryByText(/List Price Profit Potential/i),
     ).not.toBeInTheDocument();
   });
 
@@ -97,6 +109,9 @@ describe("Calculate button", () => {
 
   it("stays disabled after only ARV is filled", () => {
     render(<NovationTab tab={tab} />);
+    fireEvent.change(screen.getByLabelText(/^State/i), {
+      target: { value: "TX" },
+    });
     fireEvent.change(screen.getByLabelText(/^ARV/i), {
       target: { value: "200000" },
     });
@@ -120,12 +135,12 @@ describe("summary calculations", () => {
   it("shows summary only after clicking Calculate MAO", () => {
     render(<NovationTab tab={tab} />);
     expect(
-      screen.queryByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.queryByText(/List Price Profit Potential/i),
     ).not.toBeInTheDocument();
     fillFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
     expect(
-      screen.getByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.getByText(/List Price Profit Potential/i),
     ).toBeInTheDocument();
   });
 
@@ -145,19 +160,19 @@ describe("summary calculations", () => {
     expect(screen.getByText("$180,000.00")).toBeInTheDocument();
   });
 
-  it("shows Viable Deal when MAO is positive", () => {
+  it("shows Profitable when MAO is positive", () => {
     render(<NovationTab tab={tab} />);
     fillFields(); // MAO = $170,000 > 0
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
-    expect(screen.getByText("Viable Deal")).toBeInTheDocument();
+    expect(screen.getByText("Profitable")).toBeInTheDocument();
   });
 
-  it("shows No Room when wholesale fee exceeds 90% of ARV", () => {
+  it("shows No Profit when wholesale fee exceeds 90% of ARV", () => {
     render(<NovationTab tab={tab} />);
     // ARV=100k → 90%=90k, fee=100k → MAO = -10k
     fillFields({ arv: "100000", wholesaleFee: "100000" });
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
-    expect(screen.getByText("No Room")).toBeInTheDocument();
+    expect(screen.getByText("No Profit")).toBeInTheDocument();
   });
 
   it("shows the formula breakdown with computed values", () => {
@@ -165,7 +180,9 @@ describe("summary calculations", () => {
     fillFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
     expect(
-      screen.getByText(/MAO = ARV × 90% − Wholesale Fee/i),
+      screen.getByText(
+        /List Price Profit = \(ARV × 90%\) − Wholesale Fee − Rehab Costs/i,
+      ),
     ).toBeInTheDocument();
     // formula line: $200,000.00 × 90% − $10,000.00 = $170,000.00
     expect(screen.getByText(/\$200,000\.00 × 90%/)).toBeInTheDocument();
@@ -176,13 +193,13 @@ describe("summary calculations", () => {
     fillFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
     expect(
-      screen.getByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.getByText(/List Price Profit Potential/i),
     ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/^ARV/i), {
       target: { value: "250000" },
     });
     expect(
-      screen.queryByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.queryByText(/List Price Profit Potential/i),
     ).not.toBeInTheDocument();
   });
 
@@ -191,13 +208,13 @@ describe("summary calculations", () => {
     fillFields();
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
     expect(
-      screen.getByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.getByText(/List Price Profit Potential/i),
     ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Wholesale Fee/i), {
       target: { value: "15000" },
     });
     expect(
-      screen.queryByText(/Maximum Allowable Offer \(MAO\)/i),
+      screen.queryByText(/List Price Profit Potential/i),
     ).not.toBeInTheDocument();
   });
 });

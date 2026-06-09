@@ -22,7 +22,6 @@ const baseProps = (overrides = {}) => ({
   profileMenuRef: { current: null },
   dueLeadsCount: 0,
   onBellClick: vi.fn(),
-  onLockedTabClick: vi.fn(),
   ...overrides,
 });
 
