@@ -169,7 +169,8 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
         if (sent < recipients.length) {
           await new Promise((r) => setTimeout(r, 300));
         }
-      } catch {
+      } catch (err) {
+        console.error(`Failed to send email to ${buyer.email}:`, err);
         errors.push(buyer.fullName || buyer.email);
       }
     }
