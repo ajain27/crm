@@ -30,6 +30,11 @@ function GoogleCalendarAuth({
         import.meta.env.VITE_CALENDAR_SERVER_URL || "http://localhost:5000";
       const apiUrl = `${serverUrl}/api/google/exchange-code`;
 
+      const basePath = window.location.pathname
+        .replace(/\/$/, "")
+        .replace(/\/[^/]*$/, "");
+      const redirectUri = `${window.location.origin}${basePath}/callback.html`;
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -37,7 +42,7 @@ function GoogleCalendarAuth({
         },
         body: JSON.stringify({
           code: code,
-          redirectUri: `${window.location.origin}/callback.html`,
+          redirectUri: redirectUri,
         }),
       });
 
@@ -74,7 +79,10 @@ function GoogleCalendarAuth({
 
     try {
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      const redirectUri = `${window.location.origin}/callback.html`;
+      const basePath = window.location.pathname
+        .replace(/\/$/, "")
+        .replace(/\/[^/]*$/, "");
+      const redirectUri = `${window.location.origin}${basePath}/callback.html`;
       const scope = encodeURIComponent(
         "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
       );
