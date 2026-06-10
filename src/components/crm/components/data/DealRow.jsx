@@ -36,14 +36,15 @@ function DealRow({
   const latestContractVersion = contractVersions[0];
 
   const isRejected =
-    deal.offerStatus === "Offer Sent" && deal.sellerAccepted === "No";
-  const isWithdrawn = deal.offerStatus === "Offer Withdrawn";
+    (deal.offerStatus || "Not Sent") === "Offer Sent" &&
+    (deal.sellerAccepted || "No") === "No";
+  const isWithdrawn = (deal.offerStatus || "Not Sent") === "Offer Withdrawn";
 
   // Expressed as a data attribute (not a className) so the row's React-controlled
   // className stays constant and never clobbers the imperatively-added
   // `is-revealed` reveal class when the deal's status changes.
   const rowStatus =
-    deal.closed === "Yes"
+    (deal.closed || "No") === "Yes"
       ? "closed"
       : isRejected
         ? "rejected"

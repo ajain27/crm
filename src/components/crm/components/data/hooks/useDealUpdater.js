@@ -41,15 +41,21 @@ export function useDealUpdater({
         return;
       }
 
-      resolvedClosedDate = window.prompt(
-        "Enter the close date (YYYY-MM-DD).",
-        deal.closedDate || "",
+      const defaultDate = deal.closedDate
+        ? deal.closedDate.split("-").reverse().join("/")
+        : "";
+      const userInput = window.prompt(
+        "Enter the close date (MM/DD/YYYY).",
+        defaultDate,
       );
-      if (!resolvedClosedDate) return;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(resolvedClosedDate)) {
-        alert("Please enter a valid close date in YYYY-MM-DD format.");
+      if (!userInput) return;
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(userInput)) {
+        alert("Please enter a valid close date in MM/DD/YYYY format.");
         return;
       }
+
+      const [month, day, year] = userInput.split("/");
+      resolvedClosedDate = `${year}-${month}-${day}`;
     }
 
     const nextDeals = deals.map((dealItem) => {
@@ -90,6 +96,7 @@ export function useDealUpdater({
           state: "All",
           propertyType: "All",
           offerAccepted: "All",
+          offerStatus: "All",
           assigned: "All",
           search: "",
           closed: "All",

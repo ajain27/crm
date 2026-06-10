@@ -79,7 +79,7 @@ describe("useDealUpdater", () => {
     });
 
     it("prompts for close date when closing", async () => {
-      vi.spyOn(window, "prompt").mockReturnValue("2026-05-20");
+      vi.spyOn(window, "prompt").mockReturnValue("05/20/2026");
       const props = makeProps();
       const { result } = renderHook(() => useDealUpdater(props));
       await act(async () => {

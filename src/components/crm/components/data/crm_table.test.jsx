@@ -93,6 +93,15 @@ describe("Wholesale_data", () => {
       />,
     );
 
+    const closedTabBtn = screen
+      .getAllByRole("button")
+      .find(
+        (btn) =>
+          btn.classList.contains("deal-tab-btn") &&
+          btn.textContent.includes("Closed"),
+      );
+    fireEvent.click(closedTabBtn);
+
     const closedDateInput = screen.getByDisplayValue("2026-04-30");
     expect(closedDateInput).toBeDisabled();
   });
@@ -152,13 +161,22 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    expect(getRenderedDealIds(container)).toEqual(["d2", "d1", "d3"]);
+    const closedTabBtn = screen
+      .getAllByRole("button")
+      .find(
+        (btn) =>
+          btn.classList.contains("deal-tab-btn") &&
+          btn.textContent.includes("Closed"),
+      );
+    fireEvent.click(closedTabBtn);
+
+    expect(getRenderedDealIds(container)).toEqual(["d2", "d1"]);
   });
 
   it("saves the entered closed date when a deal is marked closed", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
     const persist = vi.fn();
-    vi.spyOn(window, "prompt").mockReturnValue("2026-04-12");
+    vi.spyOn(window, "prompt").mockReturnValue("04/12/2026");
 
     render(
       <Wholesale_data

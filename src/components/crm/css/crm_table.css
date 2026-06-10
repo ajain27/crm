@@ -285,6 +285,22 @@
     background: color-mix(in srgb, #9a3412 24%, var(--panel) 76%) !important;
   }
 
+  [data-status="closed"] td {
+    background: color-mix(
+      in srgb,
+      var(--green) 18%,
+      var(--panel) 82%
+    ) !important;
+  }
+
+  [data-status="closed"]:hover td {
+    background: color-mix(
+      in srgb,
+      var(--green) 24%,
+      var(--panel) 76%
+    ) !important;
+  }
+
   .deal-row-actions {
     @apply flex items-center justify-center gap-1;
   }

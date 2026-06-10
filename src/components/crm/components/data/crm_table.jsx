@@ -54,14 +54,19 @@ function Wholesale_data({
 
   function isInactive(deal) {
     const isRejected =
-      deal.offerStatus === "Offer Sent" && deal.sellerAccepted === "No";
-    const isWithdrawn = deal.offerStatus === "Offer Withdrawn";
+      (deal.offerStatus || "Not Sent") === "Offer Sent" &&
+      (deal.sellerAccepted || "No") === "No";
+    const isWithdrawn = (deal.offerStatus || "Not Sent") === "Offer Withdrawn";
     return isRejected || isWithdrawn;
   }
 
-  const tabFilteredDeals = filteredDeals.filter((d) =>
-    tab === "inactive" ? isInactive(d) : !isInactive(d),
-  );
+  const isClosed = (deal) => (deal.closed || "No") === "Yes";
+
+  const tabFilteredDeals = filteredDeals.filter((d) => {
+    if (tab === "closed") return isClosed(d);
+    if (tab === "inactive") return isInactive(d) && !isClosed(d);
+    return !isInactive(d) && !isClosed(d);
+  });
 
   const {
     currentDeals,
@@ -137,8 +142,13 @@ function Wholesale_data({
     "";
   const contractMimeType = selectedContractVersion?.type || "";
 
-  const activeCount = filteredDeals.filter((d) => !isInactive(d)).length;
-  const inactiveCount = filteredDeals.filter((d) => isInactive(d)).length;
+  const activeCount = filteredDeals.filter(
+    (d) => !isInactive(d) && !isClosed(d),
+  ).length;
+  const inactiveCount = filteredDeals.filter(
+    (d) => isInactive(d) && !isClosed(d),
+  ).length;
+  const closedCount = filteredDeals.filter((d) => isClosed(d)).length;
 
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
@@ -164,6 +174,17 @@ function Wholesale_data({
         >
           Inactive
           <span className="deal-tab-count">{inactiveCount}</span>
+        </button>
+        <button
+          className={`deal-tab-btn${tab === "closed" ? " deal-tab-btn--active" : ""}`}
+          onClick={() => {
+            setTab("closed");
+            setCurrentPage(1);
+            setSelectedIds(new Set());
+          }}
+        >
+          Closed
+          <span className="deal-tab-count">{closedCount}</span>
         </button>
       </div>
 

@@ -604,25 +604,33 @@ export default function PotentialLeads({
                           )}
                         </td>
                         <td>
-                          {lead.email ? (
-                            <a
-                              href={`mailto:${lead.email}`}
-                              className="leads-contact-link"
-                            >
-                              {lead.email}
-                            </a>
+                          {lead.source !== "MLS / Zillow" ? (
+                            lead.email ? (
+                              <a
+                                href={`mailto:${lead.email}`}
+                                className="leads-contact-link"
+                              >
+                                {lead.email}
+                              </a>
+                            ) : (
+                              "—"
+                            )
                           ) : (
                             "—"
                           )}
                         </td>
                         <td>
-                          {lead.phone ? (
-                            <a
-                              href={`tel:${lead.phone}`}
-                              className="leads-contact-link"
-                            >
-                              {lead.phone}
-                            </a>
+                          {lead.source !== "MLS / Zillow" ? (
+                            lead.phone ? (
+                              <a
+                                href={`tel:${lead.phone}`}
+                                className="leads-contact-link"
+                              >
+                                {lead.phone}
+                              </a>
+                            ) : (
+                              "—"
+                            )
                           ) : (
                             "—"
                           )}
