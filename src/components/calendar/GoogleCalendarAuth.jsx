@@ -30,9 +30,10 @@ function GoogleCalendarAuth({
         import.meta.env.VITE_CALENDAR_SERVER_URL || "http://localhost:5000";
       const apiUrl = `${serverUrl}/api/google/exchange-code`;
 
-      const basePath = window.location.pathname
-        .replace(/\/$/, "")
-        .replace(/\/[^/]*$/, "");
+      const pathname = window.location.pathname;
+      const basePath = pathname.endsWith("/")
+        ? pathname.slice(0, -1)
+        : pathname;
       const redirectUri = `${window.location.origin}${basePath}/callback.html`;
 
       const response = await fetch(apiUrl, {
@@ -79,9 +80,10 @@ function GoogleCalendarAuth({
 
     try {
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      const basePath = window.location.pathname
-        .replace(/\/$/, "")
-        .replace(/\/[^/]*$/, "");
+      const pathname = window.location.pathname;
+      const basePath = pathname.endsWith("/")
+        ? pathname.slice(0, -1)
+        : pathname;
       const redirectUri = `${window.location.origin}${basePath}/callback.html`;
       const scope = encodeURIComponent(
         "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",

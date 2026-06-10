@@ -31,6 +31,8 @@ jobs:
 
       - name: Build
         env:
+          VITE_GOOGLE_CLIENT_ID: 502311578585-bf1sr1njctupjn5k8lv7mh829h78rm86.apps.googleusercontent.com
+          VITE_CALENDAR_SERVER_URL: https://crm-production-991b.up.railway.app
           VITE_FIREBASE_API_KEY: AIzaSyBqGOXZdZ_5Xc0kshufOXwZHbW2vPmOuTs
           VITE_FIREBASE_AUTH_DOMAIN: wholesale-7a3c2.firebaseapp.com
           VITE_FIREBASE_DATABASE_URL: https://wholesale-7a3c2-default-rtdb.firebaseio.com
