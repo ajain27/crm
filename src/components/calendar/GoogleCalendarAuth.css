@@ -1,0 +1,172 @@
+@layer components {
+  .google-calendar-auth {
+    padding: 1.5rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--panel) 60%, var(--blue-light) 6%);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .auth-section h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.5rem;
+    color: var(--muted);
+  }
+
+  .auth-description {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .auth-error {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, #dc2626 10%, var(--panel) 90%);
+    border: 1px solid color-mix(in srgb, #dc2626 30%, transparent 70%);
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .google-signin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: white;
+    color: #3c4043;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .google-signin-btn:hover:not(:disabled) {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    background: #f8f9fa;
+  }
+
+  .google-signin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .connected-accounts h5 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.75rem;
+    color: var(--muted);
+  }
+
+  .connected-account-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    margin-bottom: 0.5rem;
+  }
+
+  .account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .account-email {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-name {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .remove-account-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--red);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+  }
+
+  .remove-account-btn:hover {
+    background: color-mix(in srgb, var(--red) 10%, var(--panel) 90%);
+  }
+
+  .setup-guide {
+    border-top: 1px solid var(--line);
+    padding-top: 1rem;
+  }
+
+  .setup-guide h5 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.75rem;
+    color: var(--muted);
+  }
+
+  .setup-guide ol {
+    margin: 0;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .setup-guide li {
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .setup-guide a {
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .setup-guide a:hover {
+    text-decoration: underline;
+  }
+
+  .setup-guide code {
+    display: inline-block;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    font-family: "Monaco", "Courier New", monospace;
+    color: var(--blue);
+    margin: 0.25rem 0;
+    word-break: break-all;
+  }
+}

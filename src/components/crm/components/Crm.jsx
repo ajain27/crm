@@ -38,6 +38,7 @@ import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
+import FollowUpCalendar from "../../calendar/FollowUpCalendar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
@@ -71,6 +72,7 @@ function Wholesale() {
   const [activeView, setActiveView] = useState("dashboard");
   const [leads, setLeads] = useState([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -191,6 +193,7 @@ function Wholesale() {
             .length;
         })()}
         onBellClick={() => setActiveView("leads")}
+        onCalendarClick={() => setIsCalendarOpen(true)}
       />
       <main className="main">
         {!bannerDismissed &&
@@ -387,6 +390,13 @@ function Wholesale() {
         onClose={() => setIsProfileModalOpen(false)}
         onSave={handleSaveProfile}
         onProfileImageChange={handleProfileImageChange}
+      />
+      <FollowUpCalendar
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        deals={deals}
+        leads={leads}
+        currentUser={currentUser}
       />
     </div>
   );

@@ -11,6 +11,7 @@ import {
   Building2,
   KeyRound,
   TrendingUp,
+  Calendar,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
@@ -60,6 +61,7 @@ function CrmHeader({
   profileMenuRef,
   dueLeadsCount,
   onBellClick,
+  onCalendarClick,
 }) {
   const displayName = buildDisplayName(currentUser);
   const profileInitial = buildProfileInitial(currentUser);
@@ -120,6 +122,15 @@ function CrmHeader({
         </div>
         <img src={logo} alt="You Win Estates" className="app-topbar-logo" />
         <div className="app-topbar-actions">
+          <button
+            type="button"
+            className="ghost-btn header-calendar-btn"
+            onClick={onCalendarClick}
+            title="Calendar & Follow-ups"
+            aria-label="Open calendar"
+          >
+            <Calendar size={18} />
+          </button>
           <div className="profile-menu-wrap" ref={profileMenuRef}>
             <button
               type="button"
