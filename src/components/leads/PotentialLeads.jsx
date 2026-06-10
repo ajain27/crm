@@ -385,35 +385,39 @@ export default function PotentialLeads({
             />
           </div>
 
-          <div className="field">
-            <span>Email</span>
-            <div className="leads-input-icon-wrap">
-              <Mail size={15} className="leads-field-icon" />
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                onBlur={trimFieldOnBlur(handleChange)}
-                placeholder="seller@email.com"
-              />
-            </div>
-          </div>
+          {form.source !== "MLS / Zillow" && (
+            <>
+              <div className="field">
+                <span>Email</span>
+                <div className="leads-input-icon-wrap">
+                  <Mail size={15} className="leads-field-icon" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    onBlur={trimFieldOnBlur(handleChange)}
+                    placeholder="seller@email.com"
+                  />
+                </div>
+              </div>
 
-          <div className="field">
-            <span>Phone</span>
-            <div className="leads-input-icon-wrap">
-              <Phone size={15} className="leads-field-icon" />
-              <input
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={handlePhoneChange}
-                placeholder="555-000-0000"
-                maxLength={12}
-              />
-            </div>
-          </div>
+              <div className="field">
+                <span>Phone</span>
+                <div className="leads-input-icon-wrap">
+                  <Phone size={15} className="leads-field-icon" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handlePhoneChange}
+                    placeholder="555-000-0000"
+                    maxLength={12}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="field leads-notes-field">
             <span>Notes</span>
