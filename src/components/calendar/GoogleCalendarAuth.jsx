@@ -25,10 +25,11 @@ function GoogleCalendarAuth({
   const exchangeCodeForToken = async (code) => {
     setError("");
     try {
-      // Use server URL (localhost in dev, Railway URL in prod)
-      const serverUrl =
-        import.meta.env.VITE_CALENDAR_SERVER_URL || "http://localhost:5000";
-      const apiUrl = `${serverUrl}/api/google/exchange-code`;
+      // Use relative URLs in production (Vercel), localhost in dev
+      const apiUrl =
+        import.meta.env.MODE === "production"
+          ? "/api/exchange-code"
+          : "http://localhost:5000/api/exchange-code";
 
       const pathname = window.location.pathname;
       const basePath = pathname.endsWith("/")
