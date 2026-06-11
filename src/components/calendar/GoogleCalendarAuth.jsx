@@ -143,35 +143,6 @@ function GoogleCalendarAuth({
           ))}
         </div>
       )}
-
-      <div className="setup-guide">
-        <h5>Setup Instructions</h5>
-        <ol>
-          <li>
-            Go to{" "}
-            <a
-              href="https://console.cloud.google.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Google Cloud Console
-            </a>
-          </li>
-          <li>Create a new project</li>
-          <li>Enable the Google Calendar API</li>
-          <li>Create OAuth 2.0 credentials (Web application)</li>
-          <li>
-            Add this URL to authorized redirect URIs:
-            <code>{window.location.origin}/callback</code>
-          </li>
-          <li>
-            Copy your Client ID and add it to <code>.env.local</code>:
-            <code>VITE_GOOGLE_CLIENT_ID=your-client-id</code>
-          </li>
-          <li>Restart the dev server</li>
-          <li>Click "Connect Google Calendar" button</li>
-        </ol>
-      </div>
     </div>
   );
 }
