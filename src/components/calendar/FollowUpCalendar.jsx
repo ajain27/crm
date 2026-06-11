@@ -230,19 +230,32 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
                     <>
                       <div className="calendar-day-number">{day}</div>
                       <div className="calendar-day-events">
-                        {followUpsByDate[day]?.slice(0, 2).map((followUp) => (
-                          <div
-                            key={followUp.id}
-                            className={`follow-up-badge ${followUp.type}`}
-                            title={followUp.title}
-                          >
-                            {followUp.type === "lead"
+                        {followUpsByDate[day]?.slice(0, 2).map((followUp) => {
+                          const startTime =
+                            followUp.type === "google-calendar" &&
+                            followUp.date instanceof String
+                              ? new Date(followUp.date).toLocaleTimeString(
+                                  "en-US",
+                                  { hour: "2-digit", minute: "2-digit" },
+                                )
+                              : "";
+                          const displayText =
+                            followUp.type === "lead"
                               ? "L"
                               : followUp.type === "deal"
                                 ? "D"
-                                : "📅"}
-                          </div>
-                        ))}
+                                : followUp.title.substring(0, 20);
+
+                          return (
+                            <div
+                              key={followUp.id}
+                              className={`follow-up-badge ${followUp.type}`}
+                              title={`${followUp.title}${startTime ? " - " + startTime : ""}`}
+                            >
+                              {displayText}
+                            </div>
+                          );
+                        })}
                         {followUpsByDate[day]?.length > 2 && (
                           <div className="follow-up-more">
                             +{followUpsByDate[day].length - 2}
