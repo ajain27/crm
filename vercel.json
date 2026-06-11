@@ -1,8 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "env": {
-    "VITE_GOOGLE_CLIENT_ID": "@vite_google_client_id",
-    "VITE_CALENDAR_SERVER_URL": "@vite_calendar_server_url"
-  }
+  "outputDirectory": "dist"
 }
