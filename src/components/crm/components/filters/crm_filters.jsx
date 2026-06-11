@@ -84,14 +84,6 @@ function Crm_filters({
             options={months}
           />
           <Select
-            label="Closed In"
-            value={filters.closedMonth}
-            onChange={(e) =>
-              setFilters({ ...filters, closedMonth: e.target.value })
-            }
-            options={months}
-          />
-          <Select
             label="Year"
             value={filters.year}
             onChange={(e) => setFilters({ ...filters, year: e.target.value })}
@@ -144,7 +136,6 @@ function Crm_filters({
               filters.assigned !== "All" ||
               filters.closed !== "All" ||
               filters.offerMonth !== "All" ||
-              filters.closedMonth !== "All" ||
               filters.year !== "All" ||
               Boolean(filters.search)
             }

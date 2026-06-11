@@ -308,6 +308,7 @@ function Wholesale() {
             >
               <Wholesale_data
                 filteredDeals={filteredDeals}
+                filters={filters}
                 deals={deals}
                 deleteDeal={deleteDeal}
                 persist={persist}

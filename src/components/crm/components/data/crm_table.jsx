@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Pagination from "../../../pagination/Pagination";
-import { getContractVersions } from "../crmConfig";
+import { Select } from "../../../elements/elements";
+import { getContractVersions, months } from "../crmConfig";
 import { useDealsSort } from "./hooks/useDealsSort";
 import { useDealUpdater } from "./hooks/useDealUpdater";
 import { useContractManager } from "./hooks/useContractManager";
@@ -12,6 +13,7 @@ import DealDetailModal from "./modals/DealDetailModal";
 
 function Wholesale_data({
   filteredDeals,
+  filters,
   deals,
   deleteDeal,
   persist,
@@ -152,40 +154,65 @@ function Wholesale_data({
 
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
-      <div className="deal-tab-bar">
-        <button
-          className={`deal-tab-btn${tab === "active" ? " deal-tab-btn--active" : ""}`}
-          onClick={() => {
-            setTab("active");
-            setCurrentPage(1);
-            setSelectedIds(new Set());
-          }}
-        >
-          Active
-          <span className="deal-tab-count">{activeCount}</span>
-        </button>
-        <button
-          className={`deal-tab-btn${tab === "inactive" ? " deal-tab-btn--active" : ""}`}
-          onClick={() => {
-            setTab("inactive");
-            setCurrentPage(1);
-            setSelectedIds(new Set());
-          }}
-        >
-          Inactive
-          <span className="deal-tab-count">{inactiveCount}</span>
-        </button>
-        <button
-          className={`deal-tab-btn${tab === "closed" ? " deal-tab-btn--active" : ""}`}
-          onClick={() => {
-            setTab("closed");
-            setCurrentPage(1);
-            setSelectedIds(new Set());
-          }}
-        >
-          Closed
-          <span className="deal-tab-count">{closedCount}</span>
-        </button>
+      <div
+        className="deal-tab-bar"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            className={`deal-tab-btn${tab === "active" ? " deal-tab-btn--active" : ""}`}
+            onClick={() => {
+              setTab("active");
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Active
+            <span className="deal-tab-count">{activeCount}</span>
+          </button>
+          <button
+            className={`deal-tab-btn${tab === "inactive" ? " deal-tab-btn--active" : ""}`}
+            onClick={() => {
+              setTab("inactive");
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Inactive
+            <span className="deal-tab-count">{inactiveCount}</span>
+          </button>
+          <button
+            className={`deal-tab-btn${tab === "closed" ? " deal-tab-btn--active" : ""}`}
+            onClick={() => {
+              setTab("closed");
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Closed
+            <span className="deal-tab-count">{closedCount}</span>
+          </button>
+        </div>
+
+        {tab === "closed" && (
+          <div style={{ minWidth: "200px" }}>
+            <Select
+              label="Closed In"
+              value={filters?.closedMonth || "All"}
+              onChange={(e) => {
+                setFilters({
+                  ...filters,
+                  closedMonth: e.target.value,
+                });
+              }}
+              options={months}
+            />
+          </div>
+        )}
       </div>
 
       {selectedIds.size > 0 && (

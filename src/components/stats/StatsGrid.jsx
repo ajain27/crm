@@ -56,13 +56,6 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
       0,
     );
 
-  const overallGrossRevenue = revenueEligibleDeals.reduce(
-    (total, deal) =>
-      total +
-      (Number(deal.assignedPrice || 0) - Number(deal.contractPrice || 0)),
-    0,
-  );
-
   const filteredDealsRevenue = filteredDeals
     .filter(
       (deal) =>
@@ -174,14 +167,6 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
         label={`${currentMonthLabel} Gross Revenue`}
         subtitle="Closed deals this month"
         numericValue={currentMonthGrossRevenue}
-        format={currency}
-        colorTheme="green"
-      />
-      <SimpleStat
-        icon={<DollarSign size={20} />}
-        label="Overall Revenue"
-        subtitle="All closed deals"
-        numericValue={overallGrossRevenue}
         format={currency}
         colorTheme="green"
       />

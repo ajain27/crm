@@ -12,7 +12,7 @@ describe("StatsGrid", () => {
     vi.useRealTimers();
   });
 
-  it("shows current month, overall, and filtered revenue separately", () => {
+  it("shows current month and filtered revenue", () => {
     const deals = [
       {
         id: "1",
@@ -57,17 +57,16 @@ describe("StatsGrid", () => {
     const aprilRevenueCard = screen
       .getByText("Apr Gross Revenue")
       .closest(".stat-card");
-    const overallRevenueCard = screen
-      .getByText("Overall Revenue")
+    const filteredRevenueCard = screen
+      .getByText("Total Revenue")
       .closest(".stat-card");
-    const filteredRevenueCard = screen.getByText("Total Revenue").closest(".stat-card");
 
     expect(aprilRevenueCard).not.toBeNull();
-    expect(overallRevenueCard).not.toBeNull();
     expect(filteredRevenueCard).not.toBeNull();
 
     expect(within(aprilRevenueCard).getByText("$15,000")).toBeInTheDocument();
-    expect(within(overallRevenueCard).getByText("$35,000")).toBeInTheDocument();
-    expect(within(filteredRevenueCard).getByText("$15,000")).toBeInTheDocument();
+    expect(
+      within(filteredRevenueCard).getByText("$15,000"),
+    ).toBeInTheDocument();
   });
 });
