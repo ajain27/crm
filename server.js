@@ -136,7 +136,22 @@ app.post("/api/google/refresh-token", async (req, res) => {
   }
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
+
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Google Calendar server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
+});
+
+server.on("error", (err) => {
+  console.error("Server error:", err);
+  process.exit(1);
 });
