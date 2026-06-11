@@ -11,6 +11,7 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
   const [accountName, setAccountName] = useState("");
   const [googleAccounts, setGoogleAccounts] = useState([]);
   const [googleEvents, setGoogleEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -282,6 +283,8 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
                               key={followUp.id}
                               className={`follow-up-badge ${followUp.type}`}
                               title={`${followUp.title}${startTime ? " - " + startTime : ""}`}
+                              onClick={() => setSelectedEvent(followUp)}
+                              style={{ cursor: "pointer" }}
                             >
                               {displayText}
                             </div>
@@ -419,6 +422,94 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
                   Add Account
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedEvent && (
+        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
+          <div
+            className="modal-content event-details-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>{selectedEvent.title}</h3>
+              <button
+                className="ghost-btn"
+                onClick={() => setSelectedEvent(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="event-details">
+              {selectedEvent.type === "lead" && (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Type:</span>
+                    <span className="detail-value">Lead Follow-up</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Date:</span>
+                    <span className="detail-value">
+                      {formatDate(selectedEvent.date)}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Source:</span>
+                    <span className="detail-value">{selectedEvent.source}</span>
+                  </div>
+                </>
+              )}
+              {selectedEvent.type === "deal" && (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Type:</span>
+                    <span className="detail-value">Deal Closed</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Date:</span>
+                    <span className="detail-value">
+                      {formatDate(selectedEvent.date)}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Source:</span>
+                    <span className="detail-value">{selectedEvent.source}</span>
+                  </div>
+                </>
+              )}
+              {selectedEvent.type === "google-calendar" && (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Type:</span>
+                    <span className="detail-value">Google Calendar</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Time:</span>
+                    <span className="detail-value">
+                      {new Date(selectedEvent.date).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  {selectedEvent.description && (
+                    <div className="detail-row">
+                      <span className="detail-label">Description:</span>
+                      <span className="detail-value">
+                        {selectedEvent.description}
+                      </span>
+                    </div>
+                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Source:</span>
+                    <span className="detail-value">{selectedEvent.source}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
