@@ -17,11 +17,8 @@ app.use(express.json());
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-  console.error("ERROR: Google credentials not configured");
-  console.error("Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env");
-  process.exit(1);
-}
+console.log("GOOGLE_CLIENT_ID:", GOOGLE_CLIENT_ID ? "SET" : "NOT SET");
+console.log("GOOGLE_CLIENT_SECRET:", GOOGLE_CLIENT_SECRET ? "SET" : "NOT SET");
 
 // Health check endpoint
 app.get("/health", (req, res) => {
