@@ -1,8 +1,9 @@
 @layer components {
   .calendar-modal {
-    width: 95vw;
+    width: 90vw;
     max-width: 1200px;
     max-height: 85vh;
+    margin: 2rem;
     display: flex;
     flex-direction: column;
     background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
