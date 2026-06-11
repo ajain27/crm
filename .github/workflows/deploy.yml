@@ -43,7 +43,7 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: G-XP25PL56QC
           VITE_RENTCAST_API_KEY: 12679489237e4520a5cd7c5e53c8d436
           VITE_BREVO_API_KEY: ${{ secrets.VITE_BREVO_API_KEY }}
-        run: npm run build
+        run: npm run build && mkdir -p dist/crm && cp public/callback.html dist/crm/callback.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
