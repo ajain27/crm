@@ -115,10 +115,11 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
     }
 
     try {
-      // Use server URL (localhost in dev, Railway URL in prod)
-      const serverUrl =
-        import.meta.env.VITE_CALENDAR_SERVER_URL || "http://localhost:5000";
-      const apiUrl = `${serverUrl}/api/google/fetch-events`;
+      // Use relative URLs in production (Vercel), localhost in dev
+      const apiUrl =
+        import.meta.env.MODE === "production"
+          ? "/api/fetch-events"
+          : "http://localhost:5000/api/google/fetch-events";
 
       const response = await fetch(apiUrl, {
         method: "POST",
