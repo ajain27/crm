@@ -45,9 +45,6 @@ jobs:
           VITE_BREVO_API_KEY: ${{ secrets.VITE_BREVO_API_KEY }}
         run: npm run build
 
-      - name: Copy callback.html
-        run: cp public/callback.html dist/crm/callback.html
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
