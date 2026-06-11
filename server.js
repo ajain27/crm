@@ -136,7 +136,7 @@ app.post("/api/google/refresh-token", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Google Calendar server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
 });
