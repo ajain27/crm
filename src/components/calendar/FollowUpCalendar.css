@@ -92,6 +92,12 @@
     background: color-mix(in srgb, var(--panel) 60%, var(--muted) 40%);
   }
 
+  .calendar-day.today {
+    background: color-mix(in srgb, var(--blue) 8%, var(--panel) 92%);
+    border: 2px solid var(--blue);
+    box-shadow: inset 0 0 8px rgba(59, 130, 246, 0.1);
+  }
+
   .calendar-day-number {
     font-size: 0.875rem;
     font-weight: 600;

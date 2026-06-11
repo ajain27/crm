@@ -254,58 +254,67 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
               <div className="weekday-header">Fri</div>
               <div className="weekday-header">Sat</div>
 
-              {days.map((day, index) => (
-                <div
-                  key={index}
-                  className={`calendar-day ${day ? "" : "empty"}`}
-                >
-                  {day && (
-                    <>
-                      <div className="calendar-day-number">{day}</div>
-                      <div className="calendar-day-events">
-                        {followUpsByDate[day]?.slice(0, 2).map((followUp) => {
-                          const startTime =
-                            followUp.type === "google-calendar" &&
-                            followUp.date instanceof String
-                              ? new Date(followUp.date).toLocaleTimeString(
-                                  "en-US",
-                                  { hour: "2-digit", minute: "2-digit" },
-                                )
-                              : "";
-                          const displayText =
-                            followUp.type === "lead"
-                              ? "L"
-                              : followUp.type === "deal"
-                                ? "D"
-                                : followUp.title.substring(0, 20);
+              {days.map((day, index) => {
+                const today = new Date();
+                const isToday =
+                  day &&
+                  day === today.getDate() &&
+                  currentMonth === today.getMonth() &&
+                  currentYear === today.getFullYear();
 
-                          return (
+                return (
+                  <div
+                    key={index}
+                    className={`calendar-day ${day ? "" : "empty"} ${isToday ? "today" : ""}`}
+                  >
+                    {day && (
+                      <>
+                        <div className="calendar-day-number">{day}</div>
+                        <div className="calendar-day-events">
+                          {followUpsByDate[day]?.slice(0, 2).map((followUp) => {
+                            const startTime =
+                              followUp.type === "google-calendar" &&
+                              followUp.date instanceof String
+                                ? new Date(followUp.date).toLocaleTimeString(
+                                    "en-US",
+                                    { hour: "2-digit", minute: "2-digit" },
+                                  )
+                                : "";
+                            const displayText =
+                              followUp.type === "lead"
+                                ? "L"
+                                : followUp.type === "deal"
+                                  ? "D"
+                                  : followUp.title.substring(0, 20);
+
+                            return (
+                              <div
+                                key={followUp.id}
+                                className={`follow-up-badge ${followUp.type}`}
+                                title={`${followUp.title}${startTime ? " - " + startTime : ""}`}
+                                onClick={() => setSelectedEvent(followUp)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {displayText}
+                              </div>
+                            );
+                          })}
+                          {followUpsByDate[day]?.length > 2 && (
                             <div
-                              key={followUp.id}
-                              className={`follow-up-badge ${followUp.type}`}
-                              title={`${followUp.title}${startTime ? " - " + startTime : ""}`}
-                              onClick={() => setSelectedEvent(followUp)}
+                              className="follow-up-more"
+                              onClick={() => setSelectedDay(day)}
                               style={{ cursor: "pointer" }}
+                              title="Click to see all events for this day"
                             >
-                              {displayText}
+                              +{followUpsByDate[day].length - 2}
                             </div>
-                          );
-                        })}
-                        {followUpsByDate[day]?.length > 2 && (
-                          <div
-                            className="follow-up-more"
-                            onClick={() => setSelectedDay(day)}
-                            style={{ cursor: "pointer" }}
-                            title="Click to see all events for this day"
-                          >
-                            +{followUpsByDate[day].length - 2}
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
