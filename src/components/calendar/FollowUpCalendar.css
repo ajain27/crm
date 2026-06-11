@@ -21,12 +21,16 @@
   }
 
   .modal-header {
+    padding: 1.5rem;
     background: linear-gradient(
       90deg,
       rgba(139, 92, 246, 0.1) 0%,
       rgba(59, 130, 246, 0.05) 100%
     );
     border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .calendar-container {
