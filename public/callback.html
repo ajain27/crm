@@ -9,11 +9,8 @@
     const error = params.get('error');
 
     if (code) {
-      // Store the authorization code
-      localStorage.setItem('googleAuthCode', code);
-      localStorage.setItem('googleAuthTime', new Date().getTime());
-      // Redirect back to /crm/
-      window.location.href = '/crm/';
+      // Redirect back to /crm/ with code in URL
+      window.location.href = '/crm/?code=' + encodeURIComponent(code);
     } else if (error) {
       console.error('OAuth error:', error);
       // Redirect back to /crm/ after a short delay
