@@ -12,13 +12,13 @@
       // Store the authorization code
       localStorage.setItem('googleAuthCode', code);
       localStorage.setItem('googleAuthTime', new Date().getTime());
-      // Redirect back to home
-      window.location.href = '/';
+      // Redirect back to /crm/
+      window.location.href = '/crm/';
     } else if (error) {
       console.error('OAuth error:', error);
-      // Redirect back to home after a short delay
+      // Redirect back to /crm/ after a short delay
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/crm/';
       }, 2000);
     }
   </script>
