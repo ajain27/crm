@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X, Plus, Trash2 } from "lucide-react";
 import { formatDate } from "../../utils/utils";
 import GoogleCalendarAuth from "./GoogleCalendarAuth";
@@ -14,6 +14,34 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
+
+  // Load saved accounts on mount and manage background scroll
+  useEffect(() => {
+    const saved = localStorage.getItem("googleCalendarAccounts");
+    if (saved) {
+      try {
+        const accounts = JSON.parse(saved);
+        setGoogleAccounts(accounts);
+        // Fetch events for saved accounts
+        accounts.forEach((account) => {
+          fetchGoogleCalendarEventsForAccount(account);
+        });
+      } catch (err) {
+        console.error("Failed to load saved accounts:", err);
+      }
+    }
+
+    // Prevent background scroll when modal is open
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   // Get all follow-ups from deals, leads, and Google Calendar
   const allFollowUps = useMemo(() => {
