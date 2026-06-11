@@ -12,6 +12,7 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
   const [googleAccounts, setGoogleAccounts] = useState([]);
   const [googleEvents, setGoogleEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -291,7 +292,12 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
                           );
                         })}
                         {followUpsByDate[day]?.length > 2 && (
-                          <div className="follow-up-more">
+                          <div
+                            className="follow-up-more"
+                            onClick={() => setSelectedDay(day)}
+                            style={{ cursor: "pointer" }}
+                            title="Click to see all events for this day"
+                          >
                             +{followUpsByDate[day].length - 2}
                           </div>
                         )}
@@ -510,6 +516,68 @@ function FollowUpCalendar({ isOpen, onClose, deals, leads, currentUser }) {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedDay && (
+        <div className="modal-overlay" onClick={() => setSelectedDay(null)}>
+          <div
+            className="modal-content day-events-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>
+                Events for{" "}
+                {new Date(
+                  currentYear,
+                  currentMonth,
+                  selectedDay,
+                ).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </h3>
+              <button
+                className="ghost-btn"
+                onClick={() => setSelectedDay(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="day-events-list">
+              {followUpsByDate[selectedDay]?.map((followUp) => (
+                <div
+                  key={followUp.id}
+                  className={`day-event-item ${followUp.type}`}
+                  onClick={() => {
+                    setSelectedEvent(followUp);
+                    setSelectedDay(null);
+                  }}
+                >
+                  <div className="event-type-badge">
+                    {followUp.type === "lead"
+                      ? "L"
+                      : followUp.type === "deal"
+                        ? "D"
+                        : "C"}
+                  </div>
+                  <div className="event-item-content">
+                    <div className="event-item-title">{followUp.title}</div>
+                    {followUp.type === "google-calendar" && followUp.date && (
+                      <div className="event-item-time">
+                        {new Date(followUp.date).toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    )}
+                    <div className="event-item-source">{followUp.source}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

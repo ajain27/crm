@@ -378,6 +378,113 @@
     word-break: break-word;
   }
 
+  .day-events-modal {
+    width: 450px;
+    max-width: 90vw;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .day-events-list {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+  }
+
+  .day-event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--panel) 70%, var(--text) 2%);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .day-event-item:hover {
+    background: color-mix(in srgb, var(--panel) 60%, var(--text) 6%);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+
+  .day-event-item.lead {
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .day-event-item.lead:hover {
+    background: color-mix(in srgb, var(--panel) 60%, #3b82f6 4%);
+  }
+
+  .day-event-item.deal {
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  .day-event-item.deal:hover {
+    background: color-mix(in srgb, var(--panel) 60%, #10b981 4%);
+  }
+
+  .day-event-item.google-calendar {
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+
+  .day-event-item.google-calendar:hover {
+    background: color-mix(in srgb, var(--panel) 60%, #8b5cf6 4%);
+  }
+
+  .event-type-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .day-event-item.lead .event-type-badge {
+    background: #3b82f6;
+  }
+
+  .day-event-item.deal .event-type-badge {
+    background: #10b981;
+  }
+
+  .day-event-item.google-calendar .event-type-badge {
+    background: #8b5cf6;
+  }
+
+  .event-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .event-item-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+    word-break: break-word;
+  }
+
+  .event-item-time {
+    font-size: 0.8rem;
+    color: var(--blue);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+
+  .event-item-source {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
   @media (max-width: 968px) {
     .calendar-body {
       flex-direction: column;
