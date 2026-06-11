@@ -8,7 +8,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+console.log("Initializing Express server...");
+console.log("Applying CORS middleware...");
 app.use(cors());
+console.log("CORS middleware applied");
 app.use(express.json());
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
