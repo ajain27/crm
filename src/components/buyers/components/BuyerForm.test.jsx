@@ -39,11 +39,16 @@ describe("BuyerForm", () => {
     expect(screen.getByRole("button", { name: /Save Buyer/i })).toBeDisabled();
   });
 
-  it("Save Buyer button is enabled once fullName and state are set", () => {
+  it("Save Buyer button is enabled once fullName, email and state are set", () => {
     render(
       <BuyerForm
         addBuyer={vi.fn()}
-        form={{ ...emptyForm, fullName: "Jane", state: "TX" }}
+        form={{
+          ...emptyForm,
+          fullName: "Jane",
+          email: "jane@example.com",
+          state: "TX",
+        }}
         handleChange={vi.fn()}
         propertyTypes={[]}
       />,
@@ -105,7 +110,12 @@ describe("BuyerForm", () => {
     const { container } = render(
       <BuyerForm
         addBuyer={addBuyer}
-        form={{ ...emptyForm, fullName: "Jane", state: "TX" }}
+        form={{
+          ...emptyForm,
+          fullName: "Jane",
+          email: "jane@example.com",
+          state: "TX",
+        }}
         handleChange={vi.fn()}
         propertyTypes={[]}
       />,

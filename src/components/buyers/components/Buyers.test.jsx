@@ -74,7 +74,7 @@ describe("Buyers component", () => {
 
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith(
-        "A buyer with this email or phone number already exists.",
+        "A buyer with this email already exists.",
       );
     });
 

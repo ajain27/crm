@@ -26,7 +26,9 @@ function BuyerForm({
   }
 
   const isFormComplete =
-    Boolean(form.fullName?.trim()) && Boolean(form.state?.trim());
+    Boolean(form.fullName?.trim()) &&
+    Boolean(form.email?.trim()) &&
+    Boolean(form.state?.trim());
 
   const selected = Array.isArray(form.realEstateType)
     ? form.realEstateType
@@ -65,6 +67,7 @@ function BuyerForm({
           value={form.email}
           onChange={handleChange}
           placeholder="john@example.com"
+          required
         />
         <Field
           label="Phone Number"

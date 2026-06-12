@@ -97,22 +97,31 @@ function Buyers({ currentUser = { id: "" } }) {
   async function addBuyer(event) {
     event.preventDefault();
 
-    if (!form.fullName?.trim() || !form.state?.trim()) {
-      alert("Please fill out at least Full Name and State.");
+    if (!form.fullName?.trim() || !form.email?.trim() || !form.state?.trim()) {
+      alert("Please fill out Full Name, Email, and State.");
       return;
     }
 
-    const newEmail = form.email?.trim().toLowerCase() || "";
+    const newName = form.fullName?.trim();
+    const newEmail = form.email?.trim().toLowerCase();
     const newPhone = form.phone?.trim();
 
-    const isDuplicate = buyers.some((buyer) => {
-      const emailMatch = newEmail && buyer.email?.toLowerCase() === newEmail;
-      const phoneMatch = newPhone && buyer.phone === newPhone;
-      return emailMatch || phoneMatch;
+    const duplicateErrors = [];
+
+    buyers.forEach((buyer) => {
+      if (buyer.fullName?.trim() === newName) {
+        duplicateErrors.push("A buyer with this name already exists.");
+      }
+      if (newEmail && buyer.email?.toLowerCase() === newEmail) {
+        duplicateErrors.push("A buyer with this email already exists.");
+      }
+      if (newPhone && buyer.phone === newPhone) {
+        duplicateErrors.push("A buyer with this phone number already exists.");
+      }
     });
 
-    if (isDuplicate) {
-      alert("A buyer with this email or phone number already exists.");
+    if (duplicateErrors.length > 0) {
+      alert(duplicateErrors.join("\n"));
       return;
     }
 
