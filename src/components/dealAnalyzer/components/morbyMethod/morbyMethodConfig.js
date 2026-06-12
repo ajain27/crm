@@ -45,6 +45,7 @@ export function calcBalloonBalance(
 
 export const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "extraDownPayment",
   "sellerCarryback",
   "legalFees",
   "appraisalFees",
@@ -71,6 +72,7 @@ export const initialForm = {
   dscrRate: "",
   dscrTermYears: "",
   dscrPoints: "",
+  extraDownPayment: "",
   originationFeesPct: "",
   legalFees: "",
   appraisalFees: "",

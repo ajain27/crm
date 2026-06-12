@@ -43,6 +43,13 @@ export default function DSCRSection({
           />
         </label>
         <Field
+          label="Extra Down Payment"
+          name="extraDownPayment"
+          value={form.extraDownPayment}
+          onChange={onChange}
+          placeholder="e.g. $10,000"
+        />
+        <Field
           label="Interest Rate (% / year)"
           name="dscrRate"
           value={form.dscrRate}

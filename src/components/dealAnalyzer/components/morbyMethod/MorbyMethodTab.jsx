@@ -72,17 +72,22 @@ function MorbyMethodTab({ tab }) {
   // — DSCR first lien (80% LTV)
   const dscrLoanAmount = purchasePrice * DSCR_LTV;
   const downPaymentRequired = purchasePrice * (1 - DSCR_LTV);
+  const extraDownPaymentAmt = parseCurrency(form.extraDownPayment);
+  const effectiveDscrLoanAmount = Math.max(
+    0,
+    dscrLoanAmount - extraDownPaymentAmt,
+  );
   const dscrRatePct = parsePercent(form.dscrRate);
   const dscrTermYears = parseInt(form.dscrTermYears || "0", 10) || 0;
   const dscrMonthlyPayment = calcPMT(
     dscrRatePct,
     dscrTermYears,
-    dscrLoanAmount,
+    effectiveDscrLoanAmount,
   );
   const dscrPointsPct = parsePercent(form.dscrPoints);
-  const dscrPointsCost = dscrLoanAmount * (dscrPointsPct / 100);
+  const dscrPointsCost = effectiveDscrLoanAmount * (dscrPointsPct / 100);
   const originationFeesPct = parsePercent(form.originationFeesPct);
-  const originationFees = dscrLoanAmount * (originationFeesPct / 100);
+  const originationFees = effectiveDscrLoanAmount * (originationFeesPct / 100);
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
   const underwritingFees = parseCurrency(form.underwritingFees);
@@ -132,6 +137,7 @@ function MorbyMethodTab({ tab }) {
   // — What buyer actually brings to close
   const totalUpfrontNeeded =
     downPaymentRequired +
+    extraDownPaymentAmt +
     dscrUpfrontCosts +
     closingCosts +
     titleFees +
@@ -179,6 +185,8 @@ function MorbyMethodTab({ tab }) {
       titleFees,
       dscrLoanAmount,
       downPaymentRequired,
+      extraDownPaymentAmt,
+      effectiveDscrLoanAmount,
       dscrRatePct,
       dscrTermYears,
       dscrMonthlyPayment,

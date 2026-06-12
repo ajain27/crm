@@ -69,7 +69,11 @@ export default function MorbyMethodSummary({ summary }) {
         {summary.dscrMonthlyPayment > 0 && (
           <div>
             <span>
-              DSCR Payment ({summary.dscrRatePct}%, {summary.dscrTermYears} yr)
+              DSCR Payment ({summary.dscrRatePct}%, {summary.dscrTermYears} yr
+              {summary.extraDownPaymentAmt > 0
+                ? `, ${fmt(summary.effectiveDscrLoanAmount)} loan`
+                : ""}
+              )
             </span>
             <strong className="deal-analyzer-return-negative">
               <AnimatedAmount value={summary.dscrMonthlyPayment} format={fmt} />
@@ -143,6 +147,17 @@ export default function MorbyMethodSummary({ summary }) {
             <AnimatedAmount value={summary.downPaymentRequired} format={fmt} />
           </strong>
         </div>
+        {summary.extraDownPaymentAmt > 0 && (
+          <div>
+            <span>Extra Down Payment</span>
+            <strong className="deal-analyzer-return-negative">
+              <AnimatedAmount
+                value={summary.extraDownPaymentAmt}
+                format={fmt}
+              />
+            </strong>
+          </div>
+        )}
         {summary.dscrPointsCost > 0 && (
           <div>
             <span>Points ({summary.dscrPointsPct}%)</span>
