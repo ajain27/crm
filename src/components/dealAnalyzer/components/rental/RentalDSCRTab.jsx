@@ -14,7 +14,7 @@ import AdditionalLenders, {
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
-const INSPECTION_COST = 450;
+const INSPECTION_COST = 375;
 const LENDER_LTC = 0.8;
 const DOWN_PCT = Math.round((1 - LENDER_LTC) * 100);
 
@@ -34,8 +34,10 @@ const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "yearlyTaxes",
   "annualMiscExpense",
+  "monthlyHomeWarranty",
   "legalFees",
   "appraisalFees",
+  "sellerCarryback",
 ]);
 
 const PERCENT_FIELDS = new Set([
@@ -62,6 +64,8 @@ const initialForm = {
   yearlyInsurance: "",
   yearlyTaxes: "",
   annualMiscExpense: "",
+  monthlyHomeWarranty: "",
+  sellerCarryback: "",
 };
 
 function RentalDSCRTab() {
@@ -104,15 +108,13 @@ function RentalDSCRTab() {
   const underwritingFees = parseCurrency(form.underwritingFees);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const yearlyInsurance = parseCurrency(form.yearlyInsurance);
+  const monthlyInsurance = yearlyInsurance / 12;
   const yearlyTaxes = parseCurrency(form.yearlyTaxes);
+  const monthlyTaxes = yearlyTaxes / 12;
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
+  const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
-  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
-  const firstMonthMgmtAdjustment = Math.max(
-    0,
-    firstMonthPropMgmtFee - propMgmtFee,
-  );
 
   const lenderFunds = purchasePrice * LENDER_LTC;
   const downPayment = purchasePrice * (1 - LENDER_LTC);
@@ -138,21 +140,35 @@ function RentalDSCRTab() {
   );
 
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
-  const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
+  const noi =
+    monthlyRent -
+    propMgmtFee -
+    monthlyMiscExpense -
+    monthlyInsurance -
+    monthlyTaxes -
+    monthlyHomeWarranty;
   const totalMonthlyExpenses =
-    loanMortgage + lenderMonthlyPayment + propMgmtFee + monthlyMiscExpense;
+    loanMortgage +
+    lenderMonthlyPayment +
+    propMgmtFee +
+    monthlyMiscExpense +
+    monthlyInsurance +
+    monthlyTaxes +
+    monthlyHomeWarranty;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
-  const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
+  const annualCashFlow = monthlyCashFlow * 12;
+  const sellerCarryback = parseCurrency(form.sellerCarryback);
   const grossCashNeeded =
     loanOutOfPocket +
     closingCosts +
     titleFees +
-    yearlyInsurance +
-    yearlyTaxes +
     agentCommissionAmt +
     INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
-  const totalFundsNeeded = Math.max(0, grossCashNeeded - lenderTotal);
+  const totalFundsNeeded = Math.max(
+    0,
+    grossCashNeeded - sellerCarryback - lenderTotal,
+  );
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
@@ -177,12 +193,11 @@ function RentalDSCRTab() {
       underwritingFees,
       monthlyRent,
       propMgmtFee,
-      firstMonthPropMgmtFee,
-      firstMonthMgmtAdjustment,
-      yearlyInsurance,
-      yearlyTaxes,
+      monthlyInsurance,
+      monthlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
+      monthlyHomeWarranty,
       lenderFunds,
       downPayment,
       extraDownPaymentAmt,
@@ -196,6 +211,7 @@ function RentalDSCRTab() {
       lenders,
       lenderMonthlyPayment,
       lenderTotal,
+      sellerCarryback,
       grossCashNeeded,
       lenderCosts,
       originationFeesPct,
@@ -285,6 +301,13 @@ function RentalDSCRTab() {
             <input value={fmt(titleFees)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Seller Credit / Carryback"
+          name="sellerCarryback"
+          value={form.sellerCarryback}
+          onChange={handleChange}
+          placeholder="e.g. $50,000"
+        />
       </div>
 
       <div className="deal-analyzer-section-label">DSCR Loan</div>
@@ -451,6 +474,13 @@ function RentalDSCRTab() {
             <input value={fmt(monthlyMiscExpense)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Monthly Home Warranty"
+          name="monthlyHomeWarranty"
+          value={form.monthlyHomeWarranty}
+          onChange={handleChange}
+          placeholder="e.g. $50"
+        />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
@@ -551,6 +581,36 @@ function RentalDSCRTab() {
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={summary.monthlyMiscExpense}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
+            {summary.monthlyInsurance > 0 && (
+              <div>
+                <span>Home Insurance (÷ 12 monthly)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.monthlyInsurance}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
+            {summary.monthlyTaxes > 0 && (
+              <div>
+                <span>Property Taxes (÷ 12 monthly)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
+                </strong>
+              </div>
+            )}
+            {summary.monthlyHomeWarranty > 0 && (
+              <div>
+                <span>Home Warranty</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.monthlyHomeWarranty}
                     format={fmt}
                   />
                 </strong>
@@ -671,36 +731,6 @@ function RentalDSCRTab() {
               </div>
             )}
             <div>
-              <span>
-                First Month Property Management ({FIRST_MONTH_PROP_MGMT_PCT}%)
-              </span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount
-                  value={summary.firstMonthPropMgmtFee}
-                  format={fmt}
-                />
-              </strong>
-            </div>
-            {summary.yearlyInsurance > 0 && (
-              <div>
-                <span>Yearly Home Insurance</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.yearlyInsurance}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.yearlyTaxes > 0 && (
-              <div>
-                <span>Yearly Property Taxes</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.yearlyTaxes} format={fmt} />
-                </strong>
-              </div>
-            )}
-            <div>
               <span>Inspection Cost</span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.inspectionCost} format={fmt} />
@@ -727,6 +757,18 @@ function RentalDSCRTab() {
                   </strong>
                 </div>
               </>
+            )}
+            {summary.sellerCarryback > 0 && (
+              <div>
+                <span>Seller Credit / Carryback</span>
+                <strong className="deal-analyzer-return-positive">
+                  −
+                  <AnimatedAmount
+                    value={summary.sellerCarryback}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
             )}
             <div>
               <span>Total Cash Needed to Buy</span>
@@ -827,11 +869,9 @@ function RentalDSCRTab() {
             className="deal-analyzer-calculation"
             style={{ marginTop: "0.75rem" }}
           >
-            Annual Cash Flow = (Monthly Cash Flow × 12) − First Month Prop. Mgmt
-            Adjustment
+            Annual Cash Flow = Monthly Cash Flow × 12
             <span>
-              ({fmt(summary.monthlyCashFlow)} × 12) −{" "}
-              {fmt(summary.firstMonthMgmtAdjustment)} ={" "}
+              {fmt(summary.monthlyCashFlow)} × 12 ={" "}
               {fmt(summary.annualCashFlow)}
             </span>
           </div>

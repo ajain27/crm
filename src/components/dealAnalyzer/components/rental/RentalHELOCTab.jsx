@@ -10,7 +10,7 @@ import {
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
-const INSPECTION_COST = 450;
+const INSPECTION_COST = 375;
 
 function calcPMT(annualRatePct, termYears, principal) {
   if (annualRatePct <= 0 || termYears <= 0 || principal <= 0) return 0;
@@ -26,12 +26,19 @@ const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "yearlyTaxes",
   "annualMiscExpense",
+  "monthlyHomeWarranty",
+  "sellerCarryback",
 ]);
 
-const PERCENT_FIELDS = new Set(["titleFees", "helocInterestRate"]);
+const PERCENT_FIELDS = new Set([
+  "titleFees",
+  "helocInterestRate",
+  "agentCommission",
+]);
 
 const initialForm = {
   purchasePrice: "",
+  agentCommission: "",
   titleFees: "",
   helocInterestRate: "",
   helocTermYears: "",
@@ -39,6 +46,8 @@ const initialForm = {
   yearlyInsurance: "",
   yearlyTaxes: "",
   annualMiscExpense: "",
+  monthlyHomeWarranty: "",
+  sellerCarryback: "",
 };
 
 function RentalHELOCTab() {
@@ -72,6 +81,8 @@ function RentalHELOCTab() {
   }
 
   const purchasePrice = parseCurrency(form.purchasePrice);
+  const agentCommissionPct = parsePercent(form.agentCommission);
+  const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
@@ -84,12 +95,9 @@ function RentalHELOCTab() {
   const monthlyMiscExpense = annualMiscExpense / 12;
   const monthlyInsurance = yearlyInsurance / 12;
   const monthlyTaxes = yearlyTaxes / 12;
+  const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
+  const sellerCarryback = parseCurrency(form.sellerCarryback);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
-  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
-  const firstMonthMgmtAdjustment = Math.max(
-    0,
-    firstMonthPropMgmtFee - propMgmtFee,
-  );
 
   // HELOC finances the full purchase price, amortized over the term.
   const helocPayment = calcPMT(
@@ -103,19 +111,28 @@ function RentalHELOCTab() {
     propMgmtFee -
     monthlyMiscExpense -
     monthlyInsurance -
-    monthlyTaxes;
+    monthlyTaxes -
+    monthlyHomeWarranty;
   const totalMonthlyExpenses =
     helocPayment +
     propMgmtFee +
     monthlyMiscExpense +
     monthlyInsurance +
-    monthlyTaxes;
+    monthlyTaxes +
+    monthlyHomeWarranty;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
-  const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
+  const annualCashFlow = monthlyCashFlow * 12;
   // HELOC finances the full purchase price, so cash to close is the upfront
   // acquisition costs rather than the property itself.
-  const totalFundsNeeded =
-    closingCosts + titleFees + firstMonthPropMgmtFee + INSPECTION_COST;
+  const totalFundsNeeded = Math.max(
+    0,
+    purchasePrice +
+      closingCosts +
+      titleFees +
+      agentCommissionAmt +
+      INSPECTION_COST -
+      sellerCarryback,
+  );
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
@@ -131,6 +148,8 @@ function RentalHELOCTab() {
     if (!isFormComplete) return;
     setSummary({
       purchasePrice,
+      agentCommissionPct,
+      agentCommissionAmt,
       closingCosts,
       titleFeesPct,
       titleFees,
@@ -139,14 +158,12 @@ function RentalHELOCTab() {
       helocPayment,
       monthlyRent,
       propMgmtFee,
-      firstMonthPropMgmtFee,
-      firstMonthMgmtAdjustment,
-      yearlyInsurance,
-      yearlyTaxes,
       monthlyInsurance,
       monthlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
+      monthlyHomeWarranty,
+      sellerCarryback,
       noi,
       totalMonthlyExpenses,
       monthlyCashFlow,
@@ -201,6 +218,20 @@ function RentalHELOCTab() {
           />
         </label>
         <Field
+          label="Agent Commission (%)"
+          name="agentCommission"
+          value={form.agentCommission}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder="e.g. 3"
+        />
+        {agentCommissionAmt > 0 && (
+          <label className="field deal-analyzer-output">
+            <span>Agent Commission Amount</span>
+            <input value={fmt(agentCommissionAmt)} readOnly tabIndex={-1} />
+          </label>
+        )}
+        <Field
           label="Title Fees (%)"
           name="titleFees"
           value={form.titleFees}
@@ -214,6 +245,13 @@ function RentalHELOCTab() {
             <input value={fmt(titleFees)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Seller Credit / Carryback"
+          name="sellerCarryback"
+          value={form.sellerCarryback}
+          onChange={handleChange}
+          placeholder="e.g. $50,000"
+        />
       </div>
 
       <div className="deal-analyzer-section-label">HELOC</div>
@@ -304,6 +342,13 @@ function RentalHELOCTab() {
             <input value={fmt(monthlyMiscExpense)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Monthly Home Warranty"
+          name="monthlyHomeWarranty"
+          value={form.monthlyHomeWarranty}
+          onChange={handleChange}
+          placeholder="e.g. $50"
+        />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
@@ -412,6 +457,17 @@ function RentalHELOCTab() {
                 </strong>
               </div>
             )}
+            {summary.monthlyHomeWarranty > 0 && (
+              <div>
+                <span>Home Warranty</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.monthlyHomeWarranty}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
             <div>
               <span>Total Monthly Expenses</span>
               <strong className="deal-analyzer-return-negative">
@@ -429,6 +485,12 @@ function RentalHELOCTab() {
               Cash Needed to Close
             </div>
             <div>
+              <span>Purchase Price</span>
+              <strong className="deal-analyzer-return-negative">
+                <AnimatedAmount value={summary.purchasePrice} format={fmt} />
+              </strong>
+            </div>
+            <div>
               <span>Closing Costs ({CLOSING_COSTS_PCT}% of price)</span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.closingCosts} format={fmt} />
@@ -442,23 +504,35 @@ function RentalHELOCTab() {
                 </strong>
               </div>
             )}
-            <div>
-              <span>
-                First Month Property Management ({FIRST_MONTH_PROP_MGMT_PCT}%)
-              </span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount
-                  value={summary.firstMonthPropMgmtFee}
-                  format={fmt}
-                />
-              </strong>
-            </div>
+            {summary.agentCommissionAmt > 0 && (
+              <div>
+                <span>Agent Commission ({summary.agentCommissionPct}%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.agentCommissionAmt}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
             <div>
               <span>Inspection Cost</span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.inspectionCost} format={fmt} />
               </strong>
             </div>
+            {summary.sellerCarryback > 0 && (
+              <div>
+                <span>Seller Credit / Carryback</span>
+                <strong className="deal-analyzer-return-positive">
+                  −
+                  <AnimatedAmount
+                    value={summary.sellerCarryback}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
             <div>
               <span>Total Cash Needed to Close</span>
               <strong className="deal-analyzer-return-negative">
@@ -567,11 +641,9 @@ function RentalHELOCTab() {
             className="deal-analyzer-calculation"
             style={{ marginTop: "0.75rem" }}
           >
-            Annual Cash Flow = (Monthly Cash Flow × 12) − First Month Prop. Mgmt
-            Adjustment
+            Annual Cash Flow = Monthly Cash Flow × 12
             <span>
-              ({fmt(summary.monthlyCashFlow)} × 12) −{" "}
-              {fmt(summary.firstMonthMgmtAdjustment)} ={" "}
+              {fmt(summary.monthlyCashFlow)} × 12 ={" "}
               {fmt(summary.annualCashFlow)}
             </span>
           </div>

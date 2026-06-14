@@ -57,7 +57,7 @@ function RentalTab({ tab }) {
           className={`deal-tab-btn${financeType === "loan" ? " deal-tab-btn--active" : ""}`}
           onClick={() => switchFinanceType("loan")}
         >
-          Loan (DSCR)
+          DSCR
         </button>
         <button
           type="button"

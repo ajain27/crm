@@ -84,6 +84,8 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
     11: "Nov",
     12: "Dec",
   };
+  const filteredNetRevenue = filteredDealsRevenue - closedJvSplitTotal;
+
   let revenueLabel = "Total Revenue";
   if (filters.closedMonth !== "All" && filters.year !== "All") {
     revenueLabel = `${monthNames[filters.closedMonth]} ${filters.year} Revenue`;
@@ -175,6 +177,14 @@ export default function StatsGrid({ deals, filteredDeals, filters }) {
         label={revenueLabel}
         subtitle="Current filters"
         numericValue={filteredDealsRevenue}
+        format={currency}
+        colorTheme="green"
+      />
+      <SimpleStat
+        icon={<DollarSign size={20} />}
+        label="Net Revenue"
+        subtitle="Gross minus JV split"
+        numericValue={filteredNetRevenue}
         format={currency}
         colorTheme="green"
       />

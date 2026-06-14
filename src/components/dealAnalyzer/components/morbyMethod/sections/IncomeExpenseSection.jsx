@@ -67,6 +67,13 @@ export default function IncomeExpenseSection({
             <input value={fmt(monthlyMiscExpense)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Monthly Home Warranty"
+          name="monthlyHomeWarranty"
+          value={form.monthlyHomeWarranty}
+          onChange={onChange}
+          placeholder="e.g. $50"
+        />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"

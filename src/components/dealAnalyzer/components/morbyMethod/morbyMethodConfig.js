@@ -1,7 +1,7 @@
 export const PROP_MGMT_PCT = 10;
 export const FIRST_MONTH_PROP_MGMT_PCT = 50;
 export const CLOSING_COSTS_PCT = 2;
-export const INSPECTION_COST = 450;
+export const INSPECTION_COST = 375;
 export const DSCR_LTV = 0.8;
 export const DOWN_PCT = Math.round((1 - DSCR_LTV) * 100);
 
@@ -46,7 +46,6 @@ export function calcBalloonBalance(
 export const CURRENCY_FIELDS = new Set([
   "purchasePrice",
   "extraDownPayment",
-  "sellerCarryback",
   "legalFees",
   "appraisalFees",
   "underwritingFees",
@@ -54,6 +53,7 @@ export const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "yearlyTaxes",
   "annualMiscExpense",
+  "monthlyHomeWarranty",
 ]);
 
 export const PERCENT_FIELDS = new Set([
@@ -61,6 +61,7 @@ export const PERCENT_FIELDS = new Set([
   "titleFees",
   "dscrRate",
   "dscrPoints",
+  "sellerCarryback",
   "sellerCarrybackRate",
   "originationFeesPct",
 ]);
@@ -85,4 +86,5 @@ export const initialForm = {
   yearlyInsurance: "",
   yearlyTaxes: "",
   annualMiscExpense: "",
+  monthlyHomeWarranty: "",
 };

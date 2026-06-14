@@ -13,7 +13,7 @@ function fillRequired({
   purchasePrice = "300000",
   dscrRate = "8",
   dscrTermYears = "30",
-  sellerCarryback = "60000",
+  sellerCarryback = "20",
   sellerCarrybackTermYears = "10",
   monthlyRent = "2500",
 } = {}) {
@@ -26,7 +26,7 @@ function fillRequired({
   fireEvent.change(screen.getByLabelText(/Loan Term/i), {
     target: { value: dscrTermYears },
   });
-  fireEvent.change(screen.getByLabelText(/Seller Carryback Amount/i), {
+  fireEvent.change(screen.getByLabelText(/Seller Carryback \(%\)/i), {
     target: { value: sellerCarryback },
   });
   fireEvent.change(screen.getByLabelText(/^Note Term/i), {
@@ -106,10 +106,10 @@ describe("MorbyMethodTab", () => {
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
       target: { value: "300000" },
     });
-    fireEvent.change(screen.getByLabelText(/Seller Carryback Amount/i), {
-      target: { value: "200000" },
+    fireEvent.change(screen.getByLabelText(/Seller Carryback \(%\)/i), {
+      target: { value: "66" },
     });
-    // 60k down + upfront costs — 200k seller carryback covers it
+    // 60k down + upfront costs — 66% seller carryback (~198k) covers it
     expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
   });
 });

@@ -2,7 +2,6 @@ import { AnimatedAmount } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
 import {
   PROP_MGMT_PCT,
-  FIRST_MONTH_PROP_MGMT_PCT,
   CLOSING_COSTS_PCT,
   DSCR_LTV,
   DOWN_PCT,
@@ -47,7 +46,9 @@ export default function MorbyMethodSummary({ summary }) {
           </strong>
         </div>
         <div>
-          <span>Seller Carryback (2nd lien)</span>
+          <span>
+            Seller Carryback ({summary.sellerCarrybackPct}% — 2nd lien)
+          </span>
           <strong className="deal-analyzer-return-negative">
             <AnimatedAmount value={summary.sellerCarryback} format={fmt} />
           </strong>
@@ -124,6 +125,33 @@ export default function MorbyMethodSummary({ summary }) {
             </span>
             <strong className="deal-analyzer-return-negative">
               <AnimatedAmount value={summary.monthlyMiscExpense} format={fmt} />
+            </strong>
+          </div>
+        )}
+        {summary.monthlyInsurance > 0 && (
+          <div>
+            <span>Home Insurance (÷ 12 monthly)</span>
+            <strong className="deal-analyzer-return-negative">
+              <AnimatedAmount value={summary.monthlyInsurance} format={fmt} />
+            </strong>
+          </div>
+        )}
+        {summary.monthlyTaxes > 0 && (
+          <div>
+            <span>Property Taxes (÷ 12 monthly)</span>
+            <strong className="deal-analyzer-return-negative">
+              <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
+            </strong>
+          </div>
+        )}
+        {summary.monthlyHomeWarranty > 0 && (
+          <div>
+            <span>Home Warranty</span>
+            <strong className="deal-analyzer-return-negative">
+              <AnimatedAmount
+                value={summary.monthlyHomeWarranty}
+                format={fmt}
+              />
             </strong>
           </div>
         )}
@@ -217,33 +245,6 @@ export default function MorbyMethodSummary({ summary }) {
             <span>Agent Commission ({summary.agentCommissionPct}%)</span>
             <strong className="deal-analyzer-return-negative">
               <AnimatedAmount value={summary.agentCommissionAmt} format={fmt} />
-            </strong>
-          </div>
-        )}
-        <div>
-          <span>
-            First Month Property Management ({FIRST_MONTH_PROP_MGMT_PCT}%)
-          </span>
-          <strong className="deal-analyzer-return-negative">
-            <AnimatedAmount
-              value={summary.firstMonthPropMgmtFee}
-              format={fmt}
-            />
-          </strong>
-        </div>
-        {summary.yearlyInsurance > 0 && (
-          <div>
-            <span>Yearly Home Insurance</span>
-            <strong className="deal-analyzer-return-negative">
-              <AnimatedAmount value={summary.yearlyInsurance} format={fmt} />
-            </strong>
-          </div>
-        )}
-        {summary.yearlyTaxes > 0 && (
-          <div>
-            <span>Yearly Property Taxes</span>
-            <strong className="deal-analyzer-return-negative">
-              <AnimatedAmount value={summary.yearlyTaxes} format={fmt} />
             </strong>
           </div>
         )}

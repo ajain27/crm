@@ -170,9 +170,9 @@ describe("RentalHELOCTab", () => {
     expect(screen.getAllByText("-$77.00").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("includes closing costs, title fees and inspection in cash needed to close", () => {
+  it("includes purchase price, closing costs, title fees and inspection in cash needed to close", () => {
     render(<RentalHELOCTab />);
-    // Closing $4,000 + Title $2,000 + First Month Mgmt $1,500 + Inspection $450 = $7,950
+    // Purchase $200,000 + Closing $4,000 + Title $2,000 + Inspection $375 = $206,375
     fill();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(
@@ -180,7 +180,7 @@ describe("RentalHELOCTab", () => {
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Closing Costs (2% of price)")).toBeInTheDocument();
     expect(screen.getByText("Title Fees (1%)")).toBeInTheDocument();
-    expect(screen.getByText("$7,950.00")).toBeInTheDocument();
+    expect(screen.getAllByText("$206,375.00").length).toBeGreaterThanOrEqual(1);
   });
 
   it("clears summary when an input changes after calculating", () => {

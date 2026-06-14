@@ -20,11 +20,12 @@ export default function SellerCarrybackSection({
       </div>
       <div className="deal-analyzer-form-grid">
         <Field
-          label="Seller Carryback Amount"
+          label="Seller Carryback (%)"
           name="sellerCarryback"
           value={form.sellerCarryback}
           onChange={onChange}
-          placeholder="e.g. $60,000"
+          onBlur={onBlur}
+          placeholder="e.g. 20"
           required
         />
         <Field
@@ -35,6 +36,12 @@ export default function SellerCarrybackSection({
           onBlur={onBlur}
           placeholder="e.g. 0 (often interest-free)"
         />
+        {sellerCarryback > 0 && (
+          <label className="field deal-analyzer-output">
+            <span>Carryback Dollar Amount</span>
+            <input value={fmt(sellerCarryback)} readOnly tabIndex={-1} />
+          </label>
+        )}
         <Field
           label="Note Term (Years)"
           name="sellerCarrybackTermYears"

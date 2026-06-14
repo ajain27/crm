@@ -8,9 +8,8 @@ import {
 } from "../../../../utils/utils";
 
 const PROP_MGMT_PCT = 10;
-const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
-const INSPECTION_COST = 450;
+const INSPECTION_COST = 375;
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
@@ -18,7 +17,8 @@ const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "yearlyTaxes",
   "annualMiscExpense",
-  "sellerCredit",
+  "monthlyHomeWarranty",
+  "sellerCreditCarryback",
 ]);
 
 const PERCENT_FIELDS = new Set(["agentCommission", "titleFees"]);
@@ -27,11 +27,12 @@ const initialForm = {
   purchasePrice: "",
   agentCommission: "",
   titleFees: "",
-  sellerCredit: "",
+  sellerCreditCarryback: "",
   monthlyRent: "",
   yearlyInsurance: "",
   yearlyTaxes: "",
   annualMiscExpense: "",
+  monthlyHomeWarranty: "",
 };
 
 function RentalCashTab() {
@@ -66,32 +67,39 @@ function RentalCashTab() {
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
-  const sellerCredit = parseCurrency(form.sellerCredit);
+  const sellerCreditCarryback = parseCurrency(form.sellerCreditCarryback);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const yearlyInsurance = parseCurrency(form.yearlyInsurance);
+  const monthlyInsurance = yearlyInsurance / 12;
   const yearlyTaxes = parseCurrency(form.yearlyTaxes);
+  const monthlyTaxes = yearlyTaxes / 12;
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
+  const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
-  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
-  const firstMonthMgmtAdjustment = Math.max(
-    0,
-    firstMonthPropMgmtFee - propMgmtFee,
-  );
 
-  const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
-  const totalMonthlyExpenses = propMgmtFee + monthlyMiscExpense;
+  const noi =
+    monthlyRent -
+    propMgmtFee -
+    monthlyMiscExpense -
+    monthlyInsurance -
+    monthlyTaxes -
+    monthlyHomeWarranty;
+  const totalMonthlyExpenses =
+    propMgmtFee +
+    monthlyMiscExpense +
+    monthlyInsurance +
+    monthlyTaxes +
+    monthlyHomeWarranty;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
-  const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
+  const annualCashFlow = monthlyCashFlow * 12;
   const totalFundsNeeded =
     purchasePrice +
     closingCosts +
     titleFees +
-    yearlyInsurance +
-    yearlyTaxes +
     agentCommissionAmt +
     INSPECTION_COST -
-    sellerCredit;
+    sellerCreditCarryback;
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
@@ -107,15 +115,14 @@ function RentalCashTab() {
       closingCosts,
       titleFeesPct,
       titleFees,
-      sellerCredit,
+      sellerCreditCarryback,
       monthlyRent,
       propMgmtFee,
-      firstMonthPropMgmtFee,
-      firstMonthMgmtAdjustment,
-      yearlyInsurance,
-      yearlyTaxes,
+      monthlyInsurance,
+      monthlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
+      monthlyHomeWarranty,
       noi,
       totalMonthlyExpenses,
       monthlyCashFlow,
@@ -197,11 +204,11 @@ function RentalCashTab() {
           </label>
         )}
         <Field
-          label="Seller Credit"
-          name="sellerCredit"
-          value={form.sellerCredit}
+          label="Seller Credit / Carryback"
+          name="sellerCreditCarryback"
+          value={form.sellerCreditCarryback}
           onChange={handleChange}
-          placeholder="e.g. $5,000"
+          placeholder="e.g. $50,000"
         />
       </div>
 
@@ -261,6 +268,13 @@ function RentalCashTab() {
             <input value={fmt(monthlyMiscExpense)} readOnly tabIndex={-1} />
           </label>
         )}
+        <Field
+          label="Monthly Home Warranty"
+          name="monthlyHomeWarranty"
+          value={form.monthlyHomeWarranty}
+          onChange={handleChange}
+          placeholder="e.g. $50"
+        />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
@@ -337,6 +351,36 @@ function RentalCashTab() {
                 </strong>
               </div>
             )}
+            {summary.monthlyHomeWarranty > 0 && (
+              <div>
+                <span>Home Warranty</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.monthlyHomeWarranty}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
+            {summary.monthlyInsurance > 0 && (
+              <div>
+                <span>Home Insurance (÷ 12 monthly)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.monthlyInsurance}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
+            {summary.monthlyTaxes > 0 && (
+              <div>
+                <span>Property Taxes (÷ 12 monthly)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
+                </strong>
+              </div>
+            )}
             <div>
               <span>Total Monthly Expenses</span>
               <strong className="deal-analyzer-return-negative">
@@ -373,14 +417,6 @@ function RentalCashTab() {
                 </strong>
               </div>
             )}
-            {summary.sellerCredit > 0 && (
-              <div>
-                <span>Seller Credit</span>
-                <strong className="deal-analyzer-return-positive">
-                  -<AnimatedAmount value={summary.sellerCredit} format={fmt} />
-                </strong>
-              </div>
-            )}
             {summary.agentCommissionAmt > 0 && (
               <div>
                 <span>Agent Commission ({summary.agentCommissionPct}%)</span>
@@ -393,41 +429,23 @@ function RentalCashTab() {
               </div>
             )}
             <div>
-              <span>
-                First Month Property Management ({FIRST_MONTH_PROP_MGMT_PCT}%)
-              </span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount
-                  value={summary.firstMonthPropMgmtFee}
-                  format={fmt}
-                />
-              </strong>
-            </div>
-            {summary.yearlyInsurance > 0 && (
-              <div>
-                <span>Yearly Home Insurance</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.yearlyInsurance}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.yearlyTaxes > 0 && (
-              <div>
-                <span>Yearly Property Taxes</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.yearlyTaxes} format={fmt} />
-                </strong>
-              </div>
-            )}
-            <div>
               <span>Inspection Cost</span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.inspectionCost} format={fmt} />
               </strong>
             </div>
+            {summary.sellerCreditCarryback > 0 && (
+              <div>
+                <span>Seller Credit / Carryback</span>
+                <strong className="deal-analyzer-return-positive">
+                  −
+                  <AnimatedAmount
+                    value={summary.sellerCreditCarryback}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
             <div>
               <span>Total Funds Needed</span>
               <strong className="deal-analyzer-return-negative">
@@ -510,11 +528,9 @@ function RentalCashTab() {
             className="deal-analyzer-calculation"
             style={{ marginTop: "0.75rem" }}
           >
-            Annual Cash Flow = (Monthly Cash Flow × 12) − First Month Prop. Mgmt
-            Adjustment
+            Annual Cash Flow = Monthly Cash Flow × 12
             <span>
-              ({fmt(summary.monthlyCashFlow)} × 12) −{" "}
-              {fmt(summary.firstMonthMgmtAdjustment)} ={" "}
+              {fmt(summary.monthlyCashFlow)} × 12 ={" "}
               {fmt(summary.annualCashFlow)}
             </span>
           </div>

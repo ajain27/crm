@@ -10,7 +10,6 @@ import AdditionalLenders, {
 } from "../additionalLenders/AdditionalLenders";
 import {
   PROP_MGMT_PCT,
-  FIRST_MONTH_PROP_MGMT_PCT,
   CLOSING_COSTS_PCT,
   INSPECTION_COST,
   DSCR_LTV,
@@ -100,7 +99,8 @@ function MorbyMethodTab({ tab }) {
   const dscrUpfrontCosts = dscrMiscFees;
 
   // — Seller carryback (2nd lien promissory note)
-  const sellerCarryback = parseCurrency(form.sellerCarryback);
+  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
+  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const sellerCarrybackRatePct = parsePercent(form.sellerCarrybackRate);
   const sellerCarrybackTermYears =
     parseInt(form.sellerCarrybackTermYears || "0", 10) || 0;
@@ -121,18 +121,16 @@ function MorbyMethodTab({ tab }) {
         )
       : 0;
 
-  // — Income & expenses (insurance + taxes moved to upfront costs)
+  // — Income & expenses
   const monthlyRent = parseCurrency(form.monthlyRent);
   const yearlyInsurance = parseCurrency(form.yearlyInsurance);
+  const monthlyInsurance = yearlyInsurance / 12;
   const yearlyTaxes = parseCurrency(form.yearlyTaxes);
+  const monthlyTaxes = yearlyTaxes / 12;
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
+  const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
-  const firstMonthPropMgmtFee = monthlyRent * (FIRST_MONTH_PROP_MGMT_PCT / 100);
-  const firstMonthMgmtAdjustment = Math.max(
-    0,
-    firstMonthPropMgmtFee - propMgmtFee,
-  );
 
   // — What buyer actually brings to close
   const totalUpfrontNeeded =
@@ -141,8 +139,6 @@ function MorbyMethodTab({ tab }) {
     dscrUpfrontCosts +
     closingCosts +
     titleFees +
-    yearlyInsurance +
-    yearlyTaxes +
     agentCommissionAmt +
     INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
@@ -152,13 +148,24 @@ function MorbyMethodTab({ tab }) {
   );
 
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
-  const noi = monthlyRent - propMgmtFee - monthlyMiscExpense;
+  const noi =
+    monthlyRent -
+    propMgmtFee -
+    monthlyMiscExpense -
+    monthlyInsurance -
+    monthlyTaxes -
+    monthlyHomeWarranty;
   const totalMonthlyDebtService =
     dscrMonthlyPayment + sellerCarrybackMonthly + lenderMonthlyPayment;
   const totalMonthlyExpenses =
-    totalMonthlyDebtService + propMgmtFee + monthlyMiscExpense;
+    totalMonthlyDebtService +
+    propMgmtFee +
+    monthlyMiscExpense +
+    monthlyInsurance +
+    monthlyTaxes +
+    monthlyHomeWarranty;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
-  const annualCashFlow = monthlyCashFlow * 12 - firstMonthMgmtAdjustment;
+  const annualCashFlow = monthlyCashFlow * 12;
 
   // — Returns
   const dscr = dscrMonthlyPayment > 0 ? noi / dscrMonthlyPayment : 0;
@@ -199,6 +206,7 @@ function MorbyMethodTab({ tab }) {
       underwritingFees,
       dscrMiscFees,
       dscrUpfrontCosts,
+      sellerCarrybackPct,
       sellerCarryback,
       sellerCarrybackRatePct,
       sellerCarrybackTermYears,
@@ -212,12 +220,11 @@ function MorbyMethodTab({ tab }) {
       buyerCashToClose,
       monthlyRent,
       propMgmtFee,
-      firstMonthPropMgmtFee,
-      firstMonthMgmtAdjustment,
-      yearlyInsurance,
-      yearlyTaxes,
+      monthlyInsurance,
+      monthlyTaxes,
       annualMiscExpense,
       monthlyMiscExpense,
+      monthlyHomeWarranty,
       noi,
       totalMonthlyDebtService,
       totalMonthlyExpenses,
