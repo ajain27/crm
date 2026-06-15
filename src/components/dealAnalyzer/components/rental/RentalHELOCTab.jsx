@@ -6,6 +6,10 @@ import {
   fmt,
   fmtCurrencyInput,
 } from "../../../../utils/utils";
+import {
+  SellerCreditCarrybackField,
+  SellerCreditCarrybackSummaryRow,
+} from "./SellerCreditCarryback";
 
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
@@ -27,13 +31,13 @@ const CURRENCY_FIELDS = new Set([
   "yearlyTaxes",
   "annualMiscExpense",
   "monthlyHomeWarranty",
-  "sellerCarryback",
 ]);
 
 const PERCENT_FIELDS = new Set([
   "titleFees",
   "helocInterestRate",
   "agentCommission",
+  "sellerCarryback",
 ]);
 
 const initialForm = {
@@ -96,7 +100,8 @@ function RentalHELOCTab() {
   const monthlyInsurance = yearlyInsurance / 12;
   const monthlyTaxes = yearlyTaxes / 12;
   const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
-  const sellerCarryback = parseCurrency(form.sellerCarryback);
+  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
+  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
 
   // HELOC finances the full purchase price, amortized over the term.
@@ -163,6 +168,7 @@ function RentalHELOCTab() {
       annualMiscExpense,
       monthlyMiscExpense,
       monthlyHomeWarranty,
+      sellerCarrybackPct,
       sellerCarryback,
       noi,
       totalMonthlyExpenses,
@@ -245,12 +251,12 @@ function RentalHELOCTab() {
             <input value={fmt(titleFees)} readOnly tabIndex={-1} />
           </label>
         )}
-        <Field
-          label="Seller Credit / Carryback"
-          name="sellerCarryback"
+        <SellerCreditCarrybackField
           value={form.sellerCarryback}
+          purchasePrice={purchasePrice}
           onChange={handleChange}
-          placeholder="e.g. $50,000"
+          onBlur={handleBlur}
+          fmt={fmt}
         />
       </div>
 
@@ -521,18 +527,11 @@ function RentalHELOCTab() {
                 <AnimatedAmount value={summary.inspectionCost} format={fmt} />
               </strong>
             </div>
-            {summary.sellerCarryback > 0 && (
-              <div>
-                <span>Seller Credit / Carryback</span>
-                <strong className="deal-analyzer-return-positive">
-                  −
-                  <AnimatedAmount
-                    value={summary.sellerCarryback}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
+            <SellerCreditCarrybackSummaryRow
+              pct={summary.sellerCarrybackPct}
+              amount={summary.sellerCarryback}
+              fmt={fmt}
+            />
             <div>
               <span>Total Cash Needed to Close</span>
               <strong className="deal-analyzer-return-negative">

@@ -6,6 +6,10 @@ import {
   fmt,
   fmtCurrencyInput,
 } from "../../../../utils/utils";
+import {
+  SellerCreditCarrybackField,
+  SellerCreditCarrybackSummaryRow,
+} from "./SellerCreditCarryback";
 
 const PROP_MGMT_PCT = 10;
 const CLOSING_COSTS_PCT = 2;
@@ -18,16 +22,19 @@ const CURRENCY_FIELDS = new Set([
   "yearlyTaxes",
   "annualMiscExpense",
   "monthlyHomeWarranty",
-  "sellerCreditCarryback",
 ]);
 
-const PERCENT_FIELDS = new Set(["agentCommission", "titleFees"]);
+const PERCENT_FIELDS = new Set([
+  "agentCommission",
+  "titleFees",
+  "sellerCarryback",
+]);
 
 const initialForm = {
   purchasePrice: "",
   agentCommission: "",
   titleFees: "",
-  sellerCreditCarryback: "",
+  sellerCarryback: "",
   monthlyRent: "",
   yearlyInsurance: "",
   yearlyTaxes: "",
@@ -67,7 +74,8 @@ function RentalCashTab() {
   const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
-  const sellerCreditCarryback = parseCurrency(form.sellerCreditCarryback);
+  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
+  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const yearlyInsurance = parseCurrency(form.yearlyInsurance);
   const monthlyInsurance = yearlyInsurance / 12;
@@ -99,7 +107,7 @@ function RentalCashTab() {
     titleFees +
     agentCommissionAmt +
     INSPECTION_COST -
-    sellerCreditCarryback;
+    sellerCarryback;
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
@@ -115,7 +123,8 @@ function RentalCashTab() {
       closingCosts,
       titleFeesPct,
       titleFees,
-      sellerCreditCarryback,
+      sellerCarrybackPct,
+      sellerCarryback,
       monthlyRent,
       propMgmtFee,
       monthlyInsurance,
@@ -203,12 +212,12 @@ function RentalCashTab() {
             <input value={fmt(titleFees)} readOnly tabIndex={-1} />
           </label>
         )}
-        <Field
-          label="Seller Credit / Carryback"
-          name="sellerCreditCarryback"
-          value={form.sellerCreditCarryback}
+        <SellerCreditCarrybackField
+          value={form.sellerCarryback}
+          purchasePrice={purchasePrice}
           onChange={handleChange}
-          placeholder="e.g. $50,000"
+          onBlur={handleBlur}
+          fmt={fmt}
         />
       </div>
 
@@ -434,18 +443,11 @@ function RentalCashTab() {
                 <AnimatedAmount value={summary.inspectionCost} format={fmt} />
               </strong>
             </div>
-            {summary.sellerCreditCarryback > 0 && (
-              <div>
-                <span>Seller Credit / Carryback</span>
-                <strong className="deal-analyzer-return-positive">
-                  −
-                  <AnimatedAmount
-                    value={summary.sellerCreditCarryback}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
+            <SellerCreditCarrybackSummaryRow
+              pct={summary.sellerCarrybackPct}
+              amount={summary.sellerCarryback}
+              fmt={fmt}
+            />
             <div>
               <span>Total Funds Needed</span>
               <strong className="deal-analyzer-return-negative">
