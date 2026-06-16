@@ -14,6 +14,7 @@ import {
   SellerCreditCarrybackField,
   SellerCreditCarrybackSummaryRow,
 } from "./SellerCreditCarryback";
+import RentalPieChart from "./RentalPieChart";
 
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
@@ -845,6 +846,8 @@ function RentalDSCRTab() {
               </strong>
             </div>
           </div>
+
+          <RentalPieChart summary={summary} />
 
           <div
             className="deal-analyzer-calculation"
