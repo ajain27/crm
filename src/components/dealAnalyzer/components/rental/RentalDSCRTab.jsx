@@ -20,8 +20,7 @@ const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
 const CLOSING_COSTS_PCT = 2;
 const INSPECTION_COST = 375;
-const LENDER_LTC = 0.8;
-const DOWN_PCT = Math.round((1 - LENDER_LTC) * 100);
+const DOWN_OPTIONS = [20, 25];
 
 function calcPMT(annualRatePct, termYears, principal) {
   if (annualRatePct <= 0 || termYears <= 0 || principal <= 0) return 0;
@@ -77,6 +76,8 @@ function RentalDSCRTab() {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
   const [lenders, setLenders] = useState([]);
+  const [downPct, setDownPct] = useState(20);
+  const lenderLtc = (100 - downPct) / 100;
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -121,8 +122,8 @@ function RentalDSCRTab() {
   const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
 
-  const lenderFunds = purchasePrice * LENDER_LTC;
-  const downPayment = purchasePrice * (1 - LENDER_LTC);
+  const lenderFunds = purchasePrice * lenderLtc;
+  const downPayment = purchasePrice * (1 - lenderLtc);
   const extraDownPaymentAmt = parseCurrency(form.extraDownPayment);
   const effectiveLoanAmount = Math.max(0, lenderFunds - extraDownPaymentAmt);
   const effectiveDownPayment = downPayment + extraDownPaymentAmt;
@@ -204,6 +205,7 @@ function RentalDSCRTab() {
       annualMiscExpense,
       monthlyMiscExpense,
       monthlyHomeWarranty,
+      downPct,
       lenderFunds,
       downPayment,
       extraDownPaymentAmt,
@@ -319,13 +321,40 @@ function RentalDSCRTab() {
 
       <div className="deal-analyzer-section-label">DSCR Loan</div>
       <div className="deal-analyzer-form-grid">
+        <div className="field">
+          <span>Down Payment %</span>
+          <select
+            value={downPct}
+            onChange={(e) => {
+              setDownPct(Number(e.target.value));
+              setSummary(null);
+            }}
+            className="leads-select"
+          >
+            {DOWN_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}%
+              </option>
+            ))}
+          </select>
+        </div>
         <label className="field deal-analyzer-output">
           <span>
             Down Payment{" "}
-            <span className="deal-analyzer-auto-badge">{DOWN_PCT}%</span>
+            <span className="deal-analyzer-auto-badge">{downPct}%</span>
           </span>
           <input
             value={downPayment > 0 ? fmt(downPayment) : ""}
+            readOnly
+            tabIndex={-1}
+          />
+        </label>
+        <label
+          className={`field deal-analyzer-output${lenderFunds > 0 && lenderFunds < 50000 ? " deal-analyzer-output-red" : ""}`}
+        >
+          <span>Loan Amount</span>
+          <input
+            value={lenderFunds > 0 ? fmt(lenderFunds) : ""}
             readOnly
             tabIndex={-1}
           />
@@ -641,7 +670,7 @@ function RentalDSCRTab() {
             </div>
             <div>
               <span>
-                Down Payment ({DOWN_PCT}% of purchase)
+                Down Payment ({summary.downPct}% of purchase)
                 {summary.extraDownPaymentAmt > 0 && (
                   <span
                     className="deal-analyzer-auto-badge"

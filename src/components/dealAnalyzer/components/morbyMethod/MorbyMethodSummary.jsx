@@ -1,11 +1,6 @@
 import { AnimatedAmount } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
-import {
-  PROP_MGMT_PCT,
-  CLOSING_COSTS_PCT,
-  DSCR_LTV,
-  DOWN_PCT,
-} from "./morbyMethodConfig";
+import { PROP_MGMT_PCT, CLOSING_COSTS_PCT } from "./morbyMethodConfig";
 
 export default function MorbyMethodSummary({ summary }) {
   if (!summary) return null;
@@ -40,7 +35,7 @@ export default function MorbyMethodSummary({ summary }) {
           </strong>
         </div>
         <div>
-          <span>DSCR Loan ({DSCR_LTV * 100}% LTV — 1st lien)</span>
+          <span>DSCR Loan ({100 - summary.downPct}% LTV — 1st lien)</span>
           <strong className="deal-analyzer-return-negative">
             <AnimatedAmount value={summary.dscrLoanAmount} format={fmt} />
           </strong>
@@ -170,7 +165,7 @@ export default function MorbyMethodSummary({ summary }) {
           Buyer Cash to Close
         </div>
         <div>
-          <span>Down Payment ({DOWN_PCT}%)</span>
+          <span>Down Payment ({summary.downPct}%)</span>
           <strong className="deal-analyzer-return-negative">
             <AnimatedAmount value={summary.downPaymentRequired} format={fmt} />
           </strong>

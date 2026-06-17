@@ -12,7 +12,6 @@ import {
   PROP_MGMT_PCT,
   CLOSING_COSTS_PCT,
   INSPECTION_COST,
-  DSCR_LTV,
   calcPMT,
   calcBalloonBalance,
   CURRENCY_FIELDS,
@@ -25,10 +24,14 @@ import SellerCarrybackSection from "./sections/SellerCarrybackSection";
 import IncomeExpenseSection from "./sections/IncomeExpenseSection";
 import MorbyMethodSummary from "./MorbyMethodSummary";
 
+const DOWN_OPTIONS = [20, 25];
+
 function MorbyMethodTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
   const [lenders, setLenders] = useState([]);
+  const [downPct, setDownPct] = useState(20);
+  const dscrLtv = (100 - downPct) / 100;
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -68,9 +71,9 @@ function MorbyMethodTab({ tab }) {
   const titleFeesPct = parsePercent(form.titleFees);
   const titleFees = purchasePrice * (titleFeesPct / 100);
 
-  // — DSCR first lien (80% LTV)
-  const dscrLoanAmount = purchasePrice * DSCR_LTV;
-  const downPaymentRequired = purchasePrice * (1 - DSCR_LTV);
+  // — DSCR first lien
+  const dscrLoanAmount = purchasePrice * dscrLtv;
+  const downPaymentRequired = purchasePrice * (1 - dscrLtv);
   const extraDownPaymentAmt = parseCurrency(form.extraDownPayment);
   const effectiveDscrLoanAmount = Math.max(
     0,
@@ -142,6 +145,14 @@ function MorbyMethodTab({ tab }) {
     agentCommissionAmt +
     INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
+  const sellerCovers = Math.min(
+    sellerCarryback,
+    Math.max(0, totalUpfrontNeeded - lenderTotal),
+  );
+  const sellerExcess = Math.max(
+    0,
+    sellerCarryback - (totalUpfrontNeeded - lenderTotal),
+  );
   const buyerCashToClose = Math.max(
     0,
     totalUpfrontNeeded - sellerCarryback - lenderTotal,
@@ -217,6 +228,8 @@ function MorbyMethodTab({ tab }) {
       lenderMonthlyPayment,
       lenderTotal,
       totalUpfrontNeeded,
+      sellerCovers,
+      sellerExcess,
       buyerCashToClose,
       monthlyRent,
       propMgmtFee,
@@ -234,6 +247,7 @@ function MorbyMethodTab({ tab }) {
       capRate,
       cashOnCash,
       inspectionCost: INSPECTION_COST,
+      downPct,
     });
   }
 
@@ -290,6 +304,13 @@ function MorbyMethodTab({ tab }) {
           downPaymentRequired={downPaymentRequired}
           dscrMonthlyPayment={dscrMonthlyPayment}
           dscrMiscFees={dscrMiscFees}
+          downPct={downPct}
+          dscrLtv={dscrLtv}
+          onDownPctChange={(val) => {
+            setDownPct(val);
+            setSummary(null);
+          }}
+          downOptions={DOWN_OPTIONS}
         />
 
         <SellerCarrybackSection

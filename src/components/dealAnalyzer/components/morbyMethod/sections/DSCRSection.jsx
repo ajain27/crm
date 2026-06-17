@@ -1,6 +1,5 @@
 import { Field } from "../../../../elements/elements";
 import { fmt } from "../../../../../utils/utils";
-import { DSCR_LTV, DOWN_PCT } from "../morbyMethodConfig";
 
 export default function DSCRSection({
   form,
@@ -10,20 +9,37 @@ export default function DSCRSection({
   downPaymentRequired,
   dscrMonthlyPayment,
   dscrMiscFees,
+  downPct,
+  dscrLtv,
+  onDownPctChange,
+  downOptions,
 }) {
+  const ltvPct = Math.round(dscrLtv * 100);
   return (
     <>
       <div className="deal-analyzer-section-label">
         DSCR First Lien{" "}
-        <span className="deal-analyzer-auto-badge">{DSCR_LTV * 100}% LTV</span>
+        <span className="deal-analyzer-auto-badge">{ltvPct}% LTV</span>
       </div>
       <div className="deal-analyzer-form-grid">
+        <div className="field">
+          <span>Down Payment %</span>
+          <select
+            value={downPct}
+            onChange={(e) => onDownPctChange(Number(e.target.value))}
+            className="leads-select"
+          >
+            {downOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}%
+              </option>
+            ))}
+          </select>
+        </div>
         <label className="field deal-analyzer-output">
           <span>
             Loan Amount{" "}
-            <span className="deal-analyzer-auto-badge">
-              {DSCR_LTV * 100}% of price
-            </span>
+            <span className="deal-analyzer-auto-badge">{ltvPct}% of price</span>
           </span>
           <input
             value={dscrLoanAmount > 0 ? fmt(dscrLoanAmount) : ""}
@@ -34,7 +50,7 @@ export default function DSCRSection({
         <label className="field deal-analyzer-output">
           <span>
             Down Payment Required{" "}
-            <span className="deal-analyzer-auto-badge">{DOWN_PCT}%</span>
+            <span className="deal-analyzer-auto-badge">{downPct}%</span>
           </span>
           <input
             value={downPaymentRequired > 0 ? fmt(downPaymentRequired) : ""}
