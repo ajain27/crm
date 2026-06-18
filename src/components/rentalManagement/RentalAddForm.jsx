@@ -121,6 +121,36 @@ export default function RentalAddForm({
         <span className="rm-rent-deposit-hint">
           Rent accumulates automatically each month from this date.
         </span>
+        <Field
+          label="Property Management Company"
+          name="pmCompanyName"
+          value={form.pmCompanyName}
+          onChange={onChange}
+          placeholder="Acme Property Management"
+        />
+        <Field
+          label="PM Agent Name"
+          name="pmAgentName"
+          value={form.pmAgentName}
+          onChange={onChange}
+          placeholder="Jane Doe"
+        />
+        <Field
+          label="PM Contact Phone"
+          name="pmContactPhone"
+          value={form.pmContactPhone}
+          onChange={onChange}
+          placeholder="555-867-5309"
+          maxLength={12}
+        />
+        <Field
+          label="PM Contact Email"
+          name="pmContactEmail"
+          type="email"
+          value={form.pmContactEmail}
+          onChange={onChange}
+          placeholder="manager@acmepm.com"
+        />
 
         {addressError && (
           <span className="field-error rm-address-error">{addressError}</span>

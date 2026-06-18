@@ -56,6 +56,10 @@ export function normalizeRentalForm(form, isAddForm = false) {
     purchaseDate: form.purchaseDate,
     monthlyMortgage: form.monthlyMortgage,
     monthlyRent: form.monthlyRent,
+    pmCompanyName: (form.pmCompanyName || "").trim(),
+    pmAgentName: (form.pmAgentName || "").trim(),
+    pmContactPhone: form.pmContactPhone || "",
+    pmContactEmail: (form.pmContactEmail || "").trim(),
   };
 
   if (isAddForm) {

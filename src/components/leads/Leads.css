@@ -276,6 +276,47 @@
     color: #dc2626;
   }
 
+  .leads-status-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .leads-status-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.45;
+    transition:
+      opacity 0.15s,
+      transform 0.15s;
+  }
+
+  .leads-status-dot:hover {
+    opacity: 0.75;
+  }
+
+  .leads-status-dot--active {
+    opacity: 1;
+    transform: scale(1.15);
+    border-color: var(--text);
+  }
+
+  .leads-status-dot-overdue {
+    background: #dc2626;
+  }
+
+  .leads-status-dot-today {
+    background: #d97706;
+  }
+
+  .leads-status-dot-upcoming {
+    background: #2563eb;
+  }
+
   .leads-contact-link {
     font-size: 0.875rem;
     color: var(--blue);

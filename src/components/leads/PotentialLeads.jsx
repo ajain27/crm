@@ -112,6 +112,7 @@ export default function PotentialLeads({
   const [search, setSearch] = useState("");
   const [filterSource, setFilterSource] = useState("");
   const [filterState, setFilterState] = useState("");
+  const [filterFollowUpStatus, setFilterFollowUpStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [detailLead, setDetailLead] = useState(null);
 
@@ -287,6 +288,11 @@ export default function PotentialLeads({
       if (filterSource && l.source !== filterSource) return false;
       if (filterState && parseAddress(l.address).state !== filterState)
         return false;
+      if (
+        filterFollowUpStatus &&
+        followUpStatus(l.followUpDate) !== filterFollowUpStatus
+      )
+        return false;
       return true;
     })
     .sort((a, b) => {
@@ -302,7 +308,8 @@ export default function PotentialLeads({
     safePage * ITEMS_PER_PAGE,
   );
 
-  const activeFilters = search || filterSource || filterState;
+  const activeFilters =
+    search || filterSource || filterState || filterFollowUpStatus;
   const usedSources = [
     ...new Set(residentialLeads.map((l) => l.source).filter(Boolean)),
   ];
@@ -637,11 +644,41 @@ export default function PotentialLeads({
                     </option>
                   ))}
                 </select>
+                <div
+                  className="leads-status-filter"
+                  role="group"
+                  aria-label="Filter by follow-up status"
+                >
+                  {[
+                    { status: "overdue", label: "Overdue" },
+                    { status: "today", label: "Today" },
+                    { status: "upcoming", label: "Upcoming" },
+                  ].map(({ status, label }) => (
+                    <button
+                      key={status}
+                      type="button"
+                      title={label}
+                      aria-pressed={filterFollowUpStatus === status}
+                      className={`leads-status-dot leads-status-dot-${status}${
+                        filterFollowUpStatus === status
+                          ? " leads-status-dot--active"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setFilterFollowUpStatus((prev) =>
+                          prev === status ? "" : status,
+                        );
+                        resetPage();
+                      }}
+                    />
+                  ))}
+                </div>
                 <ClearFiltersButton
                   onClear={() => {
                     setSearch("");
                     setFilterSource("");
                     setFilterState("");
+                    setFilterFollowUpStatus("");
                     resetPage();
                   }}
                   hasActiveFilters={Boolean(activeFilters)}

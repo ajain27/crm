@@ -34,6 +34,10 @@ function createEmptyForm() {
     tenantPhone: "",
     tenantEmail: "",
     tenantType: "Regular",
+    pmCompanyName: "",
+    pmAgentName: "",
+    pmContactPhone: "",
+    pmContactEmail: "",
   };
 }
 
@@ -62,6 +66,9 @@ function applyFieldChange(prev, name, value, tenantId) {
   // Handle single tenant phone field in add form
   if (name === "tenantPhone") {
     return { ...prev, tenantPhone: formatPhone(value) };
+  }
+  if (name === "pmContactPhone") {
+    return { ...prev, pmContactPhone: formatPhone(value) };
   }
   return { ...prev, [name]: value };
 }
@@ -167,6 +174,10 @@ export default function RentalManagement({
       purchaseDate: rental.purchaseDate || "",
       monthlyMortgage: rental.monthlyMortgage || "",
       monthlyRent: rental.monthlyRent || "",
+      pmCompanyName: rental.pmCompanyName || "",
+      pmAgentName: rental.pmAgentName || "",
+      pmContactPhone: rental.pmContactPhone || "",
+      pmContactEmail: rental.pmContactEmail || "",
       tenants,
     });
   }
@@ -464,6 +475,7 @@ export default function RentalManagement({
                   <th>Mortgage</th>
                   <th>Cashflow</th>
                   <th>Accumulated Rent</th>
+                  <th>Management Details</th>
                   <th></th>
                 </tr>
               </thead>
@@ -545,6 +557,44 @@ export default function RentalManagement({
                       </td>
                       <td className="rm-positive" data-label="Accumulated Rent">
                         {currency(propertyAccumulatedRent)}
+                      </td>
+                      <td
+                        className="rm-col-block"
+                        data-label="Management Details"
+                      >
+                        {rental.pmCompanyName ||
+                        rental.pmAgentName ||
+                        rental.pmContactPhone ||
+                        rental.pmContactEmail ? (
+                          <div className="rm-pm-display">
+                            {rental.pmCompanyName && (
+                              <span className="rm-pm-company">
+                                {rental.pmCompanyName}
+                              </span>
+                            )}
+                            {rental.pmAgentName && (
+                              <span>{rental.pmAgentName}</span>
+                            )}
+                            {rental.pmContactPhone && (
+                              <a
+                                href={`tel:${rental.pmContactPhone}`}
+                                className="rm-pm-link"
+                              >
+                                {rental.pmContactPhone}
+                              </a>
+                            )}
+                            {rental.pmContactEmail && (
+                              <a
+                                href={`mailto:${rental.pmContactEmail}`}
+                                className="rm-pm-link"
+                              >
+                                {rental.pmContactEmail}
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <button

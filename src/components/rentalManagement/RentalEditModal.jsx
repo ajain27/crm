@@ -95,6 +95,36 @@ export default function RentalEditModal({
             placeholder="$1,200"
             inputMode="numeric"
           />
+          <Field
+            label="Property Management Company"
+            name="pmCompanyName"
+            value={editForm.pmCompanyName}
+            onChange={onChange}
+            placeholder="Acme Property Management"
+          />
+          <Field
+            label="PM Agent Name"
+            name="pmAgentName"
+            value={editForm.pmAgentName}
+            onChange={onChange}
+            placeholder="Jane Doe"
+          />
+          <Field
+            label="PM Contact Phone"
+            name="pmContactPhone"
+            value={editForm.pmContactPhone}
+            onChange={onChange}
+            placeholder="555-867-5309"
+            maxLength={12}
+          />
+          <Field
+            label="PM Contact Email"
+            name="pmContactEmail"
+            type="email"
+            value={editForm.pmContactEmail}
+            onChange={onChange}
+            placeholder="manager@acmepm.com"
+          />
         </div>
       )}
     </Modal>
