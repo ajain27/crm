@@ -60,6 +60,7 @@ export function normalizeRentalForm(form, isAddForm = false) {
 
   if (isAddForm) {
     // For add form, create initial tenant from form fields (marked as current)
+    const leaseStartDate = form.rentDepositDate || "";
     return {
       ...base,
       tenants: form.tenantName.trim()
@@ -71,12 +72,12 @@ export function normalizeRentalForm(form, isAddForm = false) {
               email: form.tenantEmail.trim(),
               type: form.tenantType || "Regular",
               monthlyRent: form.monthlyRent,
-              leaseStartDate: "",
+              leaseStartDate,
               leaseEndDate: "",
               isCurrent: true,
             },
           ]
-        : [createEmptyTenant(true)],
+        : [{ ...createEmptyTenant(true), leaseStartDate }],
     };
   }
 

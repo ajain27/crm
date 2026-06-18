@@ -70,7 +70,10 @@ function DealRow({
       className="clickable-row"
       onClick={handleTrClick}
     >
-      <td className="text-center" onClick={(e) => e.stopPropagation()}>
+      <td
+        className="text-center dt-col-action"
+        onClick={(e) => e.stopPropagation()}
+      >
         <input
           type="checkbox"
           className="row-checkbox"
@@ -78,7 +81,10 @@ function DealRow({
           onChange={() => onToggleSelect(deal.id)}
         />
       </td>
-      <td className="text-center" onClick={(e) => e.stopPropagation()}>
+      <td
+        className="text-center dt-col-action"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           className="danger-btn"
           title="Delete"
@@ -87,20 +93,21 @@ function DealRow({
           <Trash2 size={16} />
         </button>
       </td>
-      <ReadOnlyCell value={deal.address} wide />
-      <ReadOnlyCell value={deal.city} />
-      <ReadOnlyCell value={deal.zipCode} />
-      <ReadOnlyCell value={deal.state} small />
-      <ReadOnlyCell value={deal.propertyType || "—"} />
-      <ReadOnlyCell value={deal.onMarket || "No"} />
+      <ReadOnlyCell value={deal.address} wide label="Property Address" />
+      <ReadOnlyCell value={deal.city} label="City" />
+      <ReadOnlyCell value={deal.zipCode} label="Zip Code" />
+      <ReadOnlyCell value={deal.state} small label="State" />
+      <ReadOnlyCell value={deal.propertyType || "—"} label="Property Type" />
+      <ReadOnlyCell value={deal.onMarket || "No"} label="On Market" />
       <ReadOnlyCell
         value={
           deal.onMarket === "Yes" && Number(deal.listedPrice || 0) > 0
             ? currency(deal.listedPrice)
             : "—"
         }
+        label="Listed Price"
       />
-      <td>
+      <td className="dt-col-block" data-label="Agent Info">
         {deal.onMarket === "Yes" &&
         (deal.agentName || deal.agentPhone || deal.listingUrl) ? (
           <div className="buyer-info-cell">
@@ -135,11 +142,11 @@ function DealRow({
           <span className="placeholder-dash">—</span>
         )}
       </td>
-      <ReadOnlyCell value={currency(deal.arv)} />
-      <ReadOnlyCell value={currency(deal.rehabCost)} />
-      <ReadOnlyCell value={currency(deal.mao)} />
+      <ReadOnlyCell value={currency(deal.arv)} label="ARV" />
+      <ReadOnlyCell value={currency(deal.rehabCost)} label="Rehab Cost" />
+      <ReadOnlyCell value={currency(deal.mao)} label="MAO" />
 
-      <td>
+      <td data-label="Offer Status">
         <select
           className={`badge ${deal.offerStatus?.toLowerCase()?.replaceAll(" ", "-")}`}
           value={deal.offerStatus}
@@ -152,7 +159,7 @@ function DealRow({
         </select>
       </td>
 
-      <td>
+      <td data-label="Offer Date">
         {deal.offerStatus === "Not Sent" ? (
           <span className="placeholder-dash">—</span>
         ) : (
@@ -167,7 +174,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td data-label="Accepted">
         {deal.offerStatus === "Not Sent" ? (
           <span className="placeholder-dash">—</span>
         ) : (
@@ -186,7 +193,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td className="dt-col-block" data-label="Contract">
         {deal.offerStatus === "Not Sent" ? (
           <span className="placeholder-dash">—</span>
         ) : (
@@ -248,7 +255,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td data-label="Contract Price">
         {deal.offerStatus === "Not Sent" ? (
           <span className="placeholder-dash">—</span>
         ) : (
@@ -278,7 +285,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td data-label="Assigned">
         {deal.sellerAccepted === "No" ? (
           <span className="placeholder-dash">—</span>
         ) : (
@@ -294,7 +301,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td data-label="Assigned Price">
         {deal.assigned === "Yes" ? (
           <input
             type="text"
@@ -328,7 +335,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td className="dt-col-block" data-label="Buyer Info">
         {deal.assigned === "Yes" ? (
           <div className="buyer-info-cell">
             <div className="buyer-line">
@@ -411,7 +418,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td className="dt-col-block" data-label="JV Deal">
         <div className="buyer-info-cell">
           <div className="buyer-line">
             <select
@@ -533,7 +540,7 @@ function DealRow({
         </div>
       </td>
 
-      <td>
+      <td data-label="Closed">
         <select
           className={`badge ${deal.closed?.toLowerCase()}`}
           value={deal.closed}
@@ -545,7 +552,7 @@ function DealRow({
         </select>
       </td>
 
-      <td>
+      <td data-label="Closed On">
         {deal.closed === "Yes" ? (
           <input
             type="date"
@@ -559,7 +566,7 @@ function DealRow({
         )}
       </td>
 
-      <td>
+      <td data-label="Gross Revenue">
         {deal.closed === "Yes" ? (
           <strong className="revenue-value">
             {currency(

@@ -149,9 +149,9 @@ function Select({ label, required, options, ...props }) {
   );
 }
 
-function ReadOnlyCell({ value, wide, small }) {
+function ReadOnlyCell({ value, wide, small, label }) {
   return (
-    <td>
+    <td data-label={label}>
       <span
         className={`readonly-input ${wide ? "wide" : ""} ${small ? "small" : ""}`.trim()}
       >

@@ -11,10 +11,18 @@
     margin-top: -0.5rem;
   }
 
+  .rm-rent-deposit-hint {
+    grid-column: 1 / -1;
+    margin-top: -0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
   /* ── Table header + filters ──────────────────────────── */
   .rm-table-header {
     flex-wrap: wrap;
     gap: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   .rm-filters {
@@ -275,6 +283,94 @@
 
   .rm-name {
     font-weight: 600;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    white-space: nowrap;
+  }
+
+  .rm-col-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--panel);
+    box-shadow: 1px 0 0 0 var(--line);
+  }
+
+  thead .rm-col-sticky {
+    background: var(--th-bg);
+  }
+
+  tbody tr:nth-child(even) .rm-col-sticky {
+    background: color-mix(in srgb, var(--panel) 96%, var(--blue-light) 4%);
+  }
+
+  tbody tr:hover .rm-col-sticky {
+    background: color-mix(in srgb, var(--panel) 88%, var(--blue-light) 12%);
+  }
+
+  .rm-table-container {
+    container-type: inline-size;
+    box-sizing: border-box;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @container (max-width: 860px) {
+    .rm-properties-table thead {
+      display: none;
+    }
+
+    .rm-properties-table,
+    .rm-properties-table tbody,
+    .rm-properties-table tr,
+    .rm-properties-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .rm-properties-table tbody tr {
+      margin: 0 0 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.75rem 0;
+      background: var(--panel);
+    }
+
+    .rm-properties-table tbody tr:nth-child(even) {
+      background: color-mix(in srgb, var(--panel) 96%, var(--blue-light) 4%);
+    }
+
+    .rm-properties-table td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.8rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      position: static;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .rm-properties-table td:last-child {
+      border-bottom: none;
+      justify-content: flex-end;
+    }
+
+    .rm-properties-table td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      text-align: left;
+    }
+
+    .rm-properties-table .rm-name {
+      font-size: 1rem;
+    }
   }
 
   .rm-muted {

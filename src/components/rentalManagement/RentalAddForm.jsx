@@ -111,6 +111,16 @@ export default function RentalAddForm({
           placeholder="$1,200"
           inputMode="numeric"
         />
+        <Field
+          label="Rent Deposit Date"
+          name="rentDepositDate"
+          type="date"
+          value={form.rentDepositDate}
+          onChange={onChange}
+        />
+        <span className="rm-rent-deposit-hint">
+          Rent accumulates automatically each month from this date.
+        </span>
 
         {addressError && (
           <span className="field-error rm-address-error">{addressError}</span>

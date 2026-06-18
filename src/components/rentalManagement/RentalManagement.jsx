@@ -29,6 +29,7 @@ function createEmptyForm() {
     purchaseDate: "",
     monthlyMortgage: "",
     monthlyRent: "",
+    rentDepositDate: "",
     tenantName: "",
     tenantPhone: "",
     tenantEmail: "",
@@ -448,11 +449,11 @@ export default function RentalManagement({
             <p>No properties match your filters.</p>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table className="compact-table">
+          <div className="table-wrap rm-table-container">
+            <table className="compact-table rm-properties-table">
               <thead>
                 <tr>
-                  <th>Address</th>
+                  <th className="rm-name rm-col-sticky">Address</th>
                   <th>City</th>
                   <th>State</th>
                   <th>Tenant</th>
@@ -489,14 +490,21 @@ export default function RentalManagement({
                       onClick={() => openEdit(rental)}
                       data-status={hasMultipleTenants ? "multiple-tenants" : ""}
                     >
-                      <td className="rm-name">{rental.address}</td>
-                      <td className="rm-muted">{rental.city || "—"}</td>
-                      <td>
+                      <td
+                        className="rm-name rm-col-sticky"
+                        data-label="Address"
+                      >
+                        {rental.address}
+                      </td>
+                      <td className="rm-muted" data-label="City">
+                        {rental.city || "—"}
+                      </td>
+                      <td data-label="State">
                         <span className="rm-state-badge">
                           {rental.state || "—"}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Tenant">
                         <div className="rm-tenant-display">
                           <span>{currentTenant?.name || "—"}</span>
                           {hasMultipleTenants && !currentTenant?.isCurrent && (
@@ -506,13 +514,13 @@ export default function RentalManagement({
                           )}
                         </div>
                       </td>
-                      <td className="rm-muted">
+                      <td className="rm-muted" data-label="Phone">
                         {currentTenant?.phone || "—"}
                       </td>
-                      <td className="rm-muted">
+                      <td className="rm-muted" data-label="Email">
                         {currentTenant?.email || "—"}
                       </td>
-                      <td>
+                      <td data-label="Type">
                         <span
                           className={`rm-type-badge${
                             currentTenant?.type === "Section 8"
@@ -523,14 +531,19 @@ export default function RentalManagement({
                           {currentTenant?.type || "Regular"}
                         </span>
                       </td>
-                      <td>{currency(parseCurrency(rental.monthlyRent))}</td>
-                      <td>{currency(parseCurrency(rental.monthlyMortgage))}</td>
+                      <td data-label="Rent">
+                        {currency(parseCurrency(rental.monthlyRent))}
+                      </td>
+                      <td data-label="Mortgage">
+                        {currency(parseCurrency(rental.monthlyMortgage))}
+                      </td>
                       <td
                         className={cashflow < 0 ? "rm-negative" : "rm-positive"}
+                        data-label="Cashflow"
                       >
                         {currency(cashflow)}
                       </td>
-                      <td className="rm-positive">
+                      <td className="rm-positive" data-label="Accumulated Rent">
                         {currency(propertyAccumulatedRent)}
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
