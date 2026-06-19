@@ -1,6 +1,6 @@
 import { AnimatedAmount } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
-import { PROP_MGMT_PCT, CLOSING_COSTS_PCT } from "./morbyMethodConfig";
+import { PROP_MGMT_PCT } from "./morbyMethodConfig";
 
 export default function MorbyMethodSummary({ summary }) {
   if (!summary) return null;
@@ -181,14 +181,6 @@ export default function MorbyMethodSummary({ summary }) {
             </strong>
           </div>
         )}
-        {summary.dscrPointsCost > 0 && (
-          <div>
-            <span>Points ({summary.dscrPointsPct}%)</span>
-            <strong className="deal-analyzer-return-negative">
-              <AnimatedAmount value={summary.dscrPointsCost} format={fmt} />
-            </strong>
-          </div>
-        )}
         {summary.originationFees > 0 && (
           <div>
             <span>Origination Fees ({summary.originationFeesPct}%)</span>
@@ -222,19 +214,11 @@ export default function MorbyMethodSummary({ summary }) {
           </div>
         )}
         <div>
-          <span>Closing Costs ({CLOSING_COSTS_PCT}%)</span>
+          <span>Closing Costs</span>
           <strong className="deal-analyzer-return-negative">
             <AnimatedAmount value={summary.closingCosts} format={fmt} />
           </strong>
         </div>
-        {summary.titleFees > 0 && (
-          <div>
-            <span>Title Fees ({summary.titleFeesPct}%)</span>
-            <strong className="deal-analyzer-return-negative">
-              <AnimatedAmount value={summary.titleFees} format={fmt} />
-            </strong>
-          </div>
-        )}
         {summary.agentCommissionAmt > 0 && (
           <div>
             <span>Agent Commission ({summary.agentCommissionPct}%)</span>

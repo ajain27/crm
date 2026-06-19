@@ -13,11 +13,11 @@ import {
 import RentalPieChart from "./RentalPieChart";
 
 const PROP_MGMT_PCT = 10;
-const CLOSING_COSTS_PCT = 2;
 const INSPECTION_COST = 375;
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "closingCosts",
   "monthlyRent",
   "yearlyInsurance",
   "yearlyTaxes",
@@ -25,16 +25,12 @@ const CURRENCY_FIELDS = new Set([
   "monthlyHomeWarranty",
 ]);
 
-const PERCENT_FIELDS = new Set([
-  "agentCommission",
-  "titleFees",
-  "sellerCarryback",
-]);
+const PERCENT_FIELDS = new Set(["agentCommission", "sellerCarryback"]);
 
 const initialForm = {
   purchasePrice: "",
   agentCommission: "",
-  titleFees: "",
+  closingCosts: "",
   sellerCarryback: "",
   monthlyRent: "",
   yearlyInsurance: "",
@@ -72,9 +68,7 @@ function RentalCashTab() {
   const purchasePrice = parseCurrency(form.purchasePrice);
   const agentCommissionPct = parsePercent(form.agentCommission);
   const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
-  const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
-  const titleFeesPct = parsePercent(form.titleFees);
-  const titleFees = purchasePrice * (titleFeesPct / 100);
+  const closingCosts = parseCurrency(form.closingCosts);
   const sellerCarrybackPct = parsePercent(form.sellerCarryback);
   const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const monthlyRent = parseCurrency(form.monthlyRent);
@@ -105,7 +99,6 @@ function RentalCashTab() {
   const totalFundsNeeded =
     purchasePrice +
     closingCosts +
-    titleFees +
     agentCommissionAmt +
     INSPECTION_COST -
     sellerCarryback;
@@ -122,8 +115,6 @@ function RentalCashTab() {
       agentCommissionPct,
       agentCommissionAmt,
       closingCosts,
-      titleFeesPct,
-      titleFees,
       sellerCarrybackPct,
       sellerCarryback,
       monthlyRent,
@@ -186,33 +177,13 @@ function RentalCashTab() {
             <input value={fmt(agentCommissionAmt)} readOnly tabIndex={-1} />
           </label>
         )}
-        <label className="field deal-analyzer-output">
-          <span>
-            Closing Costs{" "}
-            <span className="deal-analyzer-auto-badge">
-              {CLOSING_COSTS_PCT}% of price
-            </span>
-          </span>
-          <input
-            value={closingCosts > 0 ? fmt(closingCosts) : ""}
-            readOnly
-            tabIndex={-1}
-          />
-        </label>
         <Field
-          label="Title Fees (%)"
-          name="titleFees"
-          value={form.titleFees}
+          label="Closing Costs"
+          name="closingCosts"
+          value={form.closingCosts}
           onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="e.g. 1"
+          placeholder="e.g. $4,000"
         />
-        {titleFees > 0 && (
-          <label className="field deal-analyzer-output">
-            <span>Title Fees Amount</span>
-            <input value={fmt(titleFees)} readOnly tabIndex={-1} />
-          </label>
-        )}
         <SellerCreditCarrybackField
           value={form.sellerCarryback}
           purchasePrice={purchasePrice}
@@ -414,19 +385,11 @@ function RentalCashTab() {
               </strong>
             </div>
             <div>
-              <span>Closing Costs ({CLOSING_COSTS_PCT}% of price)</span>
+              <span>Closing Costs</span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.closingCosts} format={fmt} />
               </strong>
             </div>
-            {summary.titleFees > 0 && (
-              <div>
-                <span>Title Fees ({summary.titleFeesPct}%)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.titleFees} format={fmt} />
-                </strong>
-              </div>
-            )}
             {summary.agentCommissionAmt > 0 && (
               <div>
                 <span>Agent Commission ({summary.agentCommissionPct}%)</span>

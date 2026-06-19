@@ -11,26 +11,24 @@ const tab = {
 
 // ─── Cash mode scenario ────────────────────────────────────────────────────────
 // Purchase = $200,000 | Agent Commission = 3% = $6,000
-// Closing Costs = 2% = $4,000 | Title Fees = 1% = $2,000 | Inspection = $450
+// Closing Costs (manual entry) = $4,000 | Inspection = $375
 // Rent = $2,000 | Prop Mgmt = 10% = $200 | Insurance/mo = $100 | Taxes/mo = $100
-// First Month Prop Mgmt = 50% = $1,000 | Adjustment = $800
 // Monthly CF = $2,000 − $200 − $100 − $100 = $1,600
-// Annual CF  = ($1,600 × 12) − $800 = $18,400
-// Total Funds Needed = $200,000 + $4,000 + $2,000 + $6,000 + $450 = $212,450
+// Annual CF  = $1,600 × 12 = $19,200
+// Total Funds Needed = $200,000 + $4,000 + $6,000 + $375 = $210,375
 // Cap Rate = ($1,600 × 12 / $200,000) × 100 = 9.6%
 
 // ─── Loan (DSCR) mode scenario ─────────────────────────────────────────────────
 // Purchase = $200,000 | Down = 20% = $40,000 | Loan = 80% = $160,000
-// Points = 2% → $3,200 | Rate = 12%/yr | Term = 30 yr → PMT amortized
-// Upfront Loan = $40,000 (down) + $3,200 (points) = $43,200
-// Agent Commission = 3% = $6,000 | Closing = $4,000 | Title = $2,000 | Inspection = $450
-// Total Cash Needed = $43,200 + $4,000 + $2,000 + $6,000 + $450 = $55,650
+// Rate = 12%/yr | Term = 30 yr → PMT amortized
+// Agent Commission = 3% = $6,000 | Closing (manual entry) = $4,000 | Inspection = $375
+// Total Cash Needed = $40,000 + $4,000 + $6,000 + $375 = $50,375
 // (Insurance & Taxes are calculated monthly, not upfront)
 
 function fillCash({
   purchasePrice = "200000",
   agentCommission = "3",
-  titleFees = "1",
+  closingCosts = "4000",
   monthlyRent = "2000",
   yearlyInsurance = "1200",
   yearlyTaxes = "1200",
@@ -43,9 +41,9 @@ function fillCash({
       target: { value: agentCommission },
     });
   }
-  if (titleFees) {
-    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
-      target: { value: titleFees },
+  if (closingCosts) {
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: closingCosts },
     });
   }
   fireEvent.change(screen.getByLabelText(/Estimated Monthly Rent/i), {
@@ -70,8 +68,7 @@ function switchToLoan() {
 function fillLoan({
   purchasePrice = "200000",
   agentCommission = "3",
-  titleFees = "1",
-  points = "2",
+  closingCosts = "4000",
   interestRate = "12",
   loanTermYears = "30",
   monthlyRent = "2000",
@@ -87,14 +84,9 @@ function fillLoan({
       target: { value: agentCommission },
     });
   }
-  if (titleFees) {
-    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
-      target: { value: titleFees },
-    });
-  }
-  if (points) {
-    fireEvent.change(screen.getByLabelText(/Points \(%\)/i), {
-      target: { value: points },
+  if (closingCosts) {
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: closingCosts },
     });
   }
   fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
@@ -157,7 +149,6 @@ describe("rendering", () => {
 
   it("defaults to Cash mode — no loan fields shown", () => {
     render(<RentalTab tab={tab} />);
-    expect(screen.queryByLabelText(/Points \(%\)/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Interest Rate/i)).not.toBeInTheDocument();
     expect(
       screen.queryByLabelText(/Loan Term \(Years\)/i),
@@ -167,7 +158,6 @@ describe("rendering", () => {
   it("shows DSCR fields after switching to Loan mode", () => {
     render(<RentalTab tab={tab} />);
     switchToLoan();
-    expect(screen.getByLabelText(/Points \(%\)/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Interest Rate/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Loan Term \(Years\)/i)).toBeInTheDocument();
   });
@@ -225,15 +215,6 @@ describe("input formatting", () => {
     expect(input).toHaveValue("3%");
   });
 
-  it("appends % to Points on blur (loan mode)", () => {
-    render(<RentalTab tab={tab} />);
-    switchToLoan();
-    const input = screen.getByLabelText(/Points \(%\)/i);
-    fireEvent.change(input, { target: { value: "2" } });
-    fireEvent.blur(input);
-    expect(input).toHaveValue("2%");
-  });
-
   it("appends % to Interest Rate on blur (loan mode)", () => {
     render(<RentalTab tab={tab} />);
     switchToLoan();
@@ -255,12 +236,12 @@ describe("input formatting", () => {
 // ─── Live readonly fields ─────────────────────────────────────────────────────
 
 describe("live readonly fields", () => {
-  it("Closing Costs updates as 2% of purchase price", () => {
+  it("Closing Costs is a manual currency entry", () => {
     render(<RentalTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
-      target: { value: "200000" },
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: "4000" },
     });
-    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$4,000.00");
+    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$4,000");
   });
 
   it("Agent Commission Amount appears when commission is entered", () => {
@@ -289,20 +270,6 @@ describe("live readonly fields", () => {
   it("Property Management is empty before rent is entered", () => {
     render(<RentalTab tab={tab} />);
     expect(screen.getByLabelText(/Property Management/i)).toHaveValue("");
-  });
-
-  it("shows Title Fees amount when percentage entered", () => {
-    render(<RentalTab tab={tab} />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
-      target: { value: "200000" },
-    });
-    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
-      target: { value: "1" },
-    });
-    // 1% of $200,000 = $2,000
-    expect(screen.getByLabelText(/Title Fees Amount/i)).toHaveValue(
-      "$2,000.00",
-    );
   });
 
   it("shows Down Payment as 20% of purchase price in loan mode", () => {
@@ -373,7 +340,7 @@ describe("Calculate button", () => {
 
   it("becomes enabled once all loan-mode required fields filled", () => {
     render(<RentalTab tab={tab} />);
-    fillLoan({ points: "", yearlyInsurance: "", yearlyTaxes: "" });
+    fillLoan({ closingCosts: "", yearlyInsurance: "", yearlyTaxes: "" });
     expect(
       screen.getByRole("button", { name: /Calculate/i }),
     ).not.toBeDisabled();
@@ -410,12 +377,12 @@ describe("cash mode summary", () => {
 
   it("shows Total Funds Needed including full purchase price in cash mode", () => {
     render(<RentalTab tab={tab} />);
-    // $200,000 + $4,000 + $2,000 + $6,000 + $375 = $212,375
+    // $200,000 + $4,000 + $6,000 + $375 = $210,375
     // (Insurance & Taxes are calculated monthly, not upfront)
     fillCash();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(screen.getByText("Total Funds Needed")).toBeInTheDocument();
-    expect(screen.getAllByText("$212,375.00").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("$210,375.00").length).toBeGreaterThanOrEqual(1);
   });
 
   it("does not show DSCR in cash mode", () => {
@@ -440,7 +407,9 @@ describe("cash mode summary", () => {
     render(<RentalTab tab={tab} />);
     fillCash();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("Closing Costs (2% of price)")).toBeInTheDocument();
+    expect(screen.getAllByText("Closing Costs").length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.getByText("Inspection Cost")).toBeInTheDocument();
   });
 
@@ -508,13 +477,13 @@ describe("loan mode summary", () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
-  it("includes down payment, upfront costs, closing, title, commission and inspection in total", () => {
+  it("includes down payment, upfront costs, closing, commission and inspection in total", () => {
     render(<RentalTab tab={tab} />);
-    // Down $40k + Points $3.2k + Closing $4k + Title $2k + Commission $6k + Inspection $375 = $55,575
+    // Down $40k + Closing $4k + Commission $6k + Inspection $375 = $50,375
     // (Insurance & Taxes now calculated monthly)
     fillLoan();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getAllByText("$55,575.00").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("$50,375.00").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows DSCR in loan mode", () => {
@@ -531,13 +500,11 @@ describe("loan mode summary", () => {
     expect(dscrEl).toBeTruthy();
   });
 
-  it("shows points breakdown in one-time costs", () => {
+  it("shows manually entered closing costs in one-time costs", () => {
     render(<RentalTab tab={tab} />);
     fillLoan();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
-    expect(screen.getByText("Points (2%)")).toBeInTheDocument();
-    // $160,000 × 2% = $3,200
-    expect(screen.getByText("$3,200.00")).toBeInTheDocument();
+    expect(screen.getAllByText("$4,000.00").length).toBeGreaterThanOrEqual(1);
   });
 
   it("calculates cap rate the same as cash mode", () => {

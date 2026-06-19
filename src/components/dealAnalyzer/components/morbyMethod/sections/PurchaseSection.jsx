@@ -1,14 +1,11 @@
 import { Field } from "../../../../elements/elements";
 import { fmt } from "../../../../../utils/utils";
-import { CLOSING_COSTS_PCT } from "../morbyMethodConfig";
 
 export default function PurchaseSection({
   form,
   onChange,
   onBlur,
   agentCommissionAmt,
-  closingCosts,
-  titleFees,
 }) {
   return (
     <>
@@ -38,33 +35,13 @@ export default function PurchaseSection({
             <input value={fmt(agentCommissionAmt)} readOnly tabIndex={-1} />
           </label>
         )}
-        <label className="field deal-analyzer-output">
-          <span>
-            Closing Costs{" "}
-            <span className="deal-analyzer-auto-badge">
-              {CLOSING_COSTS_PCT}% of price
-            </span>
-          </span>
-          <input
-            value={closingCosts > 0 ? fmt(closingCosts) : ""}
-            readOnly
-            tabIndex={-1}
-          />
-        </label>
         <Field
-          label="Title Fees (%)"
-          name="titleFees"
-          value={form.titleFees}
+          label="Closing Costs"
+          name="closingCosts"
+          value={form.closingCosts}
           onChange={onChange}
-          onBlur={onBlur}
-          placeholder="e.g. 1"
+          placeholder="e.g. $6,000"
         />
-        {titleFees > 0 && (
-          <label className="field deal-analyzer-output">
-            <span>Title Fees Amount</span>
-            <input value={fmt(titleFees)} readOnly tabIndex={-1} />
-          </label>
-        )}
       </div>
     </>
   );

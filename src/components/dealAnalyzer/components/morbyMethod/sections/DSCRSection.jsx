@@ -83,14 +83,6 @@ export default function DSCRSection({
           required
         />
         <Field
-          label="Points (%)"
-          name="dscrPoints"
-          value={form.dscrPoints}
-          onChange={onChange}
-          onBlur={onBlur}
-          placeholder="e.g. 2"
-        />
-        <Field
           label="Origination Fees %"
           name="originationFeesPct"
           value={form.originationFeesPct}

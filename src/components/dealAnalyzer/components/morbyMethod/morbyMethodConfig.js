@@ -1,6 +1,5 @@
 export const PROP_MGMT_PCT = 10;
 export const FIRST_MONTH_PROP_MGMT_PCT = 50;
-export const CLOSING_COSTS_PCT = 2;
 export const INSPECTION_COST = 375;
 export const DSCR_LTV = 0.8;
 export const DOWN_PCT = Math.round((1 - DSCR_LTV) * 100);
@@ -49,6 +48,7 @@ export const CURRENCY_FIELDS = new Set([
   "legalFees",
   "appraisalFees",
   "underwritingFees",
+  "closingCosts",
   "monthlyRent",
   "yearlyInsurance",
   "yearlyTaxes",
@@ -58,9 +58,7 @@ export const CURRENCY_FIELDS = new Set([
 
 export const PERCENT_FIELDS = new Set([
   "agentCommission",
-  "titleFees",
   "dscrRate",
-  "dscrPoints",
   "sellerCarryback",
   "sellerCarrybackRate",
   "originationFeesPct",
@@ -69,15 +67,14 @@ export const PERCENT_FIELDS = new Set([
 export const initialForm = {
   purchasePrice: "",
   agentCommission: "",
-  titleFees: "",
   dscrRate: "",
   dscrTermYears: "",
-  dscrPoints: "",
   extraDownPayment: "",
   originationFeesPct: "",
   legalFees: "",
   appraisalFees: "",
   underwritingFees: "",
+  closingCosts: "",
   sellerCarryback: "",
   sellerCarrybackRate: "",
   sellerCarrybackTermYears: "",

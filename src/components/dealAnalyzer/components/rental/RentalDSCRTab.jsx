@@ -18,9 +18,8 @@ import RentalPieChart from "./RentalPieChart";
 
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
-const CLOSING_COSTS_PCT = 2;
 const INSPECTION_COST = 375;
-const DOWN_OPTIONS = [20, 25];
+const DOWN_OPTIONS = [15, 20, 25];
 
 function calcPMT(annualRatePct, termYears, principal) {
   if (annualRatePct <= 0 || termYears <= 0 || principal <= 0) return 0;
@@ -41,12 +40,11 @@ const CURRENCY_FIELDS = new Set([
   "monthlyHomeWarranty",
   "legalFees",
   "appraisalFees",
+  "closingCosts",
 ]);
 
 const PERCENT_FIELDS = new Set([
   "agentCommission",
-  "titleFees",
-  "points",
   "interestRate",
   "originationFeesPct",
   "sellerCarryback",
@@ -55,15 +53,14 @@ const PERCENT_FIELDS = new Set([
 const initialForm = {
   purchasePrice: "",
   agentCommission: "",
-  titleFees: "",
   underwritingFees: "",
-  points: "",
   interestRate: "",
   loanTermYears: "",
   extraDownPayment: "",
   originationFeesPct: "",
   legalFees: "",
   appraisalFees: "",
+  closingCosts: "",
   monthlyRent: "",
   yearlyInsurance: "",
   yearlyTaxes: "",
@@ -108,9 +105,7 @@ function RentalDSCRTab() {
   const purchasePrice = parseCurrency(form.purchasePrice);
   const agentCommissionPct = parsePercent(form.agentCommission);
   const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
-  const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
-  const titleFeesPct = parsePercent(form.titleFees);
-  const titleFees = purchasePrice * (titleFeesPct / 100);
+  const closingCosts = parseCurrency(form.closingCosts);
   const underwritingFees = parseCurrency(form.underwritingFees);
   const monthlyRent = parseCurrency(form.monthlyRent);
   const yearlyInsurance = parseCurrency(form.yearlyInsurance);
@@ -127,16 +122,14 @@ function RentalDSCRTab() {
   const extraDownPaymentAmt = parseCurrency(form.extraDownPayment);
   const effectiveLoanAmount = Math.max(0, lenderFunds - extraDownPaymentAmt);
   const effectiveDownPayment = downPayment + extraDownPaymentAmt;
-  const pointsPct = parsePercent(form.points);
   const interestRatePct = parsePercent(form.interestRate);
   const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
   const originationFeesPct = parsePercent(form.originationFeesPct);
   const originationFees = effectiveLoanAmount * (originationFeesPct / 100);
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
-  const pointsCost = effectiveLoanAmount * (pointsPct / 100);
   const lenderCosts =
-    pointsCost + originationFees + legalFees + appraisalFees + underwritingFees;
+    originationFees + legalFees + appraisalFees + underwritingFees;
   const upfrontLoanCosts = lenderCosts;
   const loanOutOfPocket = effectiveDownPayment + upfrontLoanCosts;
   const loanMortgage = calcPMT(
@@ -166,11 +159,7 @@ function RentalDSCRTab() {
   const sellerCarrybackPct = parsePercent(form.sellerCarryback);
   const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const grossCashNeeded =
-    loanOutOfPocket +
-    closingCosts +
-    titleFees +
-    agentCommissionAmt +
-    INSPECTION_COST;
+    loanOutOfPocket + closingCosts + agentCommissionAmt + INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
   const totalFundsNeeded = Math.max(
     0,
@@ -195,8 +184,6 @@ function RentalDSCRTab() {
       agentCommissionPct,
       agentCommissionAmt,
       closingCosts,
-      titleFeesPct,
-      titleFees,
       underwritingFees,
       monthlyRent,
       propMgmtFee,
@@ -211,8 +198,6 @@ function RentalDSCRTab() {
       extraDownPaymentAmt,
       effectiveLoanAmount,
       effectiveDownPayment,
-      pointsPct,
-      pointsCost,
       interestRatePct,
       loanTermYears,
       loanMortgage,
@@ -283,33 +268,13 @@ function RentalDSCRTab() {
             <input value={fmt(agentCommissionAmt)} readOnly tabIndex={-1} />
           </label>
         )}
-        <label className="field deal-analyzer-output">
-          <span>
-            Closing Costs{" "}
-            <span className="deal-analyzer-auto-badge">
-              {CLOSING_COSTS_PCT}% of price
-            </span>
-          </span>
-          <input
-            value={closingCosts > 0 ? fmt(closingCosts) : ""}
-            readOnly
-            tabIndex={-1}
-          />
-        </label>
         <Field
-          label="Title Fees (%)"
-          name="titleFees"
-          value={form.titleFees}
+          label="Closing Costs"
+          name="closingCosts"
+          value={form.closingCosts}
           onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="e.g. 1"
+          placeholder="e.g. $4,000"
         />
-        {titleFees > 0 && (
-          <label className="field deal-analyzer-output">
-            <span>Title Fees Amount</span>
-            <input value={fmt(titleFees)} readOnly tabIndex={-1} />
-          </label>
-        )}
         <SellerCreditCarrybackField
           value={form.sellerCarryback}
           purchasePrice={purchasePrice}
@@ -375,14 +340,6 @@ function RentalDSCRTab() {
             <input value={fmt(effectiveLoanAmount)} readOnly tabIndex={-1} />
           </label>
         )}
-        <Field
-          label="Points (%)"
-          name="points"
-          value={form.points}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="e.g. 2"
-        />
         <Field
           label="Interest Rate (% / year)"
           name="interestRate"
@@ -695,14 +652,6 @@ function RentalDSCRTab() {
                 </strong>
               </div>
             )}
-            {summary.pointsCost > 0 && (
-              <div>
-                <span>Points ({summary.pointsPct}%)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.pointsCost} format={fmt} />
-                </strong>
-              </div>
-            )}
             {summary.originationFees > 0 && (
               <div>
                 <span>Origination Fees ({summary.originationFeesPct}%)</span>
@@ -731,19 +680,11 @@ function RentalDSCRTab() {
               </div>
             )}
             <div>
-              <span>Closing Costs ({CLOSING_COSTS_PCT}% of price)</span>
+              <span>Closing Costs</span>
               <strong className="deal-analyzer-return-negative">
                 <AnimatedAmount value={summary.closingCosts} format={fmt} />
               </strong>
             </div>
-            {summary.titleFees > 0 && (
-              <div>
-                <span>Title Fees ({summary.titleFeesPct}%)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.titleFees} format={fmt} />
-                </strong>
-              </div>
-            )}
             {summary.underwritingFees > 0 && (
               <div>
                 <span>Underwriting Fees</span>

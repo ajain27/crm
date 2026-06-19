@@ -10,7 +10,6 @@ import AdditionalLenders, {
 } from "../additionalLenders/AdditionalLenders";
 import {
   PROP_MGMT_PCT,
-  CLOSING_COSTS_PCT,
   INSPECTION_COST,
   calcPMT,
   calcBalloonBalance,
@@ -67,9 +66,7 @@ function MorbyMethodTab({ tab }) {
   const purchasePrice = parseCurrency(form.purchasePrice);
   const agentCommissionPct = parsePercent(form.agentCommission);
   const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
-  const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
-  const titleFeesPct = parsePercent(form.titleFees);
-  const titleFees = purchasePrice * (titleFeesPct / 100);
+  const closingCosts = parseCurrency(form.closingCosts);
 
   // — DSCR first lien
   const dscrLoanAmount = purchasePrice * dscrLtv;
@@ -86,19 +83,13 @@ function MorbyMethodTab({ tab }) {
     dscrTermYears,
     effectiveDscrLoanAmount,
   );
-  const dscrPointsPct = parsePercent(form.dscrPoints);
-  const dscrPointsCost = effectiveDscrLoanAmount * (dscrPointsPct / 100);
   const originationFeesPct = parsePercent(form.originationFeesPct);
   const originationFees = effectiveDscrLoanAmount * (originationFeesPct / 100);
   const legalFees = parseCurrency(form.legalFees);
   const appraisalFees = parseCurrency(form.appraisalFees);
   const underwritingFees = parseCurrency(form.underwritingFees);
   const dscrMiscFees =
-    dscrPointsCost +
-    originationFees +
-    legalFees +
-    appraisalFees +
-    underwritingFees;
+    originationFees + legalFees + appraisalFees + underwritingFees;
   const dscrUpfrontCosts = dscrMiscFees;
 
   // — Seller carryback (2nd lien promissory note)
@@ -141,7 +132,6 @@ function MorbyMethodTab({ tab }) {
     extraDownPaymentAmt +
     dscrUpfrontCosts +
     closingCosts +
-    titleFees +
     agentCommissionAmt +
     INSPECTION_COST;
   const lenderTotal = calcLenderTotal(lenders);
@@ -199,8 +189,6 @@ function MorbyMethodTab({ tab }) {
       agentCommissionPct,
       agentCommissionAmt,
       closingCosts,
-      titleFeesPct,
-      titleFees,
       dscrLoanAmount,
       downPaymentRequired,
       extraDownPaymentAmt,
@@ -208,8 +196,6 @@ function MorbyMethodTab({ tab }) {
       dscrRatePct,
       dscrTermYears,
       dscrMonthlyPayment,
-      dscrPointsPct,
-      dscrPointsCost,
       originationFeesPct,
       originationFees,
       legalFees,
@@ -292,8 +278,6 @@ function MorbyMethodTab({ tab }) {
           onChange={handleChange}
           onBlur={handleBlur}
           agentCommissionAmt={agentCommissionAmt}
-          closingCosts={closingCosts}
-          titleFees={titleFees}
         />
 
         <DSCRSection

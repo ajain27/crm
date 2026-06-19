@@ -36,12 +36,12 @@ describe("RentalCashTab (direct)", () => {
     );
   });
 
-  it("Closing Costs auto-updates as 2% of purchase price", () => {
+  it("Closing Costs is a manual currency entry", () => {
     render(<RentalCashTab />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
-      target: { value: "200000" },
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: "4000" },
     });
-    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$4,000.00");
+    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$4,000");
   });
 
   it("Calculating produces a Monthly Cash Flow", () => {

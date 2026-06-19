@@ -11,7 +11,7 @@ import RentalHELOCTab from "./RentalHELOCTab";
 
 function fill({
   purchasePrice = "200000",
-  titleFees = "1",
+  closingCosts = "4000",
   helocInterestRate = "8",
   helocTermYears = "10",
   monthlyRent = "3000",
@@ -21,9 +21,9 @@ function fill({
   fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
     target: { value: purchasePrice },
   });
-  if (titleFees) {
-    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
-      target: { value: titleFees },
+  if (closingCosts) {
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: closingCosts },
     });
   }
   fireEvent.change(screen.getByLabelText(/HELOC Interest Rate/i), {
@@ -66,29 +66,15 @@ describe("RentalHELOCTab", () => {
     expect(
       screen.getByLabelText(/Annual Miscellaneous Expense/i),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/Title Fees \(%\)/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Closing Costs/i)).toBeInTheDocument();
   });
 
-  it("computes Closing Costs as 2% of purchase price", () => {
+  it("Closing Costs is a manual currency entry", () => {
     render(<RentalHELOCTab />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
-      target: { value: "200000" },
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: "4000" },
     });
-    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$4,000.00");
-  });
-
-  it("shows Title Fees Amount when a percentage is entered", () => {
-    render(<RentalHELOCTab />);
-    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
-      target: { value: "200000" },
-    });
-    fireEvent.change(screen.getByLabelText(/Title Fees \(%\)/i), {
-      target: { value: "1" },
-    });
-    // 1% of $200,000 = $2,000
-    expect(screen.getByLabelText(/Title Fees Amount/i)).toHaveValue(
-      "$2,000.00",
-    );
+    expect(screen.getByLabelText(/Closing Costs/i)).toHaveValue("$4,000");
   });
 
   it("formats Purchase Price as currency while typing", () => {
@@ -170,17 +156,18 @@ describe("RentalHELOCTab", () => {
     expect(screen.getAllByText("-$77.00").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("includes purchase price, closing costs, title fees and inspection in cash needed to close", () => {
+  it("includes purchase price, closing costs and inspection in cash needed to close", () => {
     render(<RentalHELOCTab />);
-    // Purchase $200,000 + Closing $4,000 + Title $2,000 + Inspection $375 = $206,375
+    // Purchase $200,000 + Closing $4,000 + Inspection $375 = $204,375
     fill();
     fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
     expect(
       screen.getAllByText("Total Cash Needed to Close").length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Closing Costs (2% of price)")).toBeInTheDocument();
-    expect(screen.getByText("Title Fees (1%)")).toBeInTheDocument();
-    expect(screen.getAllByText("$206,375.00").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Closing Costs").length).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(screen.getAllByText("$204,375.00").length).toBeGreaterThanOrEqual(1);
   });
 
   it("clears summary when an input changes after calculating", () => {
