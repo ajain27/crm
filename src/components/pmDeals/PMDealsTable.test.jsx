@@ -83,8 +83,15 @@ describe("PMDealsTable", () => {
   it("clicking a row invokes onRowClick with the deal", () => {
     const onRowClick = vi.fn();
     render(<PMDealsTable {...baseProps({ onRowClick })} />);
-    fireEvent.click(screen.getByText("Jane"));
+    fireEvent.click(screen.getByText("Acme"));
     expect(onRowClick).toHaveBeenCalledWith(deal);
+  });
+
+  it("clicking the borrower name heading toggles the accordion instead of opening the row", () => {
+    const onRowClick = vi.fn();
+    render(<PMDealsTable {...baseProps({ onRowClick })} />);
+    fireEvent.click(screen.getByText("Jane"));
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 
   it("clicking delete invokes onDelete and does not propagate to row", () => {
@@ -134,5 +141,44 @@ describe("PMDealsTable", () => {
     const eyeBtn = screen.getByLabelText(/View files for Jane/i);
     fireEvent.click(eyeBtn);
     expect(onOpenFile).toHaveBeenCalled();
+  });
+
+  describe("borrower with multiple deals", () => {
+    const dealOne = {
+      ...deal,
+      id: "d1",
+      lendDate: "2025-01-15",
+      propertyAddress: "1 Main",
+    };
+    const dealTwo = {
+      ...deal,
+      id: "d2",
+      lendDate: "2025-06-01",
+      propertyAddress: "2 Second St",
+    };
+    const groupedProps = baseProps({
+      deals: [dealOne, dealTwo],
+      filteredDeals: [dealOne, dealTwo],
+    });
+
+    it("renders one shared accordion heading for the borrower, not one per deal", () => {
+      render(<PMDealsTable {...groupedProps} />);
+      expect(screen.getAllByText("Jane")).toHaveLength(1);
+      expect(screen.getByText(/Jane — Deal 1/)).toBeInTheDocument();
+      expect(screen.getByText(/Jane — Deal 2/)).toBeInTheDocument();
+    });
+
+    it("still renders both deals' data divided inside the group", () => {
+      render(<PMDealsTable {...groupedProps} />);
+      expect(screen.getByText("1 Main")).toBeInTheDocument();
+      expect(screen.getByText("2 Second St")).toBeInTheDocument();
+    });
+
+    it("clicking a deal row inside the group still invokes onRowClick with that deal", () => {
+      const onRowClick = vi.fn();
+      render(<PMDealsTable {...groupedProps} onRowClick={onRowClick} />);
+      fireEvent.click(screen.getByText("2 Second St"));
+      expect(onRowClick).toHaveBeenCalledWith(dealTwo);
+    });
   });
 });

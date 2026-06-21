@@ -396,7 +396,7 @@
   }
 
   .leads-empty {
-    padding: 0 1.5rem 1.5rem;
+    padding: 1.5rem;
     font-size: 0.875rem;
     color: var(--muted);
   }

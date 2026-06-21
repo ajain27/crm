@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Trash2, Plus, X, Building2 } from "lucide-react";
 import Modal from "../modal/Modal";
-import { Select } from "../elements/elements";
+import { Select, AccordionHeaderCell } from "../elements/elements";
 import { formatPhone, findDuplicateByField } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import "./TitleCompanies.css";
@@ -360,8 +360,8 @@ export default function TitleCompanies({
             <p>No companies match the selected state.</p>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table className="compact-table">
+          <div className="table-wrap acc-card-container">
+            <table className="compact-table acc-card">
               <thead>
                 <tr>
                   <th>Company Name</th>
@@ -378,14 +378,21 @@ export default function TitleCompanies({
                     className="tc-row"
                     onClick={() => openEdit(company)}
                   >
-                    <td className="tc-name">{company.name}</td>
-                    <td>
+                    <AccordionHeaderCell
+                      id={company.id}
+                      label="Company Name"
+                      value={company.name}
+                      className="tc-name"
+                    />
+                    <td data-label="State">
                       <span className="tc-state-badge">
                         {company.state || "—"}
                       </span>
                     </td>
-                    <td className="tc-muted">{company.phone || "—"}</td>
-                    <td>
+                    <td className="tc-muted" data-label="Phone">
+                      {company.phone || "—"}
+                    </td>
+                    <td className="acc-col-block" data-label="Emails">
                       {company.emails?.length ? (
                         <div className="tc-email-chips tc-email-chips--table">
                           {company.emails.map((email) => (
@@ -398,13 +405,17 @@ export default function TitleCompanies({
                         <span className="tc-muted">—</span>
                       )}
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className="acc-col-action-mobile"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
-                        className="leads-delete-btn"
+                        className="leads-delete-btn acc-delete-btn"
                         title="Delete company"
                         onClick={() => handleDelete(company.id)}
                       >
                         <Trash2 size={14} />
+                        <span className="acc-delete-label">Delete</span>
                       </button>
                     </td>
                   </tr>

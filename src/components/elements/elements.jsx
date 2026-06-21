@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { useCountUp } from "../../hooks/useCountUp";
 import { trimFieldOnBlur } from "../../utils/utils";
 
@@ -149,6 +150,42 @@ function Select({ label, required, options, ...props }) {
   );
 }
 
+// Collapsed/expanded heading cell for the mobile "accordion card" table
+// layout (see src/styles/accordionCard.css). Tag the `<table>` with
+// `acc-card` and its scroll wrapper with `acc-card-container` to enable it.
+function AccordionHeaderCell({
+  id,
+  label,
+  value,
+  className = "",
+  valueClassName = "",
+  colSpan,
+}) {
+  const toggleId = `acc-toggle-${id}`;
+  return (
+    <td
+      className={`acc-col-header ${className}`.trim()}
+      data-label={label}
+      colSpan={colSpan}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <input
+        type="checkbox"
+        id={toggleId}
+        className="acc-accordion-toggle"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+      <label htmlFor={toggleId} className="acc-accordion-label">
+        <span className={`acc-accordion-address ${valueClassName}`.trim()}>
+          {value}
+        </span>
+        <ChevronDown size={16} className="acc-accordion-chevron" />
+      </label>
+    </td>
+  );
+}
+
 function ReadOnlyCell({ value, wide, small, label }) {
   return (
     <td data-label={label}>
@@ -168,4 +205,4 @@ function Badge({ value }) {
   return <span className={`badge ${className}`}>{value || "—"}</span>;
 }
 
-export { Badge, ReadOnlyCell, Select, Field };
+export { Badge, ReadOnlyCell, Select, Field, AccordionHeaderCell };

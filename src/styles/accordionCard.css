@@ -1,0 +1,272 @@
+/* Reusable mobile "accordion card" table.
+   Add `acc-card-container` to the scrolling wrapper (the element that
+   should establish `container-type: inline-size`) and `acc-card` to the
+   `<table>` itself — that alone turns thead off, stacks rows into cards,
+   and renders each `data-label`'d cell as a label/value line, all under
+   900px of container width. No other per-table CSS is required.
+
+   Use the `AccordionHeaderCell` component
+   (src/components/elements/elements.jsx) for the one column that should
+   act as the card's always-visible, collapsed/expanded heading (e.g.
+   address, name, borrower). Optional per-cell modifiers:
+     - `acc-col-block`        stack a cell's content vertically instead of
+                               label/value side-by-side (e.g. multi-line
+                               buyer info).
+     - `acc-col-hide-mobile`  always hidden on mobile regardless of expand
+                               state (e.g. a bulk-select checkbox).
+     - `acc-col-action-mobile` hidden while collapsed; once expanded,
+                               renders centered with no label, pinned to
+                               the end of the card (e.g. a delete action).
+                               Pair the button itself with `acc-delete-btn`
+                               and add an `acc-delete-label` span for a
+                               text label that's icon-only on desktop and
+                               shows text on mobile. */
+@layer components {
+  .acc-card-container {
+    container-type: inline-size;
+    margin-top: 0.75rem;
+  }
+
+  /* Text label for acc-delete-btn: icon-only on desktop, shown on mobile. */
+  .acc-delete-label {
+    display: none;
+  }
+
+  /* The merged group header row only exists for the mobile accordion; it
+     never renders as an extra table row on a normal desktop table. */
+  .acc-group-header-row {
+    display: none;
+  }
+
+  /* The toggle/chevron pair only does anything once the @container query
+     below turns the row into a collapsible card. Outside of that, they're
+     just a hidden checkbox and a label — keep the checkbox invisible and
+     the label's contents on one line unconditionally, otherwise a long
+     header value (e.g. a company name) can wrap the chevron onto its own
+     line on a normal desktop table. */
+  .acc-card-container .acc-card .acc-accordion-toggle {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .acc-card-container .acc-card .acc-accordion-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .acc-card-container .acc-card .acc-accordion-chevron {
+    display: none;
+  }
+
+  @container (max-width: 900px) {
+    .acc-card-container .acc-card thead,
+    .acc-card-container .acc-card tfoot {
+      display: none;
+    }
+
+    .acc-card-container .acc-card,
+    .acc-card-container .acc-card tbody,
+    .acc-card-container .acc-card td {
+      display: block;
+      width: 100%;
+    }
+
+    /* Cards stack full-width; an inherited desktop min-width (set so the
+       table's columns have room to breathe) would force the whole card
+       stack wider than the viewport and make it scroll horizontally. */
+    .acc-card-container .acc-card {
+      min-width: 0;
+    }
+
+    .acc-card-container .acc-card tr {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      margin: 0 0 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.25rem 0;
+      background: var(--panel);
+    }
+
+    .acc-card-container .acc-card td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.45rem 1rem;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      position: static;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .acc-card-container .acc-card td:last-child {
+      border-bottom: none;
+    }
+
+    .acc-card-container .acc-card td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      text-align: left;
+      flex-shrink: 0;
+    }
+
+    /* The header cell must always fill the card's full width here, even
+       though desktop-only column classes (e.g. an address column capped
+       to a fixed max-width with an ellipsis) are still attached to it. */
+    .acc-card-container .acc-card .acc-col-header {
+      cursor: pointer;
+      width: 100%;
+      max-width: none;
+    }
+
+    .acc-card-container .acc-card .acc-accordion-label {
+      display: flex;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .acc-card-container .acc-card .acc-accordion-address {
+      flex: 1;
+      width: auto;
+      height: auto;
+      min-width: 0;
+      text-align: right;
+    }
+
+    .acc-card-container .acc-card .acc-accordion-chevron {
+      display: block;
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: transform 0.15s ease;
+    }
+
+    .acc-card-container
+      .acc-card
+      tr:has(.acc-accordion-toggle:checked)
+      .acc-accordion-chevron {
+      transform: rotate(180deg);
+    }
+
+    .acc-card-container .acc-card tr td:not(.acc-col-header) {
+      display: none;
+    }
+
+    .acc-card-container
+      .acc-card
+      tr:not(:has(.acc-accordion-toggle:checked))
+      .acc-col-header {
+      border-bottom: none;
+    }
+
+    .acc-card-container
+      .acc-card
+      tr:has(.acc-accordion-toggle:checked)
+      td:not(.acc-col-header) {
+      display: flex;
+    }
+
+    .acc-card-container .acc-card .acc-col-block {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .acc-card-container .acc-card .acc-col-block::before {
+      text-align: left;
+    }
+
+    .acc-card-container .acc-card .acc-col-block > div {
+      width: 100%;
+    }
+
+    /* Doesn't fit the per-row accordion on mobile (e.g. bulk-select checkbox) */
+    .acc-card-container .acc-card .acc-col-hide-mobile {
+      display: none !important;
+    }
+
+    /* Hidden while collapsed (like any other field); once the accordion
+       is expanded it renders centered, with no label, pinned to the end. */
+    .acc-card-container .acc-card .acc-col-action-mobile {
+      order: 999;
+      justify-content: center;
+      border-bottom: none;
+      padding: 0.3rem 1rem 0.5rem;
+    }
+
+    .acc-card-container .acc-card .acc-col-action-mobile::before {
+      content: none;
+    }
+
+    /* Render as a normal labeled button instead of a bare icon */
+    .acc-card-container .acc-card .acc-col-action-mobile .acc-delete-btn {
+      width: auto;
+      height: auto;
+      padding: 0.55rem 1.1rem;
+      gap: 0.5rem;
+      font-weight: 600;
+    }
+
+    .acc-card-container .acc-card .acc-col-action-mobile .acc-delete-label {
+      display: inline;
+    }
+
+    /* Multiple deals for the same borrower share one accordion card. The
+       toggle lives only on the group's header row; visibility of the
+       member rows is scoped to the whole tbody via :has(), so it works
+       regardless of how many deals are in the group. */
+    .acc-card-container .acc-card tbody.acc-group {
+      display: block;
+      width: 100%;
+      margin: 0 0 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.25rem 0;
+      background: var(--panel);
+    }
+
+    .acc-card-container .acc-card tbody.acc-group tr {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .acc-card-container .acc-card tbody.acc-group .acc-group-deal-row {
+      display: none;
+    }
+
+    .acc-card-container
+      .acc-card
+      tbody.acc-group:has(.acc-accordion-toggle:checked)
+      .acc-group-deal-row {
+      display: flex;
+      border-top: 1px solid var(--line);
+    }
+
+    .acc-card-container
+      .acc-card
+      tbody.acc-group:has(.acc-accordion-toggle:checked)
+      .acc-group-deal-row
+      td {
+      display: flex;
+    }
+
+    .acc-card-container .acc-card .acc-group-deal-label {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      background: var(--bg);
+    }
+  }
+}

@@ -78,8 +78,15 @@ describe("DealRow", () => {
   it("clicking the row body calls onRowDetailClick", () => {
     const onRowDetailClick = vi.fn();
     renderRow({ onRowDetailClick });
-    fireEvent.click(screen.getByText("1 Main St"));
+    fireEvent.click(screen.getByText("Austin"));
     expect(onRowDetailClick).toHaveBeenCalledWith(deal);
+  });
+
+  it("clicking the address heading toggles the accordion instead of opening the modal", () => {
+    const onRowDetailClick = vi.fn();
+    renderRow({ onRowDetailClick });
+    fireEvent.click(screen.getByText("1 Main St"));
+    expect(onRowDetailClick).not.toHaveBeenCalled();
   });
 
   it("marks the row closed when deal is closed", () => {

@@ -1,4 +1,4 @@
-import { ReadOnlyCell } from "../../../elements/elements";
+import { ReadOnlyCell, AccordionHeaderCell } from "../../../elements/elements";
 import { Trash2, Edit2, Check, Eye, Upload, Loader2 } from "lucide-react";
 import { currency } from "../../../../utils/utils";
 import { getContractVersions } from "../crmConfig";
@@ -71,7 +71,7 @@ function DealRow({
       onClick={handleTrClick}
     >
       <td
-        className="text-center dt-col-action"
+        className="text-center dt-col-action acc-col-hide-mobile"
         onClick={(e) => e.stopPropagation()}
       >
         <input
@@ -82,18 +82,24 @@ function DealRow({
         />
       </td>
       <td
-        className="text-center dt-col-action"
+        className="text-center dt-col-action acc-col-action-mobile"
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          className="danger-btn"
+          className="danger-btn acc-delete-btn"
           title="Delete"
           onClick={() => deleteDeal(deal.id)}
         >
           <Trash2 size={16} />
+          <span className="acc-delete-label">Delete</span>
         </button>
       </td>
-      <ReadOnlyCell value={deal.address} wide label="Property Address" />
+      <AccordionHeaderCell
+        id={deal.id}
+        label="Property Address"
+        value={deal.address}
+        valueClassName="readonly-input wide"
+      />
       <ReadOnlyCell value={deal.city} label="City" />
       <ReadOnlyCell value={deal.zipCode} label="Zip Code" />
       <ReadOnlyCell value={deal.state} small label="State" />
@@ -107,7 +113,7 @@ function DealRow({
         }
         label="Listed Price"
       />
-      <td className="dt-col-block" data-label="Agent Info">
+      <td className="acc-col-block" data-label="Agent Info">
         {deal.onMarket === "Yes" &&
         (deal.agentName || deal.agentPhone || deal.listingUrl) ? (
           <div className="buyer-info-cell">
@@ -193,7 +199,7 @@ function DealRow({
         )}
       </td>
 
-      <td className="dt-col-block" data-label="Contract">
+      <td className="acc-col-block" data-label="Contract">
         {deal.offerStatus === "Not Sent" ? (
           <span className="placeholder-dash">—</span>
         ) : (
@@ -335,7 +341,7 @@ function DealRow({
         )}
       </td>
 
-      <td className="dt-col-block" data-label="Buyer Info">
+      <td className="acc-col-block" data-label="Buyer Info">
         {deal.assigned === "Yes" ? (
           <div className="buyer-info-cell">
             <div className="buyer-line">
@@ -418,7 +424,7 @@ function DealRow({
         )}
       </td>
 
-      <td className="dt-col-block" data-label="JV Deal">
+      <td className="acc-col-block" data-label="JV Deal">
         <div className="buyer-info-cell">
           <div className="buyer-line">
             <select

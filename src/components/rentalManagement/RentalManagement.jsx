@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Trash2, KeyRound } from "lucide-react";
-import { Select } from "../elements/elements";
+import { Select, AccordionHeaderCell } from "../elements/elements";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import {
   formatPhone,
@@ -38,6 +38,10 @@ function createEmptyForm() {
     pmAgentName: "",
     pmContactPhone: "",
     pmContactEmail: "",
+    hasApplianceInsurance: "No",
+    applianceInsuranceCompany: "",
+    applianceInsuranceTermYears: "",
+    applianceInsurancePricePaid: "",
   };
 }
 
@@ -60,7 +64,11 @@ function applyFieldChange(prev, name, value, tenantId) {
     return { ...prev, tenants: updatedTenants };
   }
   // Handle form-level fields
-  if (name === "monthlyMortgage" || name === "monthlyRent") {
+  if (
+    name === "monthlyMortgage" ||
+    name === "monthlyRent" ||
+    name === "applianceInsurancePricePaid"
+  ) {
     return { ...prev, [name]: fmtCurrencyInput(value) };
   }
   // Handle single tenant phone field in add form
@@ -141,6 +149,26 @@ export default function RentalManagement({
     setRentals((p) => p.filter((r) => r.id !== id));
   }
 
+  async function handleApplianceInsuranceChange(rental, value) {
+    const updated = {
+      ...rental,
+      hasApplianceInsurance: value,
+      applianceInsuranceCompany:
+        value === "Yes" ? rental.applianceInsuranceCompany || "" : "",
+      applianceInsuranceTermYears:
+        value === "Yes" ? rental.applianceInsuranceTermYears || "" : "",
+      applianceInsurancePricePaid:
+        value === "Yes" ? rental.applianceInsurancePricePaid || "" : "",
+    };
+    setRentals((p) => p.map((r) => (r.id === updated.id ? updated : r)));
+    try {
+      await saveRental(updated);
+    } catch {
+      alert("Failed to save. Check your connection.");
+      setRentals((p) => p.map((r) => (r.id === rental.id ? rental : r)));
+    }
+  }
+
   function openEdit(rental) {
     setEditingRental(rental);
 
@@ -178,6 +206,10 @@ export default function RentalManagement({
       pmAgentName: rental.pmAgentName || "",
       pmContactPhone: rental.pmContactPhone || "",
       pmContactEmail: rental.pmContactEmail || "",
+      hasApplianceInsurance: rental.hasApplianceInsurance || "No",
+      applianceInsuranceCompany: rental.applianceInsuranceCompany || "",
+      applianceInsuranceTermYears: rental.applianceInsuranceTermYears || "",
+      applianceInsurancePricePaid: rental.applianceInsurancePricePaid || "",
       tenants,
     });
   }
@@ -460,8 +492,8 @@ export default function RentalManagement({
             <p>No properties match your filters.</p>
           </div>
         ) : (
-          <div className="table-wrap rm-table-container">
-            <table className="compact-table rm-properties-table">
+          <div className="table-wrap rm-table-container acc-card-container">
+            <table className="compact-table rm-properties-table acc-card">
               <thead>
                 <tr>
                   <th className="rm-name rm-col-sticky">Address</th>
@@ -476,6 +508,7 @@ export default function RentalManagement({
                   <th>Cashflow</th>
                   <th>Accumulated Rent</th>
                   <th>Management Details</th>
+                  <th>Appliance Insured</th>
                   <th></th>
                 </tr>
               </thead>
@@ -502,12 +535,12 @@ export default function RentalManagement({
                       onClick={() => openEdit(rental)}
                       data-status={hasMultipleTenants ? "multiple-tenants" : ""}
                     >
-                      <td
+                      <AccordionHeaderCell
+                        id={rental.id}
+                        label="Address"
+                        value={rental.address}
                         className="rm-name rm-col-sticky"
-                        data-label="Address"
-                      >
-                        {rental.address}
-                      </td>
+                      />
                       <td className="rm-muted" data-label="City">
                         {rental.city || "—"}
                       </td>
@@ -559,7 +592,7 @@ export default function RentalManagement({
                         {currency(propertyAccumulatedRent)}
                       </td>
                       <td
-                        className="rm-col-block"
+                        className="acc-col-block"
                         data-label="Management Details"
                       >
                         {rental.pmCompanyName ||
@@ -596,13 +629,39 @@ export default function RentalManagement({
                           "—"
                         )}
                       </td>
-                      <td onClick={(e) => e.stopPropagation()}>
+                      <td
+                        data-label="Appliance Insured"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <select
+                          className="rm-inline-select"
+                          value={
+                            rental.hasApplianceInsurance === "Yes"
+                              ? "Yes"
+                              : "No"
+                          }
+                          onChange={(e) =>
+                            handleApplianceInsuranceChange(
+                              rental,
+                              e.target.value,
+                            )
+                          }
+                        >
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </td>
+                      <td
+                        className="acc-col-action-mobile"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
-                          className="leads-delete-btn"
+                          className="leads-delete-btn acc-delete-btn"
                           title="Delete property"
                           onClick={() => handleDelete(rental.id)}
                         >
                           <Trash2 size={14} />
+                          <span className="acc-delete-label">Delete</span>
                         </button>
                       </td>
                     </tr>

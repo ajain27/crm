@@ -335,71 +335,23 @@
     padding-right: 1rem;
   }
 
-  @container (max-width: 860px) {
-    .rm-properties-table thead {
-      display: none;
+  /* The base card-stacking + accordion behavior lives in
+     src/styles/accordionCard.css (enabled via the `acc-card-container` /
+     `acc-card` classes) and is shared with other tables. Only this
+     table's own deltas (the sticky-address-column reset and the
+     even-row tint) live here. */
+  @container (max-width: 900px) {
+    .rm-properties-table.acc-card .rm-col-sticky {
+      position: static;
+      box-shadow: none;
     }
 
-    .rm-properties-table,
-    .rm-properties-table tbody,
-    .rm-properties-table tr,
-    .rm-properties-table td {
-      display: block;
-      width: 100%;
-    }
-
-    .rm-properties-table tbody tr {
-      margin: 0 0 1.25rem;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 0.75rem 0;
-      background: var(--panel);
-    }
-
-    .rm-properties-table tbody tr:nth-child(even) {
+    .rm-properties-table.acc-card tbody tr:nth-child(even) {
       background: color-mix(in srgb, var(--panel) 96%, var(--blue-light) 4%);
     }
 
-    .rm-properties-table td {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.8rem 1.25rem;
-      border-bottom: 1px solid var(--line);
-      text-align: right;
-      position: static;
-      box-shadow: none;
-      background: transparent;
-    }
-
-    .rm-properties-table td:last-child {
-      border-bottom: none;
-      justify-content: flex-end;
-    }
-
-    .rm-properties-table td::before {
-      content: attr(data-label);
-      font-weight: 600;
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      text-align: left;
-    }
-
-    .rm-properties-table .rm-name {
+    .rm-properties-table.acc-card .rm-name {
       font-size: 1rem;
-    }
-
-    .rm-properties-table .rm-col-block {
-      flex-direction: column;
-      align-items: flex-start;
-      text-align: left;
-    }
-
-    .rm-properties-table .rm-col-block::before {
-      text-align: left;
     }
   }
 
@@ -440,6 +392,16 @@
   .rm-positive {
     color: var(--green);
     font-weight: 600;
+  }
+
+  .rm-inline-select {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: inherit;
   }
 
   .rm-negative {

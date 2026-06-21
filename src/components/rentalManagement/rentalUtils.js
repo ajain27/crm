@@ -60,6 +60,19 @@ export function normalizeRentalForm(form, isAddForm = false) {
     pmAgentName: (form.pmAgentName || "").trim(),
     pmContactPhone: form.pmContactPhone || "",
     pmContactEmail: (form.pmContactEmail || "").trim(),
+    hasApplianceInsurance: form.hasApplianceInsurance || "No",
+    applianceInsuranceCompany:
+      form.hasApplianceInsurance === "Yes"
+        ? (form.applianceInsuranceCompany || "").trim()
+        : "",
+    applianceInsuranceTermYears:
+      form.hasApplianceInsurance === "Yes"
+        ? form.applianceInsuranceTermYears || ""
+        : "",
+    applianceInsurancePricePaid:
+      form.hasApplianceInsurance === "Yes"
+        ? form.applianceInsurancePricePaid || ""
+        : "",
   };
 
   if (isAddForm) {

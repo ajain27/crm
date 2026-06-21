@@ -125,6 +125,44 @@ export default function RentalEditModal({
             onChange={onChange}
             placeholder="manager@acmepm.com"
           />
+          <label className="field">
+            <span>Appliance Insurance</span>
+            <select
+              name="hasApplianceInsurance"
+              value={editForm.hasApplianceInsurance}
+              onChange={onChange}
+            >
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </label>
+          {editForm.hasApplianceInsurance === "Yes" && (
+            <>
+              <Field
+                label="Insurance Company"
+                name="applianceInsuranceCompany"
+                value={editForm.applianceInsuranceCompany}
+                onChange={onChange}
+                placeholder="Acme Home Warranty"
+              />
+              <Field
+                label="Term (years)"
+                name="applianceInsuranceTermYears"
+                value={editForm.applianceInsuranceTermYears}
+                onChange={onChange}
+                placeholder="2"
+                inputMode="numeric"
+              />
+              <Field
+                label="Price Paid"
+                name="applianceInsurancePricePaid"
+                value={editForm.applianceInsurancePricePaid}
+                onChange={onChange}
+                placeholder="$500"
+                inputMode="numeric"
+              />
+            </>
+          )}
         </div>
       )}
     </Modal>

@@ -1,6 +1,57 @@
+import { useMemo } from "react";
 import { Trash2, Eye, Upload, Loader2 } from "lucide-react";
 import { fmt, formatDate, parseCurrency } from "../../utils/utils";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
+import { AccordionHeaderCell } from "../elements/elements";
+
+// When a borrower has more than one deal, number them "Deal 1", "Deal 2"…
+// (earliest lendDate first) so the accordion heading can tell them apart.
+function buildDealNumbers(deals) {
+  const byBorrower = new Map();
+  deals.forEach((deal) => {
+    const key = (deal.borrowerName || "").trim().toLowerCase();
+    if (!byBorrower.has(key)) byBorrower.set(key, []);
+    byBorrower.get(key).push(deal);
+  });
+
+  const numbers = {};
+  byBorrower.forEach((group) => {
+    if (group.length < 2) return;
+    [...group]
+      .sort((a, b) => (a.lendDate || "").localeCompare(b.lendDate || ""))
+      .forEach((deal, index) => {
+        numbers[deal.id] = index + 1;
+      });
+  });
+  return numbers;
+}
+
+// Groups deals (in their existing order) by borrower so deals belonging to
+// the same borrower render inside a single accordion card on mobile, divided
+// by their "Deal N" numbering, instead of one card per deal.
+function groupDealsByBorrower(deals, dealNumbers) {
+  const groups = [];
+  const byKey = new Map();
+  deals.forEach((deal) => {
+    const key = (deal.borrowerName || "").trim().toLowerCase();
+    if (!byKey.has(key)) {
+      const group = { key, borrowerName: deal.borrowerName, deals: [] };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    byKey.get(key).deals.push(deal);
+  });
+  groups.forEach((group) => {
+    if (group.deals.length > 1) {
+      group.deals.sort(
+        (a, b) => (dealNumbers[a.id] || 0) - (dealNumbers[b.id] || 0),
+      );
+    }
+  });
+  return groups;
+}
+
+const PM_DEAL_COLUMN_COUNT = 14;
 
 function addMonths(dateStr, months) {
   if (!dateStr || months <= 0) return "";
@@ -52,6 +103,148 @@ export default function PMDealsTable({
   onOpenFile,
   onFileUpload,
 }) {
+  const dealNumbers = useMemo(() => buildDealNumbers(deals), [deals]);
+  const groupedDeals = useMemo(
+    () => groupDealsByBorrower(filteredDeals, dealNumbers),
+    [filteredDeals, dealNumbers],
+  );
+
+  function renderDealRow(deal, { isGroupMember = false } = {}) {
+    const { principal, dueDate, lateDays, interest, lateFee, totalPayout } =
+      computeDeal(deal, today);
+    const isUploading = uploadingId === deal.id;
+    const fileCount = deal.files?.length ?? 0;
+    const headerValue = dealNumbers[deal.id]
+      ? `${deal.borrowerName} — Deal ${dealNumbers[deal.id]}`
+      : deal.borrowerName;
+
+    return (
+      <tr
+        key={deal.id}
+        className={isGroupMember ? "acc-group-deal-row" : undefined}
+        onClick={() => onRowClick(deal)}
+        style={{ cursor: "pointer" }}
+      >
+        {isGroupMember ? (
+          <td className="acc-group-deal-label" data-label="Borrower Name">
+            {headerValue}
+          </td>
+        ) : (
+          <AccordionHeaderCell
+            id={deal.id}
+            label="Borrower Name"
+            value={headerValue}
+          />
+        )}
+        <td data-label="Company">{deal.borrowerCompany || "—"}</td>
+        <td data-label="Property Address">{deal.propertyAddress || "—"}</td>
+        <td data-label="Amount Lent">{fmt(principal)}</td>
+        <td data-label="Rate">{deal.interestRate}</td>
+        <td data-label="Term">{deal.months}</td>
+        <td data-label="Lend Date">{formatDate(deal.lendDate)}</td>
+        <td data-label="Due Date">{dueDate ? formatDate(dueDate) : "—"}</td>
+        <td data-label="Days Late">
+          {dueDate ? (
+            <span
+              style={{
+                color: lateDays > 0 ? "#dc2626" : "inherit",
+                fontWeight: lateDays > 0 ? 600 : "inherit",
+              }}
+            >
+              {lateDays}
+            </span>
+          ) : (
+            "—"
+          )}
+        </td>
+        <td data-label="Interest" style={{ color: "#16a34a", fontWeight: 600 }}>
+          {fmt(interest)}
+        </td>
+        <td
+          data-label="Late Fee"
+          style={{
+            color: lateFee > 0 ? "#dc2626" : "inherit",
+            fontWeight: lateFee > 0 ? 600 : "inherit",
+          }}
+        >
+          {fmt(lateFee)}
+        </td>
+        <td
+          data-label="Total Payout"
+          style={{ color: "#16a34a", fontWeight: 600 }}
+        >
+          {fmt(totalPayout)}
+        </td>
+        <td
+          className="acc-col-block"
+          data-label="Files"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="contract-actions">
+            {fileCount > 0 && (
+              <button
+                type="button"
+                className="secondary-btn contract-action-btn"
+                onClick={() => onOpenFile(deal)}
+                title={`${fileCount} file${fileCount !== 1 ? "s" : ""} uploaded`}
+                aria-label={`View files for ${deal.borrowerName}`}
+              >
+                <Eye size={16} />
+                {fileCount > 1 && (
+                  <span style={{ fontSize: 11, marginLeft: 2 }}>
+                    {fileCount}
+                  </span>
+                )}
+              </button>
+            )}
+            <label
+              htmlFor={`pm-upload-${deal.id}`}
+              className="secondary-btn contract-action-btn"
+              title={isUploading ? "Uploading…" : "Upload file"}
+              aria-label={
+                isUploading
+                  ? "Uploading…"
+                  : `Upload file for ${deal.borrowerName}`
+              }
+              style={
+                isUploading
+                  ? { opacity: 0.5, pointerEvents: "none" }
+                  : undefined
+              }
+            >
+              {isUploading ? (
+                <Loader2 size={16} className="spin" />
+              ) : (
+                <Upload size={16} />
+              )}
+            </label>
+            <input
+              id={`pm-upload-${deal.id}`}
+              type="file"
+              className="contract-upload-input"
+              accept=".pdf,.odt,.odf,image/*"
+              disabled={isUploading}
+              onChange={(e) => onFileUpload(deal, e)}
+            />
+          </div>
+        </td>
+        <td
+          className="acc-col-action-mobile"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="leads-delete-btn acc-delete-btn"
+            title="Delete deal"
+            onClick={() => onDelete(deal.id)}
+          >
+            <Trash2 size={14} />
+            <span className="acc-delete-label">Delete</span>
+          </button>
+        </td>
+      </tr>
+    );
+  }
+
   const totals = filteredDeals.reduce(
     (acc, d) => {
       const { principal, interest, lateFee, totalPayout } = computeDeal(
@@ -136,8 +329,8 @@ export default function PMDealsTable({
           <p>No deals match your filters.</p>
         </div>
       ) : (
-        <div className="table-wrap">
-          <table className="compact-table">
+        <div className="table-wrap acc-card-container">
+          <table className="compact-table acc-card">
             <thead>
               <tr>
                 <th>Borrower Name</th>
@@ -156,123 +349,25 @@ export default function PMDealsTable({
                 <th></th>
               </tr>
             </thead>
-            <tbody>
-              {filteredDeals.map((deal) => {
-                const {
-                  principal,
-                  dueDate,
-                  lateDays,
-                  interest,
-                  lateFee,
-                  totalPayout,
-                } = computeDeal(deal, today);
-                const isUploading = uploadingId === deal.id;
-                const fileCount = deal.files?.length ?? 0;
-
-                return (
-                  <tr
-                    key={deal.id}
-                    onClick={() => onRowClick(deal)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{deal.borrowerName}</td>
-                    <td>{deal.borrowerCompany || "—"}</td>
-                    <td>{deal.propertyAddress || "—"}</td>
-                    <td>{fmt(principal)}</td>
-                    <td>{deal.interestRate}</td>
-                    <td>{deal.months}</td>
-                    <td>{formatDate(deal.lendDate)}</td>
-                    <td>{dueDate ? formatDate(dueDate) : "—"}</td>
-                    <td>
-                      {dueDate ? (
-                        <span
-                          style={{
-                            color: lateDays > 0 ? "#dc2626" : "inherit",
-                            fontWeight: lateDays > 0 ? 600 : "inherit",
-                          }}
-                        >
-                          {lateDays}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td style={{ color: "#16a34a", fontWeight: 600 }}>
-                      {fmt(interest)}
-                    </td>
-                    <td
-                      style={{
-                        color: lateFee > 0 ? "#dc2626" : "inherit",
-                        fontWeight: lateFee > 0 ? 600 : "inherit",
-                      }}
-                    >
-                      {fmt(lateFee)}
-                    </td>
-                    <td style={{ color: "#16a34a", fontWeight: 600 }}>
-                      {fmt(totalPayout)}
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div className="contract-actions">
-                        {fileCount > 0 && (
-                          <button
-                            type="button"
-                            className="secondary-btn contract-action-btn"
-                            onClick={() => onOpenFile(deal)}
-                            title={`${fileCount} file${fileCount !== 1 ? "s" : ""} uploaded`}
-                            aria-label={`View files for ${deal.borrowerName}`}
-                          >
-                            <Eye size={16} />
-                            {fileCount > 1 && (
-                              <span style={{ fontSize: 11, marginLeft: 2 }}>
-                                {fileCount}
-                              </span>
-                            )}
-                          </button>
-                        )}
-                        <label
-                          htmlFor={`pm-upload-${deal.id}`}
-                          className="secondary-btn contract-action-btn"
-                          title={isUploading ? "Uploading…" : "Upload file"}
-                          aria-label={
-                            isUploading
-                              ? "Uploading…"
-                              : `Upload file for ${deal.borrowerName}`
-                          }
-                          style={
-                            isUploading
-                              ? { opacity: 0.5, pointerEvents: "none" }
-                              : undefined
-                          }
-                        >
-                          {isUploading ? (
-                            <Loader2 size={16} className="spin" />
-                          ) : (
-                            <Upload size={16} />
-                          )}
-                        </label>
-                        <input
-                          id={`pm-upload-${deal.id}`}
-                          type="file"
-                          className="contract-upload-input"
-                          accept=".pdf,.odt,.odf,image/*"
-                          disabled={isUploading}
-                          onChange={(e) => onFileUpload(deal, e)}
-                        />
-                      </div>
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="leads-delete-btn"
-                        title="Delete deal"
-                        onClick={() => onDelete(deal.id)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
+            {groupedDeals.map((group) =>
+              group.deals.length > 1 ? (
+                <tbody className="acc-group" key={group.key}>
+                  <tr className="acc-group-header-row">
+                    <AccordionHeaderCell
+                      id={`group-${group.key}`}
+                      label="Borrower Name"
+                      value={group.borrowerName}
+                      colSpan={PM_DEAL_COLUMN_COUNT}
+                    />
                   </tr>
-                );
-              })}
-            </tbody>
+                  {group.deals.map((deal) =>
+                    renderDealRow(deal, { isGroupMember: true }),
+                  )}
+                </tbody>
+              ) : (
+                <tbody key={group.key}>{renderDealRow(group.deals[0])}</tbody>
+              ),
+            )}
             <tfoot>
               <tr
                 style={{ fontWeight: 700, borderTop: "2px solid var(--line)" }}

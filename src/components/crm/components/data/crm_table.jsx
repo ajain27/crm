@@ -231,8 +231,8 @@ function Wholesale_data({
           </button>
         </div>
       )}
-      <div className="table-wrap dt-table-container">
-        <table className="dt-table">
+      <div className="table-wrap dt-table-container acc-card-container">
+        <table className="dt-table acc-card">
           <thead>
             <tr>
               <th className="text-center">

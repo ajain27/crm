@@ -151,6 +151,44 @@ export default function RentalAddForm({
           onChange={onChange}
           placeholder="manager@acmepm.com"
         />
+        <label className="field">
+          <span>Appliance Insurance</span>
+          <select
+            name="hasApplianceInsurance"
+            value={form.hasApplianceInsurance}
+            onChange={onChange}
+          >
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </label>
+        {form.hasApplianceInsurance === "Yes" && (
+          <>
+            <Field
+              label="Insurance Company"
+              name="applianceInsuranceCompany"
+              value={form.applianceInsuranceCompany}
+              onChange={onChange}
+              placeholder="Acme Home Warranty"
+            />
+            <Field
+              label="Term (years)"
+              name="applianceInsuranceTermYears"
+              value={form.applianceInsuranceTermYears}
+              onChange={onChange}
+              placeholder="2"
+              inputMode="numeric"
+            />
+            <Field
+              label="Price Paid"
+              name="applianceInsurancePricePaid"
+              value={form.applianceInsurancePricePaid}
+              onChange={onChange}
+              placeholder="$500"
+              inputMode="numeric"
+            />
+          </>
+        )}
 
         {addressError && (
           <span className="field-error rm-address-error">{addressError}</span>

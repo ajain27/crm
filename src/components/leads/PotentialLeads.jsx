@@ -13,6 +13,7 @@ import {
   Globe,
 } from "lucide-react";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
+import { AccordionHeaderCell } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import {
   formatPhone,
@@ -699,10 +700,10 @@ export default function PotentialLeads({
             ) : (
               <>
                 <div
-                  className="table-wrap leads-table-wrap"
+                  className="table-wrap leads-table-wrap acc-card-container"
                   style={{ overflowX: "auto" }}
                 >
-                  <table className="compact-table leads-table">
+                  <table className="compact-table leads-table acc-card">
                     <thead>
                       <tr>
                         <th></th>
@@ -728,19 +729,26 @@ export default function PotentialLeads({
                             className="clickable-row"
                             onClick={() => setDetailLead(lead)}
                           >
-                            <td onClick={(e) => e.stopPropagation()}>
+                            <td
+                              className="acc-col-action-mobile"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
-                                className="leads-delete-btn"
+                                className="leads-delete-btn acc-delete-btn"
                                 title="Delete lead"
                                 onClick={() => handleDelete(lead.id)}
                               >
                                 <Trash2 size={14} />
+                                <span className="acc-delete-label">Delete</span>
                               </button>
                             </td>
-                            <td className="leads-address-cell">
-                              {lead.address}
-                            </td>
-                            <td>
+                            <AccordionHeaderCell
+                              id={lead.id}
+                              label="Address"
+                              value={lead.address}
+                              className="leads-address-cell"
+                            />
+                            <td data-label="Source">
                               {lead.source ? (
                                 <span className="leads-source-badge">
                                   {lead.source}
@@ -749,8 +757,10 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td>{lead.sellerName || "—"}</td>
-                            <td>
+                            <td data-label="Seller">
+                              {lead.sellerName || "—"}
+                            </td>
+                            <td className="acc-col-block" data-label="Agent">
                               {lead.agentName || lead.agentPhone ? (
                                 <div className="leads-agent-cell">
                                   {lead.agentName && (
@@ -769,7 +779,7 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td>
+                            <td data-label="Follow-Up">
                               {lead.followUpDate ? (
                                 <span
                                   className={`leads-followup-badge leads-followup-${status}`}
@@ -780,7 +790,7 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td>
+                            <td data-label="Email">
                               {lead.source !== "MLS / Zillow" ? (
                                 lead.email ? (
                                   <a
@@ -796,7 +806,7 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td>
+                            <td data-label="Phone">
                               {lead.source !== "MLS / Zillow" ? (
                                 lead.phone ? (
                                   <a
@@ -812,7 +822,7 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td className="leads-notes-cell">
+                            <td className="leads-notes-cell" data-label="Notes">
                               {lead.notes ? (
                                 <span
                                   className="leads-notes-preview"
@@ -824,10 +834,13 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td className="leads-date-cell">
+                            <td className="leads-date-cell" data-label="Added">
                               {formatDate(lead.dateAdded)}
                             </td>
-                            <td onClick={(e) => e.stopPropagation()}>
+                            <td
+                              data-label="MLS Link"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {lead.url ? (
                                 <a
                                   href={lead.url}
@@ -845,7 +858,10 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td onClick={(e) => e.stopPropagation()}>
+                            <td
+                              className="acc-col-action-mobile"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 className="leads-crm-btn"
                                 title="Add to CRM pipeline"
@@ -1069,10 +1085,10 @@ export default function PotentialLeads({
             ) : (
               <>
                 <div
-                  className="table-wrap leads-table-wrap"
+                  className="table-wrap leads-table-wrap acc-card-container"
                   style={{ overflowX: "auto" }}
                 >
-                  <table className="compact-table leads-table">
+                  <table className="compact-table leads-table acc-card">
                     <thead>
                       <tr>
                         <th></th>
@@ -1089,19 +1105,32 @@ export default function PotentialLeads({
                     <tbody>
                       {paginatedCommercial.map((lead) => (
                         <tr key={lead.id}>
-                          <td>
+                          <td
+                            className="acc-col-action-mobile"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <button
-                              className="leads-delete-btn"
+                              className="leads-delete-btn acc-delete-btn"
                               title="Delete lead"
                               onClick={() => handleDelete(lead.id)}
                             >
                               <Trash2 size={14} />
+                              <span className="acc-delete-label">Delete</span>
                             </button>
                           </td>
-                          <td>{lead.name || "—"}</td>
-                          <td className="leads-address-cell">{lead.address}</td>
-                          <td>{lead.state || "—"}</td>
-                          <td>
+                          <AccordionHeaderCell
+                            id={lead.id}
+                            label="Name"
+                            value={lead.name || "—"}
+                          />
+                          <td
+                            className="leads-address-cell"
+                            data-label="Address"
+                          >
+                            {lead.address}
+                          </td>
+                          <td data-label="State">{lead.state || "—"}</td>
+                          <td data-label="Source">
                             {lead.source ? (
                               <span className="leads-source-badge">
                                 {lead.source}
@@ -1110,7 +1139,7 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td>
+                          <td data-label="Website">
                             {lead.website ? (
                               <a
                                 href={lead.website}
@@ -1126,7 +1155,7 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td>
+                          <td data-label="Phone">
                             {lead.phone ? (
                               <a
                                 href={`tel:${lead.phone}`}
@@ -1138,7 +1167,7 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td>
+                          <td data-label="Link">
                             {lead.link ? (
                               <a
                                 href={lead.link}
@@ -1154,7 +1183,7 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td className="leads-date-cell">
+                          <td className="leads-date-cell" data-label="Added">
                             {formatDate(lead.dateAdded)}
                           </td>
                         </tr>
