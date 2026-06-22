@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Field, AnimatedAmount } from "../../../elements/elements";
+import { Field, Select, AnimatedAmount } from "../../../elements/elements";
 import {
   parseCurrency,
   parsePercent,
@@ -48,6 +48,7 @@ const PERCENT_FIELDS = new Set([
   "interestRate",
   "originationFeesPct",
   "sellerCarryback",
+  "cashHelocRate",
 ]);
 
 const initialForm = {
@@ -67,6 +68,7 @@ const initialForm = {
   annualMiscExpense: "",
   monthlyHomeWarranty: "",
   sellerCarryback: "",
+  cashHelocRate: "",
 };
 
 function RentalDSCRTab() {
@@ -74,6 +76,7 @@ function RentalDSCRTab() {
   const [summary, setSummary] = useState(null);
   const [lenders, setLenders] = useState([]);
   const [downPct, setDownPct] = useState(20);
+  const [isCashNeededHeloc, setIsCashNeededHeloc] = useState(false);
   const lenderLtc = (100 - downPct) / 100;
 
   function handleChange(e) {
@@ -139,6 +142,24 @@ function RentalDSCRTab() {
   );
 
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
+  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
+  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
+  const grossCashNeeded =
+    loanOutOfPocket + closingCosts + agentCommissionAmt + INSPECTION_COST;
+  const lenderTotal = calcLenderTotal(lenders);
+  const totalFundsNeeded = Math.max(
+    0,
+    grossCashNeeded - sellerCarryback - lenderTotal,
+  );
+
+  // If the cash needed to buy is itself drawn from a HELOC, that draw is
+  // interest-only (no amortization term), so it's a straight monthly
+  // interest charge on the full amount rather than a PMT calculation.
+  const cashHelocRatePct = parsePercent(form.cashHelocRate);
+  const cashHelocMonthlyPayment = isCashNeededHeloc
+    ? totalFundsNeeded * (cashHelocRatePct / 100 / 12)
+    : 0;
+
   const noi =
     monthlyRent -
     propMgmtFee -
@@ -149,6 +170,7 @@ function RentalDSCRTab() {
   const totalMonthlyExpenses =
     loanMortgage +
     lenderMonthlyPayment +
+    cashHelocMonthlyPayment +
     propMgmtFee +
     monthlyMiscExpense +
     monthlyInsurance +
@@ -156,26 +178,19 @@ function RentalDSCRTab() {
     monthlyHomeWarranty;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12;
-  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
-  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
-  const grossCashNeeded =
-    loanOutOfPocket + closingCosts + agentCommissionAmt + INSPECTION_COST;
-  const lenderTotal = calcLenderTotal(lenders);
-  const totalFundsNeeded = Math.max(
-    0,
-    grossCashNeeded - sellerCarryback - lenderTotal,
-  );
   const cashOnCash =
     totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
   const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
-  const totalDebtService = loanMortgage + lenderMonthlyPayment;
+  const totalDebtService =
+    loanMortgage + lenderMonthlyPayment + cashHelocMonthlyPayment;
   const dscr = totalDebtService > 0 ? noi / totalDebtService : 0;
 
   const isFormComplete =
     form.purchasePrice?.trim() &&
     form.monthlyRent?.trim() &&
     form.interestRate?.trim() &&
-    form.loanTermYears?.trim();
+    form.loanTermYears?.trim() &&
+    (!isCashNeededHeloc || form.cashHelocRate?.trim());
 
   function handleCalculate() {
     if (!isFormComplete) return;
@@ -219,6 +234,9 @@ function RentalDSCRTab() {
       monthlyCashFlow,
       annualCashFlow,
       totalFundsNeeded,
+      isCashNeededHeloc,
+      cashHelocRatePct,
+      cashHelocMonthlyPayment,
       cashOnCash,
       capRate,
       dscr,
@@ -411,6 +429,45 @@ function RentalDSCRTab() {
         onMutate={() => setSummary(null)}
       />
 
+      <div className="deal-analyzer-section-label">
+        Cash Needed to Buy Financing
+      </div>
+      <div className="deal-analyzer-form-grid">
+        <Select
+          label="Is Total Cash Needed to Buy a HELOC?"
+          value={isCashNeededHeloc ? "Yes" : "No"}
+          onChange={(e) => {
+            setIsCashNeededHeloc(e.target.value === "Yes");
+            setSummary(null);
+          }}
+          options={["No", "Yes"]}
+        />
+        {isCashNeededHeloc && (
+          <Field
+            label="HELOC Interest Rate (% / year)"
+            name="cashHelocRate"
+            value={form.cashHelocRate}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. 8"
+            required
+          />
+        )}
+        {isCashNeededHeloc && cashHelocMonthlyPayment > 0 && (
+          <label className="field deal-analyzer-output">
+            <span>
+              Monthly HELOC Payment (Interest-Only){" "}
+              <span className="deal-analyzer-auto-badge">auto</span>
+            </span>
+            <input
+              value={fmt(cashHelocMonthlyPayment)}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+        )}
+      </div>
+
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
       <div className="deal-analyzer-form-grid">
         <Field
@@ -555,6 +612,20 @@ function RentalDSCRTab() {
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={summary.lenderMonthlyPayment}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+            )}
+            {summary.cashHelocMonthlyPayment > 0 && (
+              <div>
+                <span>
+                  Cash-to-Buy HELOC Payment (Interest-Only,{" "}
+                  {summary.cashHelocRatePct}%)
+                </span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.cashHelocMonthlyPayment}
                     format={fmt}
                   />
                 </strong>
@@ -824,11 +895,15 @@ function RentalDSCRTab() {
             style={{ marginTop: "1rem" }}
           >
             Monthly Cash Flow = Rent − Prop. Mgmt − Monthly Mortgage
+            {summary.cashHelocMonthlyPayment > 0 ? " − Cash HELOC" : ""}
             {summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
             <span>
               {fmt(summary.monthlyRent)} − {fmt(summary.propMgmtFee)}
               {summary.loanMortgage > 0
                 ? ` − ${fmt(summary.loanMortgage)}`
+                : ""}
+              {summary.cashHelocMonthlyPayment > 0
+                ? ` − ${fmt(summary.cashHelocMonthlyPayment)}`
                 : ""}
               {summary.monthlyMiscExpense > 0
                 ? ` − ${fmt(summary.monthlyMiscExpense)}`
