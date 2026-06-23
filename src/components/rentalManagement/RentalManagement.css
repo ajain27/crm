@@ -329,10 +329,10 @@
   }
 
   .rm-table-container {
-    container-type: inline-size;
+    /* container-type and left/right padding both come from
+       .acc-card-container (accordionCard.css) so every accordion table
+       shares the same @container breakpoint. */
     box-sizing: border-box;
-    padding-left: 1rem;
-    padding-right: 1rem;
   }
 
   /* The base card-stacking + accordion behavior lives in

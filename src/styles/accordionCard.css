@@ -22,9 +22,16 @@
                                text label that's icon-only on desktop and
                                shows text on mobile. */
 @layer components {
+  /* Container query conditions below are evaluated against this element's
+     *content* box (padding excluded), so its own left/right padding must
+     be set here — centrally, once — rather than per-table. Otherwise two
+     tables can measure the same on-screen width yet cross the @container
+     breakpoint at different viewport sizes just because one of them adds
+     its own extra inset and the other doesn't. */
   .acc-card-container {
     container-type: inline-size;
     margin-top: 0.75rem;
+    padding: 0 1.5rem;
   }
 
   /* Text label for acc-delete-btn: icon-only on desktop, shown on mobile. */

@@ -191,7 +191,9 @@
 
   /* Table */
   .leads-table-wrap {
-    padding: 0 1.5rem 1.5rem;
+    /* Left/right inset comes from .acc-card-container (accordionCard.css)
+       so every accordion table shares the same @container breakpoint. */
+    padding-bottom: 1.5rem;
   }
 
   .leads-table {
