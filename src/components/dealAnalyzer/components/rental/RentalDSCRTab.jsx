@@ -1,248 +1,41 @@
-import { useState } from "react";
-import { Field, Select, AnimatedAmount } from "../../../elements/elements";
+import { Field, Select } from "../../../elements/elements";
+import { fmt } from "../../../../utils/utils";
+import AdditionalLenders from "../additionalLenders/AdditionalLenders";
+import { SellerCreditCarrybackField } from "./SellerCreditCarryback";
+import RentalDSCRSummary from "./RentalDSCRSummary";
 import {
-  parseCurrency,
-  parsePercent,
-  fmt,
-  fmtCurrencyInput,
-} from "../../../../utils/utils";
-import AdditionalLenders, {
-  calcLenderMonthlyPayment,
-  calcLenderTotal,
-} from "../additionalLenders/AdditionalLenders";
-import {
-  SellerCreditCarrybackField,
-  SellerCreditCarrybackSummaryRow,
-} from "./SellerCreditCarryback";
-import RentalPieChart from "./RentalPieChart";
-
-const PROP_MGMT_PCT = 10;
-const FIRST_MONTH_PROP_MGMT_PCT = 50;
-const INSPECTION_COST = 375;
-const DOWN_OPTIONS = [15, 20, 25];
-
-function calcPMT(annualRatePct, termYears, principal) {
-  if (annualRatePct <= 0 || termYears <= 0 || principal <= 0) return 0;
-  const r = annualRatePct / 100 / 12;
-  const n = termYears * 12;
-  const factor = Math.pow(1 + r, n);
-  return (principal * r * factor) / (factor - 1);
-}
-
-const CURRENCY_FIELDS = new Set([
-  "purchasePrice",
-  "extraDownPayment",
-  "underwritingFees",
-  "monthlyRent",
-  "yearlyInsurance",
-  "yearlyTaxes",
-  "annualMiscExpense",
-  "monthlyHomeWarranty",
-  "legalFees",
-  "appraisalFees",
-  "closingCosts",
-]);
-
-const PERCENT_FIELDS = new Set([
-  "agentCommission",
-  "interestRate",
-  "originationFeesPct",
-  "sellerCarryback",
-  "cashHelocRate",
-]);
-
-const initialForm = {
-  purchasePrice: "",
-  agentCommission: "",
-  underwritingFees: "",
-  interestRate: "",
-  loanTermYears: "",
-  extraDownPayment: "",
-  originationFeesPct: "",
-  legalFees: "",
-  appraisalFees: "",
-  closingCosts: "",
-  monthlyRent: "",
-  yearlyInsurance: "",
-  yearlyTaxes: "",
-  annualMiscExpense: "",
-  monthlyHomeWarranty: "",
-  sellerCarryback: "",
-  cashHelocRate: "",
-};
+  useDSCRCalculations,
+  PROP_MGMT_PCT,
+  DOWN_OPTIONS,
+} from "./useDSCRCalculations";
 
 function RentalDSCRTab() {
-  const [form, setForm] = useState(initialForm);
-  const [summary, setSummary] = useState(null);
-  const [lenders, setLenders] = useState([]);
-  const [downPct, setDownPct] = useState(20);
-  const [isCashNeededHeloc, setIsCashNeededHeloc] = useState(false);
-  const lenderLtc = (100 - downPct) / 100;
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setSummary(null);
-    if (CURRENCY_FIELDS.has(name)) {
-      setForm((prev) => ({ ...prev, [name]: fmtCurrencyInput(value) }));
-      return;
-    }
-    if (PERCENT_FIELDS.has(name)) {
-      setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
-      return;
-    }
-    if (name === "loanTermYears") {
-      setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9]/g, "") }));
-      return;
-    }
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function handleBlur(e) {
-    const { name, value } = e.target;
-    if (PERCENT_FIELDS.has(name) && value) {
-      const numeric = value.replace(/[^0-9.]/g, "");
-      if (numeric) setForm((prev) => ({ ...prev, [name]: `${numeric}%` }));
-    }
-  }
-
-  const purchasePrice = parseCurrency(form.purchasePrice);
-  const agentCommissionPct = parsePercent(form.agentCommission);
-  const agentCommissionAmt = purchasePrice * (agentCommissionPct / 100);
-  const closingCosts = parseCurrency(form.closingCosts);
-  const underwritingFees = parseCurrency(form.underwritingFees);
-  const monthlyRent = parseCurrency(form.monthlyRent);
-  const yearlyInsurance = parseCurrency(form.yearlyInsurance);
-  const monthlyInsurance = yearlyInsurance / 12;
-  const yearlyTaxes = parseCurrency(form.yearlyTaxes);
-  const monthlyTaxes = yearlyTaxes / 12;
-  const annualMiscExpense = parseCurrency(form.annualMiscExpense);
-  const monthlyMiscExpense = annualMiscExpense / 12;
-  const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
-  const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
-
-  const lenderFunds = purchasePrice * lenderLtc;
-  const downPayment = purchasePrice * (1 - lenderLtc);
-  const extraDownPaymentAmt = parseCurrency(form.extraDownPayment);
-  const effectiveLoanAmount = Math.max(0, lenderFunds - extraDownPaymentAmt);
-  const effectiveDownPayment = downPayment + extraDownPaymentAmt;
-  const interestRatePct = parsePercent(form.interestRate);
-  const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
-  const originationFeesPct = parsePercent(form.originationFeesPct);
-  const originationFees = effectiveLoanAmount * (originationFeesPct / 100);
-  const legalFees = parseCurrency(form.legalFees);
-  const appraisalFees = parseCurrency(form.appraisalFees);
-  const lenderCosts =
-    originationFees + legalFees + appraisalFees + underwritingFees;
-  const upfrontLoanCosts = lenderCosts;
-  const loanOutOfPocket = effectiveDownPayment + upfrontLoanCosts;
-  const loanMortgage = calcPMT(
-    interestRatePct,
-    loanTermYears,
+  const {
+    form,
+    setSummary,
+    lenders,
+    setLenders,
+    downPct,
+    setDownPct,
+    isCashNeededHeloc,
+    setIsCashNeededHeloc,
+    handleChange,
+    handleBlur,
+    handleCalculate,
+    summary,
+    isFormComplete,
+    agentCommissionAmt,
+    downPayment,
+    lenderFunds,
+    extraDownPaymentAmt,
     effectiveLoanAmount,
-  );
-
-  const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
-  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
-  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
-  const grossCashNeeded =
-    loanOutOfPocket + closingCosts + agentCommissionAmt + INSPECTION_COST;
-  const lenderTotal = calcLenderTotal(lenders);
-  const totalFundsNeeded = Math.max(
-    0,
-    grossCashNeeded - sellerCarryback - lenderTotal,
-  );
-
-  // If the cash needed to buy is itself drawn from a HELOC, that draw is
-  // interest-only (no amortization term), so it's a straight monthly
-  // interest charge on the full amount rather than a PMT calculation.
-  const cashHelocRatePct = parsePercent(form.cashHelocRate);
-  const cashHelocMonthlyPayment = isCashNeededHeloc
-    ? totalFundsNeeded * (cashHelocRatePct / 100 / 12)
-    : 0;
-
-  const noi =
-    monthlyRent -
-    propMgmtFee -
-    monthlyMiscExpense -
-    monthlyInsurance -
-    monthlyTaxes -
-    monthlyHomeWarranty;
-  const totalMonthlyExpenses =
-    loanMortgage +
-    lenderMonthlyPayment +
-    cashHelocMonthlyPayment +
-    propMgmtFee +
-    monthlyMiscExpense +
-    monthlyInsurance +
-    monthlyTaxes +
-    monthlyHomeWarranty;
-  const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
-  const annualCashFlow = monthlyCashFlow * 12;
-  const cashOnCash =
-    totalFundsNeeded > 0 ? (annualCashFlow / totalFundsNeeded) * 100 : 0;
-  const capRate = purchasePrice > 0 ? ((noi * 12) / purchasePrice) * 100 : 0;
-  const totalDebtService =
-    loanMortgage + lenderMonthlyPayment + cashHelocMonthlyPayment;
-  const dscr = totalDebtService > 0 ? noi / totalDebtService : 0;
-
-  const isFormComplete =
-    form.purchasePrice?.trim() &&
-    form.monthlyRent?.trim() &&
-    form.interestRate?.trim() &&
-    form.loanTermYears?.trim() &&
-    (!isCashNeededHeloc || form.cashHelocRate?.trim());
-
-  function handleCalculate() {
-    if (!isFormComplete) return;
-    setSummary({
-      purchasePrice,
-      agentCommissionPct,
-      agentCommissionAmt,
-      closingCosts,
-      underwritingFees,
-      monthlyRent,
-      propMgmtFee,
-      monthlyInsurance,
-      monthlyTaxes,
-      annualMiscExpense,
-      monthlyMiscExpense,
-      monthlyHomeWarranty,
-      downPct,
-      lenderFunds,
-      downPayment,
-      extraDownPaymentAmt,
-      effectiveLoanAmount,
-      effectiveDownPayment,
-      interestRatePct,
-      loanTermYears,
-      loanMortgage,
-      lenders,
-      lenderMonthlyPayment,
-      lenderTotal,
-      sellerCarrybackPct,
-      sellerCarryback,
-      grossCashNeeded,
-      lenderCosts,
-      originationFeesPct,
-      originationFees,
-      legalFees,
-      appraisalFees,
-      upfrontLoanCosts,
-      loanOutOfPocket,
-      noi,
-      totalMonthlyExpenses,
-      monthlyCashFlow,
-      annualCashFlow,
-      totalFundsNeeded,
-      isCashNeededHeloc,
-      cashHelocRatePct,
-      cashHelocMonthlyPayment,
-      cashOnCash,
-      capRate,
-      dscr,
-      inspectionCost: INSPECTION_COST,
-    });
-  }
+    loanMortgage,
+    lenderCosts,
+    cashHelocMonthlyPayment,
+    purchasePrice,
+    propMgmtFee,
+    monthlyMiscExpense,
+  } = useDSCRCalculations();
 
   return (
     <section
@@ -308,10 +101,7 @@ function RentalDSCRTab() {
           <span>Down Payment %</span>
           <select
             value={downPct}
-            onChange={(e) => {
-              setDownPct(Number(e.target.value));
-              setSummary(null);
-            }}
+            onChange={(e) => setDownPct(Number(e.target.value))}
             className="leads-select"
           >
             {DOWN_OPTIONS.map((opt) => (
@@ -436,10 +226,7 @@ function RentalDSCRTab() {
         <Select
           label="Is Total Cash Needed to Buy a HELOC?"
           value={isCashNeededHeloc ? "Yes" : "No"}
-          onChange={(e) => {
-            setIsCashNeededHeloc(e.target.value === "Yes");
-            setSummary(null);
-          }}
+          onChange={(e) => setIsCashNeededHeloc(e.target.value === "Yes")}
           options={["No", "Yes"]}
         />
         {isCashNeededHeloc && (
@@ -515,7 +302,7 @@ function RentalDSCRTab() {
           onChange={handleChange}
           placeholder="e.g. $1,200"
         />
-        {annualMiscExpense > 0 && (
+        {monthlyMiscExpense > 0 && (
           <label className="field deal-analyzer-output">
             <span>
               Misc. Expense / Month{" "}
@@ -554,376 +341,7 @@ function RentalDSCRTab() {
         </button>
       </div>
 
-      {summary && (
-        <div className="deal-analyzer-summary">
-          <div
-            className={`deal-analyzer-final-verdict ${summary.monthlyCashFlow >= 0 ? "deal-analyzer-verdict-positive" : "deal-analyzer-verdict-negative"}`}
-          >
-            <span>Monthly Cash Flow</span>
-            <strong>
-              <AnimatedAmount value={summary.monthlyCashFlow} format={fmt} />
-            </strong>
-          </div>
-
-          <div
-            className="deal-analyzer-summary-grid"
-            style={{ marginTop: "1.25rem" }}
-          >
-            <div
-              className="deal-analyzer-section-label"
-              style={{ gridColumn: "1 / -1", marginTop: 0 }}
-            >
-              Income
-            </div>
-            <div>
-              <span>Monthly Rent</span>
-              <strong className="deal-analyzer-return-positive">
-                <AnimatedAmount value={summary.monthlyRent} format={fmt} />
-              </strong>
-            </div>
-
-            <div
-              className="deal-analyzer-section-label"
-              style={{ gridColumn: "1 / -1" }}
-            >
-              Monthly Expenses
-            </div>
-            {summary.loanMortgage > 0 && (
-              <div>
-                <span>
-                  Monthly Mortgage (DSCR {summary.interestRatePct}%,{" "}
-                  {summary.loanTermYears} yr
-                  {summary.extraDownPaymentAmt > 0
-                    ? `, ${fmt(summary.effectiveLoanAmount)} loan`
-                    : ""}
-                  )
-                </span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.loanMortgage} format={fmt} />
-                </strong>
-              </div>
-            )}
-            {summary.lenderMonthlyPayment > 0 && (
-              <div>
-                <span>
-                  Additional Lender Payment ({summary.lenders.length} lender
-                  {summary.lenders.length !== 1 ? "s" : ""})
-                </span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.lenderMonthlyPayment}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.cashHelocMonthlyPayment > 0 && (
-              <div>
-                <span>
-                  Cash-to-Buy HELOC Payment (Interest-Only,{" "}
-                  {summary.cashHelocRatePct}%)
-                </span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.cashHelocMonthlyPayment}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            <div>
-              <span>Property Management ({PROP_MGMT_PCT}%)</span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount value={summary.propMgmtFee} format={fmt} />
-              </strong>
-            </div>
-            {summary.monthlyMiscExpense > 0 && (
-              <div>
-                <span>
-                  Misc. Expenses (Annual {fmt(summary.annualMiscExpense)} ÷ 12)
-                </span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.monthlyMiscExpense}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.monthlyInsurance > 0 && (
-              <div>
-                <span>Home Insurance (÷ 12 monthly)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.monthlyInsurance}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.monthlyTaxes > 0 && (
-              <div>
-                <span>Property Taxes (÷ 12 monthly)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
-                </strong>
-              </div>
-            )}
-            {summary.monthlyHomeWarranty > 0 && (
-              <div>
-                <span>Home Warranty</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.monthlyHomeWarranty}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            <div>
-              <span>Total Monthly Expenses</span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount
-                  value={summary.totalMonthlyExpenses}
-                  format={fmt}
-                />
-              </strong>
-            </div>
-
-            <div
-              className="deal-analyzer-section-label"
-              style={{ gridColumn: "1 / -1" }}
-            >
-              Total Cash Needed to Buy
-            </div>
-            <div>
-              <span>
-                Down Payment ({summary.downPct}% of purchase)
-                {summary.extraDownPaymentAmt > 0 && (
-                  <span
-                    className="deal-analyzer-auto-badge"
-                    style={{ marginLeft: "0.35rem" }}
-                  >
-                    base
-                  </span>
-                )}
-              </span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount value={summary.downPayment} format={fmt} />
-              </strong>
-            </div>
-            {summary.extraDownPaymentAmt > 0 && (
-              <div>
-                <span>Extra Down Payment</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.extraDownPaymentAmt}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.originationFees > 0 && (
-              <div>
-                <span>Origination Fees ({summary.originationFeesPct}%)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.originationFees}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.legalFees > 0 && (
-              <div>
-                <span>Doc Fees</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.legalFees} format={fmt} />
-                </strong>
-              </div>
-            )}
-            {summary.appraisalFees > 0 && (
-              <div>
-                <span>Appraisal Fees</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount value={summary.appraisalFees} format={fmt} />
-                </strong>
-              </div>
-            )}
-            <div>
-              <span>Closing Costs</span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount value={summary.closingCosts} format={fmt} />
-              </strong>
-            </div>
-            {summary.underwritingFees > 0 && (
-              <div>
-                <span>Underwriting Fees</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.underwritingFees}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            {summary.agentCommissionAmt > 0 && (
-              <div>
-                <span>Agent Commission ({summary.agentCommissionPct}%)</span>
-                <strong className="deal-analyzer-return-negative">
-                  <AnimatedAmount
-                    value={summary.agentCommissionAmt}
-                    format={fmt}
-                  />
-                </strong>
-              </div>
-            )}
-            <div>
-              <span>Inspection Cost</span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount value={summary.inspectionCost} format={fmt} />
-              </strong>
-            </div>
-            {summary.lenderTotal > 0 && (
-              <>
-                <div>
-                  <span>Subtotal Before Lender Contributions</span>
-                  <strong>
-                    <AnimatedAmount
-                      value={summary.grossCashNeeded}
-                      format={fmt}
-                    />
-                  </strong>
-                </div>
-                <div>
-                  <span>
-                    Additional Lender Contributions ({summary.lenders.length}{" "}
-                    lender{summary.lenders.length !== 1 ? "s" : ""})
-                  </span>
-                  <strong className="deal-analyzer-return-positive">
-                    −<AnimatedAmount value={summary.lenderTotal} format={fmt} />
-                  </strong>
-                </div>
-              </>
-            )}
-            <SellerCreditCarrybackSummaryRow
-              pct={summary.sellerCarrybackPct}
-              amount={summary.sellerCarryback}
-              fmt={fmt}
-            />
-            <div>
-              <span>Total Cash Needed to Buy</span>
-              <strong className="deal-analyzer-return-negative">
-                <AnimatedAmount value={summary.totalFundsNeeded} format={fmt} />
-              </strong>
-            </div>
-
-            <div
-              className="deal-analyzer-section-label"
-              style={{ gridColumn: "1 / -1" }}
-            >
-              Returns
-            </div>
-            <div>
-              <span>Monthly Cash Flow</span>
-              <strong
-                className={
-                  summary.monthlyCashFlow >= 0
-                    ? "deal-analyzer-return-positive"
-                    : "deal-analyzer-return-negative"
-                }
-              >
-                <AnimatedAmount value={summary.monthlyCashFlow} format={fmt} />
-              </strong>
-            </div>
-            <div>
-              <span>Annual Cash Flow</span>
-              <strong
-                className={
-                  summary.annualCashFlow >= 0
-                    ? "deal-analyzer-return-positive"
-                    : "deal-analyzer-return-negative"
-                }
-              >
-                <AnimatedAmount value={summary.annualCashFlow} format={fmt} />
-              </strong>
-            </div>
-            {summary.loanMortgage > 0 && (
-              <div>
-                <span>DSCR</span>
-                <strong
-                  className={
-                    summary.dscr >= 1
-                      ? "deal-analyzer-return-positive"
-                      : "deal-analyzer-return-negative"
-                  }
-                >
-                  {summary.dscr.toFixed(2)}
-                </strong>
-              </div>
-            )}
-            <div>
-              <span>Cash-on-Cash Return</span>
-              <strong
-                className={
-                  summary.cashOnCash >= 0
-                    ? "deal-analyzer-return-positive"
-                    : "deal-analyzer-return-negative"
-                }
-              >
-                {summary.cashOnCash.toFixed(1)}%
-              </strong>
-            </div>
-            <div>
-              <span>Cap Rate</span>
-              <strong
-                className={
-                  summary.capRate >= 0
-                    ? "deal-analyzer-return-positive"
-                    : "deal-analyzer-return-negative"
-                }
-              >
-                {summary.capRate.toFixed(1)}%
-              </strong>
-            </div>
-          </div>
-
-          <RentalPieChart summary={summary} />
-
-          <div
-            className="deal-analyzer-calculation"
-            style={{ marginTop: "1rem" }}
-          >
-            Monthly Cash Flow = Rent − Prop. Mgmt − Monthly Mortgage
-            {summary.cashHelocMonthlyPayment > 0 ? " − Cash HELOC" : ""}
-            {summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
-            <span>
-              {fmt(summary.monthlyRent)} − {fmt(summary.propMgmtFee)}
-              {summary.loanMortgage > 0
-                ? ` − ${fmt(summary.loanMortgage)}`
-                : ""}
-              {summary.cashHelocMonthlyPayment > 0
-                ? ` − ${fmt(summary.cashHelocMonthlyPayment)}`
-                : ""}
-              {summary.monthlyMiscExpense > 0
-                ? ` − ${fmt(summary.monthlyMiscExpense)}`
-                : ""}{" "}
-              = {fmt(summary.monthlyCashFlow)}
-            </span>
-          </div>
-
-          <div
-            className="deal-analyzer-calculation"
-            style={{ marginTop: "0.75rem" }}
-          >
-            Annual Cash Flow = Monthly Cash Flow × 12
-            <span>
-              {fmt(summary.monthlyCashFlow)} × 12 ={" "}
-              {fmt(summary.annualCashFlow)}
-            </span>
-          </div>
-        </div>
-      )}
+      {summary && <RentalDSCRSummary summary={summary} />}
     </section>
   );
 }

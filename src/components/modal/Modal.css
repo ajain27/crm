@@ -46,7 +46,7 @@
 
   .modal textarea:focus {
     @apply outline-none;
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .modal-actions,

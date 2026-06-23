@@ -67,6 +67,20 @@
     display: none;
   }
 
+  /* On a normal (non-card) desktop table, vertically center the address
+     column's value+chevron within the row (horizontal alignment unchanged). */
+  .acc-card-container .acc-card .acc-col-header {
+    vertical-align: middle;
+  }
+
+  /* .acc-accordion-address inherits a fixed h-11 (44px) box from the shared
+     readonly-input class, but as a block element its single line of text
+     sits at the top of that box instead of centering within it. */
+  .acc-card-container .acc-card .acc-accordion-address {
+    display: flex;
+    align-items: center;
+  }
+
   @container (max-width: 900px) {
     .acc-card-container .acc-card thead,
     .acc-card-container .acc-card tfoot {
@@ -133,6 +147,7 @@
       cursor: pointer;
       width: 100%;
       max-width: none;
+      text-align: right;
     }
 
     .acc-card-container .acc-card .acc-accordion-label {

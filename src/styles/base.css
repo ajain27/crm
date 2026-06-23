@@ -656,7 +656,7 @@
   .table-input,
   .search-input-expanded,
   .modal textarea {
-    background-image: linear-gradient(var(--blue), var(--blue));
+    background-image: linear-gradient(var(--text), var(--text));
     background-position: left bottom;
     background-repeat: no-repeat;
     background-size: 0% 2px;

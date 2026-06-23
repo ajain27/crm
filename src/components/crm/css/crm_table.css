@@ -696,7 +696,7 @@
   .ddm-edit-field input:focus,
   .ddm-edit-field select:focus,
   .ddm-edit-field textarea:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .ddm-notes-input {
@@ -714,7 +714,7 @@
   }
 
   .ddm-notes-input:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .clickable-row {

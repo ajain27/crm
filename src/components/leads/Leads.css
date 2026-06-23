@@ -41,7 +41,7 @@
   }
 
   .leads-select:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .leads-add-form input[type="date"]::-webkit-calendar-picker-indicator {
@@ -82,7 +82,7 @@
   }
 
   .leads-notes-field textarea:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .leads-notes-cell {
@@ -140,7 +140,7 @@
   }
 
   .leads-search-input:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .leads-filter-select {
@@ -157,7 +157,7 @@
   }
 
   .leads-filter-select:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .leads-clear-filters {
@@ -473,7 +473,7 @@
   }
 
   .ldm-input:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   .ldm-wide {
@@ -505,7 +505,7 @@
   }
 
   .ldm-notes:focus {
-    border-color: var(--blue);
+    border-color: var(--text);
   }
 
   /* Follow-up notification banner */
