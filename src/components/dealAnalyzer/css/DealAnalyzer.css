@@ -15,10 +15,11 @@
   }
 
   .deal-analyzer-tab.active {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: white;
-    box-shadow: 0 16px 32px color-mix(in srgb, var(--blue) 26%, transparent 74%);
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+    color: var(--btn-text);
+    box-shadow: 0 16px 32px
+      color-mix(in srgb, var(--btn-primary-bg) 26%, transparent 74%);
   }
 
   .deal-analyzer-content {
@@ -49,7 +50,7 @@
 
   .deal-analyzer-hero h2 {
     @apply mb-3;
-    color: var(--blue);
+    color: var(--text);
     letter-spacing: -0.03em;
   }
 
@@ -86,7 +87,7 @@
   }
 
   .deal-analyzer-form-header h2 {
-    color: var(--blue);
+    color: var(--text);
     letter-spacing: -0.03em;
   }
 
@@ -363,9 +364,10 @@
   }
 
   .deal-analyzer-rent-estimate-btn:hover {
-    background: var(--blue);
-    color: white;
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--blue) 30%, transparent 70%);
+    background: var(--btn-primary-bg);
+    color: var(--btn-text);
+    box-shadow: 0 8px 24px
+      color-mix(in srgb, var(--btn-primary-bg) 30%, transparent 70%);
   }
 
   /* ── Pie / Donut Chart ─────────────────────────────────────────── */
@@ -551,8 +553,8 @@
   }
 
   .find-comps-recent-item:hover {
-    border-color: var(--blue);
-    background: color-mix(in srgb, var(--panel) 90%, var(--blue-light) 10%);
+    border-color: var(--text);
+    background: color-mix(in srgb, var(--panel) 90%, var(--badge-bg) 10%);
   }
 
   .find-comps-recent-address {
@@ -624,9 +626,9 @@
   }
 
   .find-comps-source-card:hover {
-    border-color: var(--blue);
-    background: color-mix(in srgb, var(--panel) 90%, var(--blue-light) 10%);
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--blue) 14%, transparent 86%);
+    border-color: var(--text);
+    background: color-mix(in srgb, var(--panel) 90%, var(--badge-bg) 10%);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 14%, transparent 86%);
     transform: translateY(-2px);
   }
 

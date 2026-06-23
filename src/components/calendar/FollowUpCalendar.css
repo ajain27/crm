@@ -190,9 +190,9 @@
   }
 
   .sidebar-add-btn:hover {
-    background: var(--blue);
-    color: white;
-    border-color: var(--blue);
+    background: var(--btn-primary-bg);
+    color: var(--btn-text);
+    border-color: var(--btn-primary-bg);
   }
 
   .upcoming-list {
@@ -214,7 +214,7 @@
   }
 
   .upcoming-item:hover {
-    background: color-mix(in srgb, var(--panel) 50%, var(--blue-light) 12%);
+    background: color-mix(in srgb, var(--panel) 50%, var(--badge-bg) 12%);
   }
 
   .type-badge {

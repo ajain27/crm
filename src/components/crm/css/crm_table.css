@@ -84,7 +84,7 @@
   }
 
   tbody tr:hover td {
-    background: color-mix(in srgb, var(--panel) 88%, var(--blue-light) 12%);
+    background: color-mix(in srgb, var(--panel) 88%, var(--badge-bg) 12%);
   }
 
   .compact-table th {
@@ -188,7 +188,7 @@
 
   .contract-version-item:hover,
   .contract-version-item.active {
-    background: color-mix(in srgb, var(--panel) 84%, var(--blue-light) 16%);
+    background: color-mix(in srgb, var(--panel) 84%, var(--badge-bg) 16%);
   }
 
   .contract-version-item strong {
@@ -327,15 +327,21 @@
   }
 
   .deal-tab-btn:hover {
-    color: var(--app-text);
-    border-color: var(--blue);
+    color: var(--text);
+    border-color: var(--text);
   }
 
   .deal-tab-btn--active {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: #fff;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--blue) 30%, transparent 70%);
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+    color: var(--btn-text);
+    box-shadow: 0 4px 12px
+      color-mix(in srgb, var(--btn-primary-bg) 30%, transparent 70%);
+  }
+
+  .deal-tab-btn--active:hover {
+    color: var(--btn-text);
+    border-color: var(--btn-primary-bg);
   }
 
   .deal-tab-count {
@@ -346,8 +352,8 @@
   }
 
   .deal-tab-btn--active .deal-tab-count {
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
+    background: color-mix(in srgb, currentColor 25%, transparent 75%);
+    color: var(--btn-text);
     opacity: 1;
   }
 
@@ -718,13 +724,13 @@
   .clickable-row:not([data-status="rejected"]):hover td {
     background: color-mix(
       in srgb,
-      var(--blue-light) 22%,
+      var(--badge-bg) 22%,
       var(--panel) 78%
     ) !important;
   }
 
   :root:not(.dark) .clickable-row:not([data-status="rejected"]):hover td {
-    background: #e8f0fe !important;
+    background: var(--badge-bg) !important;
   }
 
   [data-status="rejected"]:hover td {

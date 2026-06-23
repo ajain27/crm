@@ -1,15 +1,15 @@
 @layer components {
   .panel {
-    @apply mb-[22px] rounded-[13px] border bg-app-panel shadow-app-panel;
+    @apply mb-7 rounded-2xl border bg-app-panel shadow-app-panel;
     border-color: var(--line);
   }
 
   .panel-header {
-    @apply flex items-start justify-between px-6 pb-0 pt-[22px];
+    @apply flex items-start justify-between px-7 pb-0 pt-7;
   }
 
   .panel-header h2 {
-    color: var(--blue);
+    color: var(--text);
     letter-spacing: -0.03em;
   }
 
@@ -45,12 +45,12 @@
   .field input:not([type="checkbox"]),
   .field select,
   .search-field input {
-    @apply h-11 w-full rounded-lg border bg-app-panel px-3 text-app-text outline-none transition-colors;
+    @apply h-11 w-full rounded-[4px] border bg-app-panel px-3 text-app-text outline-none transition-colors;
     border-color: var(--input-border);
   }
 
   .field textarea {
-    @apply min-h-[120px] w-full resize-y rounded-lg border bg-app-panel p-3 text-app-text outline-none;
+    @apply min-h-[120px] w-full resize-y rounded-[4px] border bg-app-panel p-3 text-app-text outline-none;
     border-color: var(--input-border);
   }
 

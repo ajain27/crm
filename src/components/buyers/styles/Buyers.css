@@ -48,18 +48,18 @@
   }
 
   .buyer-type-pill:hover {
-    border-color: var(--blue);
-    color: var(--blue);
+    border-color: var(--text);
+    color: var(--text);
   }
 
   .buyer-type-pill--active {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: #fff;
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+    color: var(--btn-text);
   }
 
   .buyer-type-pill--active:hover {
-    color: #fff;
+    color: var(--btn-text);
     opacity: 0.9;
   }
 

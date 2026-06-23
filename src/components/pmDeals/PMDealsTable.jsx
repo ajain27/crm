@@ -287,7 +287,7 @@ export default function PMDealsTable({
               style={{
                 minWidth: 160,
                 border: "1px solid var(--input-border)",
-                borderRadius: 8,
+                borderRadius: 4,
                 padding: "0.4rem 0.65rem",
                 fontSize: "0.85rem",
                 background: "var(--bg)",
@@ -301,7 +301,7 @@ export default function PMDealsTable({
               style={{
                 minWidth: 160,
                 border: "1px solid var(--input-border)",
-                borderRadius: 8,
+                borderRadius: 4,
                 padding: "0.4rem 0.65rem",
                 fontSize: "0.85rem",
                 background: "var(--bg)",

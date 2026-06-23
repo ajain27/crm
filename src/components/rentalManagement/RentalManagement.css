@@ -78,8 +78,8 @@
   }
 
   .rm-add-tenant-btn:hover {
-    background: color-mix(in srgb, var(--blue) 16%, var(--panel) 84%);
-    border-color: color-mix(in srgb, var(--blue) 30%, transparent 70%);
+    background: color-mix(in srgb, var(--text) 16%, var(--panel) 84%);
+    border-color: color-mix(in srgb, var(--text) 30%, transparent 70%);
   }
 
   .rm-tenant-card {
@@ -325,7 +325,7 @@
   }
 
   tbody tr:hover .rm-col-sticky {
-    background: color-mix(in srgb, var(--panel) 88%, var(--blue-light) 12%);
+    background: color-mix(in srgb, var(--panel) 88%, var(--badge-bg) 12%);
   }
 
   .rm-table-container {

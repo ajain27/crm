@@ -26,9 +26,9 @@
   }
 
   .clear-filters-btn:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--panel) 80%, var(--blue-light) 20%);
-    border-color: color-mix(in srgb, var(--line) 58%, var(--blue) 42%);
-    color: var(--blue);
+    background: color-mix(in srgb, var(--panel) 80%, var(--badge-bg) 20%);
+    border-color: color-mix(in srgb, var(--line) 58%, var(--text) 42%);
+    color: var(--text);
   }
 
   .clear-filters-btn:disabled {

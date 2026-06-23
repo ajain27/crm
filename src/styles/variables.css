@@ -1,6 +1,6 @@
 @layer base {
   :root {
-    --bg: #f6f8fc;
+    --bg: #f8f9fb;
     --panel: #ffffff;
     --line: #dfe7f3;
     --text: #101827;
@@ -11,12 +11,14 @@
     --red: #dc2626;
     --orange: #d97706;
     --purple: #7c3aed;
-    --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    --shadow: 0 20px 48px rgba(15, 23, 42, 0.06);
 
     --nav-text: #334155;
     --nav-hover-bg: #eaf2ff;
     --btn-text: #ffffff;
     --btn-secondary-bg: #ffffff;
+    --btn-primary-bg: #191e25;
+    --btn-primary-hover: #2b323d;
     --input-bg: #ffffff;
     --input-border: #ccd8ea;
     --input-text: #1f2937;
@@ -44,12 +46,14 @@
     --red: #ef4444;
     --orange: #f59e0b;
     --purple: #8b5cf6;
-    --shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
 
     --nav-text: #cbd5e1;
     --nav-hover-bg: rgba(59, 130, 246, 0.15);
-    --btn-text: #ffffff;
+    --btn-text: #0f172a;
     --btn-secondary-bg: #1e293b;
+    --btn-primary-bg: #f1f5f9;
+    --btn-primary-hover: #e2e8f0;
     --input-bg: #0f172a;
     --input-border: #334155;
     --input-text: #f8fafc;

@@ -105,13 +105,13 @@
 
   nav a.active {
     @apply font-bold;
-    background: var(--blue-light);
-    color: var(--blue);
+    background: var(--badge-bg);
+    color: var(--text);
   }
 
   :root:not(.dark) nav a:hover {
-    background: var(--blue-light);
-    color: var(--blue);
+    background: var(--badge-bg);
+    color: var(--text);
   }
 
   .user-card {
@@ -143,16 +143,16 @@
 
   .sidebar-theme-btn:hover,
   .sidebar-theme-btn:hover {
-    background: color-mix(in srgb, var(--blue-light) 34%, var(--panel) 66%);
-    border: 1px solid color-mix(in srgb, var(--blue) 48%, var(--line) 52%) !important;
+    background: color-mix(in srgb, var(--badge-bg) 60%, var(--panel) 40%);
+    border: 1px solid color-mix(in srgb, var(--text) 30%, var(--line) 70%) !important;
     color: var(--text);
     padding-left: 14px;
     padding-right: 14px;
   }
 
   :root.dark .sidebar-theme-btn:hover {
-    background: color-mix(in srgb, var(--blue) 24%, var(--panel) 76%);
-    border: 1px solid color-mix(in srgb, var(--blue) 62%, var(--line) 38%) !important;
+    background: color-mix(in srgb, var(--text) 18%, var(--panel) 82%);
+    border: 1px solid color-mix(in srgb, var(--text) 40%, var(--line) 60%) !important;
   }
 
   .avatar {
