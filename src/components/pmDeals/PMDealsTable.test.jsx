@@ -50,11 +50,7 @@ const baseProps = (overrides = {}) => ({
   setFilterBorrower: vi.fn(),
   filterCompany: "",
   setFilterCompany: vi.fn(),
-  uploadingId: null,
   onRowClick: vi.fn(),
-  onDelete: vi.fn(),
-  onOpenFile: vi.fn(),
-  onFileUpload: vi.fn(),
   ...overrides,
 });
 
@@ -94,13 +90,11 @@ describe("PMDealsTable", () => {
     expect(onRowClick).not.toHaveBeenCalled();
   });
 
-  it("clicking delete invokes onDelete and does not propagate to row", () => {
+  it("clicking the Details button invokes onRowClick with the deal", () => {
     const onRowClick = vi.fn();
-    const onDelete = vi.fn();
-    render(<PMDealsTable {...baseProps({ onRowClick, onDelete })} />);
-    fireEvent.click(screen.getByTitle("Delete deal"));
-    expect(onDelete).toHaveBeenCalledWith("d1");
-    expect(onRowClick).not.toHaveBeenCalled();
+    render(<PMDealsTable {...baseProps({ onRowClick })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    expect(onRowClick).toHaveBeenCalledWith(deal);
   });
 
   it("renders filter inputs and Clear button when filters are active", () => {
@@ -123,26 +117,6 @@ describe("PMDealsTable", () => {
     expect(setFilterBorrower).toHaveBeenCalledWith("X");
   });
 
-  it("Eye icon appears when files exist; clicking calls onOpenFile", () => {
-    const onOpenFile = vi.fn();
-    const dealWithFile = {
-      ...deal,
-      files: [{ id: "f1", name: "doc.pdf", type: "application/pdf" }],
-    };
-    render(
-      <PMDealsTable
-        {...baseProps({
-          deals: [dealWithFile],
-          filteredDeals: [dealWithFile],
-          onOpenFile,
-        })}
-      />,
-    );
-    const eyeBtn = screen.getByLabelText(/View files for Jane/i);
-    fireEvent.click(eyeBtn);
-    expect(onOpenFile).toHaveBeenCalled();
-  });
-
   describe("borrower with multiple deals", () => {
     const dealOne = {
       ...deal,
@@ -163,9 +137,9 @@ describe("PMDealsTable", () => {
 
     it("renders one shared accordion heading for the borrower, not one per deal", () => {
       render(<PMDealsTable {...groupedProps} />);
-      expect(screen.getAllByText("Jane")).toHaveLength(1);
-      expect(screen.getByText(/Jane — Deal 1/)).toBeInTheDocument();
-      expect(screen.getByText(/Jane — Deal 2/)).toBeInTheDocument();
+      expect(screen.getByText(/Jane · 2 deals/)).toBeInTheDocument();
+      expect(screen.getByText("Deal 1")).toBeInTheDocument();
+      expect(screen.getByText("Deal 2")).toBeInTheDocument();
     });
 
     it("still renders both deals' data divided inside the group", () => {

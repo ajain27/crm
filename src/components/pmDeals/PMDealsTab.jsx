@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ContractPreviewModal from "../crm/components/data/modals/ContractPreviewModal";
 import PMDealAddForm from "./PMDealAddForm";
-import PMDealsTable from "./PMDealsTable";
+import PMDealsTable, { computeDeal } from "./PMDealsTable";
 import PMDealEditModal from "./PMDealEditModal";
 import { usePMDealAdd } from "./hooks/usePMDealAdd";
 import { usePMDealEdit } from "./hooks/usePMDealEdit";
@@ -81,6 +81,12 @@ export default function PMDealsTab({
     setDeals((p) => p.filter((d) => d.id !== id));
   }
 
+  async function handleDeleteFromModal() {
+    if (!edit.editingDeal) return;
+    await handleDelete(edit.editingDeal.id);
+    edit.closeEditModal();
+  }
+
   const filteredDeals = deals.filter((d) => {
     const bq = filterBorrower.trim().toLowerCase();
     const cq = filterCompany.trim().toLowerCase();
@@ -114,11 +120,7 @@ export default function PMDealsTab({
         setFilterBorrower={setFilterBorrower}
         filterCompany={filterCompany}
         setFilterCompany={setFilterCompany}
-        uploadingId={files.uploadingId}
         onRowClick={edit.handleRowClick}
-        onDelete={handleDelete}
-        onOpenFile={files.openFile}
-        onFileUpload={files.handleFileUpload}
       />
 
       <ContractPreviewModal
@@ -139,10 +141,15 @@ export default function PMDealsTab({
         editingDeal={edit.editingDeal}
         editForm={edit.editForm}
         editSaving={edit.editSaving}
+        {...computeDeal(edit.editingDeal || {}, today)}
+        isUploading={files.uploadingId === edit.editingDeal?.id}
+        onOpenFile={files.openFile}
+        onFileUpload={files.handleFileUpload}
         onClose={edit.closeEditModal}
         onSave={edit.handleEditSave}
         onChange={edit.handleEditChange}
         onBlur={edit.handleEditBlur}
+        onDelete={handleDeleteFromModal}
       />
     </>
   );

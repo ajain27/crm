@@ -301,4 +301,51 @@
       background: var(--bg);
     }
   }
+
+  /* Desktop equivalent of the grouped-card accordion above: the group
+     header becomes a clickable, full-width banner row instead of being
+     hidden (see the unconditional `display: none` near the top of this
+     file), and member rows stay collapsed underneath it until toggled
+     open — reusing the same checkbox/label/chevron primitive as mobile. */
+  @container (min-width: 901px) {
+    .acc-card-container .acc-card .acc-group-header-row {
+      display: table-row;
+    }
+
+    .acc-card-container .acc-card .acc-group-header-row .acc-col-header {
+      cursor: pointer;
+    }
+
+    .acc-card-container .acc-card .acc-group-header-row td {
+      background: color-mix(in srgb, var(--blue) 6%, var(--panel) 94%);
+      font-weight: 700;
+      border-bottom: 2px solid
+        color-mix(in srgb, var(--blue) 18%, var(--line) 82%);
+    }
+
+    .acc-card-container .acc-card .acc-group-header-row .acc-accordion-chevron {
+      display: inline-block;
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: transform 0.15s ease;
+    }
+
+    .acc-card-container
+      .acc-card
+      .acc-group-header-row:has(.acc-accordion-toggle:checked)
+      .acc-accordion-chevron {
+      transform: rotate(180deg);
+    }
+
+    .acc-card-container .acc-card tbody.acc-group .acc-group-deal-row {
+      display: none;
+    }
+
+    .acc-card-container
+      .acc-card
+      tbody.acc-group:has(.acc-accordion-toggle:checked)
+      .acc-group-deal-row {
+      display: table-row;
+    }
+  }
 }

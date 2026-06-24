@@ -1,0 +1,44 @@
+@layer components {
+  /* Desktop (normal table, not the stacked-card layout): only Borrower
+     Name, Company, Amount Lent, Term and the Details link stay visible
+     inline — every other column is still in the DOM (so the mobile
+     accordion can expand into it) but is collapsed away here. */
+  @container (min-width: 901px) {
+    .pm-deals-table.acc-card .pm-col-extra {
+      display: none;
+    }
+  }
+
+  .pm-details-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .pm-details-link:hover {
+    opacity: 0.8;
+  }
+
+  .pm-totals-breakdown {
+    margin-top: 0.2rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.78rem;
+  }
+
+  /* Override danger-btn's fixed 38x38 icon-button sizing so it can carry
+     a text label, and pin it to the opposite end from Cancel/Save. */
+  .pm-delete-deal-btn {
+    width: auto;
+    height: auto;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    margin-right: auto;
+  }
+}

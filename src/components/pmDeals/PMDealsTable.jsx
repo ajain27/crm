@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { Trash2, Eye, Upload, Loader2 } from "lucide-react";
 import { fmt, formatDate, parseCurrency } from "../../utils/utils";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import { AccordionHeaderCell } from "../elements/elements";
+import "./PMDealsTable.css";
 
 // When a borrower has more than one deal, number them "Deal 1", "Deal 2"…
 // (earliest lendDate first) so the accordion heading can tell them apart.
@@ -51,7 +51,10 @@ function groupDealsByBorrower(deals, dealNumbers) {
   return groups;
 }
 
-const PM_DEAL_COLUMN_COUNT = 14;
+// Desktop-visible columns only: Borrower Name, Company, Amount Lent, Term,
+// Details. Every other column still exists in the DOM (so the mobile
+// accordion can expand into it) but is hidden at desktop widths.
+const PM_VISIBLE_COLUMN_COUNT = 5;
 
 function addMonths(dateStr, months) {
   if (!dateStr || months <= 0) return "";
@@ -97,11 +100,7 @@ export default function PMDealsTable({
   setFilterBorrower,
   filterCompany,
   setFilterCompany,
-  uploadingId,
   onRowClick,
-  onDelete,
-  onOpenFile,
-  onFileUpload,
 }) {
   const dealNumbers = useMemo(() => buildDealNumbers(deals), [deals]);
   const groupedDeals = useMemo(
@@ -112,8 +111,6 @@ export default function PMDealsTable({
   function renderDealRow(deal, { isGroupMember = false } = {}) {
     const { principal, dueDate, lateDays, interest, lateFee, totalPayout } =
       computeDeal(deal, today);
-    const isUploading = uploadingId === deal.id;
-    const fileCount = deal.files?.length ?? 0;
     const headerValue = dealNumbers[deal.id]
       ? `${deal.borrowerName} — Deal ${dealNumbers[deal.id]}`
       : deal.borrowerName;
@@ -126,8 +123,8 @@ export default function PMDealsTable({
         style={{ cursor: "pointer" }}
       >
         {isGroupMember ? (
-          <td className="acc-group-deal-label" data-label="Borrower Name">
-            {headerValue}
+          <td className="acc-group-deal-label" data-label="Deal">
+            Deal {dealNumbers[deal.id]}
           </td>
         ) : (
           <AccordionHeaderCell
@@ -137,13 +134,21 @@ export default function PMDealsTable({
           />
         )}
         <td data-label="Company">{deal.borrowerCompany || "—"}</td>
-        <td data-label="Property Address">{deal.propertyAddress || "—"}</td>
+        <td className="pm-col-extra" data-label="Property Address">
+          {deal.propertyAddress || "—"}
+        </td>
         <td data-label="Amount Lent">{fmt(principal)}</td>
-        <td data-label="Rate">{deal.interestRate}</td>
+        <td className="pm-col-extra" data-label="Rate">
+          {deal.interestRate}
+        </td>
         <td data-label="Term">{deal.months}</td>
-        <td data-label="Lend Date">{formatDate(deal.lendDate)}</td>
-        <td data-label="Due Date">{dueDate ? formatDate(dueDate) : "—"}</td>
-        <td data-label="Days Late">
+        <td className="pm-col-extra" data-label="Lend Date">
+          {formatDate(deal.lendDate)}
+        </td>
+        <td className="pm-col-extra" data-label="Due Date">
+          {dueDate ? formatDate(dueDate) : "—"}
+        </td>
+        <td className="pm-col-extra" data-label="Days Late">
           {dueDate ? (
             <span
               style={{
@@ -157,10 +162,15 @@ export default function PMDealsTable({
             "—"
           )}
         </td>
-        <td data-label="Interest" style={{ color: "#16a34a", fontWeight: 600 }}>
+        <td
+          className="pm-col-extra"
+          data-label="Interest"
+          style={{ color: "#16a34a", fontWeight: 600 }}
+        >
           {fmt(interest)}
         </td>
         <td
+          className="pm-col-extra"
           data-label="Late Fee"
           style={{
             color: lateFee > 0 ? "#dc2626" : "inherit",
@@ -170,75 +180,22 @@ export default function PMDealsTable({
           {fmt(lateFee)}
         </td>
         <td
+          className="pm-col-extra"
           data-label="Total Payout"
           style={{ color: "#16a34a", fontWeight: 600 }}
         >
           {fmt(totalPayout)}
         </td>
         <td
-          className="acc-col-block"
-          data-label="Files"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="contract-actions">
-            {fileCount > 0 && (
-              <button
-                type="button"
-                className="secondary-btn contract-action-btn"
-                onClick={() => onOpenFile(deal)}
-                title={`${fileCount} file${fileCount !== 1 ? "s" : ""} uploaded`}
-                aria-label={`View files for ${deal.borrowerName}`}
-              >
-                <Eye size={16} />
-                {fileCount > 1 && (
-                  <span style={{ fontSize: 11, marginLeft: 2 }}>
-                    {fileCount}
-                  </span>
-                )}
-              </button>
-            )}
-            <label
-              htmlFor={`pm-upload-${deal.id}`}
-              className="secondary-btn contract-action-btn"
-              title={isUploading ? "Uploading…" : "Upload file"}
-              aria-label={
-                isUploading
-                  ? "Uploading…"
-                  : `Upload file for ${deal.borrowerName}`
-              }
-              style={
-                isUploading
-                  ? { opacity: 0.5, pointerEvents: "none" }
-                  : undefined
-              }
-            >
-              {isUploading ? (
-                <Loader2 size={16} className="spin" />
-              ) : (
-                <Upload size={16} />
-              )}
-            </label>
-            <input
-              id={`pm-upload-${deal.id}`}
-              type="file"
-              className="contract-upload-input"
-              accept=".pdf,.odt,.odf,image/*"
-              disabled={isUploading}
-              onChange={(e) => onFileUpload(deal, e)}
-            />
-          </div>
-        </td>
-        <td
-          className="acc-col-action-mobile"
+          className="acc-col-hide-mobile"
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="leads-delete-btn acc-delete-btn"
-            title="Delete deal"
-            onClick={() => onDelete(deal.id)}
+            type="button"
+            className="pm-details-link"
+            onClick={() => onRowClick(deal)}
           >
-            <Trash2 size={14} />
-            <span className="acc-delete-label">Delete</span>
+            Details
           </button>
         </td>
       </tr>
@@ -330,23 +287,22 @@ export default function PMDealsTable({
         </div>
       ) : (
         <div className="table-wrap acc-card-container">
-          <table className="compact-table acc-card">
+          <table className="compact-table acc-card pm-deals-table">
             <thead>
               <tr>
                 <th>Borrower Name</th>
                 <th>Company</th>
-                <th>Property Address</th>
+                <th className="pm-col-extra">Property Address</th>
                 <th>Amount Lent</th>
-                <th>Rate</th>
+                <th className="pm-col-extra">Rate</th>
                 <th>Term</th>
-                <th>Lend Date</th>
-                <th>Due Date</th>
-                <th>Days Late</th>
-                <th>Interest</th>
-                <th>Late Fee</th>
-                <th>Total Payout</th>
-                <th>Files</th>
-                <th></th>
+                <th className="pm-col-extra">Lend Date</th>
+                <th className="pm-col-extra">Due Date</th>
+                <th className="pm-col-extra">Days Late</th>
+                <th className="pm-col-extra">Interest</th>
+                <th className="pm-col-extra">Late Fee</th>
+                <th className="pm-col-extra">Total Payout</th>
+                <th className="acc-col-hide-mobile">Details</th>
               </tr>
             </thead>
             {groupedDeals.map((group) =>
@@ -356,8 +312,8 @@ export default function PMDealsTable({
                     <AccordionHeaderCell
                       id={`group-${group.key}`}
                       label="Borrower Name"
-                      value={group.borrowerName}
-                      colSpan={PM_DEAL_COLUMN_COUNT}
+                      value={`${group.borrowerName} · ${group.deals.length} deals`}
+                      colSpan={PM_VISIBLE_COLUMN_COUNT}
                     />
                   </tr>
                   {group.deals.map((deal) =>
@@ -373,7 +329,7 @@ export default function PMDealsTable({
                 style={{ fontWeight: 700, borderTop: "2px solid var(--line)" }}
               >
                 <td
-                  colSpan={3}
+                  colSpan={2}
                   style={{
                     color: "var(--muted)",
                     fontSize: "0.8rem",
@@ -382,19 +338,12 @@ export default function PMDealsTable({
                   }}
                 >
                   Totals ({filteredDeals.length})
+                  <div className="pm-totals-breakdown">
+                    Interest {fmt(totals.interest)} · Late Fee{" "}
+                    {fmt(totals.lateFee)} · Payout {fmt(totals.totalPayout)}
+                  </div>
                 </td>
                 <td>{fmt(totals.principal)}</td>
-                <td colSpan={4} />
-                <td />
-                <td style={{ color: "#16a34a" }}>{fmt(totals.interest)}</td>
-                <td
-                  style={{
-                    color: totals.lateFee > 0 ? "#dc2626" : "inherit",
-                  }}
-                >
-                  {fmt(totals.lateFee)}
-                </td>
-                <td style={{ color: "#16a34a" }}>{fmt(totals.totalPayout)}</td>
                 <td colSpan={2} />
               </tr>
             </tfoot>

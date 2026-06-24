@@ -1,14 +1,28 @@
+import { Eye, Upload, Loader2 } from "lucide-react";
 import Modal from "../modal/Modal";
+import { fmt, formatDate } from "../../utils/utils";
+import "./PMDealsTable.css";
 
 export default function PMDealEditModal({
   editingDeal,
   editForm,
   editSaving,
+  dueDate,
+  lateDays = 0,
+  interest = 0,
+  lateFee = 0,
+  totalPayout = 0,
+  isUploading,
+  onOpenFile,
+  onFileUpload,
   onClose,
   onSave,
   onChange,
   onBlur,
+  onDelete,
 }) {
+  const fileCount = editingDeal?.files?.length ?? 0;
+
   return (
     <Modal
       isOpen={!!editingDeal}
@@ -17,6 +31,9 @@ export default function PMDealEditModal({
       style={{ maxWidth: 640 }}
       actions={
         <>
+          <button className="danger-btn pm-delete-deal-btn" onClick={onDelete}>
+            Delete Deal
+          </button>
           <button className="secondary-btn" onClick={onClose}>
             Cancel
           </button>
@@ -105,6 +122,107 @@ export default function PMDealEditModal({
               value={editForm.lendDate}
               onChange={onChange}
             />
+          </div>
+          <label className="field">
+            <span>Due Date</span>
+            <span
+              className="readonly-input"
+              style={
+                lateDays > 0 ? { color: "#dc2626", fontWeight: 600 } : undefined
+              }
+            >
+              {dueDate ? formatDate(dueDate) : "—"}
+            </span>
+          </label>
+          <label className="field">
+            <span>Days Late</span>
+            <span
+              className="readonly-input"
+              style={
+                lateDays > 0 ? { color: "#dc2626", fontWeight: 600 } : undefined
+              }
+            >
+              {lateDays}
+            </span>
+          </label>
+          <label className="field">
+            <span>Interest</span>
+            <span
+              className="readonly-input"
+              style={{ color: "#16a34a", fontWeight: 600 }}
+            >
+              {fmt(interest)}
+            </span>
+          </label>
+          <label className="field">
+            <span>Late Fee</span>
+            <span
+              className="readonly-input"
+              style={
+                lateFee > 0 ? { color: "#dc2626", fontWeight: 600 } : undefined
+              }
+            >
+              {fmt(lateFee)}
+            </span>
+          </label>
+          <label className="field">
+            <span>Total Payout</span>
+            <span
+              className="readonly-input"
+              style={{ color: "#16a34a", fontWeight: 600 }}
+            >
+              {fmt(totalPayout)}
+            </span>
+          </label>
+          <div className="field">
+            <span>Files</span>
+            <div className="contract-actions">
+              {fileCount > 0 && (
+                <button
+                  type="button"
+                  className="secondary-btn contract-action-btn"
+                  onClick={() => onOpenFile(editingDeal)}
+                  title={`${fileCount} file${fileCount !== 1 ? "s" : ""} uploaded`}
+                  aria-label={`View files for ${editingDeal.borrowerName}`}
+                >
+                  <Eye size={16} />
+                  {fileCount > 1 && (
+                    <span style={{ fontSize: 11, marginLeft: 2 }}>
+                      {fileCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              <label
+                htmlFor="pm-deal-modal-upload"
+                className="secondary-btn contract-action-btn"
+                title={isUploading ? "Uploading…" : "Upload file"}
+                aria-label={
+                  isUploading
+                    ? "Uploading…"
+                    : `Upload file for ${editingDeal.borrowerName}`
+                }
+                style={
+                  isUploading
+                    ? { opacity: 0.5, pointerEvents: "none" }
+                    : undefined
+                }
+              >
+                {isUploading ? (
+                  <Loader2 size={16} className="spin" />
+                ) : (
+                  <Upload size={16} />
+                )}
+              </label>
+              <input
+                id="pm-deal-modal-upload"
+                type="file"
+                className="contract-upload-input"
+                accept=".pdf,.odt,.odf,image/*"
+                disabled={isUploading}
+                onChange={(e) => onFileUpload(editingDeal, e)}
+              />
+            </div>
           </div>
         </form>
       )}

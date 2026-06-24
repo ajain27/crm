@@ -465,7 +465,8 @@ describe("delete", () => {
     );
 
     await waitFor(() => screen.getByText("Jane Doe"));
-    fireEvent.click(screen.getByTitle("Delete deal"));
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    fireEvent.click(await screen.findByText("Delete Deal"));
 
     await waitFor(() =>
       expect(deletePmDealById).toHaveBeenCalledWith("deal-1"),
@@ -488,7 +489,8 @@ describe("delete", () => {
     );
 
     await waitFor(() => screen.getByText("Jane Doe"));
-    fireEvent.click(screen.getByTitle("Delete deal"));
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    fireEvent.click(await screen.findByText("Delete Deal"));
 
     expect(deletePmDealById).not.toHaveBeenCalled();
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
@@ -511,7 +513,8 @@ describe("delete", () => {
     );
 
     await waitFor(() => screen.getByText("2 deals"));
-    fireEvent.click(screen.getAllByTitle("Delete deal")[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Details" })[0]);
+    fireEvent.click(await screen.findByText("Delete Deal"));
     await waitFor(() => expect(screen.getByText("1 deal")).toBeInTheDocument());
   });
 });

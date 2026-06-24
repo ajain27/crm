@@ -32,7 +32,7 @@ describe("CrmHeader", () => {
       screen.getByRole("button", { name: /Dashboard/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /PM Deals/i }),
+      screen.getByRole("button", { name: /PML Deals/i }),
     ).toBeInTheDocument();
   });
 

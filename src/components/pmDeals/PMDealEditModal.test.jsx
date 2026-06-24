@@ -113,4 +113,63 @@ describe("PMDealEditModal", () => {
     );
     expect(screen.getByRole("button", { name: /Saving/i })).toBeDisabled();
   });
+
+  it("Delete Deal button invokes onDelete", () => {
+    const onDelete = vi.fn();
+    render(
+      <PMDealEditModal
+        editingDeal={{ id: "d1" }}
+        editForm={editForm}
+        editSaving={false}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onChange={vi.fn()}
+        onBlur={vi.fn()}
+        onDelete={onDelete}
+      />,
+    );
+    fireEvent.click(screen.getByText("Delete Deal"));
+    expect(onDelete).toHaveBeenCalled();
+  });
+
+  it("Eye icon appears when files exist; clicking calls onOpenFile", () => {
+    const onOpenFile = vi.fn();
+    render(
+      <PMDealEditModal
+        editingDeal={{
+          id: "d1",
+          borrowerName: "Jane",
+          files: [{ id: "f1", name: "doc.pdf", type: "application/pdf" }],
+        }}
+        editForm={editForm}
+        editSaving={false}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onChange={vi.fn()}
+        onBlur={vi.fn()}
+        onOpenFile={onOpenFile}
+        onFileUpload={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(/View files for Jane/i));
+    expect(onOpenFile).toHaveBeenCalled();
+  });
+
+  it("shows Days Late and Due Date in red when the deal is past due", () => {
+    render(
+      <PMDealEditModal
+        editingDeal={{ id: "d1", borrowerName: "Jane" }}
+        editForm={editForm}
+        editSaving={false}
+        dueDate="2026-01-01"
+        lateDays={5}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onChange={vi.fn()}
+        onBlur={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("5")).toHaveStyle({ color: "#dc2626" });
+    expect(screen.getByText("01/01/2026")).toHaveStyle({ color: "#dc2626" });
+  });
 });
