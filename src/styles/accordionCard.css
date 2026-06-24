@@ -162,6 +162,16 @@
       height: auto;
       min-width: 0;
       text-align: right;
+      /* This element is `display:flex` (set above, for vertical centering),
+         which makes `text-align` a no-op on its single text-node child —
+         `justify-content` is what actually moves it to the right. */
+      justify-content: flex-end;
+      /* Some header columns (e.g. address) set `white-space: nowrap` on
+         the desktop `<td>` for ellipsis truncation in a fixed-width
+         column; that's inherited here and, combined with flex:1, would
+         push long values past the card's edge instead of wrapping. */
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .acc-card-container .acc-card .acc-accordion-chevron {

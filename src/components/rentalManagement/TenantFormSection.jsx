@@ -1,11 +1,10 @@
-import { Trash2, Plus } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Field } from "../elements/elements";
 import { TENANT_TYPES } from "./rentalUtils";
 
 export default function TenantFormSection({
   tenants,
   onChange,
-  onAddTenant,
   onRemoveTenant,
   isEditMode = false,
 }) {
@@ -32,13 +31,6 @@ export default function TenantFormSection({
     <div className="rm-tenants-section">
       <div className="rm-tenants-header">
         <span className="rm-tenants-label">Tenants</span>
-        <button
-          type="button"
-          className="rm-add-tenant-btn"
-          onClick={onAddTenant}
-        >
-          <Plus size={14} /> Add Tenant
-        </button>
       </div>
 
       {/* Current tenant (editable form) */}
@@ -115,19 +107,14 @@ export default function TenantFormSection({
             onChange={onChange}
             data-tenant-id={currentTenant.id}
           />
-          <label className="field rm-current-lease-end">
-            <span>Lease End Date</span>
-            <input
-              type="text"
-              value="mm/dd/yyyy"
-              readOnly
-              disabled
-              className="rm-current-lease-placeholder"
-            />
-            <span className="rm-current-lease-hint">
-              Current tenant (no end date)
-            </span>
-          </label>
+          <Field
+            label="Lease End Date"
+            name="leaseEndDate"
+            type="date"
+            value={currentTenant.leaseEndDate}
+            onChange={onChange}
+            data-tenant-id={currentTenant.id}
+          />
         </div>
       )}
 

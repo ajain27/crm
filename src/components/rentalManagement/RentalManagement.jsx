@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Trash2, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { Select, AccordionHeaderCell } from "../elements/elements";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import {
@@ -149,6 +149,12 @@ export default function RentalManagement({
     setRentals((p) => p.filter((r) => r.id !== id));
   }
 
+  async function handleDeleteFromModal() {
+    if (!editingRental) return;
+    await handleDelete(editingRental.id);
+    closeEdit();
+  }
+
   async function handleApplianceInsuranceChange(rental, value) {
     const updated = {
       ...rental,
@@ -223,13 +229,6 @@ export default function RentalManagement({
     const { name, value } = e.target;
     const tenantId = e.target.dataset.tenantId;
     setEditForm((p) => applyFieldChange(p, name, value, tenantId));
-  }
-
-  function handleEditAddTenant() {
-    setEditForm((p) => ({
-      ...p,
-      tenants: [...p.tenants, createEmptyTenant()],
-    }));
   }
 
   function handleEditRemoveTenant(tenantId) {
@@ -390,6 +389,18 @@ export default function RentalManagement({
 
   const statsSubtitle = hasActiveFilters ? "Current filters" : "All properties";
 
+  const editingCashflow = editingRental
+    ? parseCurrency(editingRental.monthlyRent) -
+      parseCurrency(editingRental.monthlyMortgage)
+    : 0;
+  const editingAccumulatedRent = editingRental
+    ? (editingRental.tenants || []).reduce(
+        (sum, tenant) =>
+          sum + calculateTenantTotalRent(tenant, editingRental.monthlyRent),
+        0,
+      )
+    : 0;
+
   return (
     <>
       <header className="page-header" data-reveal="left">
@@ -497,19 +508,19 @@ export default function RentalManagement({
               <thead>
                 <tr>
                   <th className="rm-name rm-col-sticky">Address</th>
-                  <th>City</th>
-                  <th>State</th>
+                  <th className="rm-col-extra">City</th>
+                  <th className="rm-col-extra">State</th>
                   <th>Tenant</th>
-                  <th>Phone</th>
-                  <th>Email</th>
-                  <th>Type</th>
+                  <th className="rm-col-extra">Phone</th>
+                  <th className="rm-col-extra">Email</th>
+                  <th className="rm-col-extra">Type</th>
                   <th>Rent</th>
                   <th>Mortgage</th>
                   <th>Cashflow</th>
-                  <th>Accumulated Rent</th>
-                  <th>Management Details</th>
-                  <th>Appliance Insured</th>
-                  <th></th>
+                  <th className="rm-col-extra">Accumulated Rent</th>
+                  <th className="rm-col-extra">Management Details</th>
+                  <th className="rm-col-extra">Appliance Insured</th>
+                  <th className="acc-col-hide-mobile">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -541,10 +552,10 @@ export default function RentalManagement({
                         value={rental.address}
                         className="rm-name rm-col-sticky"
                       />
-                      <td className="rm-muted" data-label="City">
+                      <td className="rm-muted rm-col-extra" data-label="City">
                         {rental.city || "—"}
                       </td>
-                      <td data-label="State">
+                      <td className="rm-col-extra" data-label="State">
                         <span className="rm-state-badge">
                           {rental.state || "—"}
                         </span>
@@ -559,13 +570,13 @@ export default function RentalManagement({
                           )}
                         </div>
                       </td>
-                      <td className="rm-muted" data-label="Phone">
+                      <td className="rm-muted rm-col-extra" data-label="Phone">
                         {currentTenant?.phone || "—"}
                       </td>
-                      <td className="rm-muted" data-label="Email">
+                      <td className="rm-muted rm-col-extra" data-label="Email">
                         {currentTenant?.email || "—"}
                       </td>
-                      <td data-label="Type">
+                      <td className="rm-col-extra" data-label="Type">
                         <span
                           className={`rm-type-badge${
                             currentTenant?.type === "Section 8"
@@ -588,11 +599,14 @@ export default function RentalManagement({
                       >
                         {currency(cashflow)}
                       </td>
-                      <td className="rm-positive" data-label="Accumulated Rent">
+                      <td
+                        className="rm-positive rm-col-extra"
+                        data-label="Accumulated Rent"
+                      >
                         {currency(propertyAccumulatedRent)}
                       </td>
                       <td
-                        className="acc-col-block"
+                        className="acc-col-block rm-col-extra"
                         data-label="Management Details"
                       >
                         {rental.pmCompanyName ||
@@ -630,6 +644,7 @@ export default function RentalManagement({
                         )}
                       </td>
                       <td
+                        className="rm-col-extra"
                         data-label="Appliance Insured"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -652,16 +667,14 @@ export default function RentalManagement({
                         </select>
                       </td>
                       <td
-                        className="acc-col-action-mobile"
+                        className="acc-col-hide-mobile"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
-                          className="leads-delete-btn acc-delete-btn"
-                          title="Delete property"
-                          onClick={() => handleDelete(rental.id)}
+                          className="rm-details-link"
+                          onClick={() => openEdit(rental)}
                         >
-                          <Trash2 size={14} />
-                          <span className="acc-delete-label">Delete</span>
+                          Details
                         </button>
                       </td>
                     </tr>
@@ -679,11 +692,13 @@ export default function RentalManagement({
         editingRental={editingRental}
         editForm={editForm}
         editSaving={editSaving}
+        cashflow={editingCashflow}
+        accumulatedRent={editingAccumulatedRent}
         onChange={handleEditChange}
-        onAddTenant={handleEditAddTenant}
         onRemoveTenant={handleEditRemoveTenant}
         onClose={closeEdit}
         onSave={handleEditSave}
+        onDelete={handleDeleteFromModal}
       />
     </>
   );

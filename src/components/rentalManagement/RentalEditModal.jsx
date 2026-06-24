@@ -1,6 +1,7 @@
 import Modal from "../modal/Modal";
 import { Field } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
+import { currency } from "../../utils/utils";
 import TenantFormSection from "./TenantFormSection";
 
 export default function RentalEditModal({
@@ -8,11 +9,13 @@ export default function RentalEditModal({
   editingRental,
   editForm,
   editSaving,
+  cashflow,
+  accumulatedRent,
   onChange,
-  onAddTenant,
   onRemoveTenant,
   onClose,
   onSave,
+  onDelete,
 }) {
   return (
     <Modal
@@ -22,6 +25,12 @@ export default function RentalEditModal({
       style={{ maxWidth: 900 }}
       actions={
         <>
+          <button
+            className="danger-btn rm-delete-property-btn"
+            onClick={onDelete}
+          >
+            Delete Property
+          </button>
           <button className="secondary-btn" onClick={onClose}>
             Cancel
           </button>
@@ -75,7 +84,6 @@ export default function RentalEditModal({
           <TenantFormSection
             tenants={editForm.tenants}
             onChange={onChange}
-            onAddTenant={onAddTenant}
             onRemoveTenant={onRemoveTenant}
             isEditMode={true}
           />
@@ -95,6 +103,14 @@ export default function RentalEditModal({
             placeholder="$1,200"
             inputMode="numeric"
           />
+          <label className="field">
+            <span>Cashflow</span>
+            <span className="readonly-input">{currency(cashflow)}</span>
+          </label>
+          <label className="field">
+            <span>Accumulated Rent</span>
+            <span className="readonly-input">{currency(accumulatedRent)}</span>
+          </label>
           <Field
             label="Property Management Company"
             name="pmCompanyName"

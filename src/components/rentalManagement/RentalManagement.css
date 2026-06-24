@@ -3,7 +3,7 @@
   .rm-submit-row {
     grid-column: 1 / -1;
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .rm-address-error {
@@ -62,26 +62,6 @@
     letter-spacing: 0.05em;
   }
 
-  .rm-add-tenant-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.8rem;
-    background: color-mix(in srgb, var(--blue) 10%, var(--panel) 90%);
-    border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent 80%);
-    color: var(--blue);
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .rm-add-tenant-btn:hover {
-    background: color-mix(in srgb, var(--text) 16%, var(--panel) 84%);
-    border-color: color-mix(in srgb, var(--text) 30%, transparent 70%);
-  }
-
   .rm-tenant-card {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -137,10 +117,6 @@
     margin-bottom: 0;
   }
 
-  .rm-current-lease-end {
-    grid-column: 1 / -1;
-  }
-
   .rm-current-tenant-checkbox {
     grid-column: 1 / -1;
   }
@@ -160,33 +136,6 @@
   .rm-current-tenant-checkbox span {
     font-size: 0.9rem;
     font-weight: 500;
-  }
-
-  .rm-current-lease-end {
-    position: relative;
-  }
-
-  .rm-current-lease-placeholder {
-    background: color-mix(
-      in srgb,
-      var(--muted) 12%,
-      var(--panel) 88%
-    ) !important;
-    color: var(--muted) !important;
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.05em !important;
-    cursor: not-allowed !important;
-  }
-
-  .rm-current-lease-hint {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--green);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-top: 0.4rem;
   }
 
   /* Previous tenants section */
@@ -353,6 +302,41 @@
     .rm-properties-table.acc-card .rm-name {
       font-size: 1rem;
     }
+  }
+
+  /* Desktop (normal table, not the stacked-card layout): only Address,
+     Tenant, Rent and the Details link stay visible inline — every other
+     column is still in the DOM (so the mobile accordion can expand into
+     it) but is collapsed away here. */
+  @container (min-width: 901px) {
+    .rm-properties-table.acc-card .rm-col-extra {
+      display: none;
+    }
+  }
+
+  .rm-details-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .rm-details-link:hover {
+    opacity: 0.8;
+  }
+
+  /* Override danger-btn's fixed 38x38 icon-button sizing so it can carry
+     a text label, and pin it to the opposite end from Cancel/Save. */
+  .rm-delete-property-btn {
+    width: auto;
+    height: auto;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    margin-right: auto;
   }
 
   .rm-muted {

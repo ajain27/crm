@@ -144,7 +144,8 @@ describe("RentalManagement", () => {
       <RentalManagement {...baseProps({ fetchRentals, deleteRentalById })} />,
     );
     await screen.findByText("111 A St");
-    fireEvent.click(screen.getAllByTitle("Delete property")[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Details" })[0]);
+    fireEvent.click(await screen.findByText("Delete Property"));
     await waitFor(() => expect(deleteRentalById).toHaveBeenCalledWith("r1"));
   });
 });
