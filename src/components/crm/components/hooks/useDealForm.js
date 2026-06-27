@@ -213,6 +213,7 @@ export function useDealForm({
       "contractPrice",
       "assignedPrice",
       "jvSplit",
+      "rent",
     ];
     if (currencyFields.includes(name)) {
       const numericValue = String(value || "").replace(/[^0-9]/g, "");
@@ -238,6 +239,7 @@ export function useDealForm({
       "contractPrice",
       "assignedPrice",
       "jvSplit",
+      "rent",
     ];
     if (currencyFields.includes(name) && value) {
       const numericValue = value.replace(/[^0-9]/g, "");
@@ -401,6 +403,7 @@ export function useDealForm({
       zipCode: form.zipCode.trim(),
       arv: parseNumber(form.arv),
       listedPrice: parseNumber(form.listedPrice),
+      rent: parseNumber(form.rent),
       squareFootage: parseNumber(form.squareFootage),
       rehabCost: rehabNum,
       additionalRehabCost: parseNumber(form.additionalRehabCost),

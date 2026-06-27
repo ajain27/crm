@@ -21,7 +21,7 @@ import {
   formatDate,
   trimFieldOnBlur,
 } from "../../utils/utils";
-import { createEmptyDealForm } from "../crm/components/crmConfig";
+import { createEmptyDealForm, DEAL_TYPES } from "../crm/components/crmConfig";
 import LeadDetailModal from "./LeadDetailModal";
 import Pagination from "../pagination/Pagination";
 import "./Leads.css";
@@ -32,6 +32,7 @@ const SOURCES = ["MLS / Zillow", "Cold Call", "Propwire", "Auction.com"];
 
 function createEmptyForm() {
   return {
+    dealType: "Wholesale",
     address: "",
     source: "",
     agentName: "",
@@ -41,6 +42,13 @@ function createEmptyForm() {
     followUpDate: "",
     email: "",
     phone: "",
+    onMarket: "No",
+    listedPrice: "",
+    rent: "",
+    occupied: "No",
+    offerStatus: "Not Sent",
+    sellerAccepted: "No",
+    offerPrice: "",
     notes: "",
   };
 }
@@ -391,6 +399,22 @@ export default function PotentialLeads({
             </div>
 
             <form className="add-form leads-add-form" onSubmit={handleAddLead}>
+              <div className="field">
+                <span>Deal Type</span>
+                <select
+                  name="dealType"
+                  value={form.dealType || "Wholesale"}
+                  onChange={handleChange}
+                  className="leads-select"
+                >
+                  {DEAL_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="field leads-address-field">
                 <span>
                   Property Address <span className="required-star">*</span>
@@ -409,153 +433,324 @@ export default function PotentialLeads({
                 </div>
               </div>
 
-              <div className="field">
-                <span>Source</span>
-                <div className="leads-input-icon-wrap">
-                  <Tag size={15} className="leads-field-icon" />
-                  <select
-                    name="source"
-                    value={form.source}
-                    onChange={handleChange}
-                    className="leads-select"
-                  >
-                    <option value="">Select source…</option>
-                    {SOURCES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {form.source === "MLS / Zillow" && (
+              {form.dealType === "Potential Rental" ? (
                 <>
                   <div className="field">
-                    <span>Agent Name</span>
-                    <input
-                      type="text"
-                      name="agentName"
-                      value={form.agentName || ""}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          agentName: e.target.value.replace(
-                            /[^a-zA-Z\s'.]/g,
-                            "",
-                          ),
-                        }))
-                      }
-                      onBlur={trimFieldOnBlur(handleChange)}
-                      placeholder="Listing agent's name"
-                    />
+                    <span>On Market</span>
+                    <select
+                      name="onMarket"
+                      value={form.onMarket || "No"}
+                      onChange={handleChange}
+                      className="leads-select"
+                    >
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                    </select>
                   </div>
-                  <div className="field">
-                    <span>Agent Phone</span>
-                    <div className="leads-input-icon-wrap">
-                      <Phone size={15} className="leads-field-icon" />
+
+                  {form.onMarket === "Yes" ? (
+                    <>
+                      <div className="field">
+                        <span>Listed Price</span>
+                        <input
+                          type="text"
+                          name="listedPrice"
+                          value={form.listedPrice || ""}
+                          onChange={handleChange}
+                          placeholder="$0"
+                        />
+                      </div>
+                      <div className="field">
+                        <span>Agent Name</span>
+                        <input
+                          type="text"
+                          name="agentName"
+                          value={form.agentName || ""}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              agentName: e.target.value.replace(
+                                /[^a-zA-Z\s'.]/g,
+                                "",
+                              ),
+                            }))
+                          }
+                          onBlur={trimFieldOnBlur(handleChange)}
+                          placeholder="Listing agent's name"
+                        />
+                      </div>
+                      <div className="field">
+                        <span>Agent Phone</span>
+                        <div className="leads-input-icon-wrap">
+                          <Phone size={15} className="leads-field-icon" />
+                          <input
+                            type="tel"
+                            name="agentPhone"
+                            value={form.agentPhone || ""}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                agentPhone: formatPhone(e.target.value),
+                              }))
+                            }
+                            placeholder="555-000-0000"
+                            maxLength={12}
+                          />
+                        </div>
+                      </div>
+                      <div className="field">
+                        <span>Listing URL</span>
+                        <div className="leads-input-icon-wrap">
+                          <Link2 size={15} className="leads-field-icon" />
+                          <input
+                            type="url"
+                            name="url"
+                            value={form.url}
+                            onChange={handleChange}
+                            onBlur={trimFieldOnBlur(handleChange)}
+                            placeholder="https://zillow.com/…"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="field">
+                      <span>Seller Name</span>
                       <input
-                        type="tel"
-                        name="agentPhone"
-                        value={form.agentPhone || ""}
+                        type="text"
+                        name="sellerName"
+                        value={form.sellerName || ""}
                         onChange={(e) =>
                           setForm((prev) => ({
                             ...prev,
-                            agentPhone: formatPhone(e.target.value),
+                            sellerName: e.target.value.replace(
+                              /[^a-zA-Z\s'.]/g,
+                              "",
+                            ),
                           }))
                         }
-                        placeholder="555-000-0000"
-                        maxLength={12}
+                        onBlur={trimFieldOnBlur(handleChange)}
+                        placeholder="Seller's name"
                       />
                     </div>
-                  </div>
-                </>
-              )}
+                  )}
 
-              {form.source === "Cold Call" && (
-                <div className="field">
-                  <span>Seller Name</span>
-                  <input
-                    type="text"
-                    name="sellerName"
-                    value={form.sellerName || ""}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        sellerName: e.target.value.replace(
-                          /[^a-zA-Z\s'.]/g,
-                          "",
-                        ),
-                      }))
-                    }
-                    onBlur={trimFieldOnBlur(handleChange)}
-                    placeholder="Seller's name"
-                  />
-                </div>
-              )}
-
-              {form.source !== "Cold Call" && (
-                <div className="field">
-                  <span>Listing URL</span>
-                  <div className="leads-input-icon-wrap">
-                    <Link2 size={15} className="leads-field-icon" />
+                  <div className="field">
+                    <span>Rent</span>
                     <input
-                      type="url"
-                      name="url"
-                      value={form.url}
+                      type="text"
+                      name="rent"
+                      value={form.rent || ""}
                       onChange={handleChange}
-                      onBlur={trimFieldOnBlur(handleChange)}
-                      placeholder="https://zillow.com/…"
+                      placeholder="$0"
                     />
                   </div>
-                </div>
-              )}
 
-              <div className="field">
-                <span>
-                  Follow-Up Date <span className="required-star">*</span>
-                </span>
-                <input
-                  type="date"
-                  name="followUpDate"
-                  value={form.followUpDate}
-                  onChange={handleChange}
-                  min={minDate}
-                  required
-                />
-              </div>
+                  <div className="field">
+                    <span>Occupied</span>
+                    <select
+                      name="occupied"
+                      value={form.occupied || "No"}
+                      onChange={handleChange}
+                      className="leads-select"
+                    >
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                    </select>
+                  </div>
 
-              {form.source !== "MLS / Zillow" && (
+                  <div className="field">
+                    <span>Offer Status</span>
+                    <select
+                      name="offerStatus"
+                      value={form.offerStatus || "Not Sent"}
+                      onChange={handleChange}
+                      className="leads-select"
+                    >
+                      <option value="Not Sent">Not Sent</option>
+                      <option value="Offer Sent">Offer Sent</option>
+                    </select>
+                  </div>
+
+                  {form.offerStatus !== "Not Sent" && (
+                    <>
+                      <div className="field">
+                        <span>Offer Price</span>
+                        <input
+                          type="text"
+                          name="offerPrice"
+                          value={form.offerPrice || ""}
+                          onChange={handleChange}
+                          placeholder="$0"
+                        />
+                      </div>
+                      <div className="field">
+                        <span>Accepted</span>
+                        <select
+                          name="sellerAccepted"
+                          value={form.sellerAccepted || "No"}
+                          onChange={handleChange}
+                          className="leads-select"
+                        >
+                          <option value="No">No</option>
+                          <option value="Waiting">Waiting</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
                 <>
                   <div className="field">
-                    <span>Email</span>
+                    <span>Source</span>
                     <div className="leads-input-icon-wrap">
-                      <Mail size={15} className="leads-field-icon" />
-                      <input
-                        type="email"
-                        name="email"
-                        value={form.email}
+                      <Tag size={15} className="leads-field-icon" />
+                      <select
+                        name="source"
+                        value={form.source}
                         onChange={handleChange}
-                        onBlur={trimFieldOnBlur(handleChange)}
-                        placeholder="seller@email.com"
-                      />
+                        className="leads-select"
+                      >
+                        <option value="">Select source…</option>
+                        {SOURCES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
-                  <div className="field">
-                    <span>Phone</span>
-                    <div className="leads-input-icon-wrap">
-                      <Phone size={15} className="leads-field-icon" />
+                  {form.source === "MLS / Zillow" && (
+                    <>
+                      <div className="field">
+                        <span>Agent Name</span>
+                        <input
+                          type="text"
+                          name="agentName"
+                          value={form.agentName || ""}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              agentName: e.target.value.replace(
+                                /[^a-zA-Z\s'.]/g,
+                                "",
+                              ),
+                            }))
+                          }
+                          onBlur={trimFieldOnBlur(handleChange)}
+                          placeholder="Listing agent's name"
+                        />
+                      </div>
+                      <div className="field">
+                        <span>Agent Phone</span>
+                        <div className="leads-input-icon-wrap">
+                          <Phone size={15} className="leads-field-icon" />
+                          <input
+                            type="tel"
+                            name="agentPhone"
+                            value={form.agentPhone || ""}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                agentPhone: formatPhone(e.target.value),
+                              }))
+                            }
+                            placeholder="555-000-0000"
+                            maxLength={12}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {form.source === "Cold Call" && (
+                    <div className="field">
+                      <span>Seller Name</span>
                       <input
-                        type="tel"
-                        name="phone"
-                        value={form.phone}
-                        onChange={handlePhoneChange}
-                        placeholder="555-000-0000"
-                        maxLength={12}
+                        type="text"
+                        name="sellerName"
+                        value={form.sellerName || ""}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            sellerName: e.target.value.replace(
+                              /[^a-zA-Z\s'.]/g,
+                              "",
+                            ),
+                          }))
+                        }
+                        onBlur={trimFieldOnBlur(handleChange)}
+                        placeholder="Seller's name"
                       />
                     </div>
+                  )}
+
+                  {form.source !== "Cold Call" && (
+                    <div className="field">
+                      <span>Listing URL</span>
+                      <div className="leads-input-icon-wrap">
+                        <Link2 size={15} className="leads-field-icon" />
+                        <input
+                          type="url"
+                          name="url"
+                          value={form.url}
+                          onChange={handleChange}
+                          onBlur={trimFieldOnBlur(handleChange)}
+                          placeholder="https://zillow.com/…"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="field">
+                    <span>
+                      Follow-Up Date <span className="required-star">*</span>
+                    </span>
+                    <input
+                      type="date"
+                      name="followUpDate"
+                      value={form.followUpDate}
+                      onChange={handleChange}
+                      min={minDate}
+                      required
+                    />
                   </div>
+
+                  {form.source !== "MLS / Zillow" && (
+                    <>
+                      <div className="field">
+                        <span>Email</span>
+                        <div className="leads-input-icon-wrap">
+                          <Mail size={15} className="leads-field-icon" />
+                          <input
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            onBlur={trimFieldOnBlur(handleChange)}
+                            placeholder="seller@email.com"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="field">
+                        <span>Phone</span>
+                        <div className="leads-input-icon-wrap">
+                          <Phone size={15} className="leads-field-icon" />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={form.phone}
+                            onChange={handlePhoneChange}
+                            placeholder="555-000-0000"
+                            maxLength={12}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
@@ -579,7 +774,8 @@ export default function PotentialLeads({
                 type="submit"
                 disabled={
                   !form.address.trim() ||
-                  !form.followUpDate ||
+                  (form.dealType !== "Potential Rental" &&
+                    !form.followUpDate) ||
                   !!formError ||
                   saving
                 }

@@ -9,6 +9,8 @@ export const MAX_PROFILE_IMAGE_SIZE = 600 * 1024;
 export const MAX_CONTRACT_FILE_SIZE = 700 * 1024;
 export const IDLE_LOGOUT_MS = 30 * 60 * 1000;
 
+export const DEAL_TYPES = ["Wholesale", "Potential Rental"];
+
 export const months = [
   "All",
   "01",
@@ -42,6 +44,7 @@ export function createDefaultFilters() {
 
 export function createEmptyDealForm() {
   return {
+    dealType: "Wholesale",
     address: "",
     city: "",
     zipCode: "",
@@ -52,6 +55,8 @@ export function createEmptyDealForm() {
     agentName: "",
     agentPhone: "",
     listingUrl: "",
+    rent: "",
+    occupied: "No",
     arv: "",
     rehabType: "",
     squareFootage: "",

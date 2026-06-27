@@ -5,6 +5,7 @@ import "../../../styles/styles.css";
 import {
   fetchBuyers,
   saveDeal,
+  deleteDealById,
   saveBuyer,
   saveContractVersion,
   fetchContractVersion,
@@ -115,6 +116,33 @@ function Wholesale() {
     setDeals,
     setFilters,
   });
+
+  async function convertDealToRental(deal) {
+    const rental = {
+      id: crypto.randomUUID(),
+      userId: currentUser?.id || "",
+      createdAt: new Date().toISOString(),
+      address: deal.address || "",
+      city: deal.city || "",
+      state: deal.state || "",
+      purchaseDate: deal.closedDate || "",
+      monthlyMortgage: "",
+      monthlyRent: deal.rent || "",
+      tenants: [],
+      pmCompanyName: "",
+      pmAgentName: "",
+      pmContactPhone: "",
+      pmContactEmail: "",
+      hasApplianceInsurance: "No",
+      applianceInsuranceCompany: "",
+      applianceInsuranceTermYears: "",
+      applianceInsurancePricePaid: "",
+    };
+    await saveRental(rental);
+    await deleteDealById(deal.id);
+    setDeals((prev) => prev.filter((d) => d.id !== deal.id));
+    setActiveView("rental-management");
+  }
 
   const {
     profileForm,
@@ -320,6 +348,7 @@ function Wholesale() {
                 fetchContractVersion={fetchContractVersion}
                 deleteContractById={deleteContractById}
                 currentUserId={currentUser.id}
+                convertDealToRental={convertDealToRental}
               />
             </LoadingScreen>
           </>

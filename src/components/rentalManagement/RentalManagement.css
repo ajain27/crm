@@ -56,10 +56,29 @@
 
   .rm-tenants-label {
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .rm-add-tenant-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--btn-primary-bg);
+    color: var(--btn-text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .rm-add-tenant-btn:hover {
+    background: var(--btn-primary-hover);
   }
 
   .rm-tenant-card {
@@ -153,12 +172,18 @@
     margin-bottom: 1rem;
   }
 
-  .rm-previous-tenant-record {
+  .rm-tenant-record {
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 0.75rem;
     background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
+  }
+
+  .rm-tenant-record--current {
+    border: 1px solid color-mix(in srgb, var(--blue) 35%, transparent 65%);
+    background: color-mix(in srgb, var(--blue) 8%, var(--panel) 92%);
+    margin-bottom: 1.25rem;
   }
 
   .rm-record-header {
@@ -169,9 +194,54 @@
   }
 
   .rm-record-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-weight: 600;
     font-size: 0.95rem;
     color: var(--text);
+  }
+
+  .rm-current-badge {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .rm-record-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .rm-edit-tenant-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: color-mix(in srgb, var(--blue) 10%, transparent 90%);
+    border: none;
+    border-radius: 4px;
+    color: var(--blue);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .rm-edit-tenant-btn:hover {
+    background: color-mix(in srgb, var(--blue) 20%, transparent 80%);
+  }
+
+  .rm-edit-tenant-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .rm-record-details {
@@ -187,9 +257,13 @@
     gap: 0.2rem;
   }
 
+  .rm-detail-wide {
+    grid-column: 1 / -1;
+  }
+
   .rm-detail-label {
     font-weight: 600;
-    color: var(--muted);
+    color: var(--text);
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.02em;
@@ -421,24 +495,127 @@
     font-size: 0.85rem;
   }
 
-  /* ── Edit modal grid ─────────────────────────────────── */
+  /* ── Edit modal ──────────────────────────────────────── */
+  .modal.rental-edit-modal {
+    border-radius: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: 85vh;
+  }
+
+  .rental-edit-modal .modal-header h2 {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .rm-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .rm-title-address {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rm-title-edit-fields {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .rm-title-input {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    min-width: 0;
+  }
+
+  .rm-title-input-address {
+    flex: 2;
+  }
+
+  .rm-title-input-zip {
+    flex: 0 0 70px;
+  }
+
+  .rm-title-edit-btn {
+    flex-shrink: 0;
+  }
+
+  .rm-title-purchased {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
   .rm-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-right: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .rm-edit-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .rm-edit-section-label {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .rm-edit-section-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .rm-edit-section-label-row .rm-edit-section-label {
+    margin-bottom: 0;
+  }
+
+  .rm-readonly-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
+  }
+
+  .rm-edit-grid {
     display: grid;
     align-items: end;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
 
-  @media (max-width: 900px) {
-    .rm-modal-body {
-      grid-template-columns: 1fr;
-    }
+  .rm-edit-grid .field {
+    margin-bottom: 0;
   }
 
-  @media (min-width: 901px) {
-    .rm-modal-body {
-      grid-template-columns: 1fr 1fr;
-    }
+  .rm-field-wide {
+    grid-column: 1 / -1;
   }
 }

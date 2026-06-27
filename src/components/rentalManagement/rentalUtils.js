@@ -53,6 +53,7 @@ export function normalizeRentalForm(form, isAddForm = false) {
     address: form.address.trim(),
     city: form.city.trim(),
     state: form.state,
+    zipCode: (form.zipCode || "").trim(),
     purchaseDate: form.purchaseDate,
     monthlyMortgage: form.monthlyMortgage,
     monthlyRent: form.monthlyRent,

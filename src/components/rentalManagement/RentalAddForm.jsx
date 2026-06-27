@@ -42,6 +42,13 @@ export default function RentalAddForm({
           onChange={onChange}
           placeholder="Austin"
         />
+        <Field
+          label="Zip Code"
+          name="zipCode"
+          value={form.zipCode}
+          onChange={onChange}
+          placeholder="78701"
+        />
         <label className="field">
           <span>
             State <span className="required-marker">*</span>

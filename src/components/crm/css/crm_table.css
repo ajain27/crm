@@ -593,6 +593,12 @@
     background: color-mix(in srgb, var(--muted) 50%, transparent 50%);
   }
 
+  .ddm-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
   .ddm-section-label {
     @apply mb-2 text-xs font-semibold uppercase tracking-widest;
     color: var(--muted);
@@ -764,20 +770,7 @@
     color: var(--text);
   }
 
-  .deal-detail-modal .modal-actions .primary-btn {
-    background: var(--panel);
-    color: var(--text);
-    border: 1px solid var(--text);
-  }
-
-  .deal-detail-modal .modal-actions .primary-btn:hover {
-    background: color-mix(in srgb, var(--panel) 90%, var(--text) 10%);
-  }
-
   .deal-detail-modal .modal-actions .ddm-delete-btn {
-    border: 1px solid var(--red);
-    background: var(--bg-red-light);
-    color: var(--red);
     margin-right: auto;
   }
 

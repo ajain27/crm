@@ -408,6 +408,7 @@
     border-radius: 1.25rem;
     display: flex;
     flex-direction: column;
+    height: auto;
     max-height: calc(100vh - 6rem);
   }
 

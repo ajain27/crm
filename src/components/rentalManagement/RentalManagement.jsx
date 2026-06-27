@@ -26,6 +26,7 @@ function createEmptyForm() {
     address: "",
     city: "",
     state: "",
+    zipCode: "",
     purchaseDate: "",
     monthlyMortgage: "",
     monthlyRent: "",
@@ -197,7 +198,7 @@ export default function RentalManagement({
           },
         ];
       } else {
-        tenants = [createEmptyTenant()];
+        tenants = [createEmptyTenant(true)];
       }
     }
 
@@ -205,6 +206,7 @@ export default function RentalManagement({
       address: rental.address || "",
       city: rental.city || "",
       state: rental.state || "",
+      zipCode: rental.zipCode || "",
       purchaseDate: rental.purchaseDate || "",
       monthlyMortgage: rental.monthlyMortgage || "",
       monthlyRent: rental.monthlyRent || "",
@@ -229,6 +231,20 @@ export default function RentalManagement({
     const { name, value } = e.target;
     const tenantId = e.target.dataset.tenantId;
     setEditForm((p) => applyFieldChange(p, name, value, tenantId));
+  }
+
+  function handleEditAddTenant(newTenantData) {
+    setEditForm((p) => ({
+      ...p,
+      tenants: [
+        ...p.tenants.map((t) => ({ ...t, isCurrent: false })),
+        {
+          ...createEmptyTenant(true),
+          ...newTenantData,
+          id: crypto.randomUUID(),
+        },
+      ],
+    }));
   }
 
   function handleEditRemoveTenant(tenantId) {
@@ -696,6 +712,7 @@ export default function RentalManagement({
         accumulatedRent={editingAccumulatedRent}
         onChange={handleEditChange}
         onRemoveTenant={handleEditRemoveTenant}
+        onAddTenant={handleEditAddTenant}
         onClose={closeEdit}
         onSave={handleEditSave}
         onDelete={handleDeleteFromModal}

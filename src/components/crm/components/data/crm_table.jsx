@@ -24,6 +24,7 @@ function Wholesale_data({
   fetchContractVersion,
   deleteContractById,
   currentUserId,
+  convertDealToRental,
 }) {
   const [tab, setTab] = useState("active");
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -227,6 +228,7 @@ function Wholesale_data({
         deal={detailDeal}
         updateDealPatch={updateDealPatch}
         deleteDeal={deleteDeal}
+        convertDealToRental={convertDealToRental}
         openContract={openContract}
         handleContractUpload={handleContractUpload}
         uploadingDealId={uploadingDealId}

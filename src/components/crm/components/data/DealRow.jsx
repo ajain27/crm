@@ -49,9 +49,12 @@ function DealRow({ deal, index, onRowDetailClick }) {
         value={formatFullAddress(deal)}
         valueClassName="readonly-input addr-cell"
       />
-      <ReadOnlyCell value={currency(deal.arv)} label="ARV" />
-      <ReadOnlyCell value={currency(deal.mao)} label="MAO" />
-      <ReadOnlyCell value={currency(deal.rehabCost)} label="Rehab" />
+      <ReadOnlyCell value={deal.arv ? currency(deal.arv) : "—"} label="ARV" />
+      <ReadOnlyCell value={deal.mao ? currency(deal.mao) : "—"} label="MAO" />
+      <ReadOnlyCell
+        value={deal.rehabCost ? currency(deal.rehabCost) : "—"}
+        label="Rehab"
+      />
       <td data-label="Offer Sent">
         <Badge value={deal.offerStatus || "Not Sent"} />
       </td>
