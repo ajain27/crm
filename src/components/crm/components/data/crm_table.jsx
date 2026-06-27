@@ -5,7 +5,6 @@ import { getContractVersions, months } from "../crmConfig";
 import { useDealsSort } from "./hooks/useDealsSort";
 import { useDealUpdater } from "./hooks/useDealUpdater";
 import { useContractManager } from "./hooks/useContractManager";
-import { useBuyerEdit } from "./hooks/useBuyerEdit";
 import DealRow from "./DealRow";
 import NotesModal from "./modals/NotesModal";
 import ContractPreviewModal from "./modals/ContractPreviewModal";
@@ -26,33 +25,10 @@ function Wholesale_data({
   deleteContractById,
   currentUserId,
 }) {
-  const today = new Date().toISOString().slice(0, 10);
   const [tab, setTab] = useState("active");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [detailDeal, setDetailDeal] = useState(null);
-  const [selectedIds, setSelectedIds] = useState(new Set());
-
-  function toggleSelect(id) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function toggleSelectAll() {
-    if (selectedIds.size === currentDeals.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(currentDeals.map((d) => d.id)));
-    }
-  }
-
-  function deleteSelected() {
-    selectedIds.forEach((id) => deleteDeal(id));
-    setSelectedIds(new Set());
-  }
 
   function isInactive(deal) {
     const isRejected =
@@ -106,8 +82,6 @@ function Wholesale_data({
     currentUserId,
     updateDealPatch,
   });
-
-  const buyerEdit = useBuyerEdit({ updateDeal });
 
   function handleRowClick(deal) {
     setSelectedDeal(deal);
@@ -168,7 +142,6 @@ function Wholesale_data({
             onClick={() => {
               setTab("active");
               setCurrentPage(1);
-              setSelectedIds(new Set());
             }}
           >
             Active
@@ -179,7 +152,6 @@ function Wholesale_data({
             onClick={() => {
               setTab("inactive");
               setCurrentPage(1);
-              setSelectedIds(new Set());
             }}
           >
             Inactive
@@ -190,7 +162,6 @@ function Wholesale_data({
             onClick={() => {
               setTab("closed");
               setCurrentPage(1);
-              setSelectedIds(new Set());
             }}
           >
             Closed
@@ -215,61 +186,16 @@ function Wholesale_data({
         )}
       </div>
 
-      {selectedIds.size > 0 && (
-        <div className="bulk-delete-bar">
-          <span>
-            {selectedIds.size} row{selectedIds.size > 1 ? "s" : ""} selected
-          </span>
-          <button className="danger-btn" onClick={deleteSelected}>
-            Delete Selected
-          </button>
-          <button
-            className="secondary-btn"
-            onClick={() => setSelectedIds(new Set())}
-          >
-            Clear
-          </button>
-        </div>
-      )}
       <div className="table-wrap dt-table-container acc-card-container">
         <table className="dt-table acc-card">
           <thead>
             <tr>
-              <th className="text-center">
-                <input
-                  type="checkbox"
-                  className="row-checkbox"
-                  checked={
-                    currentDeals.length > 0 &&
-                    selectedIds.size === currentDeals.length
-                  }
-                  onChange={toggleSelectAll}
-                />
-              </th>
-              <th></th>
-              <th>Property Address</th>
-              <th>City</th>
-              <th>Zip Code</th>
-              <th>State</th>
-              <th>Property Type</th>
-              <th>On Market</th>
-              {renderSortableHeader("Listed Price", "listedPrice")}
-              <th>Agent Info</th>
+              <th>Address</th>
               {renderSortableHeader("ARV", "arv")}
-              {renderSortableHeader("Rehab Cost", "rehabCost")}
               {renderSortableHeader("MAO", "mao")}
-              <th>Offer Status</th>
-              {renderSortableHeader("Offer Date", "offerDate")}
-              <th>Accepted</th>
-              <th>Contract</th>
-              {renderSortableHeader("Contract Price", "contractPrice")}
-              <th>Assigned</th>
-              {renderSortableHeader("Assigned Price", "assignedPrice")}
-              <th>Buyer Info</th>
-              <th>JV Deal</th>
-              <th>Closed</th>
-              {renderSortableHeader("Closed On", "closedDate")}
-              {renderSortableHeader("Gross Revenue", "grossRevenue")}
+              {renderSortableHeader("Rehab", "rehabCost")}
+              <th>Offer Sent</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody>
@@ -278,17 +204,7 @@ function Wholesale_data({
                 key={deal.id}
                 deal={deal}
                 index={index}
-                today={today}
-                updateDeal={updateDeal}
-                deleteDeal={deleteDeal}
-                openContract={openContract}
-                handleContractUpload={handleContractUpload}
-                uploadingDealId={uploadingDealId}
-                handleRowClick={handleRowClick}
                 onRowDetailClick={setDetailDeal}
-                isSelected={selectedIds.has(deal.id)}
-                onToggleSelect={toggleSelect}
-                {...buyerEdit}
               />
             ))}
           </tbody>
@@ -310,6 +226,10 @@ function Wholesale_data({
         onClose={() => setDetailDeal(null)}
         deal={detailDeal}
         updateDealPatch={updateDealPatch}
+        deleteDeal={deleteDeal}
+        openContract={openContract}
+        handleContractUpload={handleContractUpload}
+        uploadingDealId={uploadingDealId}
         onReactivate={
           detailDeal && isInactive(detailDeal)
             ? () => {

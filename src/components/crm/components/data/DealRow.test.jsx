@@ -16,7 +16,6 @@ const deal = {
   sellerAccepted: "No",
   assigned: "No",
   closed: "No",
-  contractVersions: [],
 };
 
 function renderRow(overrides = {}) {
@@ -26,22 +25,7 @@ function renderRow(overrides = {}) {
         <DealRow
           deal={deal}
           index={0}
-          today="2026-05-30"
-          updateDeal={vi.fn()}
-          deleteDeal={vi.fn()}
-          openContract={vi.fn()}
-          handleContractUpload={vi.fn()}
-          uploadingDealId={null}
           onRowDetailClick={vi.fn()}
-          isSelected={false}
-          onToggleSelect={vi.fn()}
-          editingBuyerId={null}
-          editingBuyerField={null}
-          editBuyerValue=""
-          setEditBuyerValue={vi.fn()}
-          startEditingBuyer={vi.fn()}
-          cancelBuyerEdit={vi.fn()}
-          saveBuyerEdit={vi.fn()}
           {...overrides}
         />
       </tbody>
@@ -50,42 +34,41 @@ function renderRow(overrides = {}) {
 }
 
 describe("DealRow", () => {
-  it("renders core deal fields", () => {
+  it("renders the combined address with city, state, and zip", () => {
     renderRow();
-    expect(screen.getByText("1 Main St")).toBeInTheDocument();
-    expect(screen.getByText("Austin")).toBeInTheDocument();
-    expect(screen.getByText("78701")).toBeInTheDocument();
-    expect(screen.getByText("TX")).toBeInTheDocument();
-    expect(screen.getByText("Single Family")).toBeInTheDocument();
+    expect(screen.getByText("1 Main St, Austin, TX 78701")).toBeInTheDocument();
   });
 
-  it("checkbox reflects isSelected and toggles on change", () => {
-    const onToggleSelect = vi.fn();
-    renderRow({ onToggleSelect, isSelected: true });
-    const checkbox = screen.getByRole("checkbox");
-    expect(checkbox).toBeChecked();
-    fireEvent.click(checkbox);
-    expect(onToggleSelect).toHaveBeenCalledWith("d1");
+  it("renders ARV, MAO, and Rehab values", () => {
+    renderRow();
+    expect(screen.getByText("$450,000")).toBeInTheDocument();
+    expect(screen.getByText("$275,000")).toBeInTheDocument();
+    expect(screen.getByText("$30,000")).toBeInTheDocument();
   });
 
-  it("delete button calls deleteDeal", () => {
-    const deleteDeal = vi.fn();
-    renderRow({ deleteDeal });
-    fireEvent.click(screen.getByTitle("Delete"));
-    expect(deleteDeal).toHaveBeenCalledWith("d1");
+  it("renders the offer status badge", () => {
+    renderRow();
+    expect(screen.getByText("Not Sent")).toBeInTheDocument();
+  });
+
+  it("clicking the Details button calls onRowDetailClick", () => {
+    const onRowDetailClick = vi.fn();
+    renderRow({ onRowDetailClick });
+    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    expect(onRowDetailClick).toHaveBeenCalledWith(deal);
   });
 
   it("clicking the row body calls onRowDetailClick", () => {
     const onRowDetailClick = vi.fn();
     renderRow({ onRowDetailClick });
-    fireEvent.click(screen.getByText("Austin"));
+    fireEvent.click(screen.getByText("Not Sent"));
     expect(onRowDetailClick).toHaveBeenCalledWith(deal);
   });
 
   it("clicking the address heading toggles the accordion instead of opening the modal", () => {
     const onRowDetailClick = vi.fn();
     renderRow({ onRowDetailClick });
-    fireEvent.click(screen.getByText("1 Main St"));
+    fireEvent.click(screen.getByText("1 Main St, Austin, TX 78701"));
     expect(onRowDetailClick).not.toHaveBeenCalled();
   });
 

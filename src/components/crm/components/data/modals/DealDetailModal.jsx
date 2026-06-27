@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { Eye, Upload, Loader2 } from "lucide-react";
 import Modal from "../../../../modal/Modal";
-import { getSuggestedWholesaleMao } from "../../crmConfig";
+import { getSuggestedWholesaleMao, getContractVersions } from "../../crmConfig";
 
 const PROPERTY_TYPES = ["Single Family", "Multi Family", "Land"];
 const OFFER_STATUSES = ["Not Sent", "Offer Sent", "Offer Withdrawn"];
@@ -46,9 +47,14 @@ function Section({ title, children }) {
   );
 }
 
-function Field({ label, children, wide }) {
+function Field({ label, children, wide, span2 }) {
+  const widthClass = wide
+    ? " ddm-edit-field-wide"
+    : span2
+      ? " ddm-edit-field-span2"
+      : "";
   return (
-    <div className={`ddm-edit-field${wide ? " ddm-edit-field-wide" : ""}`}>
+    <div className={`ddm-edit-field${widthClass}`}>
       <span className="ddm-edit-label">{label}</span>
       {children}
     </div>
@@ -60,6 +66,10 @@ function DealDetailModal({
   onClose,
   deal,
   updateDealPatch,
+  deleteDeal,
+  openContract,
+  handleContractUpload,
+  uploadingDealId,
   onReactivate,
 }) {
   const [draft, setDraft] = useState({});
@@ -90,6 +100,18 @@ function DealDetailModal({
 
   const offerSent = (draft.offerStatus || "Not Sent") === "Offer Sent";
   const locked = offerSent && (draft.sellerAccepted || "No") === "No";
+  const latestContractVersion = getContractVersions(deal)[0];
+
+  function handleDelete() {
+    if (
+      window.confirm(
+        `Delete the deal at ${deal.address}? This cannot be undone.`,
+      )
+    ) {
+      deleteDeal(deal.id);
+      onClose();
+    }
+  }
 
   function set(field, value) {
     if (CURRENCY_FIELDS.includes(field)) {
@@ -165,9 +187,18 @@ function DealDetailModal({
       onClose={onClose}
       title={draft.address || deal.address || "Deal Details"}
       className="deal-detail-modal"
-      style={{ width: "min(720px, 95vw)", maxWidth: "min(720px, 95vw)" }}
+      style={{ width: "min(1040px, 96vw)", maxWidth: "min(1040px, 96vw)" }}
       actions={
         <>
+          {deleteDeal && (
+            <button
+              className="danger-btn ddm-delete-btn"
+              onClick={handleDelete}
+              disabled={saving}
+            >
+              Delete
+            </button>
+          )}
           <button className="secondary-btn" onClick={onClose} disabled={saving}>
             Cancel
           </button>
@@ -199,7 +230,7 @@ function DealDetailModal({
         )}
 
         <Section title="Property">
-          <Field label="Address" wide>
+          <Field label="Address" span2>
             <input
               disabled={locked}
               value={draft.address || ""}
@@ -405,6 +436,68 @@ function DealDetailModal({
               placeholder="$0"
             />
           </Field>
+          {openContract && handleContractUpload && (
+            <Field label="Contract File" wide>
+              <div className="contract-actions">
+                {latestContractVersion ? (
+                  <button
+                    type="button"
+                    className="secondary-btn contract-action-btn"
+                    onClick={() => openContract(deal)}
+                    title={
+                      latestContractVersion.name ||
+                      "View latest uploaded contract"
+                    }
+                    aria-label={`View contract for ${deal.address}`}
+                  >
+                    <Eye size={16} />
+                  </button>
+                ) : null}
+                <label
+                  htmlFor={`contract-upload-modal-${deal.id}`}
+                  className="secondary-btn contract-action-btn"
+                  title={
+                    uploadingDealId === deal.id
+                      ? "Uploading…"
+                      : latestContractVersion
+                        ? "Replace uploaded contract"
+                        : "Upload contract"
+                  }
+                  aria-label={
+                    uploadingDealId === deal.id
+                      ? "Uploading contract…"
+                      : latestContractVersion
+                        ? `Replace contract for ${deal.address}`
+                        : `Upload contract for ${deal.address}`
+                  }
+                  aria-disabled={
+                    deal.closed === "Yes" || uploadingDealId === deal.id
+                  }
+                  style={
+                    deal.closed === "Yes" || uploadingDealId === deal.id
+                      ? { opacity: 0.5, pointerEvents: "none" }
+                      : undefined
+                  }
+                >
+                  {uploadingDealId === deal.id ? (
+                    <Loader2 size={16} className="spin" />
+                  ) : (
+                    <Upload size={16} />
+                  )}
+                </label>
+                <input
+                  id={`contract-upload-modal-${deal.id}`}
+                  className="contract-upload-input"
+                  type="file"
+                  accept="application/pdf,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.formula,.odt,.odf,image/*"
+                  disabled={
+                    deal.closed === "Yes" || uploadingDealId === deal.id
+                  }
+                  onChange={(event) => handleContractUpload(deal, event)}
+                />
+              </div>
+            </Field>
+          )}
         </Section>
 
         <Section title="Assignment">
@@ -531,7 +624,7 @@ function DealDetailModal({
             value={draft.notes || ""}
             onChange={(e) => set("notes", e.target.value)}
             placeholder="Add notes about this deal…"
-            rows={4}
+            rows={3}
           />
         </div>
       </div>

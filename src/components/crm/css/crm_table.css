@@ -119,6 +119,23 @@
     @apply w-[58px] text-center;
   }
 
+  .readonly-input.addr-cell {
+    width: auto;
+    min-width: 220px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .details-link {
+    @apply text-sm font-semibold;
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .details-link:hover {
+    text-decoration: underline;
+  }
+
   .note-btn {
     @apply min-w-0 px-2 py-1.5;
   }
@@ -534,12 +551,19 @@
     border-radius: 1.25rem;
     display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 6rem);
+    height: auto;
+    max-height: 85vh;
   }
 
   .ddm-body {
-    @apply flex flex-col gap-5 overflow-y-auto;
-    flex: 1;
+    @apply flex flex-col gap-3 overflow-y-auto;
+    /* flex-basis must be `auto` (not the `0%` from a plain flex-1), so this
+       area hugs its own content when the auto-height modal has room, and
+       only grows/scrolls when content actually exceeds the modal's
+       max-height clamp. A `0%` basis made it stretch to fill the modal's
+       full auto-computed height, leaving a gap before the action buttons
+       whenever content was shorter than that. */
+    flex: 1 1 auto;
     min-height: 0;
     padding-right: 4px;
     scrollbar-width: thin;
@@ -642,10 +666,14 @@
     grid-column: 1 / -1;
   }
 
+  .ddm-edit-field-span2 {
+    grid-column: span 2;
+  }
+
   .ddm-edit-label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--muted);
+    color: var(--text);
   }
 
   .ddm-edit-field input,
@@ -715,6 +743,42 @@
 
   .ddm-notes-input:focus {
     border-color: var(--text);
+  }
+
+  /* Give Delete/Cancel/Save the same shape (size, padding, radius) and
+     differentiate them by color only: dark-navy fill for Save (same tone
+     as the active tab pill, kept constant across themes so it never
+     flips to a near-white fill in dark mode), neutral outline for Cancel,
+     red-tinted outline for the destructive Delete action. */
+  .deal-detail-modal .modal-actions > button {
+    height: auto;
+    width: auto;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    border-radius: 0.6rem;
+  }
+
+  .deal-detail-modal .modal-actions .secondary-btn {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .deal-detail-modal .modal-actions .primary-btn {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--text);
+  }
+
+  .deal-detail-modal .modal-actions .primary-btn:hover {
+    background: color-mix(in srgb, var(--panel) 90%, var(--text) 10%);
+  }
+
+  .deal-detail-modal .modal-actions .ddm-delete-btn {
+    border: 1px solid var(--red);
+    background: var(--bg-red-light);
+    color: var(--red);
+    margin-right: auto;
   }
 
   .clickable-row {

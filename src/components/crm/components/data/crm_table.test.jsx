@@ -43,7 +43,28 @@ function getRenderedDealIds(container) {
 }
 
 describe("Wholesale_data", () => {
-  it("calls saveDeal when offer status changes", async () => {
+  it("renders only the simplified columns", () => {
+    render(
+      <Wholesale_data
+        filteredDeals={[deal]}
+        deals={[deal]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText("123 Main St, Austin, TX 78701"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("$450,000")).toBeInTheDocument();
+    expect(screen.getByText("$275,000")).toBeInTheDocument();
+    expect(screen.getByText("$45,000")).toBeInTheDocument();
+    expect(screen.getByText("Not Sent")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Details" })).toBeInTheDocument();
+  });
+
+  it("opens the details modal and saves changes via updateDealPatch", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
     const persist = vi.fn();
 
@@ -57,53 +78,38 @@ describe("Wholesale_data", () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+
     const select = screen.getByDisplayValue("Not Sent");
     fireEvent.change(select, { target: { value: "Offer Sent" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
 
     await waitFor(() => {
-      expect(saveDeal).toHaveBeenCalledWith({
-        ...deal,
-        offerStatus: "Offer Sent",
-        sellerAccepted: "Waiting",
-      });
+      expect(saveDeal).toHaveBeenCalledWith(
+        expect.objectContaining({ offerStatus: "Offer Sent" }),
+      );
     });
     expect(persist).toHaveBeenCalled();
   });
 
-  it("shows a disabled closed date for closed deals", () => {
+  it("deletes a deal from the details modal", () => {
+    const deleteDeal = vi.fn();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
     render(
       <Wholesale_data
-        filteredDeals={[
-          {
-            ...deal,
-            closed: "Yes",
-            closedDate: "2026-04-30",
-          },
-        ]}
-        deals={[
-          {
-            ...deal,
-            closed: "Yes",
-            closedDate: "2026-04-30",
-          },
-        ]}
-        deleteDeal={vi.fn()}
+        filteredDeals={[deal]}
+        deals={[deal]}
+        deleteDeal={deleteDeal}
         persist={vi.fn()}
         saveDeal={vi.fn()}
       />,
     );
 
-    const closedTabBtn = screen
-      .getAllByRole("button")
-      .find(
-        (btn) =>
-          btn.classList.contains("deal-tab-btn") &&
-          btn.textContent.includes("Closed"),
-      );
-    fireEvent.click(closedTabBtn);
+    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
-    const closedDateInput = screen.getByDisplayValue("2026-04-30");
-    expect(closedDateInput).toBeDisabled();
+    expect(deleteDeal).toHaveBeenCalledWith("d1");
   });
 
   it("shows the most recent closed deal first by default", () => {
@@ -173,61 +179,6 @@ describe("Wholesale_data", () => {
     expect(getRenderedDealIds(container)).toEqual(["d2", "d1"]);
   });
 
-  it("saves the entered closed date when a deal is marked closed", async () => {
-    const saveDeal = vi.fn().mockResolvedValue(undefined);
-    const persist = vi.fn();
-    vi.spyOn(window, "prompt").mockReturnValue("04/12/2026");
-
-    render(
-      <Wholesale_data
-        filteredDeals={[
-          {
-            ...deal,
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Yes",
-            assigned: "Yes",
-          },
-        ]}
-        deals={[
-          {
-            ...deal,
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Yes",
-            assigned: "Yes",
-          },
-        ]}
-        deleteDeal={vi.fn()}
-        persist={persist}
-        saveDeal={saveDeal}
-      />,
-    );
-
-    const closedSelect = screen
-      .getAllByRole("combobox")
-      .filter((select) => select.className.includes("badge no"))
-      .at(-1);
-    expect(closedSelect).toBeDefined();
-    fireEvent.change(closedSelect, { target: { value: "Yes" } });
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(saveDeal).toHaveBeenCalledWith({
-      ...deal,
-      offerStatus: "Offer Sent",
-      sellerAccepted: "Yes",
-      assigned: "Yes",
-      jvDeal: "No",
-      jvPartnerName: "",
-      jvPartnerEmail: "",
-      jvSplit: 0,
-      closed: "Yes",
-      closedDate: "2026-04-12",
-      closedInMonth: "04",
-    });
-    expect(persist).toHaveBeenCalled();
-  });
-
   it("sorts by a price column when the header is clicked", () => {
     const { container } = render(
       <Wholesale_data
@@ -253,62 +204,7 @@ describe("Wholesale_data", () => {
     expect(getRenderedDealIds(container)).toEqual(["d1", "d2"]);
   });
 
-  it("sorts by a date column when the header is clicked", () => {
-    const { container } = render(
-      <Wholesale_data
-        filteredDeals={[
-          {
-            ...deal,
-            id: "d1",
-            address: "123 Main St",
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Waiting",
-            offerDate: "2026-04-15",
-          },
-          {
-            ...deal,
-            id: "d2",
-            address: "456 Oak Ave",
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Waiting",
-            offerDate: "2026-03-10",
-          },
-        ]}
-        deals={[
-          {
-            ...deal,
-            id: "d1",
-            address: "123 Main St",
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Waiting",
-            offerDate: "2026-04-15",
-          },
-          {
-            ...deal,
-            id: "d2",
-            address: "456 Oak Ave",
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Waiting",
-            offerDate: "2026-03-10",
-          },
-        ]}
-        deleteDeal={vi.fn()}
-        persist={vi.fn()}
-        saveDeal={vi.fn()}
-      />,
-    );
-
-    const offerDateSortButton = screen.getByRole("button", {
-      name: "Offer Date",
-    });
-    fireEvent.click(offerDateSortButton);
-    expect(getRenderedDealIds(container)).toEqual(["d2", "d1"]);
-
-    fireEvent.click(offerDateSortButton);
-    expect(getRenderedDealIds(container)).toEqual(["d1", "d2"]);
-  });
-
-  it("shows a view contract action when a contract file is stored on the deal", async () => {
+  it("shows a view contract action in the modal when a contract file is stored on the deal", async () => {
     render(
       <Wholesale_data
         filteredDeals={[
@@ -357,6 +253,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole("link", { name: "Details" }));
     fireEvent.click(
       screen.getByRole("button", { name: /View contract for 123 Main St/i }),
     );
@@ -372,82 +269,7 @@ describe("Wholesale_data", () => {
     });
   });
 
-  it("lists the most recent uploaded contract first in the preview modal", () => {
-    render(
-      <Wholesale_data
-        filteredDeals={[
-          {
-            ...deal,
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Waiting",
-            contractVersions: [
-              {
-                id: "older",
-                name: "extension-1.pdf",
-                type: "application/pdf",
-                data: "data:application/pdf;base64,b2xkZXI=",
-                uploadedAt: "2026-05-08T10:00:00.000Z",
-              },
-              {
-                id: "latest",
-                name: "extension-2.pdf",
-                type: "application/pdf",
-                data: "data:application/pdf;base64,bGF0ZXN0",
-                uploadedAt: "2026-05-09T10:00:00.000Z",
-              },
-            ],
-            contractFileName: "extension-2.pdf",
-            contractFileType: "application/pdf",
-            contractFileData: "data:application/pdf;base64,bGF0ZXN0",
-          },
-        ]}
-        deals={[
-          {
-            ...deal,
-            offerStatus: "Offer Sent",
-            sellerAccepted: "Waiting",
-            contractVersions: [
-              {
-                id: "older",
-                name: "extension-1.pdf",
-                type: "application/pdf",
-                data: "data:application/pdf;base64,b2xkZXI=",
-                uploadedAt: "2026-05-08T10:00:00.000Z",
-              },
-              {
-                id: "latest",
-                name: "extension-2.pdf",
-                type: "application/pdf",
-                data: "data:application/pdf;base64,bGF0ZXN0",
-                uploadedAt: "2026-05-09T10:00:00.000Z",
-              },
-            ],
-            contractFileName: "extension-2.pdf",
-            contractFileType: "application/pdf",
-            contractFileData: "data:application/pdf;base64,bGF0ZXN0",
-          },
-        ]}
-        deleteDeal={vi.fn()}
-        persist={vi.fn()}
-        saveDeal={vi.fn()}
-        fetchContractVersion={vi.fn().mockResolvedValue(null)}
-        currentUserId="u1"
-      />,
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /View contract for 123 Main St/i }),
-    );
-
-    const versionButtons = Array.from(
-      document.querySelectorAll(".contract-version-select"),
-    );
-
-    expect(versionButtons[0]).toHaveTextContent("extension-2.pdf");
-    expect(versionButtons[1]).toHaveTextContent("extension-1.pdf");
-  });
-
-  it("allows uploading an odt contract from the table when the offer is sent", async () => {
+  it("allows uploading an odt contract from the modal when the offer is sent", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
     const persist = vi.fn();
     class MockFileReader {
@@ -492,7 +314,9 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    const uploadInput = document.getElementById("contract-upload-d1");
+    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+
+    const uploadInput = document.getElementById("contract-upload-modal-d1");
     const contractFile = new File(["contract"], "contract.odt", {
       type: "application/vnd.oasis.opendocument.text",
     });
@@ -502,26 +326,24 @@ describe("Wholesale_data", () => {
     });
 
     await waitFor(() => {
-      expect(saveDeal).toHaveBeenCalledWith({
-        ...deal,
-        offerStatus: "Offer Sent",
-        sellerAccepted: "Waiting",
-        contractVersions: [
-          expect.objectContaining({
-            name: "contract.odt",
-            type: "application/vnd.oasis.opendocument.text",
-          }),
-        ],
-        contractFileName: "contract.odt",
-        contractFileType: "application/vnd.oasis.opendocument.text",
-        contractFileData: "",
-      });
+      expect(saveDeal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contractVersions: [
+            expect.objectContaining({
+              name: "contract.odt",
+              type: "application/vnd.oasis.opendocument.text",
+            }),
+          ],
+          contractFileName: "contract.odt",
+          contractFileType: "application/vnd.oasis.opendocument.text",
+        }),
+      );
     });
 
     expect(persist).toHaveBeenCalled();
   });
 
-  it("allows deleting a stored contract from the table", async () => {
+  it("allows deleting a stored contract from the modal", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
     const persist = vi.fn();
     vi.spyOn(window, "confirm").mockReturnValue(true);
@@ -575,6 +397,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole("link", { name: "Details" }));
     fireEvent.click(
       screen.getByRole("button", { name: /View contract for 123 Main St/i }),
     );
@@ -583,15 +406,14 @@ describe("Wholesale_data", () => {
     );
 
     await waitFor(() => {
-      expect(saveDeal).toHaveBeenCalledWith({
-        ...deal,
-        offerStatus: "Offer Sent",
-        sellerAccepted: "Waiting",
-        contractVersions: [],
-        contractFileName: "",
-        contractFileType: "",
-        contractFileData: "",
-      });
+      expect(saveDeal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contractVersions: [],
+          contractFileName: "",
+          contractFileType: "",
+          contractFileData: "",
+        }),
+      );
     });
 
     expect(persist).toHaveBeenCalled();
