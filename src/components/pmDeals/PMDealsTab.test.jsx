@@ -493,7 +493,7 @@ describe("delete", () => {
     fireEvent.click(await screen.findByText("Delete Deal"));
 
     expect(deletePmDealById).not.toHaveBeenCalled();
-    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    expect(screen.getAllByText("Jane Doe").length).toBeGreaterThan(0);
   });
 
   it("updates the deal count after deleting", async () => {

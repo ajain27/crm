@@ -28,7 +28,7 @@ describe("PMDealEditModal", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders title and seeded values", () => {
+  it("renders title and read-only seeded values by default", () => {
     render(
       <PMDealEditModal
         editingDeal={{ id: "d1" }}
@@ -40,7 +40,25 @@ describe("PMDealEditModal", () => {
         onBlur={vi.fn()}
       />,
     );
-    expect(screen.getByText("Edit PM Deal")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Jane" })).toBeInTheDocument();
+    expect(screen.getByText("Acme")).toBeInTheDocument();
+    expect(screen.getByText("$25,000")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("Jane")).not.toBeInTheDocument();
+  });
+
+  it("reveals editable inputs after clicking the edit toggle", () => {
+    render(
+      <PMDealEditModal
+        editingDeal={{ id: "d1" }}
+        editForm={editForm}
+        editSaving={false}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onChange={vi.fn()}
+        onBlur={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTitle("Edit"));
     expect(screen.getByDisplayValue("Jane")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Acme")).toBeInTheDocument();
     expect(screen.getByDisplayValue("$25,000")).toBeInTheDocument();
@@ -59,6 +77,7 @@ describe("PMDealEditModal", () => {
         onBlur={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByTitle("Edit"));
     fireEvent.change(screen.getByDisplayValue("Jane"), {
       target: { value: "Bob" },
     });

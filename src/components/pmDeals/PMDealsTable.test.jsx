@@ -154,5 +154,13 @@ describe("PMDealsTable", () => {
       fireEvent.click(screen.getByText("2 Second St"));
       expect(onRowClick).toHaveBeenCalledWith(dealTwo);
     });
+
+    it("shows the combined Amount Lent total for the group in the header row", () => {
+      render(<PMDealsTable {...groupedProps} />);
+      // Each deal lends $25,000, so the grouped header should show $50,000.00.
+      expect(
+        screen.getByText(/Jane · 2 deals/).closest("tr").textContent,
+      ).toContain("$50,000.00");
+    });
   });
 });

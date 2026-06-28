@@ -280,6 +280,15 @@ describe("successful fetch", () => {
     expect(screen.getByText("99%")).toBeInTheDocument();
   });
 
+  it("shows the Propwire external link before any search is run", () => {
+    render(<FindCompsTab tab={tab} />);
+    expect(screen.getByText("Open in Propwire")).toBeInTheDocument();
+    expect(screen.getByText("Open in Propwire").closest("a")).toHaveAttribute(
+      "href",
+      "https://propwire.com",
+    );
+  });
+
   it("shows the Propwire external link after results load", async () => {
     mockFetchSuccess();
     render(<FindCompsTab tab={tab} />);

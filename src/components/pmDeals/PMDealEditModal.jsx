@@ -1,7 +1,17 @@
-import { Eye, Upload, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, Upload, Loader2, Pencil, Check } from "lucide-react";
 import Modal from "../modal/Modal";
 import { fmt, formatDate } from "../../utils/utils";
 import "./PMDealsTable.css";
+
+function ReadOnlyField({ label, value }) {
+  return (
+    <div className="pm-record-detail">
+      <span className="pm-detail-label">{label}:</span>
+      <span className="pm-detail-value">{value || "—"}</span>
+    </div>
+  );
+}
 
 export default function PMDealEditModal({
   editingDeal,
@@ -22,13 +32,24 @@ export default function PMDealEditModal({
   onDelete,
 }) {
   const fileCount = editingDeal?.files?.length ?? 0;
+  const [isEditing, setIsEditing] = useState(false);
+
+  // PMDealEditModal stays mounted between opens (only the inner <Modal>
+  // conditionally renders), so this toggle must be reset explicitly —
+  // otherwise re-opening the modal resumes edit mode from last time.
+  useEffect(() => {
+    setIsEditing(false);
+  }, [editingDeal]);
 
   return (
     <Modal
       isOpen={!!editingDeal}
       onClose={onClose}
-      title="Edit PM Deal"
-      style={{ maxWidth: 640 }}
+      title={
+        editForm?.borrowerName || editingDeal?.borrowerName || "Edit PM Deal"
+      }
+      className="pm-deal-edit-modal"
+      style={{ maxWidth: 760, width: "min(760px, 96vw)" }}
       actions={
         <>
           <button className="danger-btn pm-delete-deal-btn" onClick={onDelete}>
@@ -49,80 +70,113 @@ export default function PMDealEditModal({
     >
       {editForm && (
         <form
-          className="add-form pm-deals-form"
+          className="add-form pm-deals-form pm-deal-edit-form"
           onSubmit={(e) => {
             e.preventDefault();
             onSave();
           }}
         >
-          <div className="field">
-            <span>Property Address</span>
-            <input
-              name="propertyAddress"
-              value={editForm.propertyAddress}
-              onChange={onChange}
-              onBlur={onBlur}
-              placeholder="123 Main St, Austin, TX"
-            />
+          <div className="pm-section-header">
+            <span className="pm-section-label">Deal Info</span>
+            <button
+              type="button"
+              className="pm-edit-toggle-btn"
+              onClick={() => setIsEditing((v) => !v)}
+              title={isEditing ? "Done editing" : "Edit"}
+            >
+              {isEditing ? <Check size={14} /> : <Pencil size={14} />}
+            </button>
           </div>
-          <div className="field">
-            <span>Borrower Name</span>
-            <input
-              name="borrowerName"
-              value={editForm.borrowerName}
-              onChange={onChange}
-              onBlur={onBlur}
-              placeholder="John Smith"
-            />
-          </div>
-          <div className="field">
-            <span>Borrower Company</span>
-            <input
-              name="borrowerCompany"
-              value={editForm.borrowerCompany}
-              onChange={onChange}
-              onBlur={onBlur}
-              placeholder="Acme LLC"
-            />
-          </div>
-          <div className="field">
-            <span>Amount Lent</span>
-            <input
-              name="amountLent"
-              value={editForm.amountLent}
-              onChange={onChange}
-              placeholder="$100,000"
-            />
-          </div>
-          <div className="field">
-            <span>Interest Rate</span>
-            <input
-              name="interestRate"
-              value={editForm.interestRate}
-              onChange={onChange}
-              onBlur={onBlur}
-              placeholder="e.g. 22.5%"
-            />
-          </div>
-          <div className="field">
-            <span>Months</span>
-            <input
-              name="months"
-              value={editForm.months}
-              onChange={onChange}
-              inputMode="numeric"
-              placeholder="e.g. 12"
-            />
-          </div>
-          <div className="field">
-            <span>Lend Date</span>
-            <input
-              type="date"
-              name="lendDate"
-              value={editForm.lendDate}
-              onChange={onChange}
-            />
-          </div>
+
+          {isEditing ? (
+            <>
+              <div className="field">
+                <span>Borrower Name</span>
+                <input
+                  name="borrowerName"
+                  value={editForm.borrowerName}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="John Smith"
+                />
+              </div>
+              <div className="field">
+                <span>Borrower Company</span>
+                <input
+                  name="borrowerCompany"
+                  value={editForm.borrowerCompany}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="Acme LLC"
+                />
+              </div>
+              <div className="field">
+                <span>Amount Lent</span>
+                <input
+                  name="amountLent"
+                  value={editForm.amountLent}
+                  onChange={onChange}
+                  placeholder="$100,000"
+                />
+              </div>
+              <div className="field">
+                <span>Interest Rate</span>
+                <input
+                  name="interestRate"
+                  value={editForm.interestRate}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="e.g. 22.5%"
+                />
+              </div>
+              <div className="field">
+                <span>Months</span>
+                <input
+                  name="months"
+                  value={editForm.months}
+                  onChange={onChange}
+                  inputMode="numeric"
+                  placeholder="e.g. 12"
+                />
+              </div>
+              <div className="field">
+                <span>Lend Date</span>
+                <input
+                  type="date"
+                  name="lendDate"
+                  value={editForm.lendDate}
+                  onChange={onChange}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="pm-readonly-card">
+              <div className="pm-record-details">
+                <ReadOnlyField
+                  label="Borrower Name"
+                  value={editForm.borrowerName}
+                />
+                <ReadOnlyField
+                  label="Borrower Company"
+                  value={editForm.borrowerCompany}
+                />
+                <ReadOnlyField
+                  label="Amount Lent"
+                  value={editForm.amountLent}
+                />
+                <ReadOnlyField
+                  label="Interest Rate"
+                  value={editForm.interestRate}
+                />
+                <ReadOnlyField label="Months" value={editForm.months} />
+                <ReadOnlyField
+                  label="Lend Date"
+                  value={editForm.lendDate ? formatDate(editForm.lendDate) : ""}
+                />
+              </div>
+            </div>
+          )}
+
           <label className="field">
             <span>Due Date</span>
             <span

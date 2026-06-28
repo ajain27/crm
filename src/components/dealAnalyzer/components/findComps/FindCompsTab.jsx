@@ -62,7 +62,9 @@ function getCompLinks(encoded) {
     {
       name: "Propwire",
       badge: "Full History",
-      url: `https://propwire.com/search?q=${encoded}`,
+      url: encoded
+        ? `https://propwire.com/search?q=${encoded}`
+        : "https://propwire.com",
     },
   ];
 }
@@ -300,6 +302,32 @@ function FindCompsTab({ tab }) {
           </div>
         </div>
 
+        <div className="find-comps-external">
+          <span className="find-comps-section-label">
+            Verify on External Sources
+          </span>
+          <div className="find-comps-sources-grid">
+            {compLinks.map((src) => (
+              <a
+                key={src.name}
+                href={src.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="find-comps-source-card"
+              >
+                <div className="find-comps-source-top">
+                  <span className="find-comps-source-name">{src.name}</span>
+                  <span className="find-comps-source-badge">{src.badge}</span>
+                </div>
+                <div className="find-comps-source-action">
+                  <span>Open in {src.name}</span>
+                  <ExternalLink size={14} />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
         {status === "loading" && (
           <div className="find-comps-loader">
             <div className="find-comps-spinner" />
@@ -464,34 +492,6 @@ function FindCompsTab({ tab }) {
                 </Pagination>
               </div>
             )}
-
-            <div className="find-comps-external">
-              <span className="find-comps-section-label">
-                Verify on External Sources
-              </span>
-              <div className="find-comps-sources-grid">
-                {compLinks.map((src) => (
-                  <a
-                    key={src.name}
-                    href={src.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="find-comps-source-card"
-                  >
-                    <div className="find-comps-source-top">
-                      <span className="find-comps-source-name">{src.name}</span>
-                      <span className="find-comps-source-badge">
-                        {src.badge}
-                      </span>
-                    </div>
-                    <div className="find-comps-source-action">
-                      <span>Open in {src.name}</span>
-                      <ExternalLink size={14} />
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </section>

@@ -313,8 +313,17 @@ export default function PMDealsTable({
                       id={`group-${group.key}`}
                       label="Borrower Name"
                       value={`${group.borrowerName} · ${group.deals.length} deals`}
-                      colSpan={PM_VISIBLE_COLUMN_COUNT}
+                      colSpan={2}
                     />
+                    <td data-label="Amount Lent">
+                      {fmt(
+                        group.deals.reduce(
+                          (sum, d) => sum + parseCurrency(d.amountLent),
+                          0,
+                        ),
+                      )}
+                    </td>
+                    <td colSpan={PM_VISIBLE_COLUMN_COUNT - 3} />
                   </tr>
                   {group.deals.map((deal) =>
                     renderDealRow(deal, { isGroupMember: true }),

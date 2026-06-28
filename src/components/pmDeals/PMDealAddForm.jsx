@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import "./PMDealsTable.css";
 
 export default function PMDealAddForm({
   form,
@@ -10,7 +11,7 @@ export default function PMDealAddForm({
 }) {
   return (
     <section
-      className="panel"
+      className="panel pm-add-form-panel"
       data-reveal="left"
       style={{ "--reveal-delay": "80ms" }}
     >
