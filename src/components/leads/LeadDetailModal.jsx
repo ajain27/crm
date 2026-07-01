@@ -107,22 +107,20 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
                 placeholder="e.g. 123 Main St, Dallas, TX 75201"
               />
             </Field>
-            {(!isRental || draft.onMarket === "Yes") && (
-              <Field label="Source">
-                <select
-                  className="ldm-input"
-                  value={draft.source || ""}
-                  onChange={(e) => set("source", e.target.value)}
-                >
-                  <option value="">Select source…</option>
-                  {SOURCES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            )}
+            <Field label="Source">
+              <select
+                className="ldm-input"
+                value={draft.source || ""}
+                onChange={(e) => set("source", e.target.value)}
+              >
+                <option value="">Select source…</option>
+                {SOURCES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </Field>
             {isRental && (
               <Field label="On Market">
                 <select
