@@ -603,123 +603,115 @@ function DealDetailModal({
         )}
 
         {!isRental && (
-          <>
-            <Section title="Assignment">
-              <Field label="Assigned">
-                <select
-                  disabled={locked}
-                  value={draft.assigned || "No"}
-                  onChange={(e) => set("assigned", e.target.value)}
-                >
-                  {YES_NO.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              {draft.assigned === "Yes" && (
-                <>
-                  <Field label="Assigned Price">
-                    <input
-                      disabled={locked}
-                      value={draft.assignedPrice || ""}
-                      onChange={(e) => set("assignedPrice", e.target.value)}
-                      placeholder="$0"
-                    />
-                  </Field>
-                  <Field label="Buyer Name">
-                    <input
-                      disabled={locked}
-                      value={draft.buyerName || ""}
-                      onChange={(e) => set("buyerName", e.target.value)}
-                      placeholder="Buyer name"
-                    />
-                  </Field>
-                  <Field label="Buyer Email">
-                    <input
-                      disabled={locked}
-                      type="email"
-                      value={draft.buyerEmail || ""}
-                      onChange={(e) => set("buyerEmail", e.target.value)}
-                      placeholder="buyer@email.com"
-                    />
-                  </Field>
-                </>
-              )}
-            </Section>
-
-            <Section title="JV Deal">
-              <Field label="JV Deal?">
-                <select
-                  disabled={locked}
-                  value={draft.jvDeal || "No"}
-                  onChange={(e) => set("jvDeal", e.target.value)}
-                >
-                  {YES_NO.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              {draft.jvDeal === "Yes" && (
-                <>
-                  <Field label="Partner Name">
-                    <input
-                      disabled={locked}
-                      value={draft.jvPartnerName || ""}
-                      onChange={(e) => set("jvPartnerName", e.target.value)}
-                      placeholder="Partner name"
-                    />
-                  </Field>
-                  <Field label="Partner Email">
-                    <input
-                      disabled={locked}
-                      type="email"
-                      value={draft.jvPartnerEmail || ""}
-                      onChange={(e) => set("jvPartnerEmail", e.target.value)}
-                      placeholder="partner@email.com"
-                    />
-                  </Field>
-                  <Field label="JV Split ($)">
-                    <input
-                      disabled={locked}
-                      value={draft.jvSplit || ""}
-                      onChange={(e) => set("jvSplit", e.target.value)}
-                      placeholder="$0"
-                    />
-                  </Field>
-                </>
-              )}
-            </Section>
-
-            <Section title="Closing">
-              <Field label="Closed">
-                <select
-                  disabled={locked}
-                  value={draft.closed || "No"}
-                  onChange={(e) => set("closed", e.target.value)}
-                >
-                  {YES_NO.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              {draft.closed === "Yes" && (
-                <Field label="Closed Date">
+          <Section title="Assignment & Closing">
+            <Field label="Assigned">
+              <select
+                disabled={locked}
+                value={draft.assigned || "No"}
+                onChange={(e) => set("assigned", e.target.value)}
+              >
+                {YES_NO.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="JV Deal?">
+              <select
+                disabled={locked}
+                value={draft.jvDeal || "No"}
+                onChange={(e) => set("jvDeal", e.target.value)}
+              >
+                {YES_NO.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Closed">
+              <select
+                disabled={locked}
+                value={draft.closed || "No"}
+                onChange={(e) => set("closed", e.target.value)}
+              >
+                {YES_NO.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {draft.assigned === "Yes" && (
+              <>
+                <Field label="Assigned Price">
                   <input
                     disabled={locked}
-                    type="date"
-                    value={draft.closedDate || ""}
-                    onChange={(e) => set("closedDate", e.target.value)}
+                    value={draft.assignedPrice || ""}
+                    onChange={(e) => set("assignedPrice", e.target.value)}
+                    placeholder="$0"
                   />
                 </Field>
-              )}
-            </Section>
-          </>
+                <Field label="Buyer Name">
+                  <input
+                    disabled={locked}
+                    value={draft.buyerName || ""}
+                    onChange={(e) => set("buyerName", e.target.value)}
+                    placeholder="Buyer name"
+                  />
+                </Field>
+                <Field label="Buyer Email">
+                  <input
+                    disabled={locked}
+                    type="email"
+                    value={draft.buyerEmail || ""}
+                    onChange={(e) => set("buyerEmail", e.target.value)}
+                    placeholder="buyer@email.com"
+                  />
+                </Field>
+              </>
+            )}
+            {draft.jvDeal === "Yes" && (
+              <>
+                <Field label="Partner Name">
+                  <input
+                    disabled={locked}
+                    value={draft.jvPartnerName || ""}
+                    onChange={(e) => set("jvPartnerName", e.target.value)}
+                    placeholder="Partner name"
+                  />
+                </Field>
+                <Field label="Partner Email">
+                  <input
+                    disabled={locked}
+                    type="email"
+                    value={draft.jvPartnerEmail || ""}
+                    onChange={(e) => set("jvPartnerEmail", e.target.value)}
+                    placeholder="partner@email.com"
+                  />
+                </Field>
+                <Field label="JV Split ($)">
+                  <input
+                    disabled={locked}
+                    value={draft.jvSplit || ""}
+                    onChange={(e) => set("jvSplit", e.target.value)}
+                    placeholder="$0"
+                  />
+                </Field>
+              </>
+            )}
+            {draft.closed === "Yes" && (
+              <Field label="Closed Date">
+                <input
+                  disabled={locked}
+                  type="date"
+                  value={draft.closedDate || ""}
+                  onChange={(e) => set("closedDate", e.target.value)}
+                />
+              </Field>
+            )}
+          </Section>
         )}
 
         <div className="ddm-section">
@@ -730,7 +722,7 @@ function DealDetailModal({
             value={draft.notes || ""}
             onChange={(e) => set("notes", e.target.value)}
             placeholder="Add notes about this deal…"
-            rows={3}
+            rows={5}
           />
         </div>
       </div>

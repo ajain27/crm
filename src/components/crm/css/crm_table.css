@@ -745,6 +745,7 @@
     resize: vertical;
     transition: border-color 0.15s;
     font-family: inherit;
+    min-height: 8rem;
   }
 
   .ddm-notes-input:focus {
