@@ -107,7 +107,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
                 placeholder="e.g. 123 Main St, Dallas, TX 75201"
               />
             </Field>
-            {!isRental && (
+            {(!isRental || draft.onMarket === "Yes") && (
               <Field label="Source">
                 <select
                   className="ldm-input"
