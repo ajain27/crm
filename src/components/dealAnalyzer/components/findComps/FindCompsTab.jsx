@@ -7,6 +7,41 @@ const MAX_CACHE = 100;
 const COMPS_PER_PAGE = 5;
 const MAX_SUGGESTIONS = 8;
 
+// Strip the API response down to only the fields rendered in the UI so each
+// cache entry stays small and 50 results fit comfortably within localStorage's
+// 5 MB quota. Storing the raw API payload (with extra metadata on every comp)
+// caused silent quota failures that wiped the cache on each write.
+function slimResult(data) {
+  const sp = data.subjectProperty;
+  return {
+    price: data.price,
+    priceRangeLow: data.priceRangeLow,
+    priceRangeHigh: data.priceRangeHigh,
+    subjectProperty: sp
+      ? {
+          formattedAddress: sp.formattedAddress,
+          propertyType: sp.propertyType,
+          bedrooms: sp.bedrooms,
+          bathrooms: sp.bathrooms,
+          squareFootage: sp.squareFootage,
+          yearBuilt: sp.yearBuilt,
+          lastSalePrice: sp.lastSalePrice,
+        }
+      : undefined,
+    comparables: (data.comparables ?? []).map((c) => ({
+      id: c.id,
+      formattedAddress: c.formattedAddress,
+      status: c.status,
+      price: c.price,
+      bedrooms: c.bedrooms,
+      bathrooms: c.bathrooms,
+      squareFootage: c.squareFootage,
+      distance: c.distance,
+      correlation: c.correlation,
+    })),
+  };
+}
+
 function loadCache() {
   try {
     return JSON.parse(localStorage.getItem(CACHE_KEY)) || [];
@@ -20,6 +55,7 @@ function readCache() {
 }
 
 function writeCache(searchAddress, data) {
+  const slim = slimResult(data);
   const prev = loadCache();
   const filtered = prev.filter(
     (e) => e.address.toLowerCase() !== searchAddress.toLowerCase(),
@@ -27,14 +63,22 @@ function writeCache(searchAddress, data) {
   const next = [
     {
       address: searchAddress,
-      result: data,
+      result: slim,
       searchedAt: new Date().toISOString(),
     },
     ...filtered,
   ].slice(0, MAX_CACHE);
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(next));
-  } catch {}
+  } catch {
+    // Quota still exceeded even after slimming — evict the oldest half and retry.
+    try {
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify(next.slice(0, Math.ceil(MAX_CACHE / 2))),
+      );
+    } catch {}
+  }
   return next;
 }
 
