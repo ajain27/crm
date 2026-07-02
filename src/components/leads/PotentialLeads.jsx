@@ -536,6 +536,26 @@ export default function PotentialLeads({
                   )}
 
                   <div className="field">
+                    <span>Source</span>
+                    <div className="leads-input-icon-wrap">
+                      <Tag size={15} className="leads-field-icon" />
+                      <select
+                        name="source"
+                        value={form.source}
+                        onChange={handleChange}
+                        className="leads-select"
+                      >
+                        <option value="">Select source…</option>
+                        {SOURCES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="field">
                     <span>Rent</span>
                     <input
                       type="text"

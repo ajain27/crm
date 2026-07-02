@@ -80,6 +80,7 @@ export function createEmptyDealForm() {
     jvPartnerName: "",
     jvPartnerEmail: "",
     jvSplit: "",
+    source: "",
     notes: "",
     closed: "No",
     closedDate: "",

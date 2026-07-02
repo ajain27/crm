@@ -1,5 +1,18 @@
 import { Field, Select } from "../../../elements/elements";
 import { X } from "lucide-react";
+
+const SOURCES = [
+  "Driving for Dollars",
+  "MLS / Zillow",
+  "Facebook / Instagram",
+  "Direct Mail",
+  "Cold Call",
+  "Referral",
+  "PropStream",
+  "Propwire",
+  "Auction.com",
+  "Other",
+];
 import { STATE_OPTIONS } from "../../../../constants/stateOptions";
 import { REHAB_OPTIONS } from "../../../dealAnalyzer/components/fixAndFlip/fixAndFlipConfig";
 import {
@@ -44,8 +57,8 @@ function Wholesale_form({
     isBasePropertyComplete &&
     Boolean(form.onMarket?.trim()) &&
     (form.onMarket !== "Yes" || Boolean(form.listedPrice?.trim())) &&
-    Boolean(form.rent?.trim()) &&
     Boolean(form.occupied?.trim()) &&
+    (form.occupied !== "Yes" || Boolean(form.rent?.trim())) &&
     Boolean(form.offerStatus?.trim()) &&
     (form.offerStatus !== "Offer Sent" || Boolean(form.offerDate?.trim())) &&
     (form.offerStatus === "Not Sent" || Boolean(form.contractPrice?.trim())) &&
@@ -206,16 +219,21 @@ function Wholesale_form({
                   />
                 </>
               )}
-              <Field
-                label="Rent"
-                name="rent"
-                type="text"
-                value={form.rent}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="e.g. $1,500"
-                required
-              />
+              <label className="field">
+                <span>Source</span>
+                <select
+                  name="source"
+                  value={form.source}
+                  onChange={handleChange}
+                >
+                  <option value="">Select source…</option>
+                  {SOURCES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Select
                 label="Occupied"
                 name="occupied"
@@ -224,6 +242,18 @@ function Wholesale_form({
                 options={["No", "Yes"]}
                 required
               />
+              {form.occupied === "Yes" && (
+                <Field
+                  label="Rent"
+                  name="rent"
+                  type="text"
+                  value={form.rent}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="e.g. $1,500"
+                  required
+                />
+              )}
               <Select
                 label="Offer Status"
                 name="offerStatus"

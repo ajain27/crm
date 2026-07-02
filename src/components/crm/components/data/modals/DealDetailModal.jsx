@@ -512,8 +512,12 @@ function DealDetailModal({
               placeholder="$0"
             />
           </Field>
+          {/* Spacer: when Seller Accepted is hidden (offer not sent) the grid
+              has a free column between Contract Price and Contract File —
+              this div fills it so Contract File lands in the center slot. */}
+          {!offerSent && openContract && handleContractUpload && <div />}
           {openContract && handleContractUpload && (
-            <Field label="Contract File" wide>
+            <Field label="Contract File">
               <div className="contract-actions">
                 {latestContractVersion ? (
                   <button
