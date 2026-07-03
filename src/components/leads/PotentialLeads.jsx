@@ -23,6 +23,8 @@ import {
 } from "../../utils/utils";
 import { createEmptyDealForm, DEAL_TYPES } from "../crm/components/crmConfig";
 import LeadDetailModal from "./LeadDetailModal";
+import CommercialLeadDetailModal from "./CommercialLeadDetailModal";
+import { COMMERCIAL_PROPERTY_TYPES } from "./leadsConfig";
 import Pagination from "../pagination/Pagination";
 import "./Leads.css";
 
@@ -57,12 +59,14 @@ function createEmptyCommercialForm() {
   return {
     name: "",
     address: "",
+    propertyType: "",
     source: "",
     sellerName: "",
     sellerEmail: "",
     state: "",
     website: "",
     phone: "",
+    notes: "",
   };
 }
 
@@ -134,6 +138,7 @@ export default function PotentialLeads({
   const [commercialError, setCommercialError] = useState("");
   const [commercialSearch, setCommercialSearch] = useState("");
   const [commercialPage, setCommercialPage] = useState(1);
+  const [commercialDetailLead, setCommercialDetailLead] = useState(null);
 
   // ── Split leads by type ────────────────────────────────────────────────────
   const residentialLeads = leads.filter(
@@ -278,6 +283,18 @@ export default function PotentialLeads({
     } finally {
       setCommercialSaving(false);
     }
+  }
+
+  async function handleCommercialLeadSave(updated) {
+    await saveLead(updated);
+    setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+  }
+
+  async function handleCommercialLeadDelete(id) {
+    if (!window.confirm("Delete this commercial lead?")) return;
+    await deleteLeadById(id);
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+    setCommercialDetailLead(null);
   }
 
   // ── Residential filtering / pagination ─────────────────────────────────────
@@ -1158,6 +1175,23 @@ export default function PotentialLeads({
               </div>
 
               <div className="field">
+                <span>Property Type</span>
+                <select
+                  name="propertyType"
+                  value={commercialForm.propertyType}
+                  onChange={handleCommercialChange}
+                  className="leads-select"
+                >
+                  <option value="">Select type…</option>
+                  {COMMERCIAL_PROPERTY_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
                 <span>Source</span>
                 <div className="leads-input-icon-wrap">
                   <Tag size={15} className="leads-field-icon" />
@@ -1259,6 +1293,18 @@ export default function PotentialLeads({
                 </div>
               </div>
 
+              <div className="field" style={{ gridColumn: "1 / -1" }}>
+                <span>Notes</span>
+                <textarea
+                  name="notes"
+                  value={commercialForm.notes}
+                  onChange={handleCommercialChange}
+                  placeholder="Add notes about this lead…"
+                  rows={3}
+                  style={{ width: "100%", resize: "vertical" }}
+                />
+              </div>
+
               {commercialError && (
                 <p className="leads-form-error col-span-full">
                   {commercialError}
@@ -1340,13 +1386,16 @@ export default function PotentialLeads({
                         <th>Source</th>
                         <th>Website</th>
                         <th>Phone</th>
-                        <th>Link</th>
                         <th>Added</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedCommercial.map((lead) => (
-                        <tr key={lead.id}>
+                        <tr
+                          key={lead.id}
+                          onClick={() => setCommercialDetailLead(lead)}
+                          style={{ cursor: "pointer" }}
+                        >
                           <td
                             className="acc-col-action-mobile"
                             onClick={(e) => e.stopPropagation()}
@@ -1409,22 +1458,6 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td data-label="Link">
-                            {lead.link ? (
-                              <a
-                                href={lead.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="leads-mls-link"
-                                title={lead.link}
-                              >
-                                <ExternalLink size={12} />
-                                Link
-                              </a>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
                           <td className="leads-date-cell" data-label="Added">
                             {formatDate(lead.dateAdded)}
                           </td>
@@ -1455,6 +1488,17 @@ export default function PotentialLeads({
         onClose={() => setDetailLead(null)}
         lead={detailLead}
         onSave={handleLeadSave}
+      />
+      <CommercialLeadDetailModal
+        isOpen={!!commercialDetailLead}
+        onClose={() => setCommercialDetailLead(null)}
+        lead={commercialDetailLead}
+        onSave={handleCommercialLeadSave}
+        onDelete={
+          commercialDetailLead
+            ? () => handleCommercialLeadDelete(commercialDetailLead.id)
+            : undefined
+        }
       />
     </>
   );
