@@ -58,10 +58,11 @@ function createEmptyCommercialForm() {
     name: "",
     address: "",
     source: "",
+    sellerName: "",
+    sellerEmail: "",
     state: "",
     website: "",
     phone: "",
-    link: "",
   };
 }
 
@@ -1160,16 +1161,56 @@ export default function PotentialLeads({
                 <span>Source</span>
                 <div className="leads-input-icon-wrap">
                   <Tag size={15} className="leads-field-icon" />
-                  <input
-                    type="text"
+                  <select
                     name="source"
                     value={commercialForm.source}
                     onChange={handleCommercialChange}
-                    onBlur={trimFieldOnBlur(handleCommercialChange)}
-                    placeholder="e.g. LoopNet, CoStar…"
-                  />
+                    className="leads-select"
+                  >
+                    <option value="">Select source…</option>
+                    {SOURCES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
+
+              {commercialForm.source === "Cold Call" && (
+                <>
+                  <div className="field">
+                    <span>Seller Name</span>
+                    <input
+                      type="text"
+                      name="sellerName"
+                      value={commercialForm.sellerName}
+                      onChange={(e) =>
+                        setCommercialForm((prev) => ({
+                          ...prev,
+                          sellerName: e.target.value.replace(
+                            /[^a-zA-Z\s'.]/g,
+                            "",
+                          ),
+                        }))
+                      }
+                      onBlur={trimFieldOnBlur(handleCommercialChange)}
+                      placeholder="Seller's name"
+                    />
+                  </div>
+                  <div className="field">
+                    <span>Seller Email</span>
+                    <input
+                      type="email"
+                      name="sellerEmail"
+                      value={commercialForm.sellerEmail}
+                      onChange={handleCommercialChange}
+                      onBlur={trimFieldOnBlur(handleCommercialChange)}
+                      placeholder="seller@email.com"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="field">
                 <span>State</span>
@@ -1214,21 +1255,6 @@ export default function PotentialLeads({
                     onChange={handleCommercialPhoneChange}
                     placeholder="555-000-0000"
                     maxLength={12}
-                  />
-                </div>
-              </div>
-
-              <div className="field">
-                <span>Source Link</span>
-                <div className="leads-input-icon-wrap">
-                  <Link2 size={15} className="leads-field-icon" />
-                  <input
-                    type="url"
-                    name="link"
-                    value={commercialForm.link}
-                    onChange={handleCommercialChange}
-                    onBlur={trimFieldOnBlur(handleCommercialChange)}
-                    placeholder="Direct link to listing…"
                   />
                 </div>
               </div>
