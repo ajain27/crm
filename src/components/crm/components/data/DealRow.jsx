@@ -58,6 +58,24 @@ function DealRow({ deal, index, onRowDetailClick }) {
       <td data-label="Offer Sent">
         <Badge value={deal.offerStatus || "Not Sent"} />
       </td>
+      <td
+        data-label="Listing"
+        className="dt-col-action"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {deal.listingUrl ? (
+          <a
+            href={deal.listingUrl}
+            className="details-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            MLS
+          </a>
+        ) : (
+          <span style={{ color: "var(--text-muted, #aaa)" }}>—</span>
+        )}
+      </td>
       <td className="dt-col-action" onClick={(e) => e.stopPropagation()}>
         <a
           href="#"

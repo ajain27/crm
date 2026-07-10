@@ -196,6 +196,7 @@ function Wholesale_data({
               {renderSortableHeader("MAO", "mao")}
               {renderSortableHeader("Rehab", "rehabCost")}
               <th>Offer Sent</th>
+              <th>Listing</th>
               <th>Details</th>
             </tr>
           </thead>
