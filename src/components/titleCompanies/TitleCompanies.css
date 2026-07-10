@@ -83,7 +83,7 @@
     display: grid;
     align-items: end;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .tc-email-field {
@@ -236,10 +236,6 @@
     .tc-inline-row {
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto 2.75rem auto 2.75rem;
-    }
-
-    .tc-form--modal {
-      grid-template-columns: 1fr 1fr;
     }
   }
 

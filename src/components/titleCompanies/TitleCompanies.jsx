@@ -431,7 +431,7 @@ export default function TitleCompanies({
         isOpen={!!editingCompany}
         onClose={closeEdit}
         title={editingCompany?.name || "Edit Title Company"}
-        style={{ maxWidth: 560 }}
+        style={{ maxWidth: 520, height: "auto", minHeight: 320 }}
         actions={
           <>
             <button className="secondary-btn" onClick={closeEdit}>
