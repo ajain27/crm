@@ -35,6 +35,8 @@ function RentalDSCRTab() {
     purchasePrice,
     propMgmtFee,
     monthlyMiscExpense,
+    rateBuyDownPct,
+    rateBuyDownAmt,
   } = useDSCRCalculations();
 
   return (
@@ -194,6 +196,25 @@ function RentalDSCRTab() {
           onChange={handleChange}
           placeholder="e.g. $500"
         />
+        <Field
+          label="Rate Buy Down (%)"
+          name="rateBuyDown"
+          value={form.rateBuyDown}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder="e.g. 1"
+        />
+        <label className="field deal-analyzer-output">
+          <span>
+            Rate Buy Down Amount{" "}
+            <span className="deal-analyzer-auto-badge">auto</span>
+          </span>
+          <input
+            value={rateBuyDownAmt > 0 ? fmt(rateBuyDownAmt) : ""}
+            readOnly
+            tabIndex={-1}
+          />
+        </label>
         {lenderCosts > 0 && (
           <label className="field deal-analyzer-output deal-analyzer-output-red">
             <span>Total Lender Cost</span>

@@ -41,6 +41,7 @@ const PERCENT_FIELDS = new Set([
   "originationFeesPct",
   "sellerCarryback",
   "cashHelocRate",
+  "rateBuyDown",
 ]);
 
 const initialForm = {
@@ -61,6 +62,7 @@ const initialForm = {
   monthlyHomeWarranty: "",
   sellerCarryback: "",
   cashHelocRate: "",
+  rateBuyDown: "",
 };
 
 export function useDSCRCalculations() {
@@ -143,11 +145,18 @@ export function useDSCRCalculations() {
     effectiveLoanAmount,
   );
 
+  const rateBuyDownPct = parsePercent(form.rateBuyDown);
+  const rateBuyDownAmt = effectiveLoanAmount * (rateBuyDownPct / 100);
+
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
   const sellerCarrybackPct = parsePercent(form.sellerCarryback);
   const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const grossCashNeeded =
-    loanOutOfPocket + closingCosts + agentCommissionAmt + INSPECTION_COST;
+    loanOutOfPocket +
+    closingCosts +
+    agentCommissionAmt +
+    INSPECTION_COST +
+    rateBuyDownAmt;
   const lenderTotal = calcLenderTotal(lenders);
   const totalFundsNeeded = Math.max(
     0,
@@ -223,6 +232,8 @@ export function useDSCRCalculations() {
       lenderTotal,
       sellerCarrybackPct,
       sellerCarryback,
+      rateBuyDownPct,
+      rateBuyDownAmt,
       grossCashNeeded,
       lenderCosts,
       originationFeesPct,
@@ -271,5 +282,7 @@ export function useDSCRCalculations() {
     purchasePrice,
     propMgmtFee,
     monthlyMiscExpense,
+    rateBuyDownPct,
+    rateBuyDownAmt,
   };
 }

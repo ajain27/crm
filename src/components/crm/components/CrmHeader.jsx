@@ -7,11 +7,9 @@ import {
   Sun,
   Users,
   Crosshair,
-  Bell,
   Building2,
   KeyRound,
   TrendingUp,
-  Calendar,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
@@ -59,9 +57,6 @@ function CrmHeader({
   onEditProfile,
   onSignOut,
   profileMenuRef,
-  dueLeadsCount,
-  onBellClick,
-  onCalendarClick,
 }) {
   const displayName = buildDisplayName(currentUser);
   const profileInitial = buildProfileInitial(currentUser);
@@ -101,36 +96,9 @@ function CrmHeader({
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <div className="header-bell-wrap">
-            <button
-              type="button"
-              className="ghost-btn header-theme-toggle"
-              onClick={onBellClick}
-              title={
-                dueLeadsCount > 0
-                  ? `${dueLeadsCount} follow-up${dueLeadsCount > 1 ? "s" : ""} due`
-                  : "Potential Leads"
-              }
-              aria-label="Follow-up reminders"
-            >
-              <Bell size={18} />
-            </button>
-            {dueLeadsCount > 0 && (
-              <span className="header-bell-badge">{dueLeadsCount}</span>
-            )}
-          </div>
         </div>
         <img src={logo} alt="You Win Estates" className="app-topbar-logo" />
         <div className="app-topbar-actions">
-          <button
-            type="button"
-            className="ghost-btn header-calendar-btn"
-            onClick={onCalendarClick}
-            title="Calendar & Follow-ups"
-            aria-label="Open calendar"
-          >
-            <Calendar size={18} />
-          </button>
           <div className="profile-menu-wrap" ref={profileMenuRef}>
             <button
               type="button"

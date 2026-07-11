@@ -20,8 +20,6 @@ const baseProps = (overrides = {}) => ({
   onEditProfile: vi.fn(),
   onSignOut: vi.fn(),
   profileMenuRef: { current: null },
-  dueLeadsCount: 0,
-  onBellClick: vi.fn(),
   ...overrides,
 });
 
@@ -100,16 +98,6 @@ describe("CrmHeader", () => {
       screen.getByRole("button", { name: /Switch to dark theme/i }),
     );
     expect(onToggleTheme).toHaveBeenCalled();
-  });
-
-  it("bell shows badge when dueLeadsCount > 0", () => {
-    render(<CrmHeader {...baseProps({ dueLeadsCount: 3 })} />);
-    expect(screen.getByText("3")).toBeInTheDocument();
-  });
-
-  it("bell does not show badge when count is 0", () => {
-    const { container } = render(<CrmHeader {...baseProps()} />);
-    expect(container.querySelector(".header-bell-badge")).toBeNull();
   });
 
   it("falls back to email when no name fields are set", () => {

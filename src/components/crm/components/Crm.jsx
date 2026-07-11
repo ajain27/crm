@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { RefreshCw, X } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import "../../../styles/styles.css";
 import {
   fetchBuyers,
@@ -39,7 +39,6 @@ import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
-import FollowUpCalendar from "../../calendar/FollowUpCalendar";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
@@ -72,8 +71,6 @@ function Wholesale() {
   });
   const [activeView, setActiveView] = useState("dashboard");
   const [leads, setLeads] = useState([]);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -177,7 +174,6 @@ function Wholesale() {
     setCurrentUser(null);
     setDeals([]);
     setLeads([]);
-    setBannerDismissed(false);
     resetForm();
     setFilters(createDefaultFilters());
     setActiveView("dashboard");
@@ -214,71 +210,8 @@ function Wholesale() {
         }}
         onSignOut={handleSignOut}
         profileMenuRef={profileMenuRef}
-        dueLeadsCount={(() => {
-          const _ld = new Date();
-          const today = `${_ld.getFullYear()}-${String(_ld.getMonth() + 1).padStart(2, "0")}-${String(_ld.getDate()).padStart(2, "0")}`;
-          return leads.filter((l) => l.followUpDate && l.followUpDate <= today)
-            .length;
-        })()}
-        onBellClick={() => setActiveView("leads")}
-        onCalendarClick={() => setIsCalendarOpen(true)}
       />
       <main className="main">
-        {!bannerDismissed &&
-          activeView !== "rental-management" &&
-          (() => {
-            const _bd = new Date();
-            const today = `${_bd.getFullYear()}-${String(_bd.getMonth() + 1).padStart(2, "0")}-${String(_bd.getDate()).padStart(2, "0")}`;
-            const due = leads.filter(
-              (l) => l.followUpDate && l.followUpDate <= today,
-            );
-            if (!due.length) return null;
-            return (
-              <div className="followup-banner">
-                <div className="followup-banner-body">
-                  <span className="followup-banner-title">
-                    Follow-up{due.length > 1 ? "s" : ""} due today
-                  </span>
-                  <ul className="followup-banner-list">
-                    {due.map((l) => (
-                      <li
-                        key={l.id}
-                        className={`followup-banner-item${l.followUpDate < today ? " followup-banner-item--overdue" : ""}`}
-                      >
-                        <strong>
-                          {l.followUpDate < today ? "Overdue" : "Today"}
-                        </strong>{" "}
-                        — {l.address}
-                        {(l.email || l.phone) && (
-                          <span className="followup-banner-contacts">
-                            {l.email && (
-                              <a href={`mailto:${l.email}`}>{l.email}</a>
-                            )}
-                            {l.phone && (
-                              <a href={`tel:${l.phone}`}>{l.phone}</a>
-                            )}
-                          </span>
-                        )}
-                        <button
-                          className="followup-banner-view"
-                          onClick={() => setActiveView("leads")}
-                        >
-                          View leads →
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <button
-                  className="followup-banner-dismiss"
-                  onClick={() => setBannerDismissed(true)}
-                  aria-label="Dismiss"
-                >
-                  <X size={15} />
-                </button>
-              </div>
-            );
-          })()}
         {activeView === "dashboard" ? (
           <>
             <header className="page-header" data-reveal="left">
@@ -420,13 +353,6 @@ function Wholesale() {
         onClose={() => setIsProfileModalOpen(false)}
         onSave={handleSaveProfile}
         onProfileImageChange={handleProfileImageChange}
-      />
-      <FollowUpCalendar
-        isOpen={isCalendarOpen}
-        onClose={() => setIsCalendarOpen(false)}
-        deals={deals}
-        leads={leads}
-        currentUser={currentUser}
       />
     </div>
   );

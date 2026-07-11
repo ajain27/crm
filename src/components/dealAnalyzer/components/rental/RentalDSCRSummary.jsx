@@ -211,6 +211,14 @@ function RentalDSCRSummary({ summary }) {
             </strong>
           </div>
         )}
+        {summary.rateBuyDownAmt > 0 && (
+          <div>
+            <span>Rate Buy Down ({summary.rateBuyDownPct}% of loan)</span>
+            <strong className="deal-analyzer-return-negative">
+              <AnimatedAmount value={summary.rateBuyDownAmt} format={fmt} />
+            </strong>
+          </div>
+        )}
         <div>
           <span>Inspection Cost</span>
           <strong className="deal-analyzer-return-negative">
