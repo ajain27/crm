@@ -87,6 +87,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log("lead-webhook body wp_lead_id:", req.body?.wp_lead_id);
     initAdmin();
     const db = getFirestore();
     const lead = mapToLead(req.body, userId);
