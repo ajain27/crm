@@ -6,16 +6,20 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { wpLeadId } = req.body || {};
-  if (!wpLeadId) return res.status(400).json({ error: "wpLeadId required" });
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "email required" });
 
   const wpUrl = process.env.WORDPRESS_SITE_URL;
   if (!wpUrl) return res.status(500).json({ error: "WORDPRESS_SITE_URL not configured" });
 
   try {
-    const resp = await fetch(`${wpUrl}/wp-json/ywe/v1/lead/${wpLeadId}`, {
+    const resp = await fetch(`${wpUrl}/wp-json/ywe/v1/lead-by-email`, {
       method: "DELETE",
-      headers: { "x-webhook-secret": process.env.WEBHOOK_SECRET },
+      headers: {
+        "Content-Type": "application/json",
+        "x-webhook-secret": process.env.WEBHOOK_SECRET,
+      },
+      body: JSON.stringify({ email }),
     });
     const data = await resp.json().catch(() => ({}));
     return res.status(resp.ok ? 200 : resp.status).json(data);

@@ -202,12 +202,12 @@ export default function PotentialLeads({
   }
 
   async function syncDeleteToWP(lead) {
-    if (!lead?.wpLeadId) return;
+    if (!lead?.email) return;
     try {
       await fetch("/api/delete-wp-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wpLeadId: lead.wpLeadId }),
+        body: JSON.stringify({ email: lead.email }),
       });
     } catch {
       // non-blocking — WP sync failure doesn't affect CRM
