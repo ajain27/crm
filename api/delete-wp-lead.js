@@ -1,3 +1,18 @@
+async function parseBody(req) {
+  if (req.body && typeof req.body === "object") return req.body;
+  return new Promise((resolve) => {
+    let raw = "";
+    req.on("data", (chunk) => (raw += chunk));
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(raw));
+      } catch {
+        resolve({});
+      }
+    });
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -6,7 +21,9 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { email } = req.body || {};
+  const body = await parseBody(req);
+  console.log("delete-wp-lead body:", JSON.stringify(body));
+  const { email } = body;
   if (!email) return res.status(400).json({ error: "email required" });
 
   const wpUrl = process.env.WORDPRESS_SITE_URL;
