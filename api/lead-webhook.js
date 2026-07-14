@@ -63,6 +63,7 @@ function mapToLead(body, userId) {
     offerStatus: "Not Sent",
     sellerAccepted: "No",
     offerPrice: "",
+    wpLeadId: body.wp_lead_id ? Number(body.wp_lead_id) : null,
   };
 }
 

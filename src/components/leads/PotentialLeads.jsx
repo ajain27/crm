@@ -201,10 +201,25 @@ export default function PotentialLeads({
     }
   }
 
+  async function syncDeleteToWP(lead) {
+    if (!lead?.wpLeadId) return;
+    try {
+      await fetch("/api/delete-wp-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wpLeadId: lead.wpLeadId }),
+      });
+    } catch {
+      // non-blocking — WP sync failure doesn't affect CRM
+    }
+  }
+
   async function handleDelete(id) {
     if (!window.confirm("Delete this lead?")) return;
+    const lead = leads.find((l) => l.id === id);
     await deleteLeadById(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
+    syncDeleteToWP(lead);
   }
 
   async function handleLeadSave(updated) {
@@ -292,9 +307,11 @@ export default function PotentialLeads({
 
   async function handleCommercialLeadDelete(id) {
     if (!window.confirm("Delete this commercial lead?")) return;
+    const lead = leads.find((l) => l.id === id);
     await deleteLeadById(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
     setCommercialDetailLead(null);
+    syncDeleteToWP(lead);
   }
 
   // ── Residential filtering / pagination ─────────────────────────────────────
