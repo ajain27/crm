@@ -4,14 +4,23 @@ import { randomUUID } from "crypto";
 
 function initAdmin() {
   if (getApps().length) return;
-  initializeApp({
-    credential: cert({
+  let credential;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+    console.log("init: using base64 service account");
+    const json = JSON.parse(
+      Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64.replace(/\s/g, ""), "base64").toString("utf8")
+    );
+    console.log("init: project_id =", json.project_id);
+    credential = cert(json);
+  } else {
+    console.log("init: using individual env vars, project =", process.env.FIREBASE_PROJECT_ID);
+    credential = cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      // Vercel stores the private key with escaped newlines
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  });
+    });
+  }
+  initializeApp({ credential });
 }
 
 function todayStr() {
