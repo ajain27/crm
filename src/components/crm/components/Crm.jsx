@@ -10,7 +10,7 @@ import {
   saveContractVersion,
   fetchContractVersion,
   deleteContractById,
-  fetchLeads,
+  subscribeToLeads,
   saveLead,
   deleteLeadById,
   saveLeadFile,
@@ -74,9 +74,8 @@ function Wholesale() {
 
   useEffect(() => {
     if (!currentUser) return;
-    fetchLeads(currentUser.id)
-      .then(setLeads)
-      .catch(() => {});
+    const unsub = subscribeToLeads(currentUser.id, setLeads);
+    return unsub;
   }, [currentUser?.id]);
 
   useEffect(() => {

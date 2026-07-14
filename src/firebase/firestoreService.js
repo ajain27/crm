@@ -7,6 +7,7 @@ import {
   getDocs,
   getFirestore,
   limit,
+  onSnapshot,
   query,
   setDoc,
   where,
@@ -246,6 +247,18 @@ export async function fetchLeads(userId) {
     ? await getDocs(query(leadsCollection, where("userId", "==", userId)))
     : await getDocs(leadsCollection);
   return mapSnapshot(snapshot);
+}
+
+// Returns an unsubscribe function; calls onData whenever leads change in Firestore
+export function subscribeToLeads(userId, onData, onError) {
+  const q = userId
+    ? query(leadsCollection, where("userId", "==", userId))
+    : leadsCollection;
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => d.data())),
+    onError ?? (() => {}),
+  );
 }
 
 export async function saveLead(lead) {

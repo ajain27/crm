@@ -16,6 +16,10 @@ vi.mock("../../../firebase/firestoreService", () => ({
   fetchDeals: vi.fn().mockResolvedValue([]),
   fetchBuyers: vi.fn().mockResolvedValue([]),
   fetchLeads: vi.fn().mockResolvedValue([]),
+  subscribeToLeads: vi.fn().mockImplementation((_userId, onData) => {
+    onData([]);
+    return () => {};
+  }),
   saveDeal: vi.fn().mockResolvedValue(undefined),
   saveBuyer: vi.fn().mockResolvedValue(undefined),
   deleteDealById: vi.fn().mockResolvedValue(undefined),
