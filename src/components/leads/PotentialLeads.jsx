@@ -119,6 +119,10 @@ export default function PotentialLeads({
 }) {
   const [activeTab, setActiveTab] = useState("residential");
 
+  // ── PPC state ──────────────────────────────────────────────────────────────
+  const [ppcSearch, setPpcSearch] = useState("");
+  const [ppcPage, setPpcPage] = useState(1);
+
   // ── Residential state ──────────────────────────────────────────────────────
   const [form, setForm] = useState(createEmptyForm);
   const [saving, setSaving] = useState(false);
@@ -141,8 +145,10 @@ export default function PotentialLeads({
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
 
   // ── Split leads by type ────────────────────────────────────────────────────
+  const ppcLeads = leads.filter((l) => l.source === "Website");
   const residentialLeads = leads.filter(
-    (l) => !l.leadType || l.leadType === "residential",
+    (l) =>
+      (!l.leadType || l.leadType === "residential") && l.source !== "Website",
   );
   const commercialLeads = leads.filter((l) => l.leadType === "commercial");
 
@@ -365,6 +371,28 @@ export default function PotentialLeads({
     ),
   ].sort();
 
+  // ── PPC filtering / pagination ─────────────────────────────────────────────
+  const filteredPpc = ppcLeads.filter((l) => {
+    if (!ppcSearch) return true;
+    const q = ppcSearch.toLowerCase();
+    return (
+      (l.address || "").toLowerCase().includes(q) ||
+      (l.sellerName || "").toLowerCase().includes(q) ||
+      (l.email || "").toLowerCase().includes(q) ||
+      (l.phone || "").toLowerCase().includes(q)
+    );
+  });
+
+  const ppcTotalPages = Math.max(
+    1,
+    Math.ceil(filteredPpc.length / ITEMS_PER_PAGE),
+  );
+  const safePpcPage = Math.min(ppcPage, ppcTotalPages);
+  const paginatedPpc = filteredPpc.slice(
+    (safePpcPage - 1) * ITEMS_PER_PAGE,
+    safePpcPage * ITEMS_PER_PAGE,
+  );
+
   // ── Commercial filtering / pagination ──────────────────────────────────────
   const filteredCommercial = commercialLeads.filter((l) => {
     if (!commercialSearch) return true;
@@ -416,6 +444,16 @@ export default function PotentialLeads({
           onClick={() => setActiveTab("commercial")}
         >
           Commercial
+        </button>
+        <button
+          type="button"
+          className={`deal-tab-btn${activeTab === "ppc" ? " deal-tab-btn--active" : ""}`}
+          onClick={() => setActiveTab("ppc")}
+        >
+          PPC Leads
+          {ppcLeads.length > 0 && (
+            <span className="deal-tab-count">{ppcLeads.length}</span>
+          )}
         </button>
       </div>
 
@@ -1143,7 +1181,7 @@ export default function PotentialLeads({
             )}
           </section>
         </>
-      ) : (
+      ) : activeTab === "commercial" ? (
         <>
           <section
             className="panel"
@@ -1498,7 +1536,163 @@ export default function PotentialLeads({
             )}
           </section>
         </>
-      )}
+      ) : activeTab === "ppc" ? (
+        <>
+          <section
+            className="panel"
+            data-reveal="left"
+            style={{ "--reveal-delay": "80ms" }}
+          >
+            <div className="panel-header leads-list-header">
+              <div>
+                <h2>PPC Leads</h2>
+                <p>
+                  {ppcLeads.length === 0
+                    ? "No PPC leads yet."
+                    : `${filteredPpc.length} of ${ppcLeads.length} lead${ppcLeads.length !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+              <div className="leads-filters">
+                <div className="leads-search-wrap">
+                  <Search size={13} className="leads-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search name, email, phone or address…"
+                    value={ppcSearch}
+                    onChange={(e) => {
+                      setPpcSearch(e.target.value);
+                      setPpcPage(1);
+                    }}
+                    className="leads-search-input"
+                  />
+                </div>
+                <ClearFiltersButton
+                  onClear={() => {
+                    setPpcSearch("");
+                    setPpcPage(1);
+                  }}
+                  hasActiveFilters={Boolean(ppcSearch)}
+                  className="leads-clear-filters"
+                  iconSize={13}
+                />
+              </div>
+            </div>
+
+            {ppcLeads.length === 0 ? (
+              <div className="leads-empty">
+                <p>
+                  Leads submitted through the website form will appear here.
+                </p>
+              </div>
+            ) : filteredPpc.length === 0 ? (
+              <div className="leads-empty">
+                <p>No leads match the current search.</p>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="table-wrap leads-table-wrap acc-card-container"
+                  style={{ overflowX: "auto" }}
+                >
+                  <table className="compact-table leads-table acc-card">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Notes</th>
+                        <th>Added</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedPpc.map((lead) => (
+                        <tr
+                          key={lead.id}
+                          onClick={() => setDetailLead(lead)}
+                          className="clickable-row"
+                        >
+                          <td
+                            className="acc-col-action-mobile"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="leads-delete-btn acc-delete-btn"
+                              title="Delete lead"
+                              onClick={() => handleDelete(lead.id)}
+                            >
+                              <Trash2 size={14} />
+                              <span className="acc-delete-label">Delete</span>
+                            </button>
+                          </td>
+                          <td data-label="Name">{lead.sellerName || "—"}</td>
+                          <td data-label="Email">
+                            {lead.email ? (
+                              <a
+                                href={`mailto:${lead.email}`}
+                                className="leads-contact-link"
+                              >
+                                {lead.email}
+                              </a>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td data-label="Phone">
+                            {lead.phone ? (
+                              <a
+                                href={`tel:${lead.phone}`}
+                                className="leads-contact-link"
+                              >
+                                {lead.phone}
+                              </a>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td
+                            className="leads-address-cell"
+                            data-label="Address"
+                          >
+                            {lead.address || "—"}
+                          </td>
+                          <td className="leads-notes-cell" data-label="Notes">
+                            {lead.notes ? (
+                              <span
+                                className="leads-notes-preview"
+                                title={lead.notes}
+                              >
+                                {lead.notes}
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="leads-date-cell" data-label="Added">
+                            {formatDate(lead.dateAdded)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination
+                  currentPage={safePpcPage}
+                  totalPages={ppcTotalPages}
+                  setCurrentPage={setPpcPage}
+                >
+                  <span className="pagination-summary">
+                    {filteredPpc.length === 0
+                      ? "No leads"
+                      : `${(safePpcPage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(safePpcPage * ITEMS_PER_PAGE, filteredPpc.length)} of ${filteredPpc.length} lead${filteredPpc.length !== 1 ? "s" : ""}`}
+                  </span>
+                </Pagination>
+              </>
+            )}
+          </section>
+        </>
+      ) : null}
 
       <LeadDetailModal
         isOpen={!!detailLead}
