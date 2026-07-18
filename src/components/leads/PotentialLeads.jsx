@@ -1604,6 +1604,7 @@ export default function PotentialLeads({
                         <th>Address</th>
                         <th>Notes</th>
                         <th>Added</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1671,6 +1672,19 @@ export default function PotentialLeads({
                           </td>
                           <td className="leads-date-cell" data-label="Added">
                             {formatDate(lead.dateAdded)}
+                          </td>
+                          <td
+                            className="acc-col-action-mobile"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="leads-crm-btn"
+                              title="Add to CRM pipeline"
+                              onClick={() => handleAddedToCRM(lead.id)}
+                            >
+                              <CheckCheck size={14} />
+                              CRM
+                            </button>
                           </td>
                         </tr>
                       ))}
