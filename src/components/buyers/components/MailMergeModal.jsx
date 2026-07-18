@@ -42,7 +42,9 @@ const EMPTY_DEAL = {
   subject: "",
 };
 
-const EMPTY_REGULAR = { subject: "", body: "" };
+const SIGNATURE = "Ankit Jain\nOWNER | YOU WIN ESTATES LLC\nM: 206-822-8019";
+
+const EMPTY_REGULAR = { subject: "", body: "\n\n" + SIGNATURE };
 
 function fmtCurrency(value) {
   const numeric = String(value || "").replace(/[^0-9]/g, "");
