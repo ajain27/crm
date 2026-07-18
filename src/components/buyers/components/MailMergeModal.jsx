@@ -31,7 +31,7 @@ async function sendViaBrevo({
   return res;
 }
 
-const EMPTY_TEMPLATE = {
+const EMPTY_DEAL = {
   address: "",
   price: "",
   arv: "",
@@ -41,6 +41,8 @@ const EMPTY_TEMPLATE = {
   photosLink: "",
   subject: "",
 };
+
+const EMPTY_REGULAR = { subject: "", body: "" };
 
 function fmtCurrency(value) {
   const numeric = String(value || "").replace(/[^0-9]/g, "");
@@ -69,7 +71,7 @@ function buildSubject(stateLabel) {
     : "Property available — interested?";
 }
 
-function buildBody(template, buyerFullName) {
+function buildDealBody(template, buyerFullName) {
   const firstName = getFirstName(buyerFullName);
   const bedsBaths =
     template.beds && template.baths
@@ -106,7 +108,10 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
   const brevoSenderEmail =
     import.meta.env.VITE_BREVO_SENDER_EMAIL || "ankit4pace@gmail.com";
   const NOT_CONFIGURED = !brevoApiKey;
-  const [template, setTemplate] = useState(EMPTY_TEMPLATE);
+
+  const [mode, setMode] = useState("deal"); // "deal" | "regular"
+  const [dealTemplate, setDealTemplate] = useState(EMPTY_DEAL);
+  const [regularTemplate, setRegularTemplate] = useState(EMPTY_REGULAR);
   const [sendStatus, setSendStatus] = useState(null);
   const [sendProgress, setSendProgress] = useState({ sent: 0, total: 0 });
   const [sendErrors, setSendErrors] = useState([]);
@@ -118,7 +123,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
 
   useEffect(() => {
     if (isOpen) {
-      setTemplate((prev) => ({
+      setDealTemplate((prev) => ({
         ...prev,
         subject: prev.subject || buildSubject(stateLabel),
       }));
@@ -131,18 +136,22 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     return () => clearTimeout(timer);
   }, [sendStatus]);
 
-  function handleChange(e) {
+  function handleDealChange(e) {
     const { name, value } = e.target;
     if (name === "price" || name === "arv" || name === "repairs") {
-      setTemplate((prev) => ({ ...prev, [name]: fmtCurrency(value) }));
+      setDealTemplate((prev) => ({ ...prev, [name]: fmtCurrency(value) }));
     } else {
-      setTemplate((prev) => ({ ...prev, [name]: value }));
+      setDealTemplate((prev) => ({ ...prev, [name]: value }));
     }
+  }
+
+  function handleRegularChange(e) {
+    const { name, value } = e.target;
+    setRegularTemplate((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSend() {
     if (NOT_CONFIGURED) return;
-    if (!recipients.length || !template.address.trim()) return;
 
     abortRef.current = false;
     setSendStatus("sending");
@@ -151,18 +160,26 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
 
     let sent = 0;
     const errors = [];
-    const subject = template.subject || buildSubject(stateLabel);
 
     for (const buyer of recipients) {
       if (abortRef.current) break;
       try {
+        const subject =
+          mode === "deal"
+            ? dealTemplate.subject || buildSubject(stateLabel)
+            : regularTemplate.subject;
+        const body =
+          mode === "deal"
+            ? buildDealBody(dealTemplate, buyer.fullName)
+            : regularTemplate.body;
+
         await sendViaBrevo({
           apiKey: brevoApiKey,
           senderEmail: brevoSenderEmail,
           toEmail: buyer.email.trim(),
           toName: buyer.fullName || "",
           subject,
-          body: buildBody(template, buyer.fullName),
+          body,
         });
         sent++;
         setSendProgress({ sent, total: recipients.length });
@@ -184,19 +201,32 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     setSendStatus(null);
     setSendProgress({ sent: 0, total: 0 });
     setSendErrors([]);
-    setTemplate(EMPTY_TEMPLATE);
+    setDealTemplate(EMPTY_DEAL);
+    setRegularTemplate(EMPTY_REGULAR);
     onClose();
   }
 
-  const isReady =
+  const isDealReady =
     !NOT_CONFIGURED &&
     recipients.length > 0 &&
-    template.address.trim() &&
+    dealTemplate.address.trim() &&
     sendStatus !== "sending";
 
-  const previewSubject = template.subject || buildSubject(stateLabel);
+  const isRegularReady =
+    !NOT_CONFIGURED &&
+    recipients.length > 0 &&
+    regularTemplate.subject.trim() &&
+    regularTemplate.body.trim() &&
+    sendStatus !== "sending";
+
+  const isReady = mode === "deal" ? isDealReady : isRegularReady;
+
+  const previewSubject =
+    mode === "deal"
+      ? dealTemplate.subject || buildSubject(stateLabel)
+      : regularTemplate.subject;
   const previewBuyer = recipients[0] || { fullName: "Investor Name" };
-  const previewBody = buildBody(template, previewBuyer.fullName);
+  const dealPreviewBody = buildDealBody(dealTemplate, previewBuyer.fullName);
 
   return (
     <Modal
@@ -266,6 +296,26 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
           </div>
         )}
 
+        {/* Mode toggle */}
+        <div className="mail-merge-mode-toggle">
+          <button
+            type="button"
+            className={`mail-merge-mode-btn${mode === "deal" ? " mail-merge-mode-btn--active" : ""}`}
+            onClick={() => setMode("deal")}
+            disabled={sendStatus === "sending"}
+          >
+            Deal Email
+          </button>
+          <button
+            type="button"
+            className={`mail-merge-mode-btn${mode === "regular" ? " mail-merge-mode-btn--active" : ""}`}
+            onClick={() => setMode("regular")}
+            disabled={sendStatus === "sending"}
+          >
+            Regular Email
+          </button>
+        </div>
+
         {skipped > 0 && sendStatus !== "done" && (
           <div className="mail-merge-warning">
             {skipped} buyer{skipped !== 1 ? "s have" : " has"} no email address
@@ -291,112 +341,156 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
           )}
         </div>
 
-        <div className="mail-merge-section-label">Property Details</div>
-        <div className="mail-merge-grid">
-          <label className="field mail-merge-full">
-            <span>Property Address *</span>
-            <input
-              name="address"
-              value={template.address}
-              onChange={handleChange}
-              placeholder="e.g. 123 Main St, Atlanta, GA 30301"
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-          <label className="field">
-            <span>Price</span>
-            <input
-              name="price"
-              value={template.price}
-              onChange={handleChange}
-              placeholder="e.g. $85,000"
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-          <label className="field">
-            <span>ARV</span>
-            <input
-              name="arv"
-              value={template.arv}
-              onChange={handleChange}
-              placeholder="e.g. $160,000"
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-          <label className="field">
-            <span>Repairs</span>
-            <input
-              name="repairs"
-              value={template.repairs}
-              onChange={handleChange}
-              placeholder="e.g. $25,000"
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-          <label className="field">
-            <span>Beds</span>
-            <input
-              name="beds"
-              value={template.beds}
-              onChange={handleChange}
-              placeholder="e.g. 3"
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-          <label className="field">
-            <span>Baths</span>
-            <input
-              name="baths"
-              value={template.baths}
-              onChange={handleChange}
-              placeholder="e.g. 2"
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-          <label className="field mail-merge-full">
-            <span>Photos / Details Link</span>
-            <input
-              name="photosLink"
-              value={template.photosLink}
-              onChange={handleChange}
-              placeholder="e.g. https://drive.google.com/..."
-              disabled={sendStatus === "sending"}
-            />
-          </label>
-        </div>
+        {mode === "deal" ? (
+          <>
+            <div className="mail-merge-section-label">Property Details</div>
+            <div className="mail-merge-grid">
+              <label className="field mail-merge-full">
+                <span>Property Address *</span>
+                <input
+                  name="address"
+                  value={dealTemplate.address}
+                  onChange={handleDealChange}
+                  placeholder="e.g. 123 Main St, Atlanta, GA 30301"
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+              <label className="field">
+                <span>Price</span>
+                <input
+                  name="price"
+                  value={dealTemplate.price}
+                  onChange={handleDealChange}
+                  placeholder="e.g. $85,000"
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+              <label className="field">
+                <span>ARV</span>
+                <input
+                  name="arv"
+                  value={dealTemplate.arv}
+                  onChange={handleDealChange}
+                  placeholder="e.g. $160,000"
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+              <label className="field">
+                <span>Repairs</span>
+                <input
+                  name="repairs"
+                  value={dealTemplate.repairs}
+                  onChange={handleDealChange}
+                  placeholder="e.g. $25,000"
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+              <label className="field">
+                <span>Beds</span>
+                <input
+                  name="beds"
+                  value={dealTemplate.beds}
+                  onChange={handleDealChange}
+                  placeholder="e.g. 3"
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+              <label className="field">
+                <span>Baths</span>
+                <input
+                  name="baths"
+                  value={dealTemplate.baths}
+                  onChange={handleDealChange}
+                  placeholder="e.g. 2"
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+              <label className="field mail-merge-full">
+                <span>Photos / Details Link</span>
+                <input
+                  name="photosLink"
+                  value={dealTemplate.photosLink}
+                  onChange={handleDealChange}
+                  placeholder="e.g. https://drive.google.com/..."
+                  disabled={sendStatus === "sending"}
+                />
+              </label>
+            </div>
 
-        <div className="mail-merge-section-label">Subject</div>
-        <label className="field mail-merge-full">
-          <input
-            name="subject"
-            value={template.subject}
-            onChange={handleChange}
-            placeholder={previewSubject}
-            disabled={sendStatus === "sending"}
-          />
-        </label>
+            <div className="mail-merge-section-label">Subject</div>
+            <label className="field mail-merge-full">
+              <input
+                name="subject"
+                value={dealTemplate.subject}
+                onChange={handleDealChange}
+                placeholder={buildSubject(stateLabel)}
+                disabled={sendStatus === "sending"}
+              />
+            </label>
 
-        <div className="mail-merge-section-label">
-          Email Preview
-          {recipients.length > 0 && (
-            <span
-              style={{
-                fontWeight: 400,
-                textTransform: "none",
-                marginLeft: "0.4rem",
-                color: "var(--muted)",
-              }}
-            >
-              (personalized for {getFirstName(previewBuyer.fullName)})
-            </span>
-          )}
-        </div>
-        <div className="mail-merge-preview-wrap">
-          <div className="mail-merge-preview-subject">
-            <span>Subject:</span> {previewSubject}
-          </div>
-          <pre className="mail-merge-preview">{previewBody}</pre>
-        </div>
+            <div className="mail-merge-section-label">
+              Email Preview
+              {recipients.length > 0 && (
+                <span
+                  style={{
+                    fontWeight: 400,
+                    textTransform: "none",
+                    marginLeft: "0.4rem",
+                    color: "var(--muted)",
+                  }}
+                >
+                  (personalized for {getFirstName(previewBuyer.fullName)})
+                </span>
+              )}
+            </div>
+            <div className="mail-merge-preview-wrap">
+              <div className="mail-merge-preview-subject">
+                <span>Subject:</span> {previewSubject}
+              </div>
+              <pre className="mail-merge-preview">{dealPreviewBody}</pre>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mail-merge-section-label">Subject *</div>
+            <label className="field mail-merge-full">
+              <input
+                name="subject"
+                value={regularTemplate.subject}
+                onChange={handleRegularChange}
+                placeholder="e.g. Quick question for you"
+                disabled={sendStatus === "sending"}
+              />
+            </label>
+
+            <div className="mail-merge-section-label">Message *</div>
+            <label className="field mail-merge-full">
+              <textarea
+                name="body"
+                value={regularTemplate.body}
+                onChange={handleRegularChange}
+                placeholder="Type your message here…"
+                rows={10}
+                disabled={sendStatus === "sending"}
+                style={{ resize: "vertical", fontFamily: "inherit" }}
+              />
+            </label>
+
+            {regularTemplate.subject && regularTemplate.body && (
+              <>
+                <div className="mail-merge-section-label">Preview</div>
+                <div className="mail-merge-preview-wrap">
+                  <div className="mail-merge-preview-subject">
+                    <span>Subject:</span> {regularTemplate.subject}
+                  </div>
+                  <pre className="mail-merge-preview">
+                    {regularTemplate.body}
+                  </pre>
+                </div>
+              </>
+            )}
+          </>
+        )}
       </div>
     </Modal>
   );

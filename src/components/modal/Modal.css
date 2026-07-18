@@ -70,6 +70,49 @@
     margin-bottom: 1.25rem;
   }
 
+  .mail-merge-mode-toggle {
+    display: flex;
+    gap: 0.375rem;
+    margin-bottom: 1rem;
+    background: var(--input-bg, var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.25rem;
+  }
+
+  .mail-merge-mode-btn {
+    flex: 1;
+    padding: 0.45rem 1rem;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+
+  .mail-merge-mode-btn:hover:not(:disabled) {
+    color: var(--text);
+  }
+
+  .mail-merge-mode-btn--active {
+    background: var(--btn-primary-bg);
+    color: var(--btn-text);
+  }
+
+  .mail-merge-mode-btn--active:hover:not(:disabled) {
+    color: var(--btn-text);
+  }
+
+  .mail-merge-mode-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .mail-merge-section-label {
     font-size: 0.72rem;
     font-weight: 700;
