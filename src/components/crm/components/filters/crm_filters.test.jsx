@@ -51,14 +51,14 @@ describe("Crm_filters", () => {
 
   it("clicking the search icon reveals a text input", () => {
     render(<Crm_filters {...baseProps()} />);
-    fireEvent.click(screen.getByTitle("Search"));
+    fireEvent.click(screen.getByTitle("Find Lead"));
     expect(screen.getByPlaceholderText("Search Deals...")).toBeInTheDocument();
   });
 
   it("typing in search calls setFilters", () => {
     const setFilters = vi.fn();
     render(<Crm_filters {...baseProps({ setFilters })} />);
-    fireEvent.click(screen.getByTitle("Search"));
+    fireEvent.click(screen.getByTitle("Find Lead"));
     fireEvent.change(screen.getByPlaceholderText("Search Deals..."), {
       target: { value: "main" },
     });

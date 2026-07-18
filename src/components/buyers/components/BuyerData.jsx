@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ReadOnlyCell } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
-import { X, Edit2, Check } from "lucide-react";
+import { Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 
 const EMPTY_SET = new Set();
@@ -80,14 +80,13 @@ function BuyerData({
               <th>Buys</th>
               <th>Phone Number</th>
               <th>Notes</th>
-              <th>Actions</th>
             </tr>
           </thead>
           {allPageSelected &&
             filteredBuyers.length > paginatedBuyers.length && (
               <thead>
                 <tr>
-                  <td colSpan={9} className="buyer-select-all-banner">
+                  <td colSpan={8} className="buyer-select-all-banner">
                     {selectedIds.size === filteredBuyers.length ? (
                       <>
                         All <strong>{filteredBuyers.length}</strong> buyers are
@@ -333,15 +332,6 @@ function BuyerData({
                       </button>
                     </div>
                   )}
-                </td>
-                <td>
-                  <button
-                    className="ghost-btn icon-button buyer-delete-btn"
-                    title="Delete buyer"
-                    onClick={() => deleteBuyer(buyer.id)}
-                  >
-                    <X size={16} />
-                  </button>
                 </td>
               </tr>
             ))}

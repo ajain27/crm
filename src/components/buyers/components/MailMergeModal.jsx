@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, CheckCircle, AlertCircle, Loader } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, Loader, X } from "lucide-react";
 import Modal from "../../modal/Modal";
 
 async function sendViaBrevo({
@@ -114,14 +114,17 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
   const [mode, setMode] = useState("deal"); // "deal" | "regular"
   const [dealTemplate, setDealTemplate] = useState(EMPTY_DEAL);
   const [regularTemplate, setRegularTemplate] = useState(EMPTY_REGULAR);
+  const [removedIds, setRemovedIds] = useState(new Set());
   const [sendStatus, setSendStatus] = useState(null);
   const [sendProgress, setSendProgress] = useState({ sent: 0, total: 0 });
   const [sendErrors, setSendErrors] = useState([]);
   const abortRef = useRef(false);
 
-  const recipients = selectedBuyers.filter((b) => b.email?.trim());
-  const skipped = selectedBuyers.length - recipients.length;
-  const stateLabel = deriveStateLabel(selectedBuyers);
+  const recipients = selectedBuyers.filter(
+    (b) => b.email?.trim() && !removedIds.has(b.id),
+  );
+  const skipped = selectedBuyers.filter((b) => !b.email?.trim()).length;
+  const stateLabel = deriveStateLabel(recipients);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,6 +140,12 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     const timer = setTimeout(handleClose, 3000);
     return () => clearTimeout(timer);
   }, [sendStatus]);
+
+  useEffect(() => {
+    if (removedIds.size > 0 && recipients.length === 0) {
+      handleClose();
+    }
+  }, [recipients.length, removedIds.size]);
 
   function handleDealChange(e) {
     const { name, value } = e.target;
@@ -205,6 +214,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     setSendErrors([]);
     setDealTemplate(EMPTY_DEAL);
     setRegularTemplate(EMPTY_REGULAR);
+    setRemovedIds(new Set());
     onClose();
   }
 
@@ -338,6 +348,17 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               <span key={b.id} className="mail-merge-chip">
                 {b.fullName}
                 {b.email ? ` <${b.email}>` : ""}
+                <button
+                  type="button"
+                  className="mail-merge-chip-remove"
+                  onClick={() =>
+                    setRemovedIds((prev) => new Set([...prev, b.id]))
+                  }
+                  title="Remove from this send"
+                  disabled={sendStatus === "sending"}
+                >
+                  <X size={11} />
+                </button>
               </span>
             ))
           )}

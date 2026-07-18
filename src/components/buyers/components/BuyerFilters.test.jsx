@@ -17,7 +17,7 @@ const baseProps = (overrides = {}) => ({
 describe("BuyerFilters", () => {
   it("renders Filter Buyer heading", () => {
     render(<BuyerFilters {...baseProps()} />);
-    expect(screen.getByText(/Filter Buyer/i)).toBeInTheDocument();
+    expect(screen.getByText(/Find Buyer/i)).toBeInTheDocument();
   });
 
   it("renders state and type selects", () => {
@@ -65,7 +65,7 @@ describe("BuyerFilters", () => {
 
   it("search icon expands the input on click", () => {
     render(<BuyerFilters {...baseProps()} />);
-    fireEvent.click(screen.getByTitle("Search"));
+    fireEvent.click(screen.getByTitle("Find Buyer"));
     expect(
       screen.getByPlaceholderText(/Search buyers by name/i),
     ).toBeInTheDocument();

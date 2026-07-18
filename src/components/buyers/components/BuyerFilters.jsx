@@ -43,10 +43,8 @@ function BuyerFilters({
       style={{ "--reveal-delay": "180ms" }}
     >
       <div className="panel-header">
-        <div>
-          <h2>Filter Buyer</h2>
-        </div>
-        <div className="search-container">
+        <div className="search-container search-container--inline">
+          <h2 style={{ margin: 0 }}>Find Buyer</h2>
           <button
             type="button"
             className="search-icon-btn"
@@ -57,7 +55,7 @@ function BuyerFilters({
               }
               setSearchExpanded((prev) => !prev);
             }}
-            title="Search"
+            title="Find Buyer"
           >
             <Search size={18} />
           </button>
@@ -66,7 +64,7 @@ function BuyerFilters({
               <input
                 ref={searchInputRef}
                 type="text"
-                className="search-input-expanded"
+                className="search-input-expanded search-input-expanded--right"
                 id="buyer-search"
                 name="search"
                 placeholder="Search buyers by name, email, phone, city..."

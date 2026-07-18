@@ -212,7 +212,7 @@ describe("Buyers component", () => {
     await screen.findByText("Jane Doe");
     expect(screen.getByText("John Smith")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTitle("Search"));
+    fireEvent.click(screen.getByTitle("Find Buyer"));
     fireEvent.change(
       screen.getByPlaceholderText(/Search buyers by name, email, phone, city/i),
       {

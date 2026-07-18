@@ -21,15 +21,13 @@ function Crm_filters({
         style={{ "--reveal-delay": "180ms" }}
       >
         <div className="panel-header">
-          <div>
-            <h2>Filter Lead</h2>
-          </div>
-          <div className="search-container">
+          <div className="search-container search-container--inline">
+            <h2 style={{ margin: 0 }}>Filter Lead</h2>
             <button
               type="button"
               className="search-icon-btn"
               onClick={() => setSearchExpanded(!searchExpanded)}
-              title="Search"
+              title="Find Lead"
             >
               <Search size={18} />
             </button>
@@ -37,7 +35,7 @@ function Crm_filters({
               <input
                 autoFocus
                 type="text"
-                className="search-input-expanded"
+                className="search-input-expanded search-input-expanded--right"
                 value={filters.search}
                 onChange={(e) =>
                   setFilters({ ...filters, search: e.target.value })

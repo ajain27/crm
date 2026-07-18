@@ -37,11 +37,7 @@
   }
 
   .search-container {
-    @apply relative flex flex-row-reverse items-center gap-2;
-  }
-
-  .panel-header .search-container {
-    @apply ml-auto;
+    @apply relative flex items-center gap-2;
   }
 
   .search-icon-btn {
@@ -57,7 +53,7 @@
   .search-input-expanded {
     @apply h-10 w-[500px] rounded-lg border bg-app-panel px-3 pr-8 text-sm text-app-text outline-none;
     border-color: var(--input-border);
-    animation: slideInLeft 0.2s ease;
+    animation: slideInRight 0.2s ease;
   }
 
   .search-input-wrap {
@@ -80,16 +76,28 @@
     @apply text-app-muted;
   }
 
-  @keyframes slideInLeft {
+  .search-container--inline {
+    flex-direction: row;
+    margin-left: 0;
+    align-items: center;
+  }
+
+  .search-container--inline h2 {
+    white-space: nowrap;
+  }
+
+  .search-input-expanded--right {
+    margin-left: 8px;
+  }
+
+  @keyframes slideInRight {
     from {
       width: 0;
       opacity: 0;
-      margin-left: 0;
     }
     to {
       width: 500px;
       opacity: 1;
-      margin-left: 8px;
     }
   }
 
