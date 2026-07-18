@@ -11,6 +11,8 @@ import {
   Tag,
   Search,
   Globe,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import { AccordionHeaderCell } from "../elements/elements";
@@ -122,6 +124,8 @@ export default function PotentialLeads({
   // ── PPC state ──────────────────────────────────────────────────────────────
   const [ppcSearch, setPpcSearch] = useState("");
   const [ppcPage, setPpcPage] = useState(1);
+  const [ppcBadModal, setPpcBadModal] = useState(null); // lead being marked bad
+  const [ppcBadReason, setPpcBadReason] = useState("");
 
   // ── Residential state ──────────────────────────────────────────────────────
   const [form, setForm] = useState(createEmptyForm);
@@ -231,6 +235,12 @@ export default function PotentialLeads({
   async function handleLeadSave(updated) {
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+  }
+
+  async function handlePpcQuality(lead, quality, reason = "") {
+    const updated = { ...lead, ppcQuality: quality, ppcBadReason: reason };
+    await saveLead(updated);
+    setLeads((prev) => prev.map((l) => (l.id === lead.id ? updated : l)));
   }
 
   async function handleAddedToCRM(leadId) {
@@ -1604,6 +1614,7 @@ export default function PotentialLeads({
                         <th>Address</th>
                         <th>Notes</th>
                         <th>Added</th>
+                        <th>Quality</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -1612,7 +1623,7 @@ export default function PotentialLeads({
                         <tr
                           key={lead.id}
                           onClick={() => setDetailLead(lead)}
-                          className="clickable-row"
+                          className={`clickable-row${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
                         >
                           <td
                             className="acc-col-action-mobile"
@@ -1674,6 +1685,32 @@ export default function PotentialLeads({
                             {formatDate(lead.dateAdded)}
                           </td>
                           <td
+                            onClick={(e) => e.stopPropagation()}
+                            className="ppc-quality-cell"
+                          >
+                            <div className="ppc-quality-btns">
+                              <button
+                                className={`ppc-quality-btn ppc-quality-good${lead.ppcQuality === "good" ? " ppc-quality-active" : ""}`}
+                                title="Mark as good lead"
+                                disabled={lead.ppcQuality === "good"}
+                                onClick={() => handlePpcQuality(lead, "good")}
+                              >
+                                <ThumbsUp size={13} />
+                              </button>
+                              <button
+                                className={`ppc-quality-btn ppc-quality-bad${lead.ppcQuality === "bad" ? " ppc-quality-active" : ""}`}
+                                title="Mark as bad lead"
+                                disabled={lead.ppcQuality === "bad"}
+                                onClick={() => {
+                                  setPpcBadModal(lead);
+                                  setPpcBadReason(lead.ppcBadReason || "");
+                                }}
+                              >
+                                <ThumbsDown size={13} />
+                              </button>
+                            </div>
+                          </td>
+                          <td
                             className="acc-col-action-mobile"
                             onClick={(e) => e.stopPropagation()}
                           >
@@ -1705,6 +1742,56 @@ export default function PotentialLeads({
               </>
             )}
           </section>
+
+          {ppcBadModal && (
+            <div
+              className="ppc-bad-overlay"
+              onClick={() => setPpcBadModal(null)}
+            >
+              <div
+                className="ppc-bad-popup"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="ppc-bad-popup-title">
+                  <ThumbsDown size={15} /> Mark Lead as Bad
+                </h3>
+                <p className="ppc-bad-popup-name">
+                  {ppcBadModal.sellerName || "This lead"}
+                </p>
+                <label className="ppc-bad-popup-label">
+                  Why is this lead bad?{" "}
+                  <span style={{ color: "var(--muted)", fontWeight: 400 }}>
+                    (optional)
+                  </span>
+                </label>
+                <textarea
+                  className="ppc-bad-popup-textarea"
+                  placeholder="e.g. Not motivated, wrong price range, unreachable…"
+                  rows={4}
+                  value={ppcBadReason}
+                  onChange={(e) => setPpcBadReason(e.target.value)}
+                  autoFocus
+                />
+                <div className="ppc-bad-popup-actions">
+                  <button
+                    className="secondary-btn"
+                    onClick={() => setPpcBadModal(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="danger-btn ppc-bad-confirm-btn"
+                    onClick={() => {
+                      handlePpcQuality(ppcBadModal, "bad", ppcBadReason);
+                      setPpcBadModal(null);
+                    }}
+                  >
+                    Confirm Bad Lead
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       ) : null}
 
