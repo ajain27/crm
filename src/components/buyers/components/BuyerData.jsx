@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ReadOnlyCell } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
-import { Trash2, Edit2, Check } from "lucide-react";
+import { X, Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 
 const EMPTY_SET = new Set();
@@ -336,11 +336,11 @@ function BuyerData({
                 </td>
                 <td>
                   <button
-                    className="danger-btn"
-                    title="Delete"
+                    className="ghost-btn icon-button buyer-delete-btn"
+                    title="Delete buyer"
                     onClick={() => deleteBuyer(buyer.id)}
                   >
-                    <Trash2 size={16} />
+                    <X size={16} />
                   </button>
                 </td>
               </tr>

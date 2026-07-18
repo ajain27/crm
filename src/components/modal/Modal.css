@@ -257,6 +257,15 @@
     }
   }
 
+  .buyer-delete-btn {
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .buyer-delete-btn:hover {
+    color: #dc2626;
+  }
+
   .buyer-bulk-actions {
     display: flex;
     gap: 0.5rem;
