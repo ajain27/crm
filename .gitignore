@@ -11,3 +11,4 @@ pnpm-debug.log*
 package-lock.json
 README.md
 .env.server
+.env.production

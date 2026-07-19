@@ -295,6 +295,16 @@ export default function PotentialLeads({
   async function handleAddCommercialLead(e) {
     e.preventDefault();
     if (!commercialForm.address.trim()) return;
+    const duplicate = findDuplicateByAddress(
+      commercialLeads,
+      commercialForm.address,
+    );
+    if (duplicate) {
+      setCommercialError(
+        `"${duplicate.address}" is already in your commercial lead list.`,
+      );
+      return;
+    }
     setCommercialSaving(true);
     setCommercialError("");
     try {
@@ -1232,7 +1242,18 @@ export default function PotentialLeads({
                     name="address"
                     value={commercialForm.address}
                     onChange={handleCommercialChange}
-                    onBlur={trimFieldOnBlur(handleCommercialChange)}
+                    onBlur={(e) => {
+                      trimFieldOnBlur(handleCommercialChange)(e);
+                      const dup = findDuplicateByAddress(
+                        commercialLeads,
+                        e.target.value.trim(),
+                      );
+                      if (dup) {
+                        setCommercialError(
+                          `"${dup.address}" is already in your commercial lead list.`,
+                        );
+                      }
+                    }}
                     placeholder="e.g. 500 Commerce St, Dallas, TX 75201"
                     required
                   />
@@ -1638,7 +1659,11 @@ export default function PotentialLeads({
                               <span className="acc-delete-label">Delete</span>
                             </button>
                           </td>
-                          <td data-label="Name">{lead.sellerName || "—"}</td>
+                          <AccordionHeaderCell
+                            id={lead.id}
+                            label="Name"
+                            value={lead.sellerName || "—"}
+                          />
                           <td data-label="Email">
                             {lead.email ? (
                               <a
@@ -1686,7 +1711,7 @@ export default function PotentialLeads({
                           </td>
                           <td
                             onClick={(e) => e.stopPropagation()}
-                            className="ppc-quality-cell"
+                            className="ppc-quality-cell acc-col-action-mobile"
                           >
                             <div className="ppc-quality-btns">
                               <button
