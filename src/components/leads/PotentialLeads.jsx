@@ -126,6 +126,7 @@ export default function PotentialLeads({
   const [ppcPage, setPpcPage] = useState(1);
   const [ppcBadModal, setPpcBadModal] = useState(null); // lead being marked bad
   const [ppcBadReason, setPpcBadReason] = useState("");
+  const [ppcSelectedIds, setPpcSelectedIds] = useState(new Set());
 
   // ── Residential state ──────────────────────────────────────────────────────
   const [form, setForm] = useState(createEmptyForm);
@@ -241,6 +242,21 @@ export default function PotentialLeads({
     const updated = { ...lead, ppcQuality: quality, ppcBadReason: reason };
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === lead.id ? updated : l)));
+  }
+
+  async function handlePpcBulkDelete() {
+    if (ppcSelectedIds.size === 0) return;
+    if (
+      !window.confirm(
+        `Delete ${ppcSelectedIds.size} selected lead${ppcSelectedIds.size !== 1 ? "s" : ""}?`,
+      )
+    )
+      return;
+    const toDelete = ppcLeads.filter((l) => ppcSelectedIds.has(l.id));
+    await Promise.all(toDelete.map((l) => deleteLeadById(l.id)));
+    toDelete.forEach((l) => syncDeleteToWP(l));
+    setLeads((prev) => prev.filter((l) => !ppcSelectedIds.has(l.id)));
+    setPpcSelectedIds(new Set());
   }
 
   async function handleAddedToCRM(leadId) {
@@ -1606,6 +1622,15 @@ export default function PotentialLeads({
                   className="leads-clear-filters"
                   iconSize={13}
                 />
+                {ppcSelectedIds.size > 0 && (
+                  <button
+                    className="leads-bulk-delete-btn"
+                    onClick={handlePpcBulkDelete}
+                  >
+                    <Trash2 size={13} />
+                    Delete ({ppcSelectedIds.size})
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1628,6 +1653,29 @@ export default function PotentialLeads({
                   <table className="compact-table leads-table acc-card">
                     <thead>
                       <tr>
+                        <th className="buyer-checkbox-cell">
+                          <input
+                            type="checkbox"
+                            className="buyer-checkbox"
+                            checked={
+                              paginatedPpc.length > 0 &&
+                              paginatedPpc.every((l) =>
+                                ppcSelectedIds.has(l.id),
+                              )
+                            }
+                            onChange={(e) => {
+                              setPpcSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                paginatedPpc.forEach((l) =>
+                                  e.target.checked
+                                    ? next.add(l.id)
+                                    : next.delete(l.id),
+                                );
+                                return next;
+                              });
+                            }}
+                          />
+                        </th>
                         <th></th>
                         <th>Name</th>
                         <th>Email</th>
@@ -1646,6 +1694,25 @@ export default function PotentialLeads({
                           onClick={() => setDetailLead(lead)}
                           className={`clickable-row${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
                         >
+                          <td
+                            className="buyer-checkbox-cell acc-col-hide-mobile"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              className="buyer-checkbox"
+                              checked={ppcSelectedIds.has(lead.id)}
+                              onChange={() =>
+                                setPpcSelectedIds((prev) => {
+                                  const next = new Set(prev);
+                                  next.has(lead.id)
+                                    ? next.delete(lead.id)
+                                    : next.add(lead.id);
+                                  return next;
+                                })
+                              }
+                            />
+                          </td>
                           <td
                             className="acc-col-action-mobile"
                             onClick={(e) => e.stopPropagation()}
