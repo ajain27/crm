@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MapPin,
   Link2,
@@ -15,7 +15,7 @@ import {
   ThumbsDown,
 } from "lucide-react";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
-import { AccordionHeaderCell } from "../elements/elements";
+import { AccordionHeaderCell, SimpleStat } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import {
   formatPhone,
@@ -28,6 +28,10 @@ import LeadDetailModal from "./LeadDetailModal";
 import CommercialLeadDetailModal from "./CommercialLeadDetailModal";
 import { COMMERCIAL_PROPERTY_TYPES } from "./leadsConfig";
 import Pagination from "../pagination/Pagination";
+import {
+  fetchUserStats,
+  incrementPpcDeleted,
+} from "../../firebase/firestoreService";
 import "./Leads.css";
 
 const ITEMS_PER_PAGE = 10;
@@ -127,6 +131,14 @@ export default function PotentialLeads({
   const [ppcBadModal, setPpcBadModal] = useState(null); // lead being marked bad
   const [ppcBadReason, setPpcBadReason] = useState("");
   const [ppcSelectedIds, setPpcSelectedIds] = useState(new Set());
+  const [ppcDeletedCount, setPpcDeletedCount] = useState(0);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    fetchUserStats(currentUser.id).then((stats) => {
+      setPpcDeletedCount(stats.ppcDeletedCount || 0);
+    });
+  }, [currentUser?.id]);
 
   // ── Residential state ──────────────────────────────────────────────────────
   const [form, setForm] = useState(createEmptyForm);
@@ -228,9 +240,14 @@ export default function PotentialLeads({
   async function handleDelete(id) {
     if (!window.confirm("Delete this lead?")) return;
     const lead = leads.find((l) => l.id === id);
+    const isPpc = lead?.source === "Website";
     await deleteLeadById(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
     syncDeleteToWP(lead);
+    if (isPpc) {
+      await incrementPpcDeleted(currentUser.id, 1);
+      setPpcDeletedCount((prev) => prev + 1);
+    }
   }
 
   async function handleLeadSave(updated) {
@@ -257,6 +274,8 @@ export default function PotentialLeads({
     toDelete.forEach((l) => syncDeleteToWP(l));
     setLeads((prev) => prev.filter((l) => !ppcSelectedIds.has(l.id)));
     setPpcSelectedIds(new Set());
+    await incrementPpcDeleted(currentUser.id, toDelete.length);
+    setPpcDeletedCount((prev) => prev + toDelete.length);
   }
 
   async function handleAddedToCRM(leadId) {
@@ -461,6 +480,27 @@ export default function PotentialLeads({
           </span>
         </div>
       </header>
+
+      <div className="leads-stats-row" data-reveal>
+        <SimpleStat
+          label="Residential"
+          value={residentialLeads.length}
+          colorTheme="blue"
+        />
+        <SimpleStat
+          label="Commercial"
+          value={commercialLeads.length}
+          colorTheme="orange"
+        />
+        <SimpleStat
+          label="PPC Campaign"
+          value={ppcLeads.length + ppcDeletedCount}
+          subtitle={
+            ppcLeads.length > 0 ? `${ppcLeads.length} active` : undefined
+          }
+          colorTheme="green"
+        />
+      </div>
 
       <div
         className="deal-tab-bar"

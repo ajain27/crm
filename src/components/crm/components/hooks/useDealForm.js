@@ -325,12 +325,7 @@ export function useDealForm({
   async function addDeal(event) {
     event.preventDefault();
 
-    if (
-      !form.address.trim() ||
-      !form.city.trim() ||
-      !form.zipCode.trim() ||
-      !form.state.trim()
-    ) {
+    if (!form.address.trim() || !form.state.trim()) {
       alert("Please fill out the required address fields.");
       return;
     }

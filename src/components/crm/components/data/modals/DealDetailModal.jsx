@@ -284,31 +284,6 @@ function DealDetailModal({
               placeholder="Street address"
             />
           </Field>
-          <Field label="City">
-            <input
-              disabled={locked}
-              value={draft.city || ""}
-              onChange={(e) => set("city", e.target.value)}
-              placeholder="City"
-            />
-          </Field>
-          <Field label="State">
-            <input
-              disabled={locked}
-              value={draft.state || ""}
-              onChange={(e) => set("state", e.target.value)}
-              maxLength={2}
-              placeholder="TX"
-            />
-          </Field>
-          <Field label="Zip Code">
-            <input
-              disabled={locked}
-              value={draft.zipCode || ""}
-              onChange={(e) => set("zipCode", e.target.value)}
-              placeholder="00000"
-            />
-          </Field>
           <Field label="Property Type">
             <select
               disabled={locked}
@@ -332,69 +307,69 @@ function DealDetailModal({
             />
           </Field>
           {!isRental && (
-            <Field label="Seller Phone">
-              <input
-                disabled={locked}
-                value={draft.sellerPhone || ""}
-                onChange={(e) => set("sellerPhone", e.target.value)}
-                placeholder="555-000-0000"
-              />
-            </Field>
-          )}
-        </Section>
-
-        <Section title="Listing">
-          <Field label="On Market">
-            <select
-              disabled={locked}
-              value={draft.onMarket || "No"}
-              onChange={(e) => set("onMarket", e.target.value)}
-            >
-              {YES_NO.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </Field>
-          {draft.onMarket === "Yes" && (
             <>
-              <Field label="Listed Price">
+              <Field label="Seller Phone">
                 <input
                   disabled={locked}
-                  value={draft.listedPrice || ""}
-                  onChange={(e) => set("listedPrice", e.target.value)}
-                  placeholder="$0"
-                />
-              </Field>
-              <Field label="Agent Name">
-                <input
-                  disabled={locked}
-                  value={draft.agentName || ""}
-                  onChange={(e) => set("agentName", e.target.value)}
-                  placeholder="Agent name"
-                />
-              </Field>
-              <Field label="Agent Phone">
-                <input
-                  disabled={locked}
-                  value={draft.agentPhone || ""}
-                  onChange={(e) => set("agentPhone", e.target.value)}
+                  value={draft.sellerPhone || ""}
+                  onChange={(e) => set("sellerPhone", e.target.value)}
                   placeholder="555-000-0000"
                 />
               </Field>
-              <Field label="Listing URL" wide>
-                <input
+              <Field label="On Market">
+                <select
                   disabled={locked}
-                  type="url"
-                  value={draft.listingUrl || ""}
-                  onChange={(e) => set("listingUrl", e.target.value)}
-                  placeholder="https://…"
-                />
+                  value={draft.onMarket || "No"}
+                  onChange={(e) => set("onMarket", e.target.value)}
+                >
+                  {YES_NO.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
               </Field>
             </>
           )}
         </Section>
+
+        {draft.onMarket === "Yes" && (
+          <Section title="Listing">
+            <Field label="Listed Price">
+              <input
+                disabled={locked}
+                value={draft.listedPrice || ""}
+                onChange={(e) => set("listedPrice", e.target.value)}
+                placeholder="$0"
+              />
+            </Field>
+            <Field label="Agent Name">
+              <input
+                disabled={locked}
+                value={draft.agentName || ""}
+                onChange={(e) => set("agentName", e.target.value)}
+                placeholder="Agent name"
+              />
+            </Field>
+            <Field label="Agent Phone">
+              <input
+                disabled={locked}
+                value={draft.agentPhone || ""}
+                onChange={(e) => set("agentPhone", e.target.value)}
+                placeholder="555-000-0000"
+              />
+            </Field>
+            <Field label="Listing URL" wide>
+              <input
+                disabled={locked}
+                type="url"
+                value={draft.listingUrl || ""}
+                onChange={(e) => set("listingUrl", e.target.value)}
+                placeholder="https://…"
+              />
+            </Field>
+          </Section>
+        )}
 
         {isRental && (
           <Section title="Rental Details">
@@ -512,10 +487,6 @@ function DealDetailModal({
               placeholder="$0"
             />
           </Field>
-          {/* Spacer: when Seller Accepted is hidden (offer not sent) the grid
-              has a free column between Contract Price and Contract File —
-              this div fills it so Contract File lands in the center slot. */}
-          {!offerSent && openContract && handleContractUpload && <div />}
           {openContract && handleContractUpload && (
             <Field label="Contract File">
               <div className="contract-actions">

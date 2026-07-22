@@ -48,8 +48,6 @@ function Wholesale_form({
 
   const isBasePropertyComplete =
     Boolean(form.address?.trim()) &&
-    Boolean(form.city?.trim()) &&
-    Boolean(form.zipCode?.trim()) &&
     Boolean(form.state?.trim()) &&
     Boolean(form.propertyType?.trim());
 
@@ -132,21 +130,6 @@ function Wholesale_form({
               required
             />
           </label>
-          <Field
-            label="City"
-            name="city"
-            value={form.city}
-            onChange={handleChange}
-            required
-          />
-          <Field
-            label="Zip Code"
-            name="zipCode"
-            value={form.zipCode}
-            onChange={handleChange}
-            maxLength="5"
-            required
-          />
           <label className="field">
             <span>
               State

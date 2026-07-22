@@ -6,10 +6,12 @@ import {
   doc,
   getDocs,
   getFirestore,
+  increment,
   limit,
   onSnapshot,
   query,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
@@ -267,6 +269,22 @@ export async function saveLead(lead) {
 
 export async function deleteLeadById(id) {
   await deleteDoc(doc(leadsCollection, id));
+}
+
+const userStatsCollection = collection(db, "userStats");
+
+export async function fetchUserStats(userId) {
+  const snap = await getDoc(doc(userStatsCollection, userId));
+  return snap.exists() ? snap.data() : {};
+}
+
+export async function incrementPpcDeleted(userId, by = 1) {
+  const ref = doc(userStatsCollection, userId);
+  try {
+    await updateDoc(ref, { ppcDeletedCount: increment(by) });
+  } catch {
+    await setDoc(ref, { ppcDeletedCount: by }, { merge: true });
+  }
 }
 
 export async function saveLeadFile({

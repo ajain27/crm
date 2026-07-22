@@ -1,4 +1,16 @@
 @layer components {
+  .leads-stats-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .leads-stats-row .stat-card {
+    flex: 1 1 140px;
+    min-width: 120px;
+  }
+
   .leads-add-form {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
