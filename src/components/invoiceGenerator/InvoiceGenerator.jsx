@@ -95,8 +95,6 @@ function buildInvoiceHtml({
   clientName,
   clientWebsite,
   lines,
-  taxLine,
-  subtotal,
   total,
 }) {
   const lineRows = lines
@@ -167,8 +165,6 @@ function buildInvoiceHtml({
     </td>
     <td style="padding:20px 32px;vertical-align:top;width:250px;border-left:1px solid #e5e7eb">
       <div style="border-top:1px solid #e5e7eb;padding-top:12px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#6b7280">Subtotal:</span><span>${fmt(subtotal)}</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#6b7280">Tax / Fees:</span><span>${parseAmt(taxLine) > 0 ? taxLine : "$0.00"}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#1a3560;border-top:2px solid #1a3560;margin-top:8px;padding-top:10px">
           <span>Total Due:</span><span style="color:#2563eb;font-size:18px">${fmt(total)}</span>
         </div>
@@ -216,7 +212,7 @@ export default function InvoiceGenerator({ currentUser }) {
   const [clientName, setClientName] = useState("");
   const [clientWebsite, setClientWebsite] = useState("");
   const [lines, setLines] = useState([emptyLine()]);
-  const [taxLine, setTaxLine] = useState("$0.00");
+
   const [sentInvoices, setSentInvoices] = useState([]);
 
   // Send email modal state
@@ -253,8 +249,7 @@ export default function InvoiceGenerator({ currentUser }) {
   }
 
   const subtotal = lines.reduce((s, l) => s + lineTotal(l), 0);
-  const taxAmt = parseAmt(taxLine);
-  const total = subtotal + taxAmt;
+  const total = subtotal;
 
   const canSend = clientName.trim().length > 0 && date.length > 0 && total > 0;
 
@@ -306,8 +301,6 @@ export default function InvoiceGenerator({ currentUser }) {
             clientName,
             clientWebsite,
             lines,
-            taxLine,
-            subtotal,
             total,
           }),
         ),
@@ -618,17 +611,6 @@ export default function InvoiceGenerator({ currentUser }) {
             );
           })}
         </div>
-
-        <div className="ig-tax-row">
-          <label className="field ig-tax-field">
-            <span>Tax / Fees</span>
-            <input
-              value={taxLine}
-              onChange={(e) => setTaxLine(e.target.value)}
-              placeholder="$0.00"
-            />
-          </label>
-        </div>
       </section>
 
       {/* ─── Invoice Preview (print target) ─── */}
@@ -773,14 +755,6 @@ export default function InvoiceGenerator({ currentUser }) {
               </table>
             </div>
             <div className="ig-inv-totals">
-              <div className="ig-totals-row">
-                <span>Subtotal:</span>
-                <span>{fmt(subtotal)}</span>
-              </div>
-              <div className="ig-totals-row">
-                <span>Tax / Fees:</span>
-                <span>{parseAmt(taxLine) > 0 ? taxLine : "$0.00"}</span>
-              </div>
               <div className="ig-totals-total">
                 <span>Total Due:</span>
                 <span>{fmt(total)}</span>
