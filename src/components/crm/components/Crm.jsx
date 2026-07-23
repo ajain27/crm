@@ -39,6 +39,7 @@ import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
+import InvoiceGenerator from "../../invoiceGenerator/InvoiceGenerator";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
 import AuthGate from "../../auth/AuthGate";
@@ -332,6 +333,8 @@ function Wholesale() {
           <Buyers theme={theme} currentUser={currentUser} />
         ) : activeView === "mortgage" ? (
           <MortgageCalculator />
+        ) : activeView === "invoice-generator" ? (
+          <InvoiceGenerator currentUser={currentUser} />
         ) : (
           <DealAnalyzer />
         )}

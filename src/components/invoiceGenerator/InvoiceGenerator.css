@@ -1,0 +1,815 @@
+/* ═══════════════════════════════════════════════════
+   Invoice Generator — screen + print styles
+═══════════════════════════════════════════════════ */
+
+/* ── Root layout ── */
+.ig-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 24px);
+  padding-bottom: 48px;
+}
+
+/* ── Header actions ── */
+.ig-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Email modal overlay ── */
+.ig-email-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ig-email-modal {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ig-email-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.ig-email-close:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.ig-email-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.ig-email-modal-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.ig-email-modal-sub {
+  font-size: 0.83rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ig-email-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--red, #dc2626);
+  margin: 0;
+}
+
+.ig-email-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.ig-email-modal-actions .primary-btn,
+.ig-email-modal-actions .secondary-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Loading spinner */
+.ig-spin {
+  animation: ig-rotate 0.8s linear infinite;
+}
+
+@keyframes ig-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success state */
+.ig-email-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.ig-email-success-icon {
+  color: var(--green, #059669);
+}
+
+.ig-email-success-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.ig-email-success-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Page header ── */
+.page-header-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted, #888);
+  display: block;
+  margin-top: 4px;
+}
+
+.ig-header-print-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* ── Form panel ── */
+.ig-form-panel .panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+.ig-form-panel .panel-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ig-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 0 28px;
+}
+
+.ig-client-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 0 28px;
+}
+
+.ig-num-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ig-num-row input {
+  flex: 1;
+}
+
+.ig-num-disabled {
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel) 94%) !important;
+  border: 1px solid var(--input-border, #ccd8ea) !important;
+  color: var(--muted) !important;
+  letter-spacing: 0.03em;
+  opacity: 1;
+}
+
+.ig-refresh {
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+/* ── Line items ── */
+.ig-lines-block {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 28px 20px;
+}
+
+.ig-lines-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--blue-light, #eaf2ff);
+  border-bottom: 1px solid var(--line, #dfe7f3);
+}
+
+.ig-lines-top h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.ig-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  padding: 5px 10px;
+}
+
+.ig-lines-head,
+.ig-line-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 80px 130px 40px;
+  align-items: start;
+  padding: 0 14px;
+  gap: 8px;
+}
+
+.ig-lines-head {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background: color-mix(in srgb, var(--blue) 8%, var(--panel) 92%);
+  border-bottom: 1px solid var(--line, #dfe7f3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--blue, #1769e8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ig-line-row {
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding-top: 8px;
+  padding-bottom: 8px;
+  gap: 8px;
+}
+
+.ig-line-row:last-child {
+  border-bottom: none;
+}
+
+.ig-desc-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ig-line-title-input {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.ig-line-sub-input {
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.igc-hint {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+.ig-line-total-val {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text, #111827);
+  padding-top: 6px;
+}
+
+.ig-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #9ca3af);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.ig-del-btn:hover:not(:disabled) {
+  color: var(--danger, #ef4444);
+  background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent);
+}
+
+.ig-del-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Tax row ── */
+.ig-tax-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 28px 28px;
+}
+
+/* ── Preview panel header ── */
+.ig-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding-bottom: 14px;
+  margin-bottom: 24px;
+}
+
+.ig-preview-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════
+   INVOICE DOCUMENT
+═══════════════════════════════════════════════════ */
+
+/* Neutralise every global th/td rule from crm_table.css inside the invoice */
+.ig-invoice table,
+.ig-invoice thead,
+.ig-invoice tbody,
+.ig-invoice tr,
+.ig-invoice th,
+.ig-invoice td {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  vertical-align: top !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: normal !important;
+}
+
+.ig-invoice {
+  background: #fff;
+  color: #1a1a2e;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* ── Meta table (Invoice #, Date, Due Date) ── */
+.ig-inv-meta-tbl {
+  border-collapse: collapse !important;
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.ig-inv-meta-tbl td {
+  padding: 2px 0 2px 12px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: transparent !important;
+  border: none !important;
+  white-space: nowrap !important;
+}
+
+.ig-inv-meta-tbl td:first-child {
+  color: rgba(255, 255, 255, 0.55) !important;
+  text-align: right !important;
+  padding-left: 0 !important;
+}
+
+.ig-inv-meta-tbl td:last-child {
+  font-weight: 700 !important;
+  min-width: 160px !important;
+}
+
+/* Header band */
+.ig-inv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: #1a3560;
+  color: #fff;
+  padding: 28px 32px 24px;
+  gap: 24px;
+}
+
+.ig-inv-company-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+  line-height: 1.2;
+  color: #fff;
+}
+
+.ig-inv-tagline {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+.ig-inv-title-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.ig-inv-title-word {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin: 0 0 10px;
+  color: #fff;
+  line-height: 1;
+}
+
+.ig-inv-meta-tbl {
+  border-collapse: collapse;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ig-inv-meta-tbl td {
+  padding: 2px 0 2px 12px;
+}
+
+.ig-inv-meta-tbl td:first-child {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: right;
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.ig-inv-meta-tbl td:last-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Separator */
+.ig-inv-rule {
+  height: 3px;
+  background: #2563eb;
+}
+
+/* Billing section */
+.ig-inv-billing {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ig-inv-from {
+  padding-right: 24px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.ig-inv-to {
+  padding-left: 24px;
+}
+
+.ig-inv-billing-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2563eb;
+  margin: 0 0 8px;
+}
+
+.ig-inv-billing-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a3560;
+  margin: 0 0 6px;
+}
+
+.ig-inv-billing p {
+  margin: 2px 0;
+  font-size: 12.5px;
+  color: #374151;
+}
+
+.ig-inv-billing p strong {
+  color: #1a1a2e;
+}
+
+/* Line items table */
+.ig-inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.ig-inv-table thead tr {
+  background: #1a3560 !important;
+  color: #fff !important;
+}
+
+.ig-inv-table th {
+  padding: 10px 16px !important;
+  text-align: left !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: #fff !important;
+}
+
+.ig-th-desc {
+  width: 45%;
+}
+.ig-th-amt {
+  width: 18%;
+}
+.ig-th-months {
+  width: 12%;
+}
+.ig-th-total {
+  width: 25%;
+  text-align: right;
+}
+
+.ig-inv-table td {
+  padding: 10px 16px !important;
+  vertical-align: top !important;
+  color: #374151 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.ig-inv-table td:last-child,
+.ig-inv-table th:last-child {
+  text-align: right !important;
+  font-weight: 600 !important;
+  color: #1a1a2e !important;
+}
+
+.ig-row-even td {
+  background: #fff !important;
+}
+.ig-row-odd td {
+  background: #f8fafc !important;
+}
+
+.ig-td-desc strong {
+  display: block;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.ig-td-sub {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Footer: bank + totals */
+.ig-inv-footer {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 24px;
+  padding: 20px 32px;
+  border-top: 2px solid #1a3560;
+  align-items: start;
+}
+
+.ig-inv-bank {
+  border-left: 3px solid #2563eb;
+  padding-left: 14px;
+}
+
+.ig-inv-bank-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #2563eb;
+  margin: 0 0 10px;
+}
+
+.ig-inv-bank-tbl {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ig-inv-bank-tbl td {
+  padding: 3px 0 !important;
+  color: #374151 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.ig-inv-bank-tbl td:first-child {
+  padding-right: 12px !important;
+  color: #6b7280 !important;
+  white-space: nowrap !important;
+}
+
+/* Totals */
+.ig-inv-totals {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.ig-totals-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #374151;
+  padding: 4px 0;
+}
+
+.ig-totals-row span:first-child {
+  color: #6b7280;
+}
+
+.ig-totals-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a3560;
+  border-top: 2px solid #1a3560;
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
+.ig-totals-total span:last-child {
+  color: #2563eb;
+  font-size: 18px;
+}
+
+/* Notes */
+.ig-inv-notes {
+  margin: 0 32px 20px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-left: 3px solid #1a3560;
+  border-radius: 0 4px 4px 0;
+}
+
+.ig-inv-notes-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1a3560;
+  margin: 0 0 8px;
+}
+
+.ig-inv-notes p {
+  font-size: 11.5px;
+  color: #4b5563;
+  margin: 3px 0;
+  line-height: 1.5;
+}
+
+.ig-inv-page-num {
+  text-align: right;
+  padding: 0 32px 16px;
+  font-size: 10.5px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Placeholder italic */
+.ig-placeholder {
+  color: #c4c9d4;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════════════
+   PRINT STYLES — hide UI, show invoice only
+═══════════════════════════════════════════════════ */
+@media print {
+  /* Hide every UI element */
+  .app-topbar,
+  .ig-form-panel,
+  .ig-preview-header,
+  .ig-preview-panel > .panel-header,
+  .app-footer,
+  .page-header {
+    display: none !important;
+  }
+
+  /* Strip chrome from the preview panel */
+  .ig-root,
+  .ig-preview-panel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+  }
+
+  body,
+  .layout,
+  .main {
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Invoice fills the page */
+  .ig-invoice {
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Force white backgrounds inside invoice */
+  .ig-inv-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ig-inv-table thead tr {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .ig-lines-head,
+  .ig-line-row {
+    grid-template-columns: 1fr 100px 60px 100px 36px;
+  }
+
+  .ig-inv-billing {
+    grid-template-columns: 1fr;
+  }
+
+  .ig-inv-from {
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding-right: 0;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .ig-inv-to {
+    padding-left: 0;
+  }
+
+  .ig-inv-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .ig-inv-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ig-inv-title-block {
+    text-align: left;
+  }
+}

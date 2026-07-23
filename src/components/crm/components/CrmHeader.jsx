@@ -10,6 +10,7 @@ import {
   Building2,
   KeyRound,
   TrendingUp,
+  Receipt,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { id: "rental-management", label: "Rental Management", icon: KeyRound },
   { id: "mortgage", label: "Mortgage Calculator", icon: Calculator },
   { id: "buyers", label: "Buyers List", icon: Users },
+  { id: "invoice-generator", label: "Invoice Generator", icon: Receipt },
 ];
 
 function buildDisplayName(currentUser) {
