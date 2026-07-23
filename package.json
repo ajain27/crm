@@ -6,6 +6,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "dev:api": "node dev-api.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

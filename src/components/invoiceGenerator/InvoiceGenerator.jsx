@@ -244,6 +244,16 @@ export default function InvoiceGenerator({ currentUser }) {
     setLines((p) => (p.length > 1 ? p.filter((l) => l.id !== id) : p));
   }
 
+  function resetForm() {
+    setInvoiceNum(genInvoiceNumber());
+    setDate(todayISO());
+    setDueDate("Due Upon Receipt");
+    setClientName("");
+    setClientWebsite("");
+    setLines([emptyLine()]);
+    setModal({ open: false, email: "", status: "idle", error: "" });
+  }
+
   function updateLine(id, field, value) {
     setLines((p) => p.map((l) => (l.id !== id ? l : { ...l, [field]: value })));
   }
@@ -392,10 +402,7 @@ export default function InvoiceGenerator({ currentUser }) {
                 <p className="ig-email-success-sub">
                   Sent to <strong>{modal.email}</strong> from {SELLER.email}
                 </p>
-                <button
-                  className="primary-btn"
-                  onClick={() => setModal((m) => ({ ...m, open: false }))}
-                >
+                <button className="primary-btn" onClick={resetForm}>
                   Done
                 </button>
               </div>
