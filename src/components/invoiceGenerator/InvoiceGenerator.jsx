@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Plus,
   Trash2,
@@ -13,6 +13,11 @@ import {
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import {
+  saveInvoice,
+  fetchInvoices,
+  deleteInvoiceById,
+} from "../../firebase/firestoreService";
 import "./InvoiceGenerator.css";
 
 const SELLER = {
@@ -212,6 +217,7 @@ export default function InvoiceGenerator({ currentUser }) {
   const [clientWebsite, setClientWebsite] = useState("");
   const [lines, setLines] = useState([emptyLine()]);
   const [taxLine, setTaxLine] = useState("$0.00");
+  const [sentInvoices, setSentInvoices] = useState([]);
 
   // Send email modal state
   const [modal, setModal] = useState({
@@ -222,6 +228,13 @@ export default function InvoiceGenerator({ currentUser }) {
   });
   const emailInputRef = useRef(null);
   const invoiceRef = useRef(null);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    fetchInvoices(currentUser.id)
+      .then(setSentInvoices)
+      .catch(() => {});
+  }, [currentUser?.id]);
 
   function refreshNum() {
     setInvoiceNum(genInvoiceNumber());
@@ -307,6 +320,19 @@ export default function InvoiceGenerator({ currentUser }) {
         pdfBase64,
         invoiceNum,
       });
+      const record = {
+        id: crypto.randomUUID(),
+        userId: currentUser?.id || "",
+        invoiceNum,
+        clientName,
+        clientWebsite,
+        toEmail,
+        date,
+        total,
+        sentAt: new Date().toISOString(),
+      };
+      await saveInvoice(record);
+      setSentInvoices((prev) => [record, ...prev]);
       setModal((m) => ({ ...m, status: "success" }));
     } catch (err) {
       setModal((m) => ({ ...m, status: "error", error: err.message }));
@@ -778,6 +804,71 @@ export default function InvoiceGenerator({ currentUser }) {
           <p className="ig-inv-page-num">Page 1 of 1</p>
         </div>
       </section>
+
+      {/* Sent Invoices History */}
+      {sentInvoices.length > 0 && (
+        <section
+          className="panel ig-history-panel"
+          data-reveal
+          style={{ "--reveal-delay": "120ms" }}
+        >
+          <div className="panel-header">
+            <h2>Sent Invoices</h2>
+            <span className="ig-history-count">{sentInvoices.length}</span>
+          </div>
+          <div className="ig-history-table-wrap">
+            <table className="ig-history-table">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Client</th>
+                  <th>Sent To</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Sent At</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...sentInvoices]
+                  .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt))
+                  .map((inv) => (
+                    <tr key={inv.id}>
+                      <td className="ig-history-num">{inv.invoiceNum}</td>
+                      <td>{inv.clientName}</td>
+                      <td className="ig-history-email">{inv.toEmail}</td>
+                      <td>{fmtDate(inv.date)}</td>
+                      <td className="ig-history-total">{fmt(inv.total)}</td>
+                      <td className="ig-history-sentat">
+                        {new Date(inv.sentAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td>
+                        <button
+                          className="ig-history-del"
+                          title="Remove from history"
+                          onClick={async () => {
+                            await deleteInvoiceById(inv.id);
+                            setSentInvoices((p) =>
+                              p.filter((i) => i.id !== inv.id),
+                            );
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

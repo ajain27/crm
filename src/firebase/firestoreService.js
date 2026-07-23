@@ -37,6 +37,7 @@ const passwordResetsCollection = collection(db, "passwordResets");
 const pmDealsCollection = collection(db, "pmDeals");
 const titleCompaniesCollection = collection(db, "titleCompanies");
 const rentalsCollection = collection(db, "rentals");
+const invoicesCollection = collection(db, "invoices");
 
 function leadFilesSubcollection(leadId) {
   return collection(db, "leads", leadId, "files");
@@ -466,4 +467,20 @@ export async function confirmPasswordReset(email, otp, newPassword) {
     { used: true },
     { merge: true },
   );
+}
+
+export async function saveInvoice(invoice) {
+  const invoiceRef = doc(invoicesCollection, invoice.id);
+  await setDoc(invoiceRef, invoice);
+}
+
+export async function fetchInvoices(userId) {
+  const snapshot = await getDocs(
+    query(invoicesCollection, where("userId", "==", userId)),
+  );
+  return mapSnapshot(snapshot);
+}
+
+export async function deleteInvoiceById(id) {
+  await deleteDoc(doc(invoicesCollection, id));
 }

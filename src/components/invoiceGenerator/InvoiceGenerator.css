@@ -813,3 +813,94 @@
     text-align: left;
   }
 }
+
+/* ── Sent Invoices History ── */
+.ig-history-panel .panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ig-history-count {
+  background: color-mix(in srgb, var(--blue) 12%, var(--panel) 88%);
+  color: var(--blue);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.ig-history-table-wrap {
+  overflow-x: auto;
+  padding: 0 28px 24px;
+}
+
+.ig-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.ig-history-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ig-history-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.ig-history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ig-history-num {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: var(--blue) !important;
+  font-weight: 600;
+}
+
+.ig-history-email {
+  color: var(--muted) !important;
+  font-size: 0.8rem;
+}
+
+.ig-history-total {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ig-history-sentat {
+  color: var(--muted) !important;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.ig-history-del {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.ig-history-del:hover {
+  color: var(--red, #dc2626);
+  background: color-mix(in srgb, var(--red, #dc2626) 10%, transparent);
+}
