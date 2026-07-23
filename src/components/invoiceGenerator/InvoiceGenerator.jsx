@@ -249,11 +249,11 @@ export default function InvoiceGenerator({ currentUser }) {
     const el = invoiceRef.current;
     if (!el) return null;
     const canvas = await html2canvas(el, {
-      scale: 2,
+      scale: 1.5,
       useCORS: true,
       logging: false,
     });
-    const imgData = canvas.toDataURL("image/png");
+    const imgData = canvas.toDataURL("image/jpeg", 0.82);
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "pt",
@@ -266,14 +266,13 @@ export default function InvoiceGenerator({ currentUser }) {
     let yOffset = 0;
     let remaining = imgH;
     while (remaining > 0) {
-      pdf.addImage(imgData, "PNG", 0, -yOffset, pageW, imgH);
+      pdf.addImage(imgData, "JPEG", 0, -yOffset, pageW, imgH);
       remaining -= pageH;
       if (remaining > 0) {
         pdf.addPage();
         yOffset += pageH;
       }
     }
-    // Return base64 string without the data URI prefix
     return pdf.output("datauristring").split(",")[1];
   }
 
