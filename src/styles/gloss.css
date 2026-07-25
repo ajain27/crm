@@ -1,0 +1,843 @@
+/* ═══════════════════════════════════════════════════════════════
+   Glassmorphism, gloss & reflection system
+   Unlayered — wins over @layer components without !important.
+
+   Class mapping to app's existing selectors:
+   • .panel            → content cards (InvoiceGenerator, CRM form, etc.)
+   • .stat-card        → KPI metric cards (Stats.css)
+   • .simple-stat      → the white-bg stat card variant
+   • .theme-*          → colored stat card backgrounds
+   • .primary-btn      → main CTA (Save, Send, etc.)
+   • .app-topbar       → sticky nav bar
+   • .sidebar          → left nav panel
+   • nav a.active      → active nav link
+   • .modal / .auth-card → overlays
+   • .user-card        → sidebar footer card
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Gloss tokens ─────────────────────────────────────────────── */
+:root {
+  --gloss-top: rgba(255, 255, 255, 0.16);
+  --gloss-mid: rgba(255, 255, 255, 0.05);
+  --gloss-edge: rgba(255, 255, 255, 0.24);
+  --gloss-btn: rgba(255, 255, 255, 0.22);
+  --gloss-btn-hover: rgba(255, 255, 255, 0.32);
+  --gloss-sweep: rgba(255, 255, 255, 0.18);
+  /* Light mode: strong diagonal white glass reflection */
+  --glass-reflection: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.3) 40%,
+    transparent 100%
+  );
+}
+
+:root.dark {
+  --gloss-top: rgba(255, 255, 255, 0.065);
+  --gloss-mid: rgba(255, 255, 255, 0.02);
+  --gloss-edge: rgba(255, 255, 255, 0.1);
+  --gloss-btn: rgba(255, 255, 255, 0.14);
+  --gloss-btn-hover: rgba(255, 255, 255, 0.22);
+  --gloss-sweep: rgba(255, 255, 255, 0.09);
+  --glass-reflection: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 100%
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PANELS / CONTENT CARDS
+════════════════════════════════════════════════════════════════ */
+
+.panel {
+  background-image: var(--glass-reflection);
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .panel {
+  background-color: var(--panel);
+  background-image: var(--glass-reflection);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STAT CARDS — glass reflection + shimmer sweep
+════════════════════════════════════════════════════════════════ */
+
+@keyframes gloss-sweep {
+  from {
+    transform: translateX(-180%) skewX(-12deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(300%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+/* Diagonal glass reflection on the card face */
+.stat-card {
+  background-image: var(--glass-reflection);
+  box-shadow:
+    var(--shadow, 0 4px 16px rgba(0, 0, 0, 0.1)),
+    inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .stat-card {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Shimmer sweep — ::before (::after is already the ripple) */
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -20%;
+  width: 32%;
+  height: 160%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gloss-sweep) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+  animation: gloss-sweep 1.1s ease-out 0.35s both;
+}
+
+.stat-card:hover::before {
+  animation: gloss-sweep 0.6s ease-out both;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Themed stat card variants (dark mode accents with glow)
+──────────────────────────────────────────────────────────────── */
+
+:root.dark .simple-stat.theme-green {
+  background: linear-gradient(
+    135deg,
+    rgba(13, 148, 136, 0.22) 0%,
+    rgba(20, 29, 46, 0.9) 100%
+  );
+  border-top: 2px solid #14b8a6;
+  box-shadow:
+    0 0 20px rgba(13, 148, 136, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(20, 184, 166, 0.25);
+}
+
+:root.dark .simple-stat.theme-orange {
+  background: linear-gradient(
+    135deg,
+    rgba(234, 179, 8, 0.18) 0%,
+    rgba(20, 29, 46, 0.9) 100%
+  );
+  border-top: 2px solid #eab308;
+  box-shadow:
+    0 0 20px rgba(234, 179, 8, 0.14),
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(234, 179, 8, 0.2);
+}
+
+:root.dark .simple-stat.theme-red {
+  background: linear-gradient(
+    135deg,
+    rgba(244, 63, 94, 0.18) 0%,
+    rgba(20, 29, 46, 0.9) 100%
+  );
+  border-top: 2px solid #f43f5e;
+  box-shadow:
+    0 0 18px rgba(244, 63, 94, 0.14),
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(244, 63, 94, 0.2);
+}
+
+:root.dark .simple-stat.theme-blue {
+  background: linear-gradient(
+    135deg,
+    rgba(20, 184, 166, 0.2) 0%,
+    rgba(13, 148, 136, 0.1) 50%,
+    rgba(15, 23, 42, 0.9) 100%
+  );
+  border-top: 2px solid #2dd4bf;
+  border-color: rgba(45, 212, 191, 0.25);
+  box-shadow:
+    inset 0 0 24px rgba(13, 148, 136, 0.12),
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(45, 212, 191, 0.3);
+}
+
+/* White theme becomes a clean glass card in dark mode */
+:root.dark .simple-stat.theme-white {
+  background: rgba(255, 255, 255, 0.04);
+  border-top: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Glowing value text on revenue/teal cards */
+:root.dark .theme-blue strong,
+:root.dark .theme-blue .gauge-val {
+  color: #5eead4;
+  text-shadow:
+    0 0 14px rgba(45, 212, 191, 0.8),
+    0 0 30px rgba(13, 148, 136, 0.5);
+}
+
+/* Glowing gauge arc when active */
+:root.dark .gauge-path {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TOPBAR — frosted glass
+════════════════════════════════════════════════════════════════ */
+
+.app-topbar {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gloss-top) 0%,
+    transparent 100%
+  );
+  box-shadow:
+    0 1px 0 var(--gloss-edge),
+    0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+:root.dark .app-topbar {
+  background-color: color-mix(in srgb, var(--panel) 84%, transparent 16%);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 100%
+  );
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 32px rgba(0, 0, 0, 0.3);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Active nav pill in topbar */
+.app-topbar-nav-item.active {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gloss-top) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .app-topbar-nav-item.active {
+  background-color: rgba(20, 184, 166, 0.14);
+  color: #2dd4bf;
+  box-shadow: inset 0 1px 0 rgba(45, 212, 191, 0.25);
+}
+
+:root.dark .app-topbar-nav-item:hover {
+  background-color: rgba(20, 184, 166, 0.08);
+  color: var(--text);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SIDEBAR — glass gradient
+════════════════════════════════════════════════════════════════ */
+
+.sidebar {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gloss-top) 0%,
+    var(--gloss-mid) 30%,
+    transparent 60%
+  );
+  box-shadow: inset -1px 0 0 var(--gloss-edge);
+}
+
+:root.dark .sidebar {
+  background-color: var(--panel);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 50%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Active nav link */
+nav a.active {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gloss-top) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark nav a.active {
+  background-color: rgba(20, 184, 166, 0.14);
+  color: #2dd4bf;
+  box-shadow: inset 0 1px 0 rgba(45, 212, 191, 0.25);
+}
+
+:root.dark nav a:hover {
+  background-color: rgba(20, 184, 166, 0.08);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 70%
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BUTTONS — ::before gloss sheen (::after is ripple)
+════════════════════════════════════════════════════════════════ */
+
+.primary-btn::before,
+.secondary-btn::before,
+.ghost-btn::before,
+.danger-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--gloss-btn) 0%, transparent 55%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.18s ease;
+}
+
+.primary-btn:hover::before,
+.secondary-btn:hover::before,
+.ghost-btn:hover::before,
+.danger-btn:hover::before {
+  background: linear-gradient(
+    to bottom,
+    var(--gloss-btn-hover) 0%,
+    transparent 55%
+  );
+}
+
+.primary-btn:disabled::before,
+.secondary-btn:disabled::before,
+.ghost-btn:disabled::before,
+.danger-btn:disabled::before {
+  display: none;
+}
+
+/* Dark mode primary button — teal gradient with neon glow */
+:root.dark .primary-btn {
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 0 20px rgba(13, 148, 136, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+:root.dark .primary-btn:hover {
+  background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
+  box-shadow:
+    0 0 32px rgba(45, 212, 191, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+:root.dark .primary-btn:active {
+  transform: translateY(0);
+}
+
+/* Secondary / ghost buttons in dark mode */
+:root.dark .secondary-btn,
+:root.dark .ghost-btn {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root.dark .secondary-btn:hover,
+:root.dark .ghost-btn:hover {
+  background-color: rgba(20, 184, 166, 0.08);
+  border-color: rgba(20, 184, 166, 0.25);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FORM INPUTS — dark glass with teal focus glow
+════════════════════════════════════════════════════════════════ */
+
+.field input:not([type="checkbox"]):not([type="date"]):not([type="range"]),
+.field textarea,
+.auth-field input,
+.search-input-expanded {
+  box-shadow: inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .field input:not([type="checkbox"]):not([type="range"]),
+:root.dark .field textarea,
+:root.dark .field select,
+:root.dark .auth-field input,
+:root.dark .search-input-expanded {
+  background-color: rgba(10, 16, 26, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-size 0.22s ease;
+}
+
+:root.dark .field input:not([type="checkbox"]):not([type="range"]):focus,
+:root.dark .field textarea:focus,
+:root.dark .field select:focus,
+:root.dark .auth-field input:focus,
+:root.dark .search-input-expanded:focus {
+  border-color: #2dd4bf;
+  box-shadow:
+    0 0 0 3px rgba(45, 212, 191, 0.18),
+    inset 0 0 6px rgba(45, 212, 191, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MODAL & AUTH CARD — elevated glass
+════════════════════════════════════════════════════════════════ */
+
+.modal {
+  background-image: var(--glass-reflection);
+  box-shadow:
+    0 32px 72px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .modal {
+  background-color: rgba(20, 29, 46, 0.92);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 40px 80px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.auth-card {
+  background-image: var(--glass-reflection);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .auth-card {
+  background-color: rgba(20, 29, 46, 0.9);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 32px 72px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   USER CARD (sidebar footer)
+════════════════════════════════════════════════════════════════ */
+
+.user-card {
+  background-image: linear-gradient(
+    to bottom,
+    var(--gloss-top) 0%,
+    transparent 50%
+  );
+  box-shadow: inset 0 1px 0 var(--gloss-edge);
+}
+
+:root.dark .user-card {
+  background-color: rgba(255, 255, 255, 0.04);
+  background-image: var(--glass-reflection);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PROFILE AVATAR
+════════════════════════════════════════════════════════════════ */
+
+.profile-avatar-btn {
+  box-shadow:
+    inset 0 1px 0 var(--gloss-edge),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+:root.dark .profile-avatar-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(20, 184, 166, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BRAND ICON
+════════════════════════════════════════════════════════════════ */
+
+.brand-icon {
+  background: linear-gradient(135deg, #1a7aff 0%, #0f6ae8 60%, #0b52c4 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 4px 14px rgba(15, 106, 232, 0.42);
+}
+
+:root.dark .brand-icon {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 16px rgba(13, 148, 136, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PROFILE DROPDOWN MENU
+════════════════════════════════════════════════════════════════ */
+
+:root.dark .profile-menu-dropdown {
+  background-color: rgba(20, 29, 46, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LIGHT MODE — crisp glass reflection & teal accents
+   Techniques from the reference CSS, mapped to app selectors.
+   border-color: transparent !important in base.css is defeated
+   by using inset box-shadow for border highlights instead.
+════════════════════════════════════════════════════════════════ */
+
+/* ── Update bg token for light mode ──────────────────────────── */
+:root:not(.dark) {
+  --bg: #f3f4f6;
+}
+
+/* Panel — frosted glass card with strong top-edge reflection */
+:root:not(.dark) .panel {
+  background-color: rgba(255, 255, 255, 0.9);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  /* inset top shadow = bright white border-top (avoids !important border conflict) */
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06),
+    0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+:root:not(.dark) .panel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 20px 30px -10px rgba(0, 0, 0, 0.09),
+    0 8px 12px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* Stat cards — glass reflection overlay via background-image */
+:root:not(.dark) .stat-card {
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06),
+    0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+:root:not(.dark) .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 20px 30px -10px rgba(0, 0, 0, 0.09),
+    0 8px 12px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Themed stat card accents (light mode) ──────────────────── */
+
+:root:not(.dark) .simple-stat.theme-green {
+  background: linear-gradient(
+    135deg,
+    rgba(5, 150, 105, 0.12) 0%,
+    rgba(255, 255, 255, 0.92) 60%,
+    transparent 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -2px 0 rgba(5, 150, 105, 0.2),
+    0 0 20px rgba(5, 150, 105, 0.08),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .simple-stat.theme-orange {
+  background: linear-gradient(
+    135deg,
+    rgba(217, 119, 6, 0.12) 0%,
+    rgba(255, 255, 255, 0.92) 60%,
+    transparent 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -2px 0 rgba(217, 119, 6, 0.22),
+    0 0 20px rgba(217, 119, 6, 0.07),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .simple-stat.theme-red {
+  background: linear-gradient(
+    135deg,
+    rgba(220, 38, 38, 0.1) 0%,
+    rgba(255, 255, 255, 0.92) 60%,
+    transparent 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -2px 0 rgba(220, 38, 38, 0.2),
+    0 0 20px rgba(220, 38, 38, 0.07),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .simple-stat.theme-blue {
+  background: linear-gradient(
+    135deg,
+    rgba(13, 148, 136, 0.12) 0%,
+    rgba(255, 255, 255, 0.92) 60%,
+    transparent 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -2px 0 rgba(13, 148, 136, 0.25),
+    0 0 24px rgba(13, 148, 136, 0.1),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .simple-stat.theme-white {
+  background-color: rgba(255, 255, 255, 0.92);
+  background-image: var(--glass-reflection);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 10px 25px -5px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Topbar — crisp frosted glass ───────────────────────────── */
+
+:root:not(.dark) .app-topbar {
+  background-color: rgba(255, 255, 255, 0.86);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 100%
+  );
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 24px rgba(15, 23, 42, 0.07);
+}
+
+:root:not(.dark) .app-topbar-nav-item.active {
+  background-color: rgba(13, 148, 136, 0.1);
+  color: #0d9488;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root:not(.dark) .app-topbar-nav-item:hover {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.7) 0%,
+    transparent 70%
+  );
+}
+
+/* ── Sidebar — light frosted glass ──────────────────────────── */
+
+:root:not(.dark) .sidebar {
+  background-color: rgba(255, 255, 255, 0.86);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+:root:not(.dark) nav a.active {
+  background-color: var(--badge-bg);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.8) 0%,
+    transparent 70%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root:not(.dark) nav a:hover {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.55) 0%,
+    transparent 70%
+  );
+}
+
+/* ── Primary button — teal gradient with gloss sheen ────────── */
+
+:root:not(.dark) .primary-btn {
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 4px 14px rgba(13, 148, 136, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+:root:not(.dark) .primary-btn::before {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+:root:not(.dark) .primary-btn:hover {
+  background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
+  box-shadow:
+    0 6px 20px rgba(13, 148, 136, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+:root:not(.dark) .primary-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Input fields — teal focus ring ─────────────────────────── */
+
+:root:not(.dark) .field input:not([type="checkbox"]):not([type="range"]),
+:root:not(.dark) .field textarea,
+:root:not(.dark) .field select,
+:root:not(.dark) .auth-field input,
+:root:not(.dark) .search-input-expanded {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-size 0.22s ease;
+}
+
+:root:not(.dark) .field input:not([type="checkbox"]):not([type="range"]):focus,
+:root:not(.dark) .field textarea:focus,
+:root:not(.dark) .field select:focus,
+:root:not(.dark) .auth-field input:focus,
+:root:not(.dark) .search-input-expanded:focus {
+  box-shadow:
+    0 0 0 3px rgba(13, 148, 136, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* ── Modal — frosted glass overlay ──────────────────────────── */
+
+:root:not(.dark) .modal {
+  background-color: rgba(255, 255, 255, 0.9);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 32px 72px rgba(15, 23, 42, 0.18);
+}
+
+/* ── Auth card ───────────────────────────────────────────────── */
+
+:root:not(.dark) .auth-card {
+  background-color: rgba(255, 255, 255, 0.9);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    0 24px 64px rgba(15, 23, 42, 0.12);
+}
+
+/* ── Profile dropdown ────────────────────────────────────────── */
+
+:root:not(.dark) .profile-menu-dropdown {
+  background-color: rgba(255, 255, 255, 0.92);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 24px 48px rgba(15, 23, 42, 0.14);
+}
+
+/* ── User card ───────────────────────────────────────────────── */
+
+:root:not(.dark) .user-card {
+  background-color: rgba(255, 255, 255, 0.8);
+  background-image: var(--glass-reflection);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+/* ── Profile avatar ──────────────────────────────────────────── */
+
+:root:not(.dark) .profile-avatar-btn {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(13, 148, 136, 0.18),
+    0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ACCESSIBILITY — no sweep animation for reduced motion
+════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card::before,
+  .stat-card:hover::before {
+    animation: none;
+    display: none;
+  }
+
+  :root.dark .primary-btn:hover,
+  :root:not(.dark) .primary-btn:hover {
+    transform: none;
+  }
+}

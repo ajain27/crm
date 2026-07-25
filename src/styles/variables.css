@@ -11,7 +11,8 @@
     --red: #dc2626;
     --orange: #d97706;
     --purple: #7c3aed;
-    --shadow: 0 20px 48px rgba(15, 23, 42, 0.06);
+    --shadow:
+      0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
 
     --nav-text: #334155;
     --nav-hover-bg: #eaf2ff;
@@ -35,36 +36,36 @@
   }
 
   :root.dark {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --line: #334155;
-    --text: #f8fafc;
+    --bg: #0c1322;
+    --panel: #141d2e;
+    --line: rgba(255, 255, 255, 0.08);
+    --text: #f1f5f9;
     --muted: #94a3b8;
-    --blue: #3b82f6;
-    --blue-light: rgba(59, 130, 246, 0.2);
-    --green: #10b981;
-    --red: #ef4444;
-    --orange: #f59e0b;
-    --purple: #8b5cf6;
-    --shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+    --blue: #14b8a6;
+    --blue-light: rgba(20, 184, 166, 0.16);
+    --green: #2dd4bf;
+    --red: #f43f5e;
+    --orange: #eab308;
+    --purple: #a78bfa;
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.28);
 
     --nav-text: #cbd5e1;
-    --nav-hover-bg: rgba(59, 130, 246, 0.15);
-    --btn-text: #0f172a;
-    --btn-secondary-bg: #1e293b;
-    --btn-primary-bg: #f1f5f9;
-    --btn-primary-hover: #e2e8f0;
-    --input-bg: #0f172a;
-    --input-border: #334155;
-    --input-text: #f8fafc;
-    --th-bg: #0f172a;
+    --nav-hover-bg: rgba(20, 184, 166, 0.12);
+    --btn-text: #ffffff;
+    --btn-secondary-bg: #1b2640;
+    --btn-primary-bg: #0d9488;
+    --btn-primary-hover: #0f9e91;
+    --input-bg: #0a1019;
+    --input-border: rgba(255, 255, 255, 0.09);
+    --input-text: #f1f5f9;
+    --th-bg: #0c1322;
     --th-text: #94a3b8;
-    --badge-bg: #334155;
+    --badge-bg: rgba(255, 255, 255, 0.07);
 
-    --bg-green-light: rgba(16, 185, 129, 0.15);
-    --bg-purple-light: rgba(139, 92, 246, 0.15);
-    --bg-orange-light: rgba(245, 158, 11, 0.15);
-    --bg-red-light: rgba(239, 68, 68, 0.15);
+    --bg-green-light: rgba(45, 212, 191, 0.14);
+    --bg-purple-light: rgba(167, 139, 250, 0.14);
+    --bg-orange-light: rgba(234, 179, 8, 0.14);
+    --bg-red-light: rgba(244, 63, 94, 0.14);
     --ripple-soft: rgba(255, 255, 255, 0.18);
     --ripple-strong: rgba(255, 255, 255, 0.34);
   }
