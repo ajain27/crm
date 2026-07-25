@@ -904,3 +904,102 @@
   color: var(--red, #dc2626);
   background: color-mix(in srgb, var(--red, #dc2626) 10%, transparent);
 }
+
+/* ── Payment Options (split payments) ── */
+.ig-payment-options {
+  padding: 0 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ig-payment-num-field {
+  max-width: 200px;
+}
+
+.ig-payment-num-input {
+  width: 100%;
+}
+
+.ig-schedule-block {
+  border: 1px solid var(--line, #dfe7f3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ig-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--blue) 8%, var(--panel) 92%);
+  border-bottom: 1px solid var(--line, #dfe7f3);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ig-schedule-per {
+  font-size: 0.82rem;
+  color: var(--blue);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ig-schedule-breakdown {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--muted, #6b7280);
+}
+
+.ig-schedule-row {
+  display: grid;
+  grid-template-columns: 110px 130px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.ig-schedule-row:last-child {
+  border-bottom: none;
+}
+
+.ig-schedule-pnum {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ig-schedule-amt {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.ig-schedule-date {
+  width: 100%;
+}
+
+/* ── Scheduled payment status badges ── */
+.ig-sched-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ig-sched-pending {
+  background: color-mix(in srgb, #f59e0b 15%, transparent);
+  color: #b45309;
+}
+
+.ig-sched-sent {
+  background: color-mix(in srgb, #059669 15%, transparent);
+  color: #047857;
+}

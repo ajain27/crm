@@ -17,6 +17,9 @@ import {
   saveInvoice,
   fetchInvoices,
   deleteInvoiceById,
+  saveScheduledPayment,
+  fetchScheduledPayments,
+  deleteScheduledPaymentById,
 } from "../../firebase/firestoreService";
 import "./InvoiceGenerator.css";
 
@@ -93,10 +96,23 @@ function buildInvoiceHtml({
   date,
   dueDate,
   clientName,
+  clientAddress,
   clientWebsite,
   lines,
   total,
+  paymentNum = null,
+  totalPayments = null,
+  paymentAmount = null,
 }) {
+  const displayTotal = paymentAmount !== null ? paymentAmount : total;
+  const isSplit =
+    paymentNum !== null && totalPayments !== null && totalPayments > 1;
+  const splitBanner = isSplit
+    ? `<div style="background:#2563eb;color:#fff;text-align:center;padding:10px 0;font-size:13px;font-weight:700;letter-spacing:.05em">
+        PAYMENT ${paymentNum} OF ${totalPayments} — ${fmt(displayTotal)} DUE ${fmtDate(dueDate) || dueDate}
+       </div>`
+    : "";
+
   const lineRows = lines
     .map((line, i) => {
       const lt = lineTotal(line);
@@ -114,6 +130,7 @@ function buildInvoiceHtml({
 
   return `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,sans-serif">
 <div style="max-width:700px;margin:0 auto;background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden">
+  ${splitBanner}
   <div style="background:#1a3560;padding:28px 32px">
     <table width="100%"><tr>
       <td><h1 style="margin:0 0 4px;font-size:22px;font-weight:700;color:#fff">${SELLER.name}</h1>
@@ -142,6 +159,7 @@ function buildInvoiceHtml({
     <td width="50%" style="padding:20px 32px;vertical-align:top">
       <p style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2563eb;margin:0 0 8px">BILLED TO (CLIENT)</p>
       <p style="font-size:15px;font-weight:700;color:#1a3560;margin:0 0 6px">${clientName || "—"}</p>
+      ${clientAddress ? `<p style="margin:2px 0;font-size:12px;color:#374151">${clientAddress}</p>` : ""}
       ${clientWebsite ? `<p style="margin:2px 0;font-size:12px;color:#374151"><strong>Website:</strong> ${clientWebsite}</p>` : ""}
     </td>
   </tr></table>
@@ -166,7 +184,7 @@ function buildInvoiceHtml({
     <td style="padding:20px 32px;vertical-align:top;width:250px;border-left:1px solid #e5e7eb">
       <div style="border-top:1px solid #e5e7eb;padding-top:12px">
         <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#1a3560;border-top:2px solid #1a3560;margin-top:8px;padding-top:10px">
-          <span>Total Due:</span><span style="color:#2563eb;font-size:18px">${fmt(total)}</span>
+          <span>Total Due:</span><span style="color:#2563eb;font-size:18px">${fmt(displayTotal)}</span>
         </div>
       </div>
     </td>
@@ -210,10 +228,17 @@ export default function InvoiceGenerator({ currentUser }) {
   const [date, setDate] = useState(todayISO);
   const [dueDate, setDueDate] = useState("Due Upon Receipt");
   const [clientName, setClientName] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
   const [clientWebsite, setClientWebsite] = useState("");
+  const [setupFee, setSetupFee] = useState("");
   const [lines, setLines] = useState([emptyLine()]);
 
+  const [numPaymentsRaw, setNumPaymentsRaw] = useState("");
+  const numPayments = Math.max(1, Math.min(12, parseInt(numPaymentsRaw) || 1));
+  const [paymentDates, setPaymentDates] = useState([""]);
+
   const [sentInvoices, setSentInvoices] = useState([]);
+  const [scheduledPayments, setScheduledPayments] = useState([]);
 
   // Send email modal state
   const [modal, setModal] = useState({
@@ -221,6 +246,8 @@ export default function InvoiceGenerator({ currentUser }) {
     email: "",
     status: "idle",
     error: "",
+    sentCount: 0,
+    scheduledCount: 0,
   });
   const emailInputRef = useRef(null);
   const invoiceRef = useRef(null);
@@ -230,7 +257,38 @@ export default function InvoiceGenerator({ currentUser }) {
     fetchInvoices(currentUser.id)
       .then(setSentInvoices)
       .catch(() => {});
+    fetchScheduledPayments(currentUser.id)
+      .then(setScheduledPayments)
+      .catch(() => {});
   }, [currentUser?.id]);
+
+  function handleSetupFeeChange(val) {
+    setSetupFee(val);
+    setLines((prev) => [
+      { ...prev[0], title: val ? "Setup Fee" : "", amount: val },
+      ...prev.slice(1),
+    ]);
+  }
+
+  function handleNumPaymentsChange(val) {
+    setNumPaymentsRaw(val);
+    const n = Math.max(1, Math.min(12, parseInt(val) || 1));
+    const months = lines
+      .slice(1)
+      .reduce((max, l) => Math.max(max, parseInt(l.months) || 0), 0);
+    const newTotal = Math.max(n, months || 1);
+    setPaymentDates((prev) =>
+      Array.from({ length: newTotal }, (_, i) => prev[i] || ""),
+    );
+  }
+
+  function updatePaymentDate(idx, val) {
+    setPaymentDates((prev) => {
+      const next = [...prev];
+      next[idx] = val;
+      return next;
+    });
+  }
 
   function refreshNum() {
     setInvoiceNum(genInvoiceNumber());
@@ -249,9 +307,20 @@ export default function InvoiceGenerator({ currentUser }) {
     setDate(todayISO());
     setDueDate("Due Upon Receipt");
     setClientName("");
+    setClientAddress("");
     setClientWebsite("");
+    setSetupFee("");
     setLines([emptyLine()]);
-    setModal({ open: false, email: "", status: "idle", error: "" });
+    setNumPaymentsRaw("");
+    setPaymentDates([""]);
+    setModal({
+      open: false,
+      email: "",
+      status: "idle",
+      error: "",
+      sentCount: 0,
+      scheduledCount: 0,
+    });
   }
 
   function updateLine(id, field, value) {
@@ -261,7 +330,29 @@ export default function InvoiceGenerator({ currentUser }) {
   const subtotal = lines.reduce((s, l) => s + lineTotal(l), 0);
   const total = subtotal;
 
-  const canSend = clientName.trim().length > 0 && date.length > 0 && total > 0;
+  const setupFeeAmt = parseAmt(setupFee);
+  // Per-month rate = sum of non-setup-fee line amounts (no months multiplier)
+  const monthlyRate = lines
+    .slice(1)
+    .reduce((sum, l) => sum + parseAmt(l.amount), 0);
+  // Total billing periods = max of setup installments and monthly duration
+  const totalMonths = lines
+    .slice(1)
+    .reduce((max, l) => Math.max(max, parseInt(l.months) || 0), 0);
+  const totalInvoices = Math.max(numPayments, totalMonths || 1);
+  const allDatesSet =
+    totalInvoices <= 1 ||
+    Array.from(
+      { length: totalInvoices },
+      (_, i) => paymentDates[i] || "",
+    ).every((d) => d.length > 0);
+  const canSend =
+    clientName.trim().length > 0 &&
+    date.length > 0 &&
+    total > 0 &&
+    numPaymentsRaw !== "" &&
+    allDatesSet &&
+    (numPayments === 1 || setupFeeAmt > 0);
 
   async function generatePdfBase64() {
     const el = invoiceRef.current;
@@ -302,27 +393,108 @@ export default function InvoiceGenerator({ currentUser }) {
     }
     setModal((m) => ({ ...m, status: "sending", error: "" }));
     try {
-      const [html, pdfBase64] = await Promise.all([
-        Promise.resolve(
-          buildInvoiceHtml({
-            invoiceNum,
-            date,
-            dueDate,
+      const today = todayISO();
+      let sentCount = 0;
+      let scheduledCount = 0;
+
+      // totalInvoices = max(numPayments, months on monthly lines)
+      const tMonths = lines
+        .slice(1)
+        .reduce((max, l) => Math.max(max, parseInt(l.months) || 0), 0);
+      const tInvoices = Math.max(numPayments, tMonths || 1);
+      const installmentAmt = setupFeeAmt / numPayments;
+
+      // Build line items for invoice pNum:
+      //   - setup line only when pNum <= numPayments
+      //   - monthly lines only when pNum <= tMonths (or 1 if no months set)
+      function buildPaymentLines(pNum) {
+        const hasSetup = setupFeeAmt > 0 && pNum <= numPayments;
+        const hasMonthly = pNum <= (tMonths || 1);
+        const result = [];
+        if (hasSetup) {
+          result.push({
+            ...lines[0],
+            title:
+              numPayments > 1
+                ? `Setup Fee (${pNum} of ${numPayments})`
+                : "Setup Fee",
+            subtitle: numPayments > 1 ? `Total setup: ${fmt(setupFeeAmt)}` : "",
+            amount: String(installmentAmt),
+            months: "",
+          });
+        }
+        if (hasMonthly) {
+          lines
+            .slice(1)
+            .forEach((line) => result.push({ ...line, months: "" }));
+        }
+        return result;
+      }
+
+      // Generate PDF once from the current preview DOM
+      const pdfBase64 = await generatePdfBase64();
+
+      for (let i = 0; i < tInvoices; i++) {
+        const pNum = i + 1;
+        const hasSetup = setupFeeAmt > 0 && pNum <= numPayments;
+        const hasMonthly = pNum <= (tMonths || 1);
+        const paymentAmt =
+          (hasSetup ? installmentAmt : 0) + (hasMonthly ? monthlyRate : 0);
+        const pDate =
+          tInvoices > 1 && paymentDates[i] ? paymentDates[i] : today;
+        const pInvoiceNum =
+          tInvoices > 1 ? `${invoiceNum}-P${pNum}` : invoiceNum;
+        const subject =
+          tInvoices > 1
+            ? `Invoice ${pInvoiceNum} (${pNum} of ${tInvoices}) from ${SELLER.name}`
+            : `Invoice ${invoiceNum} from ${SELLER.name}`;
+        const html = buildInvoiceHtml({
+          invoiceNum: pInvoiceNum,
+          date,
+          dueDate: pDate,
+          clientName,
+          clientAddress,
+          clientWebsite,
+          lines: buildPaymentLines(pNum),
+          total: paymentAmt,
+          paymentNum: tInvoices > 1 ? pNum : null,
+          totalPayments: tInvoices > 1 ? tInvoices : null,
+          paymentAmount: tInvoices > 1 ? paymentAmt : null,
+        });
+        if (pDate <= today) {
+          await sendViaResend({
+            toEmail,
+            subject,
+            htmlContent: html,
+            pdfBase64,
+            invoiceNum: pInvoiceNum,
+          });
+          sentCount++;
+        } else {
+          const rec = {
+            id: crypto.randomUUID(),
+            userId: currentUser?.id || "",
+            invoiceNum: pInvoiceNum,
+            parentInvoiceNum: invoiceNum,
+            paymentNum: pNum,
+            totalPayments: tInvoices,
             clientName,
             clientWebsite,
-            lines,
-            total,
-          }),
-        ),
-        generatePdfBase64(),
-      ]);
-      await sendViaResend({
-        toEmail,
-        subject: `Invoice ${invoiceNum} from ${SELLER.name}`,
-        htmlContent: html,
-        pdfBase64,
-        invoiceNum,
-      });
+            toEmail,
+            date,
+            dueDate: pDate,
+            paymentAmount: paymentAmt,
+            total: paymentAmt,
+            htmlContent: html,
+            status: "pending",
+            createdAt: new Date().toISOString(),
+          };
+          await saveScheduledPayment(rec);
+          setScheduledPayments((prev) => [...prev, rec]);
+          scheduledCount++;
+        }
+      }
+
       const record = {
         id: crypto.randomUUID(),
         userId: currentUser?.id || "",
@@ -332,11 +504,12 @@ export default function InvoiceGenerator({ currentUser }) {
         toEmail,
         date,
         total,
+        numPayments,
         sentAt: new Date().toISOString(),
       };
       await saveInvoice(record);
       setSentInvoices((prev) => [record, ...prev]);
-      setModal((m) => ({ ...m, status: "success" }));
+      setModal((m) => ({ ...m, status: "success", sentCount, scheduledCount }));
     } catch (err) {
       setModal((m) => ({ ...m, status: "error", error: err.message }));
     }
@@ -398,9 +571,34 @@ export default function InvoiceGenerator({ currentUser }) {
             {modal.status === "success" ? (
               <div className="ig-email-success">
                 <CheckCircle size={40} className="ig-email-success-icon" />
-                <p className="ig-email-success-title">Invoice sent!</p>
+                <p className="ig-email-success-title">
+                  {numPayments > 1 && modal.sentCount === 0
+                    ? "Payments Scheduled!"
+                    : "Invoice Sent!"}
+                </p>
                 <p className="ig-email-success-sub">
-                  Sent to <strong>{modal.email}</strong> from {SELLER.email}
+                  {numPayments === 1 ? (
+                    <>
+                      Sent to <strong>{modal.email}</strong> from {SELLER.email}
+                    </>
+                  ) : (
+                    <>
+                      {modal.sentCount > 0 && (
+                        <span>
+                          {modal.sentCount} payment
+                          {modal.sentCount > 1 ? "s" : ""} sent
+                          immediately.{" "}
+                        </span>
+                      )}
+                      {modal.scheduledCount > 0 && (
+                        <span>
+                          {modal.scheduledCount} payment
+                          {modal.scheduledCount > 1 ? "s" : ""} scheduled for
+                          their due dates.
+                        </span>
+                      )}
+                    </>
+                  )}
                 </p>
                 <button className="primary-btn" onClick={resetForm}>
                   Done
@@ -526,11 +724,27 @@ export default function InvoiceGenerator({ currentUser }) {
             />
           </label>
           <label className="field">
+            <span>Client Address</span>
+            <input
+              value={clientAddress}
+              onChange={(e) => setClientAddress(e.target.value)}
+              placeholder="123 Main St, City, State"
+            />
+          </label>
+          <label className="field">
             <span>Client Website</span>
             <input
               value={clientWebsite}
               onChange={(e) => setClientWebsite(e.target.value)}
               placeholder="https://..."
+            />
+          </label>
+          <label className="field">
+            <span>Setup Fee</span>
+            <input
+              value={setupFee}
+              onChange={(e) => handleSetupFeeChange(e.target.value)}
+              placeholder="$0.00"
             />
           </label>
         </div>
@@ -618,6 +832,67 @@ export default function InvoiceGenerator({ currentUser }) {
             );
           })}
         </div>
+
+        {/* Payment Options */}
+        <div className="ig-payment-options">
+          <label className="field ig-payment-num-field">
+            <span>Number of Payments</span>
+            <input
+              type="text"
+              value={numPaymentsRaw}
+              onChange={(e) => handleNumPaymentsChange(e.target.value)}
+              className="ig-payment-num-input"
+              placeholder="1"
+            />
+          </label>
+          {totalInvoices > 1 && (
+            <div className="ig-schedule-block">
+              <div className="ig-schedule-header">
+                <span>Payment Schedule — {totalInvoices} invoices</span>
+                <span className="ig-schedule-per">
+                  {totalInvoices !== numPayments && monthlyRate > 0 ? (
+                    <span className="ig-schedule-breakdown">
+                      {numPayments} setup installments +{" "}
+                      {totalInvoices - numPayments} monthly-only
+                    </span>
+                  ) : (
+                    <>
+                      {fmt(setupFeeAmt / numPayments + monthlyRate)} per invoice
+                      {monthlyRate > 0 && (
+                        <span className="ig-schedule-breakdown">
+                          {" "}
+                          ({fmt(setupFeeAmt / numPayments)} + {fmt(monthlyRate)}
+                          /mo)
+                        </span>
+                      )}
+                    </>
+                  )}
+                </span>
+              </div>
+              {Array.from({ length: totalInvoices }, (_, i) => {
+                const pNum = i + 1;
+                const hasSetup = setupFeeAmt > 0 && pNum <= numPayments;
+                const hasMonthly =
+                  monthlyRate > 0 && pNum <= (totalMonths || 1);
+                const rowAmt =
+                  (hasSetup ? setupFeeAmt / numPayments : 0) +
+                  (hasMonthly ? monthlyRate : 0);
+                return (
+                  <div key={i} className="ig-schedule-row">
+                    <span className="ig-schedule-pnum">Invoice {pNum}</span>
+                    <span className="ig-schedule-amt">{fmt(rowAmt)}</span>
+                    <input
+                      type="date"
+                      value={paymentDates[i] || ""}
+                      onChange={(e) => updatePaymentDate(i, e.target.value)}
+                      className="ig-schedule-date"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* ─── Invoice Preview (print target) ─── */}
@@ -686,6 +961,7 @@ export default function InvoiceGenerator({ currentUser }) {
               <p className="ig-inv-billing-name">
                 {clientName || <em className="ig-placeholder">Client Name</em>}
               </p>
+              {clientAddress && <p>{clientAddress}</p>}
               {clientWebsite && (
                 <p>
                   <strong>Website:</strong> {clientWebsite}
@@ -707,7 +983,6 @@ export default function InvoiceGenerator({ currentUser }) {
             <tbody>
               {lines.map((line, i) => {
                 const lt = lineTotal(line);
-                const hasMonths = parseAmt(line.months) > 0;
                 return (
                   <tr
                     key={line.id}
@@ -785,6 +1060,74 @@ export default function InvoiceGenerator({ currentUser }) {
           <p className="ig-inv-page-num">Page 1 of 1</p>
         </div>
       </section>
+
+      {/* Scheduled Payments */}
+      {scheduledPayments.length > 0 && (
+        <section
+          className="panel ig-history-panel"
+          data-reveal
+          style={{ "--reveal-delay": "100ms" }}
+        >
+          <div className="panel-header">
+            <h2>Scheduled Payments</h2>
+            <span className="ig-history-count">
+              {scheduledPayments.filter((p) => p.status === "pending").length}{" "}
+              pending
+            </span>
+          </div>
+          <div className="ig-history-table-wrap">
+            <table className="ig-history-table">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Client</th>
+                  <th>Payment</th>
+                  <th>Due Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...scheduledPayments]
+                  .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+                  .map((p) => (
+                    <tr key={p.id}>
+                      <td className="ig-history-num">{p.invoiceNum}</td>
+                      <td>{p.clientName}</td>
+                      <td className="ig-history-email">
+                        {p.paymentNum} of {p.totalPayments}
+                      </td>
+                      <td>{fmtDate(p.dueDate)}</td>
+                      <td className="ig-history-total">
+                        {fmt(p.paymentAmount)}
+                      </td>
+                      <td>
+                        <span className={`ig-sched-badge ig-sched-${p.status}`}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="ig-history-del"
+                          title="Cancel scheduled payment"
+                          onClick={async () => {
+                            await deleteScheduledPaymentById(p.id);
+                            setScheduledPayments((prev) =>
+                              prev.filter((x) => x.id !== p.id),
+                            );
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Sent Invoices History */}
       {sentInvoices.length > 0 && (

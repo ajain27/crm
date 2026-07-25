@@ -484,3 +484,27 @@ export async function fetchInvoices(userId) {
 export async function deleteInvoiceById(id) {
   await deleteDoc(doc(invoicesCollection, id));
 }
+
+const scheduledPaymentsCollection = collection(db, "scheduledPayments");
+
+export async function saveScheduledPayment(payment) {
+  await setDoc(doc(scheduledPaymentsCollection, payment.id), payment);
+}
+
+export async function fetchScheduledPayments(userId) {
+  const snapshot = await getDocs(
+    query(scheduledPaymentsCollection, where("userId", "==", userId)),
+  );
+  return mapSnapshot(snapshot);
+}
+
+export async function updateScheduledPaymentStatus(id, status) {
+  await updateDoc(doc(scheduledPaymentsCollection, id), {
+    status,
+    sentAt: status === "sent" ? new Date().toISOString() : null,
+  });
+}
+
+export async function deleteScheduledPaymentById(id) {
+  await deleteDoc(doc(scheduledPaymentsCollection, id));
+}

@@ -15,6 +15,11 @@ app.post("/api/send-invoice", async (req, res) => {
   await handler(req, res);
 });
 
+app.get("/api/send-scheduled-invoices", async (req, res) => {
+  const { default: handler } = await import("./api/send-scheduled-invoices.js");
+  await handler(req, res);
+});
+
 const PORT = 3001;
 app.listen(PORT, () =>
   console.log(`Dev API server running at http://localhost:${PORT}`)
