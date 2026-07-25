@@ -225,9 +225,12 @@ export default function PotentialLeads({
   }
 
   async function syncDeleteToWP(lead) {
-    if (!lead?.email && !lead?.wpLeadId) return;
+    if (!lead?.email && !lead?.wpLeadId) {
+      console.warn("[WP sync] skipped — lead has no email or wpLeadId", lead);
+      return;
+    }
     try {
-      await fetch("/api/delete-wp-lead", {
+      const resp = await fetch("/api/delete-wp-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -235,8 +238,18 @@ export default function PotentialLeads({
           wpLeadId: lead.wpLeadId || undefined,
         }),
       });
-    } catch {
-      // non-blocking — WP sync failure doesn't affect CRM
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        console.error("[WP sync] failed", resp.status, data);
+        alert(
+          `WordPress sync failed (${resp.status}): ${data?.error || JSON.stringify(data)}`,
+        );
+      } else {
+        console.log("[WP sync] success", data);
+      }
+    } catch (err) {
+      console.error("[WP sync] network error", err);
+      alert(`WordPress sync network error: ${err.message}`);
     }
   }
 
