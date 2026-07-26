@@ -65,11 +65,9 @@ describe("RentalDSCRTab (direct)", () => {
     expect(screen.getByLabelText(/Effective Loan Amount/i)).toBeInTheDocument();
   });
 
-  it("asks whether Total Cash Needed to Buy is a HELOC, hiding the rate field by default", () => {
+  it("shows the Using HELOC? toggle, hiding the rate field by default", () => {
     render(<RentalDSCRTab />);
-    expect(
-      screen.getByText("Is Total Cash Needed to Buy a HELOC?"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Using HELOC?")).toBeInTheDocument();
     expect(
       screen.queryByLabelText(/HELOC Interest Rate/i),
     ).not.toBeInTheDocument();
@@ -90,10 +88,9 @@ describe("RentalDSCRTab (direct)", () => {
       target: { value: "2000" },
     });
 
-    fireEvent.change(
-      screen.getByLabelText(/Is Total Cash Needed to Buy a HELOC/i),
-      { target: { value: "Yes" } },
-    );
+    fireEvent.change(screen.getByLabelText(/Using HELOC/i), {
+      target: { value: "Yes" },
+    });
     expect(screen.getByLabelText(/HELOC Interest Rate/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Calculate/i })).toBeDisabled();
 
@@ -125,10 +122,9 @@ describe("RentalDSCRTab (direct)", () => {
       { selector: ".deal-analyzer-final-verdict strong" },
     ).textContent;
 
-    fireEvent.change(
-      screen.getByLabelText(/Is Total Cash Needed to Buy a HELOC/i),
-      { target: { value: "Yes" } },
-    );
+    fireEvent.change(screen.getByLabelText(/Using HELOC/i), {
+      target: { value: "Yes" },
+    });
     fireEvent.change(screen.getByLabelText(/HELOC Interest Rate/i), {
       target: { value: "9" },
     });

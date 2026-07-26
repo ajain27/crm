@@ -221,35 +221,34 @@ function RentalDSCRTab() {
             <input value={fmt(lenderCosts)} readOnly tabIndex={-1} />
           </label>
         )}
-        <label className="field deal-analyzer-output">
-          <span>
-            Monthly Mortgage{" "}
-            <span className="deal-analyzer-auto-badge">auto</span>
-          </span>
-          <input
-            value={loanMortgage > 0 ? fmt(loanMortgage) : ""}
-            readOnly
-            tabIndex={-1}
-          />
-        </label>
-      </div>
-
-      <AdditionalLenders
-        lenders={lenders}
-        setLenders={setLenders}
-        onMutate={() => setSummary(null)}
-      />
-
-      <div className="deal-analyzer-section-label">
-        Cash Needed to Buy Financing
-      </div>
-      <div className="deal-analyzer-form-grid">
-        <Select
-          label="Is Total Cash Needed to Buy a HELOC?"
-          value={isCashNeededHeloc ? "Yes" : "No"}
-          onChange={(e) => setIsCashNeededHeloc(e.target.value === "Yes")}
-          options={["No", "Yes"]}
-        />
+        <div className="dscr-mortgage-heloc-row">
+          <label
+            className="field deal-analyzer-output"
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            <span>
+              Monthly Mortgage{" "}
+              <span className="deal-analyzer-auto-badge">auto</span>
+            </span>
+            <input
+              value={loanMortgage > 0 ? fmt(loanMortgage) : ""}
+              readOnly
+              tabIndex={-1}
+            />
+          </label>
+          <div className="field dscr-heloc-field">
+            <span>Using HELOC?</span>
+            <select
+              value={isCashNeededHeloc ? "Yes" : "No"}
+              onChange={(e) => setIsCashNeededHeloc(e.target.value === "Yes")}
+              className="dscr-down-pct-select"
+              aria-label="Using HELOC?"
+            >
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+        </div>
         {isCashNeededHeloc && (
           <Field
             label="HELOC Interest Rate (% / year)"
@@ -275,6 +274,12 @@ function RentalDSCRTab() {
           </label>
         )}
       </div>
+
+      <AdditionalLenders
+        lenders={lenders}
+        setLenders={setLenders}
+        onMutate={() => setSummary(null)}
+      />
 
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
       <div className="deal-analyzer-form-grid">

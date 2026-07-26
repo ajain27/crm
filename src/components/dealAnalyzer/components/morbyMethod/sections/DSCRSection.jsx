@@ -22,12 +22,12 @@ export default function DSCRSection({
         <span className="deal-analyzer-auto-badge">{ltvPct}% LTV</span>
       </div>
       <div className="deal-analyzer-form-grid">
-        <div className="field">
+        <div className="field dscr-down-pct-field">
           <span>Down Payment %</span>
           <select
             value={downPct}
             onChange={(e) => onDownPctChange(Number(e.target.value))}
-            className="leads-select"
+            className="leads-select dscr-down-pct-select"
           >
             {downOptions.map((opt) => (
               <option key={opt} value={opt}>
