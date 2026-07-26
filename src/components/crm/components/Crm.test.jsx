@@ -103,7 +103,7 @@ describe("Crm", () => {
 
     expect(screen.getByText("Edit Profile")).toBeInTheDocument();
     expect(screen.getByText("Sign Out")).toBeInTheDocument();
-    expect(screen.getByText("ankit@example.com")).toBeInTheDocument();
+    expect(screen.getAllByText("ankit@example.com").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit Profile" }));
 

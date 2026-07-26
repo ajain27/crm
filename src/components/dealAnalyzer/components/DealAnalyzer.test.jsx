@@ -29,9 +29,9 @@ vi.mock("./morbyMethod/MorbyMethodTab", () => ({
 const { default: DealAnalyzer } = await import("./DealAnalyzer");
 
 describe("DealAnalyzer", () => {
-  it("renders the page header", () => {
+  it("renders the deal analyzer tabs", () => {
     render(<DealAnalyzer />);
-    expect(screen.getByText("Deal Analyzer")).toBeInTheDocument();
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
   });
 
   it("starts on the Find Comps tab", () => {

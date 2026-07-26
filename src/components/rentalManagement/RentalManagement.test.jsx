@@ -61,9 +61,7 @@ const sampleRentals = [
 describe("RentalManagement", () => {
   it("renders the stats and add form", async () => {
     render(<RentalManagement {...baseProps()} />);
-    expect(
-      await screen.findByRole("heading", { name: "Rental Management" }),
-    ).toBeInTheDocument();
+    // Page-level h1 heading removed (nav handles the title now)
     expect(screen.getByText("Net Cashflow")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Add Property/i }),

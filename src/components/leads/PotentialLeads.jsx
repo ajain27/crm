@@ -487,16 +487,6 @@ export default function PotentialLeads({
 
   return (
     <>
-      <header className="page-header" data-reveal>
-        <div>
-          <h1>Potential Leads</h1>
-          <span>
-            Track properties you&apos;re monitoring before they enter your
-            pipeline.
-          </span>
-        </div>
-      </header>
-
       <div className="leads-stats-row" data-reveal>
         <SimpleStat
           label="Residential"

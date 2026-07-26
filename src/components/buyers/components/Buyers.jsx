@@ -286,12 +286,6 @@ function Buyers({ currentUser = { id: "" } }) {
 
   return (
     <>
-      <header className="page-header" data-reveal="left">
-        <div>
-          <h1>Buyers List</h1>
-        </div>
-      </header>
-
       <section
         className="stats-grid"
         data-reveal-group

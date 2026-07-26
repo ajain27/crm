@@ -518,12 +518,6 @@ export default function InvoiceGenerator({ currentUser }) {
   return (
     <div className="ig-root">
       <header className="page-header" data-reveal="left">
-        <div>
-          <h1>Invoice Generator</h1>
-          <span className="page-header-sub">
-            Fill in client details and line items, then print or send.
-          </span>
-        </div>
         <div className="ig-header-actions">
           <button
             className="secondary-btn ig-header-print-btn"

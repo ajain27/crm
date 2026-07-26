@@ -38,7 +38,6 @@ describe("Buyers component", () => {
     render(<Buyers theme="light" setTheme={vi.fn()} />);
 
     expect(await screen.findByText("Jane Doe")).toBeInTheDocument();
-    expect(screen.getByText("Buyers List")).toBeInTheDocument();
   });
 
   it("prevents adding a buyer with duplicate email", async () => {

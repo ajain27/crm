@@ -419,13 +419,6 @@ export default function RentalManagement({
 
   return (
     <>
-      <header className="page-header" data-reveal="left">
-        <div>
-          <h1>Rental Management</h1>
-          <span>Track your rental portfolio, tenants and cashflow.</span>
-        </div>
-      </header>
-
       {/* ── Stats ────────────────────────────────────────── */}
       <RentalStatsGrid
         propertiesCount={filtered.length}

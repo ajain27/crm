@@ -146,13 +146,6 @@ function MortgageCalculator() {
 
   return (
     <>
-      <header className="page-header" data-reveal>
-        <div>
-          <h1>Mortgage Calculator</h1>
-          <span>See the full monthly and lifetime cost breakdown.</span>
-        </div>
-      </header>
-
       <section
         className="panel mc-panel"
         data-reveal="left"

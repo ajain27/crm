@@ -123,16 +123,6 @@ function DealAnalyzer() {
 
   return (
     <>
-      <header className="page-header" data-reveal>
-        <div>
-          <h1>Deal Analyzer</h1>
-          <span>
-            Review different deal structures and pressure-test the numbers
-            before you make an offer.
-          </span>
-        </div>
-      </header>
-
       <section
         className="panel deal-analyzer-panel"
         data-reveal="left"

@@ -115,6 +115,563 @@
     transition-delay: calc(var(--reveal-delay, 0ms) + 630ms);
   }
 
+  /* ── App shell — sidebar + main ────────────────────── */
+  .app-shell {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .app-shell > .main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────── */
+  .app-sidebar {
+    width: 248px;
+    min-width: 248px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+    z-index: 40;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+    transition:
+      width 0.26s cubic-bezier(0.4, 0, 0.2, 1),
+      min-width 0.26s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s ease;
+  }
+
+  /* Desktop: collapse sidebar when not open */
+  @media (min-width: 901px) {
+    .app-sidebar:not(.is-open) {
+      width: 0;
+      min-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      border-right-width: 0;
+    }
+  }
+
+  /* Logo block */
+  .sb-header {
+    padding: 1.5rem 1.125rem 1.125rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .sb-logo {
+    height: 3.75rem;
+    width: auto;
+    max-width: 190px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+
+  .dark .sb-logo {
+    mix-blend-mode: screen;
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  .sb-tag {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--blue);
+    background: color-mix(in srgb, var(--blue-light) 70%, transparent 30%);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  /* Controls row: prime rate · theme · collapse */
+  .sb-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .sb-controls-gap {
+    flex: 1;
+  }
+
+  .sb-collapse-btn {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--badge-bg);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background 0.14s,
+      color 0.14s,
+      border-color 0.14s;
+  }
+
+  .sb-collapse-btn:hover {
+    background: var(--blue-light);
+    color: var(--blue);
+    border-color: color-mix(in srgb, var(--blue) 30%, var(--line) 70%);
+  }
+
+  /* Desktop sidebar reopen button — floats when sidebar is closed */
+  .sb-reopen-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 38;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transition:
+      background 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .sb-reopen-btn:hover {
+    background: var(--badge-bg);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  }
+
+  /* On mobile, the mobile-bar hamburger handles reopening */
+  @media (max-width: 900px) {
+    .sb-reopen-btn {
+      display: none;
+    }
+  }
+
+  /* Nav items */
+  .sb-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.75rem 0.625rem;
+  }
+
+  .sb-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.575rem 0.75rem;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: var(--nav-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background 0.14s ease,
+      color 0.14s ease;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sb-nav-item > svg {
+    flex-shrink: 0;
+    opacity: 0.65;
+    transition: opacity 0.14s;
+  }
+
+  .sb-nav-item:hover {
+    background: var(--badge-bg);
+    color: var(--text);
+  }
+
+  .sb-nav-item:hover > svg {
+    opacity: 0.9;
+  }
+
+  .sb-nav-item.active {
+    background: var(--blue-light);
+    color: var(--blue);
+    font-weight: 600;
+  }
+
+  .sb-nav-item.active > svg {
+    opacity: 1;
+  }
+
+  /* Spacer */
+  .sb-spacer {
+    flex: 1;
+  }
+
+  /* Bottom section */
+  .sb-bottom {
+    padding: 0.625rem 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .sb-prime-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--panel) 80%, var(--blue-light) 20%);
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    width: fit-content;
+    color: var(--text);
+  }
+
+  .sb-prime-pill span {
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .sb-prime-pill strong {
+    font-weight: 700;
+    color: var(--blue);
+  }
+
+  /* Fixed prime rate badge — always visible in top-right corner */
+  .prime-rate-fixed {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.28rem 0.65rem;
+    border: 1px solid var(--line);
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--panel) 80%, var(--blue-light) 20%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--text);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .prime-rate-fixed span {
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .prime-rate-fixed strong {
+    font-weight: 700;
+    color: var(--blue);
+  }
+
+  .sb-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 0.125rem 0;
+  }
+
+  /* User card row */
+  .sb-user-wrap {
+    position: relative;
+  }
+
+  .sb-user-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .sb-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.5rem;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.14s;
+  }
+
+  .sb-user-btn:hover {
+    background: var(--badge-bg);
+  }
+
+  .sb-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    background: var(--blue);
+    color: white;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sb-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sb-user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sb-user-info strong {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .sb-user-info span {
+    font-size: 0.6875rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  /* Theme toggle next to avatar */
+  .sb-theme-btn {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--badge-bg);
+    color: var(--nav-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background 0.14s,
+      color 0.14s,
+      border-color 0.14s;
+  }
+
+  .sb-theme-btn:hover {
+    background: var(--blue-light);
+    color: var(--blue);
+    border-color: color-mix(in srgb, var(--blue) 30%, var(--line) 70%);
+  }
+
+  /* Profile dropdown — opens above the user card */
+  .sb-profile-menu {
+    position: absolute !important;
+    bottom: calc(100% + 8px) !important;
+    top: auto !important;
+    left: 0;
+    right: 0;
+    min-width: unset;
+  }
+
+  /* ── Mobile bar ──────────────────────────────────── */
+  .app-mobile-bar {
+    display: none;
+  }
+
+  .mobile-hamburger {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .mobile-hamburger:hover {
+    background: var(--badge-bg);
+  }
+
+  .mobile-logo {
+    height: 1.75rem;
+    width: auto;
+    max-width: 130px;
+    mix-blend-mode: multiply;
+  }
+
+  .dark .mobile-logo {
+    mix-blend-mode: screen;
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  /* Sidebar backdrop — visible on mobile only */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  @media (min-width: 901px) {
+    .sidebar-backdrop {
+      display: none !important;
+    }
+  }
+
+  /* ── Main area ───────────────────────────────────── */
+  .main {
+    @apply overflow-x-hidden px-[46px] pb-14;
+    padding-top: 2rem;
+  }
+
+  /* ── Per-view description heading ───────────────── */
+  .view-description {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+    padding: 0;
+  }
+
+  /* ── Collapsed brand header ──────────────────────── */
+  .collapsed-brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 46px 1.25rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2rem;
+    /* bleed to edge of .main padding */
+    margin-top: -2rem;
+    margin-left: -46px;
+    margin-right: -46px;
+  }
+
+  .collapsed-brand-logo {
+    height: 3.25rem;
+    width: auto;
+    max-width: 240px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+
+  .dark .collapsed-brand-logo {
+    mix-blend-mode: screen;
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  /* ── Dark-mode sidebar nav active state ─────────── */
+  :root.dark .sb-nav-item.active {
+    background: rgba(20, 184, 166, 0.14);
+    color: #2dd4bf;
+  }
+
+  :root.dark .sb-nav-item:hover {
+    background: rgba(20, 184, 166, 0.08);
+  }
+
+  :root.dark .sb-theme-btn:hover {
+    background: rgba(20, 184, 166, 0.14);
+    color: #2dd4bf;
+    border-color: rgba(45, 212, 191, 0.3);
+  }
+
+  :root.dark .sb-collapse-btn:hover {
+    background: rgba(20, 184, 166, 0.14);
+    color: #2dd4bf;
+    border-color: rgba(45, 212, 191, 0.3);
+  }
+
+  /* ── Responsive ──────────────────────────────────── */
+  @media (max-width: 900px) {
+    .app-mobile-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .app-shell {
+      flex-direction: column;
+    }
+
+    .app-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+      transform: translateX(-100%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 6px 0 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .app-sidebar.is-open {
+      transform: translateX(0);
+    }
+
+    .sidebar-backdrop {
+      display: block;
+    }
+
+    .main {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+  }
+
+  /* Legacy layout classes — kept for any other component that may reference them */
   .layout {
     @apply grid min-h-screen grid-cols-[270px_1fr];
     transition: grid-template-columns 0.28s ease;
@@ -135,10 +692,6 @@
 
   .layout.sidebar-collapsed {
     grid-template-columns: 0 1fr;
-  }
-
-  .main {
-    @apply overflow-x-hidden px-[46px] pb-14 pt-0;
   }
 
   .layout.layout-no-sidebar .main {

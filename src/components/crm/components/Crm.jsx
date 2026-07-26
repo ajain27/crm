@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { RefreshCw } from "lucide-react";
 import "../../../styles/styles.css";
+import logo from "../../../assets/logo.png";
 import {
   fetchBuyers,
   saveDeal,
@@ -67,6 +68,20 @@ function Wholesale() {
     }
   });
   const [activeView, setActiveView] = useState("dashboard");
+
+  const VIEW_META = {
+    dashboard: "Manage and track your wholesale deals",
+    leads: "Monitor properties before they enter your pipeline",
+    "deal-analyzer": "Analyze deal structures and pressure-test the numbers",
+    "pm-deals": "Track borrower details and private money loans",
+    "rental-management": "Manage your rental portfolio, tenants, and cash flow",
+    mortgage: "Calculate monthly payments and lifetime loan costs",
+    buyers: "Organize and manage your buyers list",
+    "invoice-generator": "Create and send professional invoices",
+  };
+  const [sidebarOpen, setSidebarOpen] = useState(
+    typeof window !== "undefined" && window.innerWidth >= 901,
+  );
   const [leads, setLeads] = useState([]);
 
   useEffect(() => {
@@ -191,7 +206,7 @@ function Wholesale() {
   }
 
   return (
-    <div className="layout layout-no-sidebar">
+    <div className="app-shell">
       <CrmHeader
         currentUser={currentUser}
         activeView={activeView}
@@ -206,12 +221,28 @@ function Wholesale() {
         }}
         onSignOut={handleSignOut}
         profileMenuRef={profileMenuRef}
+        isSidebarOpen={sidebarOpen}
+        onToggleSidebar={setSidebarOpen}
       />
       <main className="main">
+        {/* Brand header — shown when sidebar drawer is closed */}
+        {!sidebarOpen && (
+          <div className="collapsed-brand-header">
+            <img
+              src={logo}
+              alt="You Win Estates"
+              className="collapsed-brand-logo"
+            />
+          </div>
+        )}
+
+        {/* Per-view description */}
+        {VIEW_META[activeView] && (
+          <p className="view-description">{VIEW_META[activeView]}</p>
+        )}
+
         {activeView === "dashboard" ? (
           <>
-            <header className="page-header" data-reveal="left"></header>
-
             {errorMessage && (
               <div
                 className="error-banner"

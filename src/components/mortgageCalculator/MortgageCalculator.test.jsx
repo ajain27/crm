@@ -52,17 +52,10 @@ function clickCalculate() {
 // ─── Rendering ───────────────────────────────────────────────────────────────
 
 describe("rendering", () => {
-  it("renders the page heading", () => {
+  it("renders the loan details panel", () => {
     render(<MortgageCalculator />);
     expect(
-      screen.getByRole("heading", { name: /Mortgage Calculator/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("renders the page subtitle", () => {
-    render(<MortgageCalculator />);
-    expect(
-      screen.getByText(/full monthly and lifetime cost breakdown/i),
+      screen.getByRole("heading", { name: /Loan Details/i }),
     ).toBeInTheDocument();
   });
 

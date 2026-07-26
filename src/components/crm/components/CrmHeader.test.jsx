@@ -70,7 +70,7 @@ describe("CrmHeader", () => {
     expect(
       screen.getByRole("button", { name: /Sign Out/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    expect(screen.getAllByText("Jane Doe").length).toBeGreaterThan(0);
   });
 
   it("calls onEditProfile / onSignOut from menu items", () => {
