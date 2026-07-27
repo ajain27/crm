@@ -34,6 +34,9 @@ export default async function handler(req, res) {
   const headers = {
     "Content-Type": "application/json",
     "x-webhook-secret": process.env.WEBHOOK_SECRET,
+    // Some hosts/firewalls block the raw DELETE verb; WP core's REST API
+    // natively honors this override header and routes it as DELETE.
+    "X-HTTP-Method-Override": "DELETE",
   };
 
   try {
@@ -42,7 +45,7 @@ export default async function handler(req, res) {
     // Preferred: delete by WordPress lead ID (exact row match in ywe_leads table)
     if (wpLeadId) {
       resp = await fetch(`${wpUrl}/wp-json/ywe/v1/lead/${wpLeadId}`, {
-        method: "DELETE",
+        method: "POST",
         headers,
       });
       console.log(`delete by id=${wpLeadId} status:`, resp.status);
@@ -55,7 +58,7 @@ export default async function handler(req, res) {
         return res.status(resp?.status ?? 400).json(data);
       }
       resp = await fetch(`${wpUrl}/wp-json/ywe/v1/lead-by-email`, {
-        method: "DELETE",
+        method: "POST",
         headers,
         body: JSON.stringify({ email }),
       });
