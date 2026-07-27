@@ -9,7 +9,6 @@ const EMPTY_SET = new Set();
 function BuyerData({
   filteredBuyers,
   buyers,
-  deleteBuyer,
   updateBuyer,
   selectedIds = EMPTY_SET,
   onToggleSelect = () => {},

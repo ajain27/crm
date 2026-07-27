@@ -144,19 +144,6 @@ function Buyers({ currentUser = { id: "" } }) {
     }
   }
 
-  async function deleteBuyer(id) {
-    const buyer = buyers.find((item) => item.id === id);
-    if (!window.confirm(`Delete ${buyer?.fullName || "this buyer"}?`)) return;
-
-    try {
-      await deleteBuyerById(id);
-      setBuyers((prev) => prev.filter((b) => b.id !== id));
-    } catch (error) {
-      console.error("Failed to delete buyer", error);
-      alert("Unable to delete buyer. Check your database connection.");
-    }
-  }
-
   const states = useMemo(
     () => [
       "All",
@@ -345,7 +332,6 @@ function Buyers({ currentUser = { id: "" } }) {
       <BuyerData
         filteredBuyers={filteredBuyers}
         buyers={buyers}
-        deleteBuyer={deleteBuyer}
         updateBuyer={updateBuyer}
         selectedIds={selectedIds}
         onToggleSelect={handleToggleSelect}
