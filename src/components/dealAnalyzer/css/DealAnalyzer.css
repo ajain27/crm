@@ -242,6 +242,189 @@
     word-break: break-word;
   }
 
+  .deal-analyzer-summary-toolbar {
+    @apply flex items-center justify-between gap-3;
+    margin-bottom: 0.75rem;
+  }
+
+  .deal-analyzer-summary-toolbar h3 {
+    @apply text-lg font-semibold;
+    color: var(--text);
+    margin: 0;
+  }
+
+  /* ── Morby Method PDF export template (always light, print-ready) ── */
+  .mm-pdf-container {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    z-index: -1;
+    width: 860px;
+    background: #fff;
+    color: #1a1a2e;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .mm-pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: #1a3560;
+    color: #fff;
+    padding: 28px 32px 24px;
+    gap: 24px;
+  }
+
+  .mm-pdf-company-name {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0 0 4px;
+    color: #fff;
+  }
+
+  .mm-pdf-tagline {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+  }
+
+  .mm-pdf-meta {
+    text-align: right;
+  }
+
+  .mm-pdf-meta-label {
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0;
+  }
+
+  .mm-pdf-meta-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin: 4px 0 0;
+  }
+
+  .mm-pdf-rule {
+    height: 3px;
+    background: #2563eb;
+  }
+
+  .mm-pdf-body {
+    padding: 28px 32px 8px;
+  }
+
+  .mm-pdf-verdict {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 14px;
+  }
+
+  .mm-pdf-verdict span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+  }
+
+  .mm-pdf-verdict strong {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .mm-pdf-verdict-positive {
+    background: #ecfdf5;
+  }
+
+  .mm-pdf-verdict-positive strong {
+    color: #16a34a;
+  }
+
+  .mm-pdf-verdict-negative {
+    background: #fef2f2;
+  }
+
+  .mm-pdf-verdict-negative strong {
+    color: #dc2626;
+  }
+
+  .mm-pdf-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2563eb;
+    border-bottom: 1.5px solid #2563eb;
+    padding-bottom: 4px;
+    margin: 15px 0 4px;
+  }
+
+  .mm-pdf-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 4px 0;
+    border-bottom: 1px dotted #e5e7eb;
+  }
+
+  .mm-pdf-row-label {
+    color: #4b5563;
+  }
+
+  .mm-pdf-row-value {
+    font-weight: 600;
+    color: #1a1a2e;
+    white-space: nowrap;
+  }
+
+  .mm-pdf-positive {
+    color: #16a34a;
+  }
+
+  .mm-pdf-negative {
+    color: #dc2626;
+  }
+
+  .mm-pdf-row-total {
+    border-bottom: none;
+    border-top: 1.5px solid #1a1a2e;
+    margin-top: 4px;
+    padding-top: 8px;
+  }
+
+  .mm-pdf-row-total .mm-pdf-row-label,
+  .mm-pdf-row-total .mm-pdf-row-value {
+    font-weight: 700;
+  }
+
+  .mm-pdf-formula {
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .mm-pdf-footer {
+    padding: 10px 32px 12px;
+    font-size: 10.5px;
+    color: #9ca3af;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 6px;
+  }
+
   .deal-analyzer-metric {
     @apply flex items-center gap-3 self-end px-0 py-0;
     min-height: 44px;
