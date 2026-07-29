@@ -15,6 +15,11 @@ app.post("/api/send-invoice", async (req, res) => {
   await handler(req, res);
 });
 
+app.post("/api/send-email", async (req, res) => {
+  const { default: handler } = await import("./api/send-email.js");
+  await handler(req, res);
+});
+
 app.get("/api/fetch-wp-leads", async (req, res) => {
   const { default: handler } = await import("./api/fetch-wp-leads.js");
   await handler(req, res);

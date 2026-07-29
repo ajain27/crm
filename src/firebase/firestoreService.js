@@ -34,6 +34,7 @@ const buyersCollection = collection(db, "buyers");
 const usersCollection = collection(db, "users");
 const leadsCollection = collection(db, "leads");
 const passwordResetsCollection = collection(db, "passwordResets");
+const accountActivationsCollection = collection(db, "accountActivations");
 const pmDealsCollection = collection(db, "pmDeals");
 const rentalsCollection = collection(db, "rentals");
 const invoicesCollection = collection(db, "invoices");
@@ -73,6 +74,87 @@ function stripContractData(versions) {
   return versions.map(({ data, downloadURL, storagePath, ...rest }) => rest);
 }
 
+function activationUrl(token) {
+  if (typeof window === "undefined") return token;
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("activate", token);
+  return url.toString();
+}
+
+function randomToken() {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function sendBrevoEmail({ toEmail, subject, textContent }) {
+  const payload = JSON.stringify({
+    toEmail,
+    subject,
+    textContent,
+  });
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: payload,
+  };
+  let res = await fetch("/api/send-email", requestOptions);
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+  if (res.status === 404 && isLocalhost) {
+    try {
+      res = await fetch("http://localhost:3001/api/send-email", requestOptions);
+    } catch {
+      throw new Error(
+        "Local email API is not running. Stop the server and run npm run dev so localhost:3001 starts.",
+      );
+    }
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    if (res.status === 404) {
+      throw new Error(
+        "Email API route was not found. For local testing, stop the server and run npm run dev so the API server starts.",
+      );
+    }
+    throw new Error(
+      err.error || err.message || `Failed to send email (HTTP ${res.status})`,
+    );
+  }
+}
+
+async function sendActivationEmail({ userId, email }) {
+  const token = randomToken();
+  const oldActivations = await getDocs(
+    query(accountActivationsCollection, where("email", "==", email)),
+  );
+
+  await Promise.all(oldActivations.docs.map((snap) => deleteDoc(snap.ref)));
+  await setDoc(doc(accountActivationsCollection, token), {
+    token,
+    userId,
+    email,
+    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    used: false,
+  });
+
+  const link = activationUrl(token);
+  await sendBrevoEmail({
+    toEmail: email,
+    subject: "Activate your You Win Estates CRM account",
+    textContent: `Welcome to You Win Estates CRM.\n\nActivate your account here:\n${link}\n\nThis link expires in 7 days.`,
+  });
+}
+
 export async function createUserAccount({
   firstName,
   lastName,
@@ -81,25 +163,66 @@ export async function createUserAccount({
   password,
 }) {
   const normalizedEmail = email.trim().toLowerCase();
+  const normalizedUsername = username.trim().toLowerCase();
   const existingUsers = await getDocs(
     query(usersCollection, where("email", "==", normalizedEmail), limit(1)),
   );
 
   if (!existingUsers.empty) {
+    const existingUser = {
+      id: existingUsers.docs[0].id,
+      ...existingUsers.docs[0].data(),
+    };
+    if (existingUser.active === false) {
+      await sendActivationEmail({
+        userId: existingUser.id,
+        email: normalizedEmail,
+      });
+      return {
+        id: existingUser.id,
+        firstName: existingUser.firstName || "",
+        lastName: existingUser.lastName || "",
+        username: existingUser.username || "",
+        email: normalizedEmail,
+        profileImage: existingUser.profileImage || "",
+        role: existingUser.role || "ppc",
+        active: false,
+        resentActivation: true,
+      };
+    }
     throw new Error("An account with this email already exists.");
+  }
+
+  const existingUsernames = await getDocs(
+    query(
+      usersCollection,
+      where("username", "==", normalizedUsername),
+      limit(1),
+    ),
+  );
+
+  if (!existingUsernames.empty) {
+    throw new Error("An account with this username already exists.");
   }
 
   const user = {
     id: crypto.randomUUID(),
     firstName: firstName.trim(),
     lastName: lastName.trim(),
-    username: username.trim(),
+    username: normalizedUsername,
     email: normalizedEmail,
     profileImage: "",
     passwordHash: await hashPassword(password),
+    role: "ppc",
+    active: false,
+    createdAt: new Date().toISOString(),
   };
 
   await setDoc(doc(usersCollection, user.id), user);
+  await sendActivationEmail({
+    userId: user.id,
+    email: normalizedEmail,
+  });
 
   return {
     id: user.id,
@@ -108,7 +231,34 @@ export async function createUserAccount({
     username: user.username,
     email: user.email,
     profileImage: user.profileImage || "",
+    role: user.role,
+    active: user.active,
   };
+}
+
+export async function activateUserAccount(token) {
+  const normalizedToken = token.trim();
+  const activationRef = doc(accountActivationsCollection, normalizedToken);
+  const activationSnap = await getDoc(activationRef);
+
+  if (!activationSnap.exists()) {
+    throw new Error("Activation link is invalid or has already been used.");
+  }
+
+  const activation = activationSnap.data();
+  if (activation.used) {
+    throw new Error("Activation link has already been used.");
+  }
+  if (Date.now() > activation.expiresAt) {
+    throw new Error("Activation link expired. Please sign up again.");
+  }
+
+  await setDoc(
+    doc(usersCollection, activation.userId),
+    { active: true, activatedAt: new Date().toISOString() },
+    { merge: true },
+  );
+  await deleteDoc(activationRef);
 }
 
 export async function signInUser({ username, password }) {
@@ -127,7 +277,11 @@ export async function signInUser({ username, password }) {
   ]);
   const user = allUsers.docs
     .map((d) => ({ id: d.id, ...d.data() }))
-    .find((u) => (u.username || "").toLowerCase() === normalizedUsername);
+    .find(
+      (u) =>
+        (u.username || "").toLowerCase() === normalizedUsername ||
+        (u.email || "").toLowerCase() === normalizedUsername,
+    );
 
   if (!user) {
     throw new Error("Incorrect username or password.");
@@ -138,6 +292,10 @@ export async function signInUser({ username, password }) {
     throw new Error("Incorrect username or password.");
   }
 
+  if (user.active === false) {
+    throw new Error("Please activate your account from the email we sent you.");
+  }
+
   return {
     id: user.id,
     firstName: user.firstName || "",
@@ -145,6 +303,8 @@ export async function signInUser({ username, password }) {
     username: user.username,
     email: user.email,
     profileImage: user.profileImage || "",
+    role: user.role || "admin",
+    active: user.active !== false,
   };
 }
 
@@ -395,27 +555,11 @@ export async function sendPasswordResetOtp(email) {
     used: false,
   });
 
-  const apiKey = import.meta.env.VITE_BREVO_API_KEY || "";
-  const senderEmail =
-    import.meta.env.VITE_BREVO_SENDER_EMAIL || "ankit4pace@gmail.com";
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": apiKey,
-      "Content-Type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      sender: { name: "You Win Estates CRM", email: senderEmail },
-      to: [{ email: normalizedEmail }],
-      subject: "Your password reset code",
-      textContent: `Your one-time reset code is: ${otp}\n\nThis code expires in 15 minutes. If you did not request this, ignore this email.`,
-    }),
+  await sendBrevoEmail({
+    toEmail: normalizedEmail,
+    subject: "Your password reset code",
+    textContent: `Your one-time reset code is: ${otp}\n\nThis code expires in 15 minutes. If you did not request this, ignore this email.`,
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Failed to send email (HTTP ${res.status})`);
-  }
 }
 
 export async function confirmPasswordReset(email, otp, newPassword) {

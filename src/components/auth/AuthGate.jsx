@@ -1,13 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  activateUserAccount,
+  createUserAccount,
   signInUser,
   sendPasswordResetOtp,
   confirmPasswordReset,
 } from "../../firebase/firestoreService";
 
 function AuthGate({ onAuthenticated }) {
-  const [view, setView] = useState("login"); // "login" | "forgot" | "reset"
+  const [view, setView] = useState("login"); // "login" | "signup" | "forgot" | "reset"
   const [form, setForm] = useState({ username: "", password: "" });
+  const [signupForm, setSignupForm] = useState({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [resetEmail, setResetEmail] = useState("");
   const [resetOtp, setResetOtp] = useState("");
   const [resetPassword, setResetPassword] = useState("");
@@ -21,6 +31,29 @@ function AuthGate({ onAuthenticated }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  function handleSignupChange(event) {
+    const { name, value } = event.target;
+    setSignupForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("activate");
+    if (!token) return;
+
+    setIsSubmitting(true);
+    activateUserAccount(token)
+      .then(() => {
+        window.history.replaceState({}, "", window.location.pathname);
+        setView("login");
+        setSuccessMessage("Account activated. You can now sign in.");
+      })
+      .catch((error) => {
+        setErrorMessage(error.message || "Could not activate account.");
+      })
+      .finally(() => setIsSubmitting(false));
+  }, []);
+
   function goToLogin() {
     setView("login");
     setErrorMessage("");
@@ -28,6 +61,42 @@ function AuthGate({ onAuthenticated }) {
     setResetOtp("");
     setResetPassword("");
     setResetConfirm("");
+  }
+
+  async function handleSignup(event) {
+    event.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (signupForm.password !== signupForm.confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+    if (signupForm.password.length < 4) {
+      setErrorMessage("Password must be at least 4 characters.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createUserAccount(signupForm);
+      setSignupForm({
+        firstName: "",
+        lastName: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+      setView("login");
+      setSuccessMessage(
+        `Activation email sent to ${signupForm.email}. Activate your account before signing in.`,
+      );
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to create account.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   async function handleSignIn(event) {
@@ -138,15 +207,125 @@ function AuthGate({ onAuthenticated }) {
               </button>
             </form>
 
-            <button
-              className="auth-forgot-link"
-              onClick={() => {
-                setErrorMessage("");
-                setSuccessMessage("");
-                setView("forgot");
-              }}
-            >
-              Forgot password?
+            <div className="auth-login-actions">
+              <button
+                className="auth-forgot-link"
+                onClick={() => {
+                  setErrorMessage("");
+                  setSuccessMessage("");
+                  setView("signup");
+                }}
+              >
+                Create account
+              </button>
+
+              <button
+                className="auth-forgot-link"
+                onClick={() => {
+                  setErrorMessage("");
+                  setSuccessMessage("");
+                  setView("forgot");
+                }}
+              >
+                Forgot password?
+              </button>
+            </div>
+          </>
+        )}
+
+        {view === "signup" && (
+          <>
+            <div className="auth-copy">
+              <h1>Create your PPC access</h1>
+              <p>Activate by email, then sign in to view PPC leads.</p>
+            </div>
+
+            <form className="auth-form" onSubmit={handleSignup}>
+              <label className="auth-field">
+                <span>First Name</span>
+                <input
+                  required
+                  type="text"
+                  name="firstName"
+                  value={signupForm.firstName}
+                  onChange={handleSignupChange}
+                  placeholder="First name"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Last Name</span>
+                <input
+                  required
+                  type="text"
+                  name="lastName"
+                  value={signupForm.lastName}
+                  onChange={handleSignupChange}
+                  placeholder="Last name"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Username</span>
+                <input
+                  required
+                  type="text"
+                  name="username"
+                  value={signupForm.username}
+                  onChange={handleSignupChange}
+                  placeholder="Username"
+                  autoComplete="username"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Email</span>
+                <input
+                  required
+                  type="email"
+                  name="email"
+                  value={signupForm.email}
+                  onChange={handleSignupChange}
+                  placeholder="you@example.com"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Password</span>
+                <input
+                  required
+                  type="password"
+                  name="password"
+                  value={signupForm.password}
+                  onChange={handleSignupChange}
+                  placeholder="Password"
+                />
+              </label>
+
+              <label className="auth-field">
+                <span>Confirm Password</span>
+                <input
+                  required
+                  type="password"
+                  name="confirmPassword"
+                  value={signupForm.confirmPassword}
+                  onChange={handleSignupChange}
+                  placeholder="Repeat password"
+                />
+              </label>
+
+              {errorMessage && <div className="auth-error">{errorMessage}</div>}
+
+              <button
+                className="primary-btn auth-submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating..." : "Create Account"}
+              </button>
+            </form>
+
+            <button className="auth-forgot-link" onClick={goToLogin}>
+              ← Back to sign in
             </button>
           </>
         )}

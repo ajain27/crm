@@ -67,7 +67,10 @@ function Wholesale() {
       return null;
     }
   });
-  const [activeView, setActiveView] = useState("dashboard");
+  const [activeView, setActiveView] = useState(() =>
+    currentUser?.role === "ppc" ? "leads" : "dashboard",
+  );
+  const ppcOnly = currentUser?.role === "ppc";
 
   const VIEW_META = {
     dashboard: "Manage and track your wholesale deals",
@@ -89,6 +92,12 @@ function Wholesale() {
     const unsub = subscribeToLeads(currentUser.id, setLeads);
     return unsub;
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (ppcOnly && activeView !== "leads") {
+      setActiveView("leads");
+    }
+  }, [ppcOnly, activeView]);
 
   useEffect(() => {
     if ("scrollRestoration" in history) {
@@ -177,6 +186,7 @@ function Wholesale() {
   function handleAuthenticated(user) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     setCurrentUser(user);
+    if (user.role === "ppc") setActiveView("leads");
     setProfileForm(createProfileForm(user));
   }
 
@@ -223,6 +233,7 @@ function Wholesale() {
         profileMenuRef={profileMenuRef}
         isSidebarOpen={sidebarOpen}
         onToggleSidebar={setSidebarOpen}
+        ppcOnly={ppcOnly}
       />
       <main className="main">
         {/* Brand header — shown when sidebar drawer is closed */}
@@ -241,7 +252,7 @@ function Wholesale() {
           <p className="view-description">{VIEW_META[activeView]}</p>
         )}
 
-        {activeView === "dashboard" ? (
+        {!ppcOnly && activeView === "dashboard" ? (
           <>
             {errorMessage && (
               <div
@@ -308,7 +319,7 @@ function Wholesale() {
               />
             </LoadingScreen>
           </>
-        ) : activeView === "leads" ? (
+        ) : ppcOnly || activeView === "leads" ? (
           <PotentialLeads
             currentUser={currentUser}
             leads={leads}
@@ -321,8 +332,9 @@ function Wholesale() {
             saveDeal={saveDeal}
             setDeals={setDeals}
             setActiveView={setActiveView}
+            ppcOnly={ppcOnly}
           />
-        ) : activeView === "pm-deals" ? (
+        ) : !ppcOnly && activeView === "pm-deals" ? (
           <PMDealsTab
             tab={{
               eyebrow: "Private Money",
@@ -338,21 +350,36 @@ function Wholesale() {
             fetchPmDealFile={fetchPmDealFile}
             deletePmDealFileById={deletePmDealFileById}
           />
-        ) : activeView === "rental-management" ? (
+        ) : !ppcOnly && activeView === "rental-management" ? (
           <RentalManagement
             currentUser={currentUser}
             fetchRentals={fetchRentals}
             saveRental={saveRental}
             deleteRentalById={deleteRentalById}
           />
-        ) : activeView === "buyers" ? (
+        ) : !ppcOnly && activeView === "buyers" ? (
           <Buyers theme={theme} currentUser={currentUser} />
-        ) : activeView === "mortgage" ? (
+        ) : !ppcOnly && activeView === "mortgage" ? (
           <MortgageCalculator />
-        ) : activeView === "invoice-generator" ? (
+        ) : !ppcOnly && activeView === "invoice-generator" ? (
           <InvoiceGenerator currentUser={currentUser} />
-        ) : (
+        ) : !ppcOnly ? (
           <DealAnalyzer />
+        ) : (
+          <PotentialLeads
+            currentUser={currentUser}
+            leads={leads}
+            setLeads={setLeads}
+            saveLead={saveLead}
+            deleteLeadById={deleteLeadById}
+            saveLeadFile={saveLeadFile}
+            fetchLeadFile={fetchLeadFile}
+            deleteLeadFileById={deleteLeadFileById}
+            saveDeal={saveDeal}
+            setDeals={setDeals}
+            setActiveView={setActiveView}
+            ppcOnly
+          />
         )}
         <footer
           className="app-footer"

@@ -4,11 +4,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 const signInUser = vi.fn();
 const sendPasswordResetOtp = vi.fn();
 const confirmPasswordReset = vi.fn();
+const createUserAccount = vi.fn();
+const activateUserAccount = vi.fn();
 
 vi.mock("../../firebase/firestoreService", () => ({
   signInUser: (...args) => signInUser(...args),
   sendPasswordResetOtp: (...args) => sendPasswordResetOtp(...args),
   confirmPasswordReset: (...args) => confirmPasswordReset(...args),
+  createUserAccount: (...args) => createUserAccount(...args),
+  activateUserAccount: (...args) => activateUserAccount(...args),
 }));
 
 const { default: AuthGate } = await import("./AuthGate");
@@ -17,6 +21,9 @@ beforeEach(() => {
   signInUser.mockReset();
   sendPasswordResetOtp.mockReset();
   confirmPasswordReset.mockReset();
+  createUserAccount.mockReset();
+  activateUserAccount.mockReset();
+  window.history.replaceState({}, "", "/");
 });
 
 describe("AuthGate", () => {
@@ -62,6 +69,57 @@ describe("AuthGate", () => {
     render(<AuthGate onAuthenticated={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /Forgot password/i }));
     expect(screen.getByText(/Reset password/i)).toBeInTheDocument();
+  });
+
+  it("creates a PPC account and asks the user to activate by email", async () => {
+    createUserAccount.mockResolvedValue({ id: "u2" });
+    render(<AuthGate onAuthenticated={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Create account/i }));
+
+    fireEvent.change(screen.getByPlaceholderText("First name"), {
+      target: { value: "Perry" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Last name"), {
+      target: { value: "PPC" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Username"), {
+      target: { value: "perry" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "perry@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
+      target: { value: "secret" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Repeat password"), {
+      target: { value: "secret" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Create Account/i }));
+
+    await waitFor(() =>
+      expect(createUserAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: "perry@example.com",
+          username: "perry",
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText(/Activation email sent/i),
+    ).toBeInTheDocument();
+  });
+
+  it("activates an account from an activation link", async () => {
+    activateUserAccount.mockResolvedValue(undefined);
+    window.history.replaceState({}, "", "/?activate=token-123");
+
+    render(<AuthGate onAuthenticated={vi.fn()} />);
+
+    await waitFor(() =>
+      expect(activateUserAccount).toHaveBeenCalledWith("token-123"),
+    );
+    expect(await screen.findByText(/Account activated/i)).toBeInTheDocument();
   });
 
   it("sends OTP and progresses to reset step", async () => {

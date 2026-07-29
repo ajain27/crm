@@ -181,8 +181,9 @@ export default function PotentialLeads({
   saveDeal,
   setDeals,
   setActiveView,
+  ppcOnly = false,
 }) {
-  const [activeTab, setActiveTab] = useState("residential");
+  const [activeTab, setActiveTab] = useState(ppcOnly ? "ppc" : "residential");
 
   // ── PPC state ──────────────────────────────────────────────────────────────
   const [ppcSearch, setPpcSearch] = useState("");
@@ -361,6 +362,12 @@ export default function PotentialLeads({
     wpAutoSyncStarted.current = true;
     syncWordPressLeads({ silent: true });
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (ppcOnly && activeTab !== "ppc") {
+      setActiveTab("ppc");
+    }
+  }, [ppcOnly, activeTab]);
 
   async function syncDeleteToWP(lead) {
     if (!lead?.email && !lead?.wpLeadId) {
@@ -708,16 +715,20 @@ export default function PotentialLeads({
   return (
     <>
       <div className="leads-stats-row" data-reveal>
-        <SimpleStat
-          label="Residential"
-          value={residentialLeads.length}
-          colorTheme="blue"
-        />
-        <SimpleStat
-          label="Commercial"
-          value={commercialLeads.length}
-          colorTheme="orange"
-        />
+        {!ppcOnly && (
+          <>
+            <SimpleStat
+              label="Residential"
+              value={residentialLeads.length}
+              colorTheme="blue"
+            />
+            <SimpleStat
+              label="Commercial"
+              value={commercialLeads.length}
+              colorTheme="orange"
+            />
+          </>
+        )}
         <SimpleStat
           label="PPC Campaign"
           value={ppcLeads.length + ppcDeletedCount}
@@ -733,20 +744,24 @@ export default function PotentialLeads({
         style={{ padding: "0 0 1rem 0" }}
         data-reveal
       >
-        <button
-          type="button"
-          className={`deal-tab-btn${activeTab === "residential" ? " deal-tab-btn--active" : ""}`}
-          onClick={() => setActiveTab("residential")}
-        >
-          Residential
-        </button>
-        <button
-          type="button"
-          className={`deal-tab-btn${activeTab === "commercial" ? " deal-tab-btn--active" : ""}`}
-          onClick={() => setActiveTab("commercial")}
-        >
-          Commercial
-        </button>
+        {!ppcOnly && (
+          <>
+            <button
+              type="button"
+              className={`deal-tab-btn${activeTab === "residential" ? " deal-tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("residential")}
+            >
+              Residential
+            </button>
+            <button
+              type="button"
+              className={`deal-tab-btn${activeTab === "commercial" ? " deal-tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("commercial")}
+            >
+              Commercial
+            </button>
+          </>
+        )}
         <button
           type="button"
           className={`deal-tab-btn${activeTab === "ppc" ? " deal-tab-btn--active" : ""}`}
@@ -1297,7 +1312,7 @@ export default function PotentialLeads({
                   <table className="compact-table leads-table acc-card">
                     <thead>
                       <tr>
-                        <th></th>
+                        {!ppcOnly && <th></th>}
                         <th>Address</th>
                         <th>Source</th>
                         <th>Seller</th>
@@ -1962,7 +1977,7 @@ export default function PotentialLeads({
                         <th>Notes</th>
                         <th>Added</th>
                         <th>Quality</th>
-                        <th></th>
+                        {!ppcOnly && <th></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -2080,19 +2095,21 @@ export default function PotentialLeads({
                               </button>
                             </div>
                           </td>
-                          <td
-                            className="acc-col-action-mobile"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              className="leads-crm-btn"
-                              title="Add to CRM pipeline"
-                              onClick={() => handleAddedToCRM(lead.id)}
+                          {!ppcOnly && (
+                            <td
+                              className="acc-col-action-mobile"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <CheckCheck size={14} />
-                              CRM
-                            </button>
-                          </td>
+                              <button
+                                className="leads-crm-btn"
+                                title="Add to CRM pipeline"
+                                onClick={() => handleAddedToCRM(lead.id)}
+                              >
+                                <CheckCheck size={14} />
+                                CRM
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>

@@ -74,6 +74,26 @@ describe("PotentialLeads", () => {
     expect(screen.getByText(/Jane PPC/i)).toBeInTheDocument();
   });
 
+  it("locks PPC-only users to PPC leads without the CRM action", () => {
+    const leads = [
+      {
+        id: "l1",
+        address: "1 Main St, Dallas, TX 75201",
+        source: "Google Ads",
+        sellerName: "Jane PPC",
+        email: "jane@example.com",
+        phone: "555-1212",
+      },
+    ];
+
+    render(<PotentialLeads {...baseProps({ leads, ppcOnly: true })} />);
+
+    expect(screen.getByText(/Jane PPC/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Residential$/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Commercial$/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^CRM$/i })).toBeNull();
+  });
+
   it("imports same-contact WordPress leads when their WordPress IDs differ", async () => {
     const saveLead = vi.fn().mockResolvedValue(undefined);
     fetch.mockResolvedValueOnce({

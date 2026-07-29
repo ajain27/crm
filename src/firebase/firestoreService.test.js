@@ -38,12 +38,19 @@ const {
   deleteDealById,
   deleteBuyerById,
   updateUserProfile,
+  createUserAccount,
 } = await import("./firestoreService");
-const { getDocs, setDoc, deleteDoc, doc } =
-  await import("firebase/firestore");
+const { getDocs, setDoc, deleteDoc, doc } = await import("firebase/firestore");
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    }),
+  );
 });
 
 describe("firestoreService", () => {
@@ -169,6 +176,60 @@ describe("firestoreService", () => {
         profileImage: "data:image/png;base64,abc123",
       },
       { merge: true },
+    );
+  });
+
+  it("resends activation when signing up with an inactive existing email", async () => {
+    getDocs
+      .mockResolvedValueOnce({
+        empty: false,
+        docs: [
+          {
+            id: "u1",
+            data: () => ({
+              email: "a4ankit27@yahoo.com",
+              username: "a4ankit27",
+              active: false,
+              role: "ppc",
+            }),
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        docs: [{ ref: { oldActivationRef: true } }],
+      });
+
+    const user = await createUserAccount({
+      firstName: "Ankit",
+      lastName: "Jain",
+      username: "a4ankit27",
+      email: "A4Ankit27@yahoo.com",
+      password: "secret",
+    });
+
+    expect(deleteDoc).toHaveBeenCalledWith({ oldActivationRef: true });
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        userId: "u1",
+        email: "a4ankit27@yahoo.com",
+        used: false,
+      }),
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/send-email",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("a4ankit27@yahoo.com"),
+      }),
+    );
+    expect(user).toEqual(
+      expect.objectContaining({
+        id: "u1",
+        email: "a4ankit27@yahoo.com",
+        active: false,
+        resentActivation: true,
+      }),
     );
   });
 });

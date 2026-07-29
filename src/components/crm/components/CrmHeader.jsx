@@ -61,10 +61,17 @@ function CrmHeader({
   profileMenuRef,
   isSidebarOpen = false,
   onToggleSidebar = () => {},
+  ppcOnly = false,
 }) {
   const displayName = buildDisplayName(currentUser);
   const profileInitial = buildProfileInitial(currentUser);
   const primeRate = usePrimeRate();
+  const navItems = ppcOnly
+    ? NAV_ITEMS.filter((item) => item.id === "leads").map((item) => ({
+        ...item,
+        label: "PPC Leads",
+      }))
+    : NAV_ITEMS;
 
   const primeAriaLabel = `Prime rate ${primeRate.rate.toFixed(2)}%`;
   const primeTooltip = primeRate.asOf
@@ -130,7 +137,7 @@ function CrmHeader({
 
         {/* Nav */}
         <nav className="sb-nav" aria-label="Main navigation">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          {navItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"

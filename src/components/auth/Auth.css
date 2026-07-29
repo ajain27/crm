@@ -70,9 +70,17 @@
     @apply min-h-[46px] w-full;
   }
 
+  .auth-login-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.875rem 1.25rem;
+    margin-top: 0.875rem;
+  }
+
   .auth-forgot-link {
     display: block;
-    margin-top: 0.875rem;
     text-align: center;
     font-size: 0.875rem;
     font-weight: 500;
@@ -85,5 +93,9 @@
 
   .auth-forgot-link:hover {
     text-decoration: underline;
+  }
+
+  .auth-card > .auth-forgot-link {
+    margin-top: 0.875rem;
   }
 }
