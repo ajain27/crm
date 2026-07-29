@@ -82,6 +82,21 @@ function leadMatchesAnyKey(lead, keys) {
   return leadIdentityKeys(lead).some((key) => keys.has(key));
 }
 
+function leadPrimaryKey(lead) {
+  return leadIdentityKeys(lead)[0] || lead?.id || "";
+}
+
+function dedupePpcLeads(leads) {
+  const seen = new Set();
+  return leads.filter((lead) => {
+    const key = leadPrimaryKey(lead);
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function stableWpLeadId(lead) {
   if (lead?.wpLeadId) {
     return `wp-lead-${String(lead.wpLeadId).replace(/[^A-Za-z0-9_-]/g, "-")}`;
@@ -245,7 +260,7 @@ export default function PotentialLeads({
       (lead) => !leadIdentityKeys(lead).some((key) => localLeadKeys.has(key)),
     ),
   ];
-  const ppcLeads = visibleLeads.filter(isPpcLead);
+  const ppcLeads = dedupePpcLeads(visibleLeads.filter(isPpcLead));
   const residentialLeads = leads.filter(
     (l) => (!l.leadType || l.leadType === "residential") && !isPpcLead(l),
   );
@@ -414,6 +429,7 @@ export default function PotentialLeads({
   }
 
   async function handleDelete(id) {
+    if (ppcOnly) return;
     if (!window.confirm("Delete this lead?")) return;
     const lead = visibleLeads.find((l) => l.id === id);
     const isPpc = isPpcLead(lead);
@@ -450,12 +466,14 @@ export default function PotentialLeads({
   }
 
   async function handlePpcQuality(lead, quality, reason = "") {
+    if (ppcOnly) return;
     const updated = { ...lead, ppcQuality: quality, ppcBadReason: reason };
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === lead.id ? updated : l)));
   }
 
   async function handlePpcBulkDelete() {
+    if (ppcOnly) return;
     if (ppcSelectedIds.size === 0) return;
     if (
       !window.confirm(
@@ -1920,7 +1938,7 @@ export default function PotentialLeads({
                   className="leads-clear-filters"
                   iconSize={13}
                 />
-                {ppcSelectedIds.size > 0 && (
+                {!ppcOnly && ppcSelectedIds.size > 0 && (
                   <button
                     className="leads-bulk-delete-btn"
                     onClick={handlePpcBulkDelete}
@@ -1954,37 +1972,41 @@ export default function PotentialLeads({
                   <table className="compact-table leads-table acc-card">
                     <thead>
                       <tr>
-                        <th className="buyer-checkbox-cell">
-                          <input
-                            type="checkbox"
-                            className="buyer-checkbox"
-                            checked={
-                              paginatedPpc.length > 0 &&
-                              paginatedPpc.every((l) =>
-                                ppcSelectedIds.has(l.id),
-                              )
-                            }
-                            onChange={(e) => {
-                              setPpcSelectedIds((prev) => {
-                                const next = new Set(prev);
-                                paginatedPpc.forEach((l) =>
-                                  e.target.checked
-                                    ? next.add(l.id)
-                                    : next.delete(l.id),
-                                );
-                                return next;
-                              });
-                            }}
-                          />
-                        </th>
-                        <th></th>
+                        {!ppcOnly && (
+                          <>
+                            <th className="buyer-checkbox-cell">
+                              <input
+                                type="checkbox"
+                                className="buyer-checkbox"
+                                checked={
+                                  paginatedPpc.length > 0 &&
+                                  paginatedPpc.every((l) =>
+                                    ppcSelectedIds.has(l.id),
+                                  )
+                                }
+                                onChange={(e) => {
+                                  setPpcSelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    paginatedPpc.forEach((l) =>
+                                      e.target.checked
+                                        ? next.add(l.id)
+                                        : next.delete(l.id),
+                                    );
+                                    return next;
+                                  });
+                                }}
+                              />
+                            </th>
+                            <th></th>
+                          </>
+                        )}
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Address</th>
                         <th>Notes</th>
                         <th>Added</th>
-                        <th>Quality</th>
+                        {!ppcOnly && <th>Quality</th>}
                         {!ppcOnly && <th></th>}
                       </tr>
                     </thead>
@@ -1995,38 +2017,44 @@ export default function PotentialLeads({
                           onClick={() => setDetailLead(lead)}
                           className={`clickable-row${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
                         >
-                          <td
-                            className="buyer-checkbox-cell acc-col-hide-mobile"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="checkbox"
-                              className="buyer-checkbox"
-                              checked={ppcSelectedIds.has(lead.id)}
-                              onChange={() =>
-                                setPpcSelectedIds((prev) => {
-                                  const next = new Set(prev);
-                                  next.has(lead.id)
-                                    ? next.delete(lead.id)
-                                    : next.add(lead.id);
-                                  return next;
-                                })
-                              }
-                            />
-                          </td>
-                          <td
-                            className="acc-col-action-mobile"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              className="leads-delete-btn acc-delete-btn"
-                              title="Delete lead"
-                              onClick={() => handleDelete(lead.id)}
-                            >
-                              <Trash2 size={14} />
-                              <span className="acc-delete-label">Delete</span>
-                            </button>
-                          </td>
+                          {!ppcOnly && (
+                            <>
+                              <td
+                                className="buyer-checkbox-cell acc-col-hide-mobile"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="buyer-checkbox"
+                                  checked={ppcSelectedIds.has(lead.id)}
+                                  onChange={() =>
+                                    setPpcSelectedIds((prev) => {
+                                      const next = new Set(prev);
+                                      next.has(lead.id)
+                                        ? next.delete(lead.id)
+                                        : next.add(lead.id);
+                                      return next;
+                                    })
+                                  }
+                                />
+                              </td>
+                              <td
+                                className="acc-col-action-mobile"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  className="leads-delete-btn acc-delete-btn"
+                                  title="Delete lead"
+                                  onClick={() => handleDelete(lead.id)}
+                                >
+                                  <Trash2 size={14} />
+                                  <span className="acc-delete-label">
+                                    Delete
+                                  </span>
+                                </button>
+                              </td>
+                            </>
+                          )}
                           <AccordionHeaderCell
                             id={lead.id}
                             label="Name"
@@ -2077,32 +2105,34 @@ export default function PotentialLeads({
                           <td className="leads-date-cell" data-label="Added">
                             {formatDate(lead.dateAdded)}
                           </td>
-                          <td
-                            onClick={(e) => e.stopPropagation()}
-                            className="ppc-quality-cell acc-col-action-mobile"
-                          >
-                            <div className="ppc-quality-btns">
-                              <button
-                                className={`ppc-quality-btn ppc-quality-good${lead.ppcQuality === "good" ? " ppc-quality-active" : ""}`}
-                                title="Mark as good lead"
-                                disabled={lead.ppcQuality === "good"}
-                                onClick={() => handlePpcQuality(lead, "good")}
-                              >
-                                <ThumbsUp size={13} />
-                              </button>
-                              <button
-                                className={`ppc-quality-btn ppc-quality-bad${lead.ppcQuality === "bad" ? " ppc-quality-active" : ""}`}
-                                title="Mark as bad lead"
-                                disabled={lead.ppcQuality === "bad"}
-                                onClick={() => {
-                                  setPpcBadModal(lead);
-                                  setPpcBadReason(lead.ppcBadReason || "");
-                                }}
-                              >
-                                <ThumbsDown size={13} />
-                              </button>
-                            </div>
-                          </td>
+                          {!ppcOnly && (
+                            <td
+                              onClick={(e) => e.stopPropagation()}
+                              className="ppc-quality-cell acc-col-action-mobile"
+                            >
+                              <div className="ppc-quality-btns">
+                                <button
+                                  className={`ppc-quality-btn ppc-quality-good${lead.ppcQuality === "good" ? " ppc-quality-active" : ""}`}
+                                  title="Mark as good lead"
+                                  disabled={lead.ppcQuality === "good"}
+                                  onClick={() => handlePpcQuality(lead, "good")}
+                                >
+                                  <ThumbsUp size={13} />
+                                </button>
+                                <button
+                                  className={`ppc-quality-btn ppc-quality-bad${lead.ppcQuality === "bad" ? " ppc-quality-active" : ""}`}
+                                  title="Mark as bad lead"
+                                  disabled={lead.ppcQuality === "bad"}
+                                  onClick={() => {
+                                    setPpcBadModal(lead);
+                                    setPpcBadReason(lead.ppcBadReason || "");
+                                  }}
+                                >
+                                  <ThumbsDown size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
                           {!ppcOnly && (
                             <td
                               className="acc-col-action-mobile"

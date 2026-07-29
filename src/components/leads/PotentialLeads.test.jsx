@@ -92,6 +92,30 @@ describe("PotentialLeads", () => {
     expect(screen.queryByRole("button", { name: /^Residential$/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Commercial$/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /^CRM$/i })).toBeNull();
+    expect(screen.queryByTitle(/Delete lead/i)).toBeNull();
+    expect(screen.queryByText(/Quality/i)).toBeNull();
+    expect(screen.queryByTitle(/Mark as good lead/i)).toBeNull();
+  });
+
+  it("collapses duplicate PPC leads for PPC-only users", () => {
+    const duplicateLead = {
+      wpLeadId: 777,
+      address: "777 Main St, Dallas, TX 75201",
+      source: "Website",
+      ppcSource: true,
+      sellerName: "Duplicate PPC",
+      email: "duplicate@example.com",
+      phone: "555-7777",
+    };
+    const leads = [
+      { ...duplicateLead, id: "old-random-id" },
+      { ...duplicateLead, id: "wp-lead-777" },
+    ];
+
+    render(<PotentialLeads {...baseProps({ leads, ppcOnly: true })} />);
+
+    expect(screen.getAllByText(/Duplicate PPC/i)).toHaveLength(1);
+    expect(screen.getAllByText(/1.*of 1 lead/i).length).toBeGreaterThan(0);
   });
 
   it("imports same-contact WordPress leads when their WordPress IDs differ", async () => {
