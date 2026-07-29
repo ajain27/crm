@@ -469,7 +469,13 @@ export default function PotentialLeads({
       return;
 
     const lead = visibleLeads.find((l) => l.id === leadId);
+    if (!lead) return;
+
     const { address, city, state, zipCode } = parseAddress(lead.address);
+    const leadKeys = new Set(leadIdentityKeys(lead));
+    const matchingLocalLeads = leads.filter(
+      (l) => l.id === leadId || leadMatchesAnyKey(l, leadKeys),
+    );
     const deal = {
       ...createEmptyDealForm(),
       id: crypto.randomUUID(),
@@ -481,17 +487,39 @@ export default function PotentialLeads({
       listingUrl: lead.url || "",
       agentName: lead.agentName || "",
       agentPhone: lead.agentPhone || "",
-      onMarket: lead.source === "MLS / Zillow" ? "Yes" : "No",
+      onMarket:
+        lead.onMarket || (lead.source === "MLS / Zillow" ? "Yes" : "No"),
+      listedPrice: lead.listedPrice || "",
       sellerPhone: lead.phone || "",
-      notes: [lead.source ? `Source: ${lead.source}` : "", lead.notes || ""]
+      source: lead.source || "Website",
+      notes: [
+        lead.source ? `Source: ${lead.source}` : "Source: Website",
+        lead.sellerName ? `Seller: ${lead.sellerName}` : "",
+        lead.email ? `Email: ${lead.email}` : "",
+        lead.phone ? `Phone: ${lead.phone}` : "",
+        lead.notes || "",
+      ]
         .filter(Boolean)
         .join("\n"),
     };
 
     await saveDeal(deal);
     setDeals((prev) => [deal, ...prev]);
-    await deleteLeadById(leadId);
-    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+    await Promise.all(
+      matchingLocalLeads.map((l) => deleteLeadById(l.id).catch(() => null)),
+    );
+    setLeads((prev) =>
+      prev.filter((l) => l.id !== leadId && !leadMatchesAnyKey(l, leadKeys)),
+    );
+    setWpFetchedLeads((prev) =>
+      prev.filter((l) => l.id !== leadId && !leadMatchesAnyKey(l, leadKeys)),
+    );
+    setPpcSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(leadId);
+      matchingLocalLeads.forEach((l) => next.delete(l.id));
+      return next;
+    });
     setActiveView("dashboard");
   }
 
