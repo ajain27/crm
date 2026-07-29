@@ -82,6 +82,16 @@ function leadMatchesAnyKey(lead, keys) {
   return leadIdentityKeys(lead).some((key) => keys.has(key));
 }
 
+function leadAddress(lead) {
+  return (
+    lead?.address ||
+    lead?.propertyAddress ||
+    lead?.property_address ||
+    lead?.property ||
+    ""
+  ).trim();
+}
+
 function createEmptyForm() {
   return {
     dealType: "Wholesale",
@@ -471,7 +481,15 @@ export default function PotentialLeads({
     const lead = visibleLeads.find((l) => l.id === leadId);
     if (!lead) return;
 
-    const { address, city, state, zipCode } = parseAddress(lead.address);
+    const fullAddress = leadAddress(lead);
+    if (!fullAddress) {
+      alert(
+        "This lead does not have a property address, so it was not added to CRM.",
+      );
+      return;
+    }
+
+    const { address, city, state, zipCode } = parseAddress(fullAddress);
     const leadKeys = new Set(leadIdentityKeys(lead));
     const matchingLocalLeads = leads.filter(
       (l) => l.id === leadId || leadMatchesAnyKey(l, leadKeys),
@@ -504,6 +522,9 @@ export default function PotentialLeads({
     };
 
     await saveDeal(deal);
+    if (isPpcLead(lead)) {
+      await syncDeleteToWP(lead);
+    }
     setDeals((prev) => [deal, ...prev]);
     await Promise.all(
       matchingLocalLeads.map((l) => deleteLeadById(l.id).catch(() => null)),

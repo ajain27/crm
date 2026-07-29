@@ -120,7 +120,7 @@ function ywe_leads_api_table_score($table) {
     if (ywe_leads_api_first_column($columns, array('phone', 'seller_phone', 'sellerPhone'))) {
         $score++;
     }
-    if (ywe_leads_api_first_column($columns, array('property_address', 'propertyAddress', 'address', 'property'))) {
+    if (ywe_leads_api_first_column($columns, array('property_address', 'propertyAddress', 'Property Address', 'property address', 'address', 'Address', 'property'))) {
         $score++;
     }
     if (ywe_leads_api_first_column($columns, array('name', 'full_name', 'seller_name', 'sellerName'))) {
@@ -154,16 +154,16 @@ function ywe_leads_api_normalize_row($row, $columns) {
     return array(
         'wp_lead_id' => $id,
         'id' => $id,
-        'date' => ywe_leads_api_value($row, $columns, array('date', 'created_at', 'createdAt', 'date_added', 'submitted_at')),
-        'name' => ywe_leads_api_value($row, $columns, array('name', 'full_name', 'seller_name', 'sellerName')),
-        'phone' => ywe_leads_api_value($row, $columns, array('phone', 'seller_phone', 'sellerPhone')),
-        'email' => ywe_leads_api_value($row, $columns, array('email', 'seller_email', 'sellerEmail')),
-        'property_address' => ywe_leads_api_value($row, $columns, array('property_address', 'propertyAddress', 'address', 'property')),
-        'condition' => ywe_leads_api_value($row, $columns, array('condition', 'property_condition')),
-        'timeline' => ywe_leads_api_value($row, $columns, array('timeline', 'selling_timeline')),
-        'mls_listed' => ywe_leads_api_value($row, $columns, array('mls_listed', 'mlsListed', 'on_market', 'onMarket')),
-        'estimated_value' => ywe_leads_api_value($row, $columns, array('estimated_value', 'estimatedValue', 'value', 'home_value')),
-        'notes' => ywe_leads_api_value($row, $columns, array('notes', 'message', 'comments')),
+        'date' => ywe_leads_api_value($row, $columns, array('Date', 'date', 'created_at', 'createdAt', 'date_added', 'submitted_at')),
+        'name' => ywe_leads_api_value($row, $columns, array('Name', 'name', 'full_name', 'seller_name', 'sellerName')),
+        'phone' => ywe_leads_api_value($row, $columns, array('Phone', 'phone', 'seller_phone', 'sellerPhone')),
+        'email' => ywe_leads_api_value($row, $columns, array('Email', 'email', 'seller_email', 'sellerEmail')),
+        'property_address' => ywe_leads_api_value($row, $columns, array('Property Address', 'property address', 'property_address', 'propertyAddress', 'Address', 'address', 'property')),
+        'condition' => ywe_leads_api_value($row, $columns, array('Condition', 'condition', 'property_condition')),
+        'timeline' => ywe_leads_api_value($row, $columns, array('Timeline', 'timeline', 'selling_timeline')),
+        'mls_listed' => ywe_leads_api_value($row, $columns, array('MLS Listed', 'mls listed', 'mls_listed', 'mlsListed', 'on_market', 'onMarket')),
+        'estimated_value' => ywe_leads_api_value($row, $columns, array('Estimated Value', 'estimated value', 'estimated_value', 'estimatedValue', 'value', 'home_value')),
+        'notes' => ywe_leads_api_value($row, $columns, array('Notes', 'notes', 'message', 'comments')),
         'source' => ywe_leads_api_value($row, $columns, array('source', 'lead_source', 'utm_source')),
     );
 }
