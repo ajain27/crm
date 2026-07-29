@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PotentialLeads from "./PotentialLeads";
 
 const baseProps = (overrides = {}) => ({
@@ -18,6 +18,20 @@ const baseProps = (overrides = {}) => ({
 });
 
 describe("PotentialLeads", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ leads: [] }),
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("renders the Add Lead form", () => {
     render(<PotentialLeads {...baseProps()} />);
     expect(
@@ -42,6 +56,59 @@ describe("PotentialLeads", () => {
     ];
     render(<PotentialLeads {...baseProps({ leads })} />);
     expect(screen.getByText(/1 Main St/i)).toBeInTheDocument();
+  });
+
+  it("shows paid-source leads in the PPC tab", () => {
+    const leads = [
+      {
+        id: "l1",
+        address: "1 Main St, Dallas, TX 75201",
+        source: "Google Ads",
+        sellerName: "Jane PPC",
+        email: "jane@example.com",
+        phone: "555-1212",
+      },
+    ];
+    render(<PotentialLeads {...baseProps({ leads })} />);
+    fireEvent.click(screen.getByRole("button", { name: /PPC Leads/i }));
+    expect(screen.getByText(/Jane PPC/i)).toBeInTheDocument();
+  });
+
+  it("imports same-contact WordPress leads when their WordPress IDs differ", async () => {
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        leads: [
+          {
+            id: "local-1",
+            wpLeadId: 101,
+            ppcSource: true,
+            source: "Website",
+            sellerName: "kausar miah",
+            email: "kausarstore7@gmail.com",
+            phone: "3474503572",
+            address: "Baridhara, Dhaka, Bangladesh, 1212, texas, TX 78805",
+          },
+          {
+            id: "local-2",
+            wpLeadId: 102,
+            ppcSource: true,
+            source: "Website",
+            sellerName: "kausar miah",
+            email: "kausarstore7@gmail.com",
+            phone: "3474503572",
+            address: "Baridhara, Dhaka, Bangladesh, 1212, texas, TX 78805",
+          },
+        ],
+      }),
+    });
+
+    render(<PotentialLeads {...baseProps({ saveLead })} />);
+
+    await waitFor(() => {
+      expect(saveLead).toHaveBeenCalledTimes(2);
+    });
   });
 
   it("shows a duplicate-address warning on address blur", () => {

@@ -15,6 +15,16 @@ app.post("/api/send-invoice", async (req, res) => {
   await handler(req, res);
 });
 
+app.get("/api/fetch-wp-leads", async (req, res) => {
+  const { default: handler } = await import("./api/fetch-wp-leads.js");
+  await handler(req, res);
+});
+
+app.post("/api/delete-wp-lead", async (req, res) => {
+  const { default: handler } = await import("./api/delete-wp-lead.js");
+  await handler(req, res);
+});
+
 app.get("/api/send-scheduled-invoices", async (req, res) => {
   const { default: handler } = await import("./api/send-scheduled-invoices.js");
   await handler(req, res);
@@ -22,5 +32,5 @@ app.get("/api/send-scheduled-invoices", async (req, res) => {
 
 const PORT = 3001;
 app.listen(PORT, () =>
-  console.log(`Dev API server running at http://localhost:${PORT}`)
+  console.log(`Dev API server running at http://localhost:${PORT}`),
 );

@@ -1,0 +1,228 @@
+import { randomUUID } from "crypto";
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function normalizeDate(value) {
+  if (!value) return todayStr();
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value).slice(0, 10) || todayStr();
+  }
+  return date.toISOString().slice(0, 10);
+}
+
+function getField(source, ...keys) {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return String(value).trim();
+    }
+  }
+  return "";
+}
+
+function parseLeadList(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.leads)) return payload.leads;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+}
+
+function yesNo(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return "No";
+  return ["yes", "true", "1", "listed"].includes(normalized) ? "Yes" : "No";
+}
+
+function normalizeWpLead(raw) {
+  const wpLeadId = getField(raw, "wp_lead_id", "wpLeadId", "id", "ID");
+  const source =
+    getField(raw, "source", "utm_source", "lead_source", "campaign_source") ||
+    "Website";
+
+  return {
+    id: randomUUID(),
+    leadType: "residential",
+    source,
+    ppcSource: true,
+    dealType: getField(raw, "deal_type", "dealType") || "Wholesale",
+    address: getField(
+      raw,
+      "address",
+      "property_address",
+      "propertyAddress",
+      "property",
+      "Property Address",
+    ),
+    sellerName: getField(
+      raw,
+      "Name",
+      "seller-name",
+      "seller_name",
+      "sellerName",
+      "full_name",
+      "fullName",
+      "your-name",
+      "name",
+    ),
+    email: getField(raw, "Email", "email", "seller_email", "sellerEmail"),
+    phone: getField(raw, "Phone", "phone", "seller_phone", "sellerPhone"),
+    agentName: getField(raw, "agent_name", "agentName"),
+    agentPhone: getField(raw, "agent_phone", "agentPhone"),
+    url: getField(raw, "url", "listing_url", "listingUrl", "mls_url"),
+    followUpDate: getField(raw, "follow_up_date", "followUpDate"),
+    notes: [
+      getField(raw, "notes", "message", "comments"),
+      getField(raw, "condition", "Condition")
+        ? `Condition: ${getField(raw, "condition", "Condition")}`
+        : "",
+      getField(raw, "timeline", "Timeline")
+        ? `Timeline: ${getField(raw, "timeline", "Timeline")}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    onMarket: yesNo(
+      getField(raw, "on_market", "onMarket", "mls_listed", "MLS Listed"),
+    ),
+    listedPrice: getField(
+      raw,
+      "listed_price",
+      "listedPrice",
+      "asking_price",
+      "estimated_value",
+      "estimatedValue",
+      "Estimated Value",
+    ),
+    rent: getField(raw, "rent", "monthly_rent"),
+    occupied: getField(raw, "occupied") || "No",
+    offerStatus: "Not Sent",
+    sellerAccepted: "No",
+    offerPrice: "",
+    dateAdded: normalizeDate(
+      getField(
+        raw,
+        "Date",
+        "date",
+        "dateAdded",
+        "date_added",
+        "created_at",
+        "createdAt",
+      ),
+    ),
+    wpLeadId: wpLeadId ? Number(wpLeadId) || wpLeadId : null,
+  };
+}
+
+function withPaginationParams(baseUrl, page, perPage) {
+  const url = new URL(baseUrl);
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("per_page", String(perPage));
+  url.searchParams.set("perPage", String(perPage));
+  url.searchParams.set("limit", String(perPage));
+  url.searchParams.set("number", String(perPage));
+  url.searchParams.set("posts_per_page", String(perPage));
+  url.searchParams.set("all", "1");
+  return url;
+}
+
+function rawLeadKey(row) {
+  const id = getField(row, "wp_lead_id", "wpLeadId", "id", "ID");
+  if (id) return `wp:${id}`;
+  return JSON.stringify(row);
+}
+
+async function fetchAllWordPressLeads({ wpUrl, path, headers }) {
+  const perPage = Number(process.env.WORDPRESS_LEADS_PER_PAGE || 100);
+  const allRows = [];
+  const seen = new Set();
+  const pageSizes = [];
+
+  for (let page = 1; page <= 50; page += 1) {
+    const pageUrl = withPaginationParams(`${wpUrl}${path}`, page, perPage);
+    const response = await fetch(pageUrl, { method: "GET", headers });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      if (page > 1 && allRows.length > 0) break;
+      return {
+        ok: false,
+        status: response.status,
+        error: data.message || data.error || "WordPress fetch failed",
+      };
+    }
+
+    const rows = parseLeadList(data);
+    pageSizes.push(rows.length);
+    if (rows.length === 0) break;
+
+    let newRows = 0;
+    for (const row of rows) {
+      const key = rawLeadKey(row);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      allRows.push(row);
+      newRows += 1;
+    }
+
+    const totalPages = Number(response.headers.get("x-wp-totalpages") || 0);
+    if (totalPages && page >= totalPages) break;
+    if (!totalPages && newRows === 0) break;
+  }
+
+  return { ok: true, rows: allRows, pageSizes };
+}
+
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const wpUrl = (process.env.WORDPRESS_SITE_URL || "").replace(/\/+$/, "");
+  if (!wpUrl) {
+    return res.status(500).json({ error: "WORDPRESS_SITE_URL not configured" });
+  }
+
+  const headers = {
+    "Content-Type": "application/json",
+    "x-webhook-secret": process.env.WEBHOOK_SECRET || "",
+  };
+
+  try {
+    const leadsPath =
+      process.env.WORDPRESS_LEADS_PATH || "/wp-json/ywe/v1/leads";
+    const path = leadsPath.startsWith("/") ? leadsPath : `/${leadsPath}`;
+    const result = await fetchAllWordPressLeads({ wpUrl, path, headers });
+
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
+
+    const leads = result.rows
+      .map(normalizeWpLead)
+      .filter(
+        (lead) => lead.address || lead.sellerName || lead.email || lead.phone,
+      );
+
+    return res.status(200).json({
+      leads,
+      totalFetched: result.rows.length,
+      pageSizes: result.pageSizes,
+    });
+  } catch (err) {
+    console.error("fetch-wp-leads error:", err);
+    return res.status(500).json({ error: "Failed to fetch WordPress leads" });
+  }
+}

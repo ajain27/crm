@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   MapPin,
   Link2,
@@ -13,6 +13,7 @@ import {
   Globe,
   ThumbsUp,
   ThumbsDown,
+  RefreshCw,
 } from "lucide-react";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import { AccordionHeaderCell, SimpleStat } from "../elements/elements";
@@ -37,6 +38,45 @@ import "./Leads.css";
 const ITEMS_PER_PAGE = 10;
 
 const SOURCES = ["MLS / Zillow", "Cold Call", "Propwire", "Auction.com"];
+const PPC_SOURCE_TERMS = [
+  "website",
+  "ppc",
+  "google ad",
+  "google ads",
+  "adwords",
+  "paid search",
+  "facebook ad",
+  "facebook ads",
+  "meta ad",
+  "meta ads",
+];
+
+function isPpcLead(lead) {
+  if (lead?.ppcSource === true) return true;
+  const source = String(lead?.source || "").toLowerCase();
+  return PPC_SOURCE_TERMS.some((term) => source.includes(term));
+}
+
+function leadIdentityKeys(lead) {
+  if (lead?.wpLeadId) return [`wp:${lead.wpLeadId}`];
+
+  return [
+    [
+      lead?.sellerName,
+      lead?.email,
+      lead?.phone,
+      lead?.address,
+      lead?.dateAdded,
+      lead?.notes,
+    ]
+      .map((value) =>
+        String(value || "")
+          .trim()
+          .toLowerCase(),
+      )
+      .join("|"),
+  ].filter((key) => key.replace(/\|/g, ""));
+}
 
 function createEmptyForm() {
   return {
@@ -132,12 +172,20 @@ export default function PotentialLeads({
   const [ppcBadReason, setPpcBadReason] = useState("");
   const [ppcSelectedIds, setPpcSelectedIds] = useState(new Set());
   const [ppcDeletedCount, setPpcDeletedCount] = useState(0);
+  const [wpFetchedLeads, setWpFetchedLeads] = useState([]);
+  const [wpSyncStatus, setWpSyncStatus] = useState("");
+  const [wpSyncing, setWpSyncing] = useState(false);
+  const wpAutoSyncStarted = useRef(false);
 
   useEffect(() => {
     if (!currentUser?.id) return;
-    fetchUserStats(currentUser.id).then((stats) => {
-      setPpcDeletedCount(stats.ppcDeletedCount || 0);
-    });
+    fetchUserStats(currentUser.id)
+      .then((stats) => {
+        setPpcDeletedCount(stats.ppcDeletedCount || 0);
+      })
+      .catch((err) => {
+        console.warn("[PPC stats] failed to load", err);
+      });
   }, [currentUser?.id]);
 
   // ── Residential state ──────────────────────────────────────────────────────
@@ -162,10 +210,16 @@ export default function PotentialLeads({
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
 
   // ── Split leads by type ────────────────────────────────────────────────────
-  const ppcLeads = leads.filter((l) => l.source === "Website");
+  const localLeadKeys = new Set(leads.flatMap(leadIdentityKeys));
+  const visibleLeads = [
+    ...leads,
+    ...wpFetchedLeads.filter(
+      (lead) => !leadIdentityKeys(lead).some((key) => localLeadKeys.has(key)),
+    ),
+  ];
+  const ppcLeads = visibleLeads.filter(isPpcLead);
   const residentialLeads = leads.filter(
-    (l) =>
-      (!l.leadType || l.leadType === "residential") && l.source !== "Website",
+    (l) => (!l.leadType || l.leadType === "residential") && !isPpcLead(l),
   );
   const commercialLeads = leads.filter((l) => l.leadType === "commercial");
 
@@ -224,10 +278,75 @@ export default function PotentialLeads({
     }
   }
 
+  async function syncWordPressLeads({ silent = false } = {}) {
+    if (!currentUser?.id || wpSyncing) return;
+    setWpSyncing(true);
+    if (!silent) setWpSyncStatus("Syncing WordPress leads...");
+
+    try {
+      const resp = await fetch("/api/fetch-wp-leads");
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(
+          data?.error || `WordPress sync failed (${resp.status})`,
+        );
+      }
+
+      const existingKeys = new Set(leads.flatMap(leadIdentityKeys));
+      const imported = [];
+      const fetchedLeads = (data.leads || []).map((wpLead) => ({
+        ...wpLead,
+        id: wpLead.id || crypto.randomUUID(),
+        userId: currentUser.id,
+        ppcSource: true,
+        source: wpLead.source || "Website",
+      }));
+
+      setWpFetchedLeads(fetchedLeads);
+
+      for (const lead of fetchedLeads) {
+        const keys = leadIdentityKeys(lead);
+        if (keys.some((key) => existingKeys.has(key))) continue;
+
+        await saveLead(lead);
+        imported.push(lead);
+        leadIdentityKeys(lead).forEach((key) => existingKeys.add(key));
+      }
+
+      if (imported.length) {
+        setLeads((prev) => {
+          const prevKeys = new Set(prev.flatMap(leadIdentityKeys));
+          const freshImported = imported.filter(
+            (lead) => !leadIdentityKeys(lead).some((key) => prevKeys.has(key)),
+          );
+          return [...freshImported, ...prev];
+        });
+      }
+
+      setWpSyncStatus(
+        imported.length
+          ? `Showing ${fetchedLeads.length} WordPress lead${fetchedLeads.length !== 1 ? "s" : ""}. Imported ${imported.length}.`
+          : `Showing ${fetchedLeads.length} WordPress lead${fetchedLeads.length !== 1 ? "s" : ""}. Local CRM is up to date.`,
+      );
+    } catch (err) {
+      console.error("[WP sync] fetch failed", err);
+      setWpSyncStatus(err.message || "Failed to sync WordPress leads.");
+      if (!silent) alert(err.message || "Failed to sync WordPress leads.");
+    } finally {
+      setWpSyncing(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!currentUser?.id || wpAutoSyncStarted.current) return;
+    wpAutoSyncStarted.current = true;
+    syncWordPressLeads({ silent: true });
+  }, [currentUser?.id]);
+
   async function syncDeleteToWP(lead) {
     if (!lead?.email && !lead?.wpLeadId) {
       console.warn("[WP sync] skipped — lead has no email or wpLeadId", lead);
-      return;
+      return true;
     }
     try {
       const resp = await fetch("/api/delete-wp-lead", {
@@ -244,22 +363,27 @@ export default function PotentialLeads({
         alert(
           `WordPress sync failed (${resp.status}): ${data?.error || JSON.stringify(data)}`,
         );
+        return false;
       } else {
         console.log("[WP sync] success", data);
+        return true;
       }
     } catch (err) {
       console.error("[WP sync] network error", err);
       alert(`WordPress sync network error: ${err.message}`);
+      return false;
     }
   }
 
   async function handleDelete(id) {
     if (!window.confirm("Delete this lead?")) return;
-    const lead = leads.find((l) => l.id === id);
-    const isPpc = lead?.source === "Website";
+    const lead = visibleLeads.find((l) => l.id === id);
+    const isPpc = isPpcLead(lead);
+    if (isPpc && !(await syncDeleteToWP(lead))) return;
     await deleteLeadById(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
-    syncDeleteToWP(lead);
+    setWpFetchedLeads((prev) => prev.filter((l) => l.id !== id));
+    if (!isPpc) syncDeleteToWP(lead);
     if (isPpc) {
       await incrementPpcDeleted(currentUser.id, 1);
       setPpcDeletedCount((prev) => prev + 1);
@@ -286,12 +410,16 @@ export default function PotentialLeads({
     )
       return;
     const toDelete = ppcLeads.filter((l) => ppcSelectedIds.has(l.id));
-    await Promise.all(toDelete.map((l) => deleteLeadById(l.id)));
-    toDelete.forEach((l) => syncDeleteToWP(l));
-    setLeads((prev) => prev.filter((l) => !ppcSelectedIds.has(l.id)));
+    const wpResults = await Promise.all(toDelete.map((l) => syncDeleteToWP(l)));
+    const syncedLeads = toDelete.filter((_, index) => wpResults[index]);
+    if (syncedLeads.length === 0) return;
+    const syncedIds = new Set(syncedLeads.map((l) => l.id));
+    await Promise.all(syncedLeads.map((l) => deleteLeadById(l.id)));
+    setLeads((prev) => prev.filter((l) => !syncedIds.has(l.id)));
+    setWpFetchedLeads((prev) => prev.filter((l) => !syncedIds.has(l.id)));
     setPpcSelectedIds(new Set());
-    await incrementPpcDeleted(currentUser.id, toDelete.length);
-    setPpcDeletedCount((prev) => prev + toDelete.length);
+    await incrementPpcDeleted(currentUser.id, syncedLeads.length);
+    setPpcDeletedCount((prev) => prev + syncedLeads.length);
   }
 
   async function handleAddedToCRM(leadId) {
@@ -302,7 +430,7 @@ export default function PotentialLeads({
     )
       return;
 
-    const lead = leads.find((l) => l.id === leadId);
+    const lead = visibleLeads.find((l) => l.id === leadId);
     const { address, city, state, zipCode } = parseAddress(lead.address);
     const deal = {
       ...createEmptyDealForm(),
@@ -1485,6 +1613,15 @@ export default function PotentialLeads({
                 </p>
               </div>
               <div className="leads-filters">
+                <button
+                  type="button"
+                  className="leads-sync-btn"
+                  onClick={() => syncWordPressLeads()}
+                  disabled={wpSyncing}
+                >
+                  <RefreshCw size={13} />
+                  {wpSyncing ? "Syncing..." : "Sync WordPress"}
+                </button>
                 <div className="leads-search-wrap">
                   <Search size={13} className="leads-search-icon" />
                   <input
@@ -1679,6 +1816,9 @@ export default function PotentialLeads({
                 )}
               </div>
             </div>
+            {wpSyncStatus && (
+              <p className="leads-sync-status">{wpSyncStatus}</p>
+            )}
 
             {ppcLeads.length === 0 ? (
               <div className="leads-empty">
