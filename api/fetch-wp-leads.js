@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 
 function todayStr() {
   const d = new Date();
@@ -41,39 +41,84 @@ function yesNo(value) {
   return ["yes", "true", "1", "listed"].includes(normalized) ? "Yes" : "No";
 }
 
+function stableLeadId({
+  wpLeadId,
+  sellerName,
+  email,
+  phone,
+  address,
+  dateAdded,
+}) {
+  if (wpLeadId) {
+    return `wp-lead-${String(wpLeadId).replace(/[^A-Za-z0-9_-]/g, "-")}`;
+  }
+
+  const fingerprint = [sellerName, email, phone, address, dateAdded]
+    .map((value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase(),
+    )
+    .join("|");
+
+  return `wp-lead-${createHash("sha1").update(fingerprint).digest("hex")}`;
+}
+
 function normalizeWpLead(raw) {
   const wpLeadId = getField(raw, "wp_lead_id", "wpLeadId", "id", "ID");
   const source =
     getField(raw, "source", "utm_source", "lead_source", "campaign_source") ||
     "Website";
+  const address = getField(
+    raw,
+    "address",
+    "property_address",
+    "propertyAddress",
+    "property",
+    "Property Address",
+  );
+  const sellerName = getField(
+    raw,
+    "Name",
+    "seller-name",
+    "seller_name",
+    "sellerName",
+    "full_name",
+    "fullName",
+    "your-name",
+    "name",
+  );
+  const email = getField(raw, "Email", "email", "seller_email", "sellerEmail");
+  const phone = getField(raw, "Phone", "phone", "seller_phone", "sellerPhone");
+  const dateAdded = normalizeDate(
+    getField(
+      raw,
+      "Date",
+      "date",
+      "dateAdded",
+      "date_added",
+      "created_at",
+      "createdAt",
+    ),
+  );
 
   return {
-    id: randomUUID(),
+    id: stableLeadId({
+      wpLeadId,
+      sellerName,
+      email,
+      phone,
+      address,
+      dateAdded,
+    }),
     leadType: "residential",
     source,
     ppcSource: true,
     dealType: getField(raw, "deal_type", "dealType") || "Wholesale",
-    address: getField(
-      raw,
-      "address",
-      "property_address",
-      "propertyAddress",
-      "property",
-      "Property Address",
-    ),
-    sellerName: getField(
-      raw,
-      "Name",
-      "seller-name",
-      "seller_name",
-      "sellerName",
-      "full_name",
-      "fullName",
-      "your-name",
-      "name",
-    ),
-    email: getField(raw, "Email", "email", "seller_email", "sellerEmail"),
-    phone: getField(raw, "Phone", "phone", "seller_phone", "sellerPhone"),
+    address,
+    sellerName,
+    email,
+    phone,
     agentName: getField(raw, "agent_name", "agentName"),
     agentPhone: getField(raw, "agent_phone", "agentPhone"),
     url: getField(raw, "url", "listing_url", "listingUrl", "mls_url"),
@@ -106,17 +151,7 @@ function normalizeWpLead(raw) {
     offerStatus: "Not Sent",
     sellerAccepted: "No",
     offerPrice: "",
-    dateAdded: normalizeDate(
-      getField(
-        raw,
-        "Date",
-        "date",
-        "dateAdded",
-        "date_added",
-        "created_at",
-        "createdAt",
-      ),
-    ),
+    dateAdded,
     wpLeadId: wpLeadId ? Number(wpLeadId) || wpLeadId : null,
   };
 }

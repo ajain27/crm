@@ -82,6 +82,14 @@ function leadMatchesAnyKey(lead, keys) {
   return leadIdentityKeys(lead).some((key) => keys.has(key));
 }
 
+function stableWpLeadId(lead) {
+  if (lead?.wpLeadId) {
+    return `wp-lead-${String(lead.wpLeadId).replace(/[^A-Za-z0-9_-]/g, "-")}`;
+  }
+
+  return lead?.id || crypto.randomUUID();
+}
+
 function leadAddress(lead) {
   return (
     lead?.address ||
@@ -316,7 +324,7 @@ export default function PotentialLeads({
       const imported = [];
       const fetchedLeads = (data.leads || []).map((wpLead) => ({
         ...wpLead,
-        id: wpLead.id || crypto.randomUUID(),
+        id: stableWpLeadId(wpLead),
         userId: currentUser.id,
         ppcSource: true,
         source: wpLead.source || "Website",

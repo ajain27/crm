@@ -131,6 +131,35 @@ describe("PotentialLeads", () => {
     });
   });
 
+  it("uses stable Firestore IDs for WordPress imports", async () => {
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        leads: [
+          {
+            id: "random-from-api",
+            wpLeadId: 901,
+            ppcSource: true,
+            source: "Website",
+            sellerName: "Stable Lead",
+            email: "stable@example.com",
+            phone: "5551212",
+            address: "901 Main St",
+          },
+        ],
+      }),
+    });
+
+    render(<PotentialLeads {...baseProps({ saveLead })} />);
+
+    await waitFor(() => {
+      expect(saveLead).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "wp-lead-901", wpLeadId: 901 }),
+      );
+    });
+  });
+
   it("shows a duplicate-address warning on address blur", () => {
     const leads = [
       {
