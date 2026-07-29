@@ -2014,8 +2014,10 @@ export default function PotentialLeads({
                       {paginatedPpc.map((lead) => (
                         <tr
                           key={lead.id}
-                          onClick={() => setDetailLead(lead)}
-                          className={`clickable-row${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
+                          onClick={
+                            ppcOnly ? undefined : () => setDetailLead(lead)
+                          }
+                          className={`${ppcOnly ? "" : "clickable-row"}${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
                         >
                           {!ppcOnly && (
                             <>
@@ -2220,12 +2222,14 @@ export default function PotentialLeads({
         </>
       ) : null}
 
-      <LeadDetailModal
-        isOpen={!!detailLead}
-        onClose={() => setDetailLead(null)}
-        lead={detailLead}
-        onSave={handleLeadSave}
-      />
+      {!ppcOnly && (
+        <LeadDetailModal
+          isOpen={!!detailLead}
+          onClose={() => setDetailLead(null)}
+          lead={detailLead}
+          onSave={handleLeadSave}
+        />
+      )}
       <CommercialLeadDetailModal
         isOpen={!!commercialDetailLead}
         onClose={() => setCommercialDetailLead(null)}

@@ -95,6 +95,12 @@ describe("PotentialLeads", () => {
     expect(screen.queryByTitle(/Delete lead/i)).toBeNull();
     expect(screen.queryByText(/Quality/i)).toBeNull();
     expect(screen.queryByTitle(/Mark as good lead/i)).toBeNull();
+
+    const ppcRow = screen.getByText(/Jane PPC/i).closest("tr");
+    expect(ppcRow).not.toHaveClass("clickable-row");
+
+    fireEvent.click(screen.getByText(/Jane PPC/i));
+    expect(screen.queryByRole("button", { name: /Save Changes/i })).toBeNull();
   });
 
   it("collapses duplicate PPC leads for PPC-only users", () => {
