@@ -19,7 +19,8 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   const body = await parseBody(req);
   const { email, wpLeadId } = body;
@@ -29,7 +30,8 @@ export default async function handler(req, res) {
   }
 
   const wpUrl = (process.env.WORDPRESS_SITE_URL || "").replace(/\/+$/, "");
-  if (!wpUrl) return res.status(500).json({ error: "WORDPRESS_SITE_URL not configured" });
+  if (!wpUrl)
+    return res.status(500).json({ error: "WORDPRESS_SITE_URL not configured" });
 
   const headers = {
     "Content-Type": "application/json",
@@ -48,10 +50,19 @@ export default async function handler(req, res) {
       console.log(`delete by id=${wpLeadId} status:`, resp.status);
     }
 
-    // Fallback: delete by email
+    // Fallback: delete by email. A 404 by exact WordPress ID means the row is already gone.
+    if (resp?.status === 404 && wpLeadId) {
+      const data = await resp.json().catch(() => ({}));
+      return res
+        .status(200)
+        .json({ success: true, alreadyDeleted: true, details: data });
+    }
+
     if (!resp || !resp.ok) {
       if (!email) {
-        const data = resp ? await resp.json().catch(() => ({})) : { error: "no email fallback" };
+        const data = resp
+          ? await resp.json().catch(() => ({}))
+          : { error: "no email fallback" };
         return res.status(resp?.status ?? 400).json(data);
       }
       resp = await fetch(`${wpUrl}/wp-json/ywe/v1/lead-by-email`, {
@@ -63,6 +74,11 @@ export default async function handler(req, res) {
     }
 
     const data = await resp.json().catch(() => ({}));
+    if (resp.status === 404) {
+      return res
+        .status(200)
+        .json({ success: true, alreadyDeleted: true, details: data });
+    }
     return res.status(resp.ok ? 200 : resp.status).json(data);
   } catch (err) {
     console.error("delete-wp-lead error:", err);

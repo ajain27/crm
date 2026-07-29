@@ -78,6 +78,10 @@ function leadIdentityKeys(lead) {
   ].filter((key) => key.replace(/\|/g, ""));
 }
 
+function leadMatchesAnyKey(lead, keys) {
+  return leadIdentityKeys(lead).some((key) => keys.has(key));
+}
+
 function createEmptyForm() {
   return {
     dealType: "Wholesale",
@@ -359,6 +363,10 @@ export default function PotentialLeads({
       });
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
+        if (resp.status === 404) {
+          console.warn("[WP sync] lead already deleted", data);
+          return true;
+        }
         console.error("[WP sync] failed", resp.status, data);
         alert(
           `WordPress sync failed (${resp.status}): ${data?.error || JSON.stringify(data)}`,
@@ -380,9 +388,25 @@ export default function PotentialLeads({
     const lead = visibleLeads.find((l) => l.id === id);
     const isPpc = isPpcLead(lead);
     if (isPpc && !(await syncDeleteToWP(lead))) return;
-    await deleteLeadById(id);
-    setLeads((prev) => prev.filter((l) => l.id !== id));
-    setWpFetchedLeads((prev) => prev.filter((l) => l.id !== id));
+    const deletedKeys = new Set(leadIdentityKeys(lead));
+    const matchingLocalLeads = leads.filter(
+      (l) => l.id === id || leadMatchesAnyKey(l, deletedKeys),
+    );
+    await Promise.all(
+      matchingLocalLeads.map((l) => deleteLeadById(l.id).catch(() => null)),
+    );
+    setLeads((prev) =>
+      prev.filter((l) => l.id !== id && !leadMatchesAnyKey(l, deletedKeys)),
+    );
+    setWpFetchedLeads((prev) =>
+      prev.filter((l) => l.id !== id && !leadMatchesAnyKey(l, deletedKeys)),
+    );
+    setPpcSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      matchingLocalLeads.forEach((l) => next.delete(l.id));
+      return next;
+    });
     if (!isPpc) syncDeleteToWP(lead);
     if (isPpc) {
       await incrementPpcDeleted(currentUser.id, 1);
@@ -414,9 +438,23 @@ export default function PotentialLeads({
     const syncedLeads = toDelete.filter((_, index) => wpResults[index]);
     if (syncedLeads.length === 0) return;
     const syncedIds = new Set(syncedLeads.map((l) => l.id));
-    await Promise.all(syncedLeads.map((l) => deleteLeadById(l.id)));
-    setLeads((prev) => prev.filter((l) => !syncedIds.has(l.id)));
-    setWpFetchedLeads((prev) => prev.filter((l) => !syncedIds.has(l.id)));
+    const syncedKeys = new Set(syncedLeads.flatMap(leadIdentityKeys));
+    const matchingLocalLeads = leads.filter(
+      (l) => syncedIds.has(l.id) || leadMatchesAnyKey(l, syncedKeys),
+    );
+    await Promise.all(
+      matchingLocalLeads.map((l) => deleteLeadById(l.id).catch(() => null)),
+    );
+    setLeads((prev) =>
+      prev.filter(
+        (l) => !syncedIds.has(l.id) && !leadMatchesAnyKey(l, syncedKeys),
+      ),
+    );
+    setWpFetchedLeads((prev) =>
+      prev.filter(
+        (l) => !syncedIds.has(l.id) && !leadMatchesAnyKey(l, syncedKeys),
+      ),
+    );
     setPpcSelectedIds(new Set());
     await incrementPpcDeleted(currentUser.id, syncedLeads.length);
     setPpcDeletedCount((prev) => prev + syncedLeads.length);
