@@ -154,8 +154,12 @@ function rawLeadKey(row) {
   return JSON.stringify(row);
 }
 
-async function fetchLeadRows(url, headers) {
-  const response = await fetch(url, { method: "GET", headers });
+async function fetchLeadRows(url, headers, method = "GET") {
+  const response = await fetch(url, {
+    method,
+    headers,
+    ...(method === "POST" ? { body: JSON.stringify({}) } : {}),
+  });
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -236,6 +240,84 @@ async function fetchAllWordPressLeads({ wpUrl, path, headers }) {
   return { ok: true, rows: allRows, pageSizes };
 }
 
+function uniqueValues(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function candidateLeadPaths() {
+  return uniqueValues([
+    process.env.WORDPRESS_LEADS_PATH,
+    "/wp-json/ywe/v1/leads",
+    "/wp-json/ywe/v1/lead",
+    "/wp-json/ywe/v1/leads/all",
+    "/wp-json/ywe/v1/all-leads",
+    "/wp-json/ywe/v1/get-leads",
+    "/wp-json/ywe/v1/list-leads",
+  ]).map((path) => (path.startsWith("/") ? path : `/${path}`));
+}
+
+async function fetchAllWordPressLeadsFromAnyRoute({ wpUrl, headers }) {
+  const attempts = [];
+
+  for (const path of candidateLeadPaths()) {
+    const result = await fetchAllWordPressLeads({ wpUrl, path, headers });
+    attempts.push({
+      path,
+      method: "GET",
+      ok: result.ok,
+      count: result.rows?.length || 0,
+      error: result.error,
+      status: result.status,
+    });
+    if (result.ok && result.rows.length > 0) {
+      return { ...result, path, method: "GET", attempts };
+    }
+  }
+
+  for (const path of candidateLeadPaths()) {
+    const baseUrl = `${wpUrl}${path}`;
+    const result = await fetchLeadRows(
+      withPaginationParams(
+        baseUrl,
+        1,
+        Number(process.env.WORDPRESS_LEADS_PER_PAGE || 100),
+      ),
+      headers,
+      "POST",
+    );
+    attempts.push({
+      path,
+      method: "POST",
+      ok: result.ok,
+      count: result.rows?.length || 0,
+      error: result.error,
+      status: result.status,
+    });
+    if (result.ok && result.rows.length > 0) {
+      return {
+        ok: true,
+        rows: result.rows,
+        pageSizes: [result.rows.length],
+        path,
+        method: "POST",
+        attempts,
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    status: attempts.find((attempt) => attempt.status)?.status || 404,
+    error: `No WordPress lead list route returned leads. Tried: ${attempts
+      .map(
+        (attempt) =>
+          `${attempt.method} ${attempt.path}${attempt.status ? ` (${attempt.status})` : ""}`,
+      )
+      .join(", ")}`,
+    attempts,
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -257,13 +339,15 @@ export default async function handler(req, res) {
   };
 
   try {
-    const leadsPath =
-      process.env.WORDPRESS_LEADS_PATH || "/wp-json/ywe/v1/leads";
-    const path = leadsPath.startsWith("/") ? leadsPath : `/${leadsPath}`;
-    const result = await fetchAllWordPressLeads({ wpUrl, path, headers });
+    const result = await fetchAllWordPressLeadsFromAnyRoute({
+      wpUrl,
+      headers,
+    });
 
     if (!result.ok) {
-      return res.status(result.status).json({ error: result.error });
+      return res
+        .status(result.status)
+        .json({ error: result.error, attempts: result.attempts });
     }
 
     const leads = result.rows
@@ -276,6 +360,8 @@ export default async function handler(req, res) {
       leads,
       totalFetched: result.rows.length,
       pageSizes: result.pageSizes,
+      sourcePath: result.path,
+      sourceMethod: result.method,
     });
   } catch (err) {
     console.error("fetch-wp-leads error:", err);
