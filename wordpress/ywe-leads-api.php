@@ -15,6 +15,10 @@ function ywe_leads_api_secret() {
         return YWE_WEBHOOK_SECRET;
     }
 
+    if (defined('YWE_CRM_WEBHOOK_SECRET') && YWE_CRM_WEBHOOK_SECRET) {
+        return YWE_CRM_WEBHOOK_SECRET;
+    }
+
     $env_secret = getenv('WEBHOOK_SECRET');
     if ($env_secret) {
         return $env_secret;
@@ -48,9 +52,17 @@ function ywe_leads_api_has_access(WP_REST_Request $request) {
 function ywe_leads_api_table_name() {
     global $wpdb;
 
+    $configured_table = get_option('ywe_leads_table_name', '');
+    if ($configured_table) {
+        return $configured_table;
+    }
+
     $candidates = array(
         $wpdb->prefix . 'ywe_leads',
+        $wpdb->prefix . 'ywe_lead',
+        $wpdb->prefix . 'ywe_crm_leads',
         $wpdb->prefix . 'leads',
+        $wpdb->prefix . 'lead',
         'ywe_leads',
     );
 
@@ -61,11 +73,29 @@ function ywe_leads_api_table_name() {
         }
     }
 
-    return $wpdb->prefix . 'ywe_leads';
+    $lead_like_tables = $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', '%' . $wpdb->esc_like('lead') . '%'));
+    foreach ($lead_like_tables as $table) {
+        if (ywe_leads_api_table_score($table) >= 3) {
+            return $table;
+        }
+    }
+
+    $prefixed_tables = $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($wpdb->prefix) . '%'));
+    foreach ($prefixed_tables as $table) {
+        if (ywe_leads_api_table_score($table) >= 4) {
+            return $table;
+        }
+    }
+
+    return '';
 }
 
 function ywe_leads_api_columns($table) {
     global $wpdb;
+    if (!$table) {
+        return array();
+    }
+
     $columns = $wpdb->get_results("SHOW COLUMNS FROM {$table}", ARRAY_A);
 
     if (!is_array($columns)) {
@@ -78,6 +108,29 @@ function ywe_leads_api_columns($table) {
         },
         $columns
     );
+}
+
+function ywe_leads_api_table_score($table) {
+    $columns = ywe_leads_api_columns($table);
+    $score = 0;
+
+    if (ywe_leads_api_first_column($columns, array('email', 'seller_email', 'sellerEmail'))) {
+        $score++;
+    }
+    if (ywe_leads_api_first_column($columns, array('phone', 'seller_phone', 'sellerPhone'))) {
+        $score++;
+    }
+    if (ywe_leads_api_first_column($columns, array('property_address', 'propertyAddress', 'address', 'property'))) {
+        $score++;
+    }
+    if (ywe_leads_api_first_column($columns, array('name', 'full_name', 'seller_name', 'sellerName'))) {
+        $score++;
+    }
+    if (ywe_leads_api_first_column($columns, array('date', 'created_at', 'submitted_at', 'date_added'))) {
+        $score++;
+    }
+
+    return $score;
 }
 
 function ywe_leads_api_first_column($columns, $names) {
@@ -124,7 +177,7 @@ function ywe_leads_api_list(WP_REST_Request $request) {
     if (!$columns) {
         return new WP_Error(
             'ywe_leads_table_missing',
-            'Could not find the WordPress leads table.',
+            'Could not find the WordPress leads table. Set wp option ywe_leads_table_name to the table that stores your lead rows.',
             array('status' => 500)
         );
     }
