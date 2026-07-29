@@ -92,6 +92,11 @@ function leadAddress(lead) {
   ).trim();
 }
 
+function hasUsableAddress(address) {
+  const normalized = String(address || "").trim();
+  return Boolean(normalized && normalized !== "—" && normalized !== "-");
+}
+
 function createEmptyForm() {
   return {
     dealType: "Wholesale",
@@ -482,7 +487,7 @@ export default function PotentialLeads({
     if (!lead) return;
 
     const fullAddress = leadAddress(lead);
-    if (!fullAddress) {
+    if (!hasUsableAddress(fullAddress)) {
       alert(
         "This lead does not have a property address, so it was not added to CRM.",
       );

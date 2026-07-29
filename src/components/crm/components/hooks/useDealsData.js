@@ -41,14 +41,17 @@ export function useDealsData({ currentUser }) {
 
   async function deleteDeal(id) {
     const deal = deals.find((item) => item.id === id);
-    if (!window.confirm(`Delete ${deal?.address || "this deal"}?`)) return;
+    if (!window.confirm(`Delete ${deal?.address || "this deal"}?`))
+      return false;
 
     try {
       await deleteDealById(id);
       setDeals((prevDeals) => prevDeals.filter((d) => d.id !== id));
+      return true;
     } catch (error) {
       console.error("Failed to delete property", error);
       alert("Unable to delete property. Check your database connection.");
+      return false;
     }
   }
 

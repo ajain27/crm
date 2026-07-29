@@ -110,15 +110,9 @@ function DealDetailModal({
   const latestContractVersion = getContractVersions(deal)[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
 
-  function handleDelete() {
-    if (
-      window.confirm(
-        `Delete the deal at ${deal.address}? This cannot be undone.`,
-      )
-    ) {
-      deleteDeal(deal.id);
-      onClose();
-    }
+  async function handleDelete() {
+    const deleted = await deleteDeal(deal.id);
+    if (deleted) onClose();
   }
 
   function set(field, value) {
