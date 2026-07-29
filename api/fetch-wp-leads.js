@@ -124,11 +124,26 @@ function normalizeWpLead(raw) {
 function withPaginationParams(baseUrl, page, perPage) {
   const url = new URL(baseUrl);
   url.searchParams.set("page", String(page));
+  url.searchParams.set("paged", String(page));
   url.searchParams.set("per_page", String(perPage));
   url.searchParams.set("perPage", String(perPage));
   url.searchParams.set("limit", String(perPage));
   url.searchParams.set("number", String(perPage));
   url.searchParams.set("posts_per_page", String(perPage));
+  url.searchParams.set("all", "1");
+  return url;
+}
+
+function withOffsetParams(baseUrl, offset, limit) {
+  const url = new URL(baseUrl);
+  url.searchParams.set("offset", String(offset));
+  url.searchParams.set("start", String(offset));
+  url.searchParams.set("skip", String(offset));
+  url.searchParams.set("per_page", String(limit));
+  url.searchParams.set("perPage", String(limit));
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("number", String(limit));
+  url.searchParams.set("posts_per_page", String(limit));
   url.searchParams.set("all", "1");
   return url;
 }
@@ -139,42 +154,83 @@ function rawLeadKey(row) {
   return JSON.stringify(row);
 }
 
+async function fetchLeadRows(url, headers) {
+  const response = await fetch(url, { method: "GET", headers });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      error: data.message || data.error || "WordPress fetch failed",
+      rows: [],
+      totalPages: 0,
+    };
+  }
+
+  return {
+    ok: true,
+    rows: parseLeadList(data),
+    totalPages: Number(response.headers.get("x-wp-totalpages") || 0),
+  };
+}
+
+function appendNewRows({ rows, allRows, seen }) {
+  let newRows = 0;
+  for (const row of rows) {
+    const key = rawLeadKey(row);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    allRows.push(row);
+    newRows += 1;
+  }
+  return newRows;
+}
+
 async function fetchAllWordPressLeads({ wpUrl, path, headers }) {
   const perPage = Number(process.env.WORDPRESS_LEADS_PER_PAGE || 100);
+  const maxPages = Number(process.env.WORDPRESS_LEADS_MAX_PAGES || 50);
   const allRows = [];
   const seen = new Set();
   const pageSizes = [];
+  const baseUrl = `${wpUrl}${path}`;
 
-  for (let page = 1; page <= 50; page += 1) {
-    const pageUrl = withPaginationParams(`${wpUrl}${path}`, page, perPage);
-    const response = await fetch(pageUrl, { method: "GET", headers });
-    const data = await response.json().catch(() => ({}));
+  for (let page = 1; page <= maxPages; page += 1) {
+    const pageUrl = withPaginationParams(baseUrl, page, perPage);
+    const result = await fetchLeadRows(pageUrl, headers);
 
-    if (!response.ok) {
+    if (!result.ok) {
       if (page > 1 && allRows.length > 0) break;
       return {
         ok: false,
-        status: response.status,
-        error: data.message || data.error || "WordPress fetch failed",
+        status: result.status,
+        error: result.error,
       };
     }
 
-    const rows = parseLeadList(data);
+    const rows = result.rows;
     pageSizes.push(rows.length);
     if (rows.length === 0) break;
 
-    let newRows = 0;
-    for (const row of rows) {
-      const key = rawLeadKey(row);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      allRows.push(row);
-      newRows += 1;
-    }
+    const newRows = appendNewRows({ rows, allRows, seen });
 
-    const totalPages = Number(response.headers.get("x-wp-totalpages") || 0);
-    if (totalPages && page >= totalPages) break;
-    if (!totalPages && newRows === 0) break;
+    if (result.totalPages && page >= result.totalPages) break;
+    if (!result.totalPages && newRows === 0) break;
+  }
+
+  const offsetStep = pageSizes.find((size) => size > 0 && size < perPage) || 5;
+  for (
+    let offset = offsetStep;
+    offset <= offsetStep * maxPages;
+    offset += offsetStep
+  ) {
+    const offsetUrl = withOffsetParams(baseUrl, offset, offsetStep);
+    const result = await fetchLeadRows(offsetUrl, headers);
+    if (!result.ok || result.rows.length === 0) break;
+
+    pageSizes.push(result.rows.length);
+    const newRows = appendNewRows({ rows: result.rows, allRows, seen });
+    if (newRows === 0) break;
   }
 
   return { ok: true, rows: allRows, pageSizes };
