@@ -174,10 +174,15 @@ export async function createUserAccount({
       ...existingUsers.docs[0].data(),
     };
     if (existingUser.active === false) {
-      await sendActivationEmail({
-        userId: existingUser.id,
-        email: normalizedEmail,
-      });
+      let emailFailed = false;
+      try {
+        await sendActivationEmail({
+          userId: existingUser.id,
+          email: normalizedEmail,
+        });
+      } catch {
+        emailFailed = true;
+      }
       return {
         id: existingUser.id,
         firstName: existingUser.firstName || "",
@@ -188,6 +193,7 @@ export async function createUserAccount({
         role: existingUser.role || "ppc",
         active: false,
         resentActivation: true,
+        emailFailed,
       };
     }
     throw new Error("An account with this email already exists.");
@@ -219,10 +225,15 @@ export async function createUserAccount({
   };
 
   await setDoc(doc(usersCollection, user.id), user);
-  await sendActivationEmail({
-    userId: user.id,
-    email: normalizedEmail,
-  });
+  let emailFailed = false;
+  try {
+    await sendActivationEmail({
+      userId: user.id,
+      email: normalizedEmail,
+    });
+  } catch {
+    emailFailed = true;
+  }
 
   return {
     id: user.id,
@@ -233,6 +244,7 @@ export async function createUserAccount({
     profileImage: user.profileImage || "",
     role: user.role,
     active: user.active,
+    emailFailed,
   };
 }
 

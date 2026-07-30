@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   activateUserAccount,
   createUserAccount,
@@ -25,6 +26,17 @@ function AuthGate({ onAuthenticated }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    login: false,
+    signup: false,
+    signupConfirm: false,
+    reset: false,
+    resetConfirm: false,
+  });
+
+  function togglePasswordVisibility(field) {
+    setVisiblePasswords((prev) => ({ ...prev, [field]: !prev[field] }));
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -79,7 +91,8 @@ function AuthGate({ onAuthenticated }) {
 
     setIsSubmitting(true);
     try {
-      await createUserAccount(signupForm);
+      const result = await createUserAccount(signupForm);
+      const submittedEmail = signupForm.email;
       setSignupForm({
         firstName: "",
         lastName: "",
@@ -90,7 +103,9 @@ function AuthGate({ onAuthenticated }) {
       });
       setView("login");
       setSuccessMessage(
-        `Activation email sent to ${signupForm.email}. Activate your account before signing in.`,
+        result.emailFailed
+          ? `Account created, but we couldn't send the activation email to ${submittedEmail}. Sign up again with the same email to resend it.`
+          : `Activation email sent to ${submittedEmail}. Activate your account before signing in.`,
       );
     } catch (error) {
       setErrorMessage(error.message || "Unable to create account.");
@@ -187,14 +202,30 @@ function AuthGate({ onAuthenticated }) {
 
               <label className="auth-field">
                 <span>Password</span>
-                <input
-                  required
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Password"
-                />
+                <div className="auth-password-wrap">
+                  <input
+                    required
+                    type={visiblePasswords.login ? "text" : "password"}
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Password"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => togglePasswordVisibility("login")}
+                    aria-label={
+                      visiblePasswords.login ? "Hide password" : "Show password"
+                    }
+                  >
+                    {visiblePasswords.login ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
               </label>
 
               {errorMessage && <div className="auth-error">{errorMessage}</div>}
@@ -250,6 +281,7 @@ function AuthGate({ onAuthenticated }) {
                   value={signupForm.firstName}
                   onChange={handleSignupChange}
                   placeholder="First name"
+                  autoComplete="off"
                 />
               </label>
 
@@ -262,6 +294,7 @@ function AuthGate({ onAuthenticated }) {
                   value={signupForm.lastName}
                   onChange={handleSignupChange}
                   placeholder="Last name"
+                  autoComplete="off"
                 />
               </label>
 
@@ -292,26 +325,62 @@ function AuthGate({ onAuthenticated }) {
 
               <label className="auth-field">
                 <span>Password</span>
-                <input
-                  required
-                  type="password"
-                  name="password"
-                  value={signupForm.password}
-                  onChange={handleSignupChange}
-                  placeholder="Password"
-                />
+                <div className="auth-password-wrap">
+                  <input
+                    required
+                    type={visiblePasswords.signup ? "text" : "password"}
+                    name="password"
+                    value={signupForm.password}
+                    onChange={handleSignupChange}
+                    placeholder="Password"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => togglePasswordVisibility("signup")}
+                    aria-label={
+                      visiblePasswords.signup
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {visiblePasswords.signup ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
               </label>
 
               <label className="auth-field">
                 <span>Confirm Password</span>
-                <input
-                  required
-                  type="password"
-                  name="confirmPassword"
-                  value={signupForm.confirmPassword}
-                  onChange={handleSignupChange}
-                  placeholder="Repeat password"
-                />
+                <div className="auth-password-wrap">
+                  <input
+                    required
+                    type={visiblePasswords.signupConfirm ? "text" : "password"}
+                    name="confirmPassword"
+                    value={signupForm.confirmPassword}
+                    onChange={handleSignupChange}
+                    placeholder="Repeat password"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => togglePasswordVisibility("signupConfirm")}
+                    aria-label={
+                      visiblePasswords.signupConfirm
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {visiblePasswords.signupConfirm ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
               </label>
 
               {errorMessage && <div className="auth-error">{errorMessage}</div>}
@@ -392,24 +461,58 @@ function AuthGate({ onAuthenticated }) {
 
               <label className="auth-field">
                 <span>New password</span>
-                <input
-                  required
-                  type="password"
-                  value={resetPassword}
-                  onChange={(e) => setResetPassword(e.target.value)}
-                  placeholder="New password"
-                />
+                <div className="auth-password-wrap">
+                  <input
+                    required
+                    type={visiblePasswords.reset ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                    placeholder="New password"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => togglePasswordVisibility("reset")}
+                    aria-label={
+                      visiblePasswords.reset ? "Hide password" : "Show password"
+                    }
+                  >
+                    {visiblePasswords.reset ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
               </label>
 
               <label className="auth-field">
                 <span>Confirm password</span>
-                <input
-                  required
-                  type="password"
-                  value={resetConfirm}
-                  onChange={(e) => setResetConfirm(e.target.value)}
-                  placeholder="Repeat new password"
-                />
+                <div className="auth-password-wrap">
+                  <input
+                    required
+                    type={visiblePasswords.resetConfirm ? "text" : "password"}
+                    value={resetConfirm}
+                    onChange={(e) => setResetConfirm(e.target.value)}
+                    placeholder="Repeat new password"
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => togglePasswordVisibility("resetConfirm")}
+                    aria-label={
+                      visiblePasswords.resetConfirm
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {visiblePasswords.resetConfirm ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
               </label>
 
               {errorMessage && <div className="auth-error">{errorMessage}</div>}
