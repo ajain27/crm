@@ -67,10 +67,11 @@ function CrmHeader({
   const profileInitial = buildProfileInitial(currentUser);
   const primeRate = usePrimeRate();
   const navItems = ppcOnly
-    ? NAV_ITEMS.filter((item) => item.id === "leads").map((item) => ({
-        ...item,
-        label: "PPC Leads",
-      }))
+    ? NAV_ITEMS.filter(
+        (item) => item.id === "leads" || item.id === "deal-analyzer",
+      ).map((item) =>
+        item.id === "leads" ? { ...item, label: "PPC Leads" } : item,
+      )
     : NAV_ITEMS;
 
   const primeAriaLabel = `Prime rate ${primeRate.rate.toFixed(2)}%`;

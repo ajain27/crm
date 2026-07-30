@@ -94,7 +94,7 @@ function Wholesale() {
   }, [currentUser?.id]);
 
   useEffect(() => {
-    if (ppcOnly && activeView !== "leads") {
+    if (ppcOnly && activeView !== "leads" && activeView !== "deal-analyzer") {
       setActiveView("leads");
     }
   }, [ppcOnly, activeView]);
@@ -319,6 +319,8 @@ function Wholesale() {
               />
             </LoadingScreen>
           </>
+        ) : activeView === "deal-analyzer" ? (
+          <DealAnalyzer />
         ) : ppcOnly || activeView === "leads" ? (
           <PotentialLeads
             currentUser={currentUser}
@@ -363,8 +365,6 @@ function Wholesale() {
           <MortgageCalculator />
         ) : !ppcOnly && activeView === "invoice-generator" ? (
           <InvoiceGenerator currentUser={currentUser} />
-        ) : !ppcOnly ? (
-          <DealAnalyzer />
         ) : (
           <PotentialLeads
             currentUser={currentUser}
@@ -378,7 +378,7 @@ function Wholesale() {
             saveDeal={saveDeal}
             setDeals={setDeals}
             setActiveView={setActiveView}
-            ppcOnly
+            ppcOnly={ppcOnly}
           />
         )}
         <footer
