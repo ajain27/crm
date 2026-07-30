@@ -389,6 +389,16 @@
     border-color: #16a34a;
   }
 
+  .leads-crm-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .leads-crm-btn:disabled:hover {
+    background: color-mix(in srgb, #16a34a 8%, transparent 92%);
+    border-color: color-mix(in srgb, #16a34a 30%, transparent 70%);
+  }
+
   .leads-delete-btn {
     display: inline-flex;
     align-items: center;

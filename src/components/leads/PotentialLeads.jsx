@@ -2144,7 +2144,12 @@ export default function PotentialLeads({
                             >
                               <button
                                 className="leads-crm-btn"
-                                title="Add to CRM pipeline"
+                                title={
+                                  lead.ppcQuality === "bad"
+                                    ? "Mark lead as good before adding to CRM"
+                                    : "Add to CRM pipeline"
+                                }
+                                disabled={lead.ppcQuality === "bad"}
                                 onClick={() => handleAddedToCRM(lead.id)}
                               >
                                 <CheckCheck size={14} />
