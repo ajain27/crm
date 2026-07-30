@@ -2015,9 +2015,11 @@ export default function PotentialLeads({
                         <tr
                           key={lead.id}
                           onClick={
-                            ppcOnly ? undefined : () => setDetailLead(lead)
+                            ppcOnly || lead.ppcQuality === "bad"
+                              ? undefined
+                              : () => setDetailLead(lead)
                           }
-                          className={`${ppcOnly ? "" : "clickable-row"}${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
+                          className={`${ppcOnly || lead.ppcQuality === "bad" ? "" : "clickable-row"}${lead.ppcQuality === "bad" ? " ppc-row-bad" : lead.ppcQuality === "good" ? " ppc-row-good" : ""}`}
                         >
                           {!ppcOnly && (
                             <>
