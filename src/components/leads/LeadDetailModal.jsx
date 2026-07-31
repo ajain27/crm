@@ -26,13 +26,19 @@ function Field({ label, children }) {
   );
 }
 
-export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
+export default function LeadDetailModal({
+  isOpen,
+  onClose,
+  lead,
+  onSave,
+  isPpc = false,
+}) {
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (lead) setDraft({ ...lead });
-  }, [lead]);
+    if (lead) setDraft({ ...lead, source: isPpc ? "PPC" : lead.source });
+  }, [lead, isPpc]);
 
   if (!lead) return null;
 
@@ -108,18 +114,22 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
               />
             </Field>
             <Field label="Source">
-              <select
-                className="ldm-input"
-                value={draft.source || ""}
-                onChange={(e) => set("source", e.target.value)}
-              >
-                <option value="">Select source…</option>
-                {SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              {isPpc ? (
+                <input className="ldm-input" value="PPC" disabled />
+              ) : (
+                <select
+                  className="ldm-input"
+                  value={draft.source || ""}
+                  onChange={(e) => set("source", e.target.value)}
+                >
+                  <option value="">Select source…</option>
+                  {SOURCES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Field>
             {isRental && (
               <Field label="On Market">
@@ -172,7 +182,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
                 />
               </Field>
             )}
-            {isRental && draft.onMarket !== "Yes" && (
+            {(isPpc || (isRental && draft.onMarket !== "Yes")) && (
               <Field label="Seller Name">
                 <input
                   className="ldm-input"
@@ -187,15 +197,17 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
                 />
               </Field>
             )}
-            <Field label="Listing URL">
-              <input
-                className="ldm-input ldm-wide"
-                type="url"
-                value={draft.url || ""}
-                onChange={(e) => set("url", e.target.value)}
-                placeholder="https://…"
-              />
-            </Field>
+            {!isPpc && (
+              <Field label="Listing URL">
+                <input
+                  className="ldm-input ldm-wide"
+                  type="url"
+                  value={draft.url || ""}
+                  onChange={(e) => set("url", e.target.value)}
+                  placeholder="https://…"
+                />
+              </Field>
+            )}
           </div>
         </div>
 
@@ -279,39 +291,43 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onSave }) {
               </div>
             )}
 
-            <div className="ldm-section">
-              <div className="ldm-section-label">Follow-Up</div>
-              <div className="ldm-grid">
-                <Field label="Follow-Up Date">
-                  <input
-                    className="ldm-input"
-                    type="date"
-                    value={draft.followUpDate || ""}
-                    min={today}
-                    onChange={(e) => set("followUpDate", e.target.value)}
-                  />
-                </Field>
-                <Field label="Email">
-                  <input
-                    className="ldm-input"
-                    type="email"
-                    value={draft.email || ""}
-                    onChange={(e) => set("email", e.target.value)}
-                    placeholder="seller@email.com"
-                  />
-                </Field>
-                <Field label="Phone">
-                  <input
-                    className="ldm-input"
-                    type="tel"
-                    value={draft.phone || ""}
-                    onChange={(e) => set("phone", formatPhone(e.target.value))}
-                    placeholder="555-000-0000"
-                    maxLength={12}
-                  />
-                </Field>
+            {!isPpc && (
+              <div className="ldm-section">
+                <div className="ldm-section-label">Follow-Up</div>
+                <div className="ldm-grid">
+                  <Field label="Follow-Up Date">
+                    <input
+                      className="ldm-input"
+                      type="date"
+                      value={draft.followUpDate || ""}
+                      min={today}
+                      onChange={(e) => set("followUpDate", e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Email">
+                    <input
+                      className="ldm-input"
+                      type="email"
+                      value={draft.email || ""}
+                      onChange={(e) => set("email", e.target.value)}
+                      placeholder="seller@email.com"
+                    />
+                  </Field>
+                  <Field label="Phone">
+                    <input
+                      className="ldm-input"
+                      type="tel"
+                      value={draft.phone || ""}
+                      onChange={(e) =>
+                        set("phone", formatPhone(e.target.value))
+                      }
+                      placeholder="555-000-0000"
+                      maxLength={12}
+                    />
+                  </Field>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
 

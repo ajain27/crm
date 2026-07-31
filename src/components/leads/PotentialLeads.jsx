@@ -2235,6 +2235,7 @@ export default function PotentialLeads({
           onClose={() => setDetailLead(null)}
           lead={detailLead}
           onSave={handleLeadSave}
+          isPpc={detailLead ? isPpcLead(detailLead) : false}
         />
       )}
       <CommercialLeadDetailModal
