@@ -280,6 +280,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
       onClose={sendStatus === "sending" ? undefined : handleClose}
       title={`Compose Email — ${selectedBuyers.length} buyer${selectedBuyers.length !== 1 ? "s" : ""} selected`}
       style={{ maxWidth: "700px" }}
+      closeOnOverlayClick={false}
       actions={
         <div className="profile-modal-actions">
           <button

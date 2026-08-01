@@ -368,5 +368,16 @@ describe("MailMergeModal", () => {
 
       fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
     });
+
+    it("does not close or lose typed content when clicking the overlay", () => {
+      const { onClose } = renderModal();
+      const addressInput = screen.getByPlaceholderText(/123 Main St/i);
+      fireEvent.change(addressInput, { target: { value: "Some Address" } });
+
+      fireEvent.click(document.querySelector(".modal-overlay"));
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect(addressInput.value).toBe("Some Address");
+    });
   });
 });

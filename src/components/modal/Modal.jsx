@@ -10,6 +10,7 @@ function Modal({
   actions,
   className = "",
   style,
+  closeOnOverlayClick = true,
 }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -28,7 +29,10 @@ function Modal({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="modal-overlay" onClick={onClose}>
+    <div
+      className="modal-overlay"
+      onClick={closeOnOverlayClick ? onClose : undefined}
+    >
       <div
         className={`modal ${className}`.trim()}
         style={style}
