@@ -149,62 +149,37 @@
       opacity 0.2s ease;
   }
 
-  /* Desktop: collapse sidebar when not open */
+  /* Desktop: shrink to an icon-only rail when not open */
   @media (min-width: 901px) {
     .app-sidebar:not(.is-open) {
-      width: 0;
-      min-width: 0;
-      opacity: 0;
-      overflow: hidden;
-      pointer-events: none;
-      border-right-width: 0;
+      width: 4.5rem;
+      min-width: 4.5rem;
     }
-  }
 
-  /* Logo block */
-  .sb-header {
-    padding: 1.5rem 1.125rem 1.125rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--line);
-  }
+    .app-sidebar:not(.is-open) .sb-nav-item span,
+    .app-sidebar:not(.is-open) .sb-user-info,
+    .app-sidebar:not(.is-open) .sb-theme-btn {
+      display: none;
+    }
 
-  .sb-logo {
-    height: 3.75rem;
-    width: auto;
-    max-width: 190px;
-    object-fit: contain;
-    mix-blend-mode: multiply;
-  }
+    .app-sidebar:not(.is-open) .sb-nav-item {
+      justify-content: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
 
-  .dark .sb-logo {
-    mix-blend-mode: screen;
-    filter: invert(1) hue-rotate(180deg);
-  }
+    .app-sidebar:not(.is-open) .sb-user-row {
+      flex-direction: column;
+    }
 
-  .sb-tag {
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--blue);
-    background: color-mix(in srgb, var(--blue-light) 70%, transparent 30%);
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    text-align: center;
-  }
+    .app-sidebar:not(.is-open) .sb-user-btn {
+      flex: 0 0 auto;
+      margin: 0 auto;
+    }
 
-  /* Controls row: prime rate · theme · collapse */
-  .sb-controls-row {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .sb-controls-gap {
-    flex: 1;
+    .app-sidebar:not(.is-open) .sb-collapse-btn {
+      margin: 0 auto;
+    }
   }
 
   .sb-collapse-btn {
@@ -229,40 +204,6 @@
     background: var(--blue-light);
     color: var(--blue);
     border-color: color-mix(in srgb, var(--blue) 30%, var(--line) 70%);
-  }
-
-  /* Desktop sidebar reopen button — floats when sidebar is closed */
-  .sb-reopen-btn {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 38;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 9px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition:
-      background 0.15s,
-      box-shadow 0.15s;
-  }
-
-  .sb-reopen-btn:hover {
-    background: var(--badge-bg);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
-  }
-
-  /* On mobile, the mobile-bar hamburger handles reopening */
-  @media (max-width: 900px) {
-    .sb-reopen-btn {
-      display: none;
-    }
   }
 
   /* Nav items */
@@ -320,7 +261,7 @@
     opacity: 1;
   }
 
-  /* Spacer */
+  /* Spacer — pins the user card to the bottom of the sidebar */
   .sb-spacer {
     flex: 1;
   }
@@ -331,7 +272,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    border-top: 1px solid var(--line);
   }
 
   .sb-prime-pill {
@@ -391,12 +331,6 @@
   .prime-rate-fixed strong {
     font-weight: 700;
     color: var(--blue);
-  }
-
-  .sb-divider {
-    height: 1px;
-    background: var(--line);
-    margin: 0.125rem 0;
   }
 
   /* User card row */
@@ -653,6 +587,11 @@
       flex-direction: column;
     }
 
+    /* Mobile top bar already shows the logo — don't repeat it in .main */
+    .collapsed-brand-header {
+      display: none;
+    }
+
     .app-sidebar {
       position: fixed;
       top: 0;
@@ -670,6 +609,12 @@
 
     .sidebar-backdrop {
       display: block;
+    }
+
+    /* Let the user card sit right below the nav instead of being
+       pinned to the bottom of the off-canvas drawer */
+    .sb-spacer {
+      display: none;
     }
 
     .main {

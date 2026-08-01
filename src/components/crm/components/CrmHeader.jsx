@@ -12,6 +12,7 @@ import {
   Receipt,
   Menu,
   ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
@@ -116,26 +117,8 @@ function CrmHeader({
         />
       )}
 
-      {/* ── Desktop reopen button — shown when sidebar is closed ── */}
-      {!isSidebarOpen && (
-        <button
-          type="button"
-          className="sb-reopen-btn"
-          onClick={() => onToggleSidebar(true)}
-          aria-label="Open navigation"
-        >
-          <Menu size={18} />
-        </button>
-      )}
-
       {/* ── Sidebar ── */}
       <aside className={`app-sidebar${isSidebarOpen ? " is-open" : ""}`}>
-        {/* Logo */}
-        <div className="sb-header">
-          <img src={logo} alt="You Win Estates" className="sb-logo" />
-          <span className="sb-tag">Proprietary CRM</span>
-        </div>
-
         {/* Nav */}
         <nav className="sb-nav" aria-label="Main navigation">
           {navItems.map(({ id, label, icon: Icon }) => (
@@ -145,6 +128,7 @@ function CrmHeader({
               className={`sb-nav-item${activeView === id ? " active" : ""}`}
               onClick={() => handleNav(id)}
               aria-current={activeView === id ? "page" : undefined}
+              title={label}
             >
               <Icon size={17} />
               <span>{label}</span>
@@ -157,22 +141,6 @@ function CrmHeader({
 
         {/* Bottom */}
         <div className="sb-bottom">
-          {/* Collapse button row */}
-          <div className="sb-controls-row">
-            <div className="sb-controls-gap" />
-            <button
-              type="button"
-              className="sb-collapse-btn"
-              onClick={() => onToggleSidebar(false)}
-              aria-label="Close navigation"
-              title="Collapse sidebar"
-            >
-              <ChevronLeft size={16} />
-            </button>
-          </div>
-
-          <div className="sb-divider" />
-
           {/* User card */}
           <div className="sb-user-wrap" ref={profileMenuRef}>
             {/* Profile dropdown — floats above the card */}
@@ -241,6 +209,23 @@ function CrmHeader({
                 title={theme === "dark" ? "Light Mode" : "Dark Mode"}
               >
                 {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+
+              {/* Collapse/expand sidebar */}
+              <button
+                type="button"
+                className="sb-collapse-btn"
+                onClick={() => onToggleSidebar(!isSidebarOpen)}
+                aria-label={
+                  isSidebarOpen ? "Close navigation" : "Open navigation"
+                }
+                title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              >
+                {isSidebarOpen ? (
+                  <ChevronLeft size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )}
               </button>
             </div>
           </div>
