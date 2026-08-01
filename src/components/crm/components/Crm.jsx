@@ -405,7 +405,12 @@ function Wholesale() {
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  createRoot(rootElement).render(<Wholesale />);
+  // Reuse the same root across Vite HMR re-executions of this module —
+  // calling createRoot() again on every hot reload mounts a second,
+  // independent React tree into the same DOM node alongside the first.
+  const root = rootElement._reactRoot ?? createRoot(rootElement);
+  rootElement._reactRoot = root;
+  root.render(<Wholesale />);
 }
 
 export default Wholesale;
