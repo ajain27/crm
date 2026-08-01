@@ -140,6 +140,8 @@
     border: 1px solid var(--line);
     border-radius: 10px;
     min-height: auto;
+    max-height: 180px;
+    overflow-y: auto;
     background: var(--bg);
     align-content: flex-start;
   }
