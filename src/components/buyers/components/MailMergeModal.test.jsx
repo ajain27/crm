@@ -82,6 +82,48 @@ describe("MailMergeModal", () => {
     });
   });
 
+  describe("email editing", () => {
+    it("lets the user edit a recipient's email and shows it in the chip", () => {
+      renderModal();
+      fireEvent.click(screen.getAllByTitle("Edit email")[0]);
+
+      const input = screen.getByPlaceholderText("email@example.com");
+      expect(input.value).toBe("jane@example.com");
+
+      fireEvent.change(input, { target: { value: "jane-new@example.com" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      expect(screen.getByText(/jane-new@example\.com/)).toBeInTheDocument();
+      expect(screen.queryByText(/jane@example\.com/)).not.toBeInTheDocument();
+    });
+
+    it("sends to the edited email address", async () => {
+      renderModal();
+      fireEvent.click(screen.getAllByTitle("Edit email")[0]);
+      fireEvent.change(screen.getByPlaceholderText("email@example.com"), {
+        target: { value: "jane-new@example.com" },
+      });
+      fireEvent.keyDown(screen.getByPlaceholderText("email@example.com"), {
+        key: "Enter",
+      });
+
+      fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), {
+        target: { value: "123 Oak St" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /Send to 2 Buyers/i }),
+      );
+
+      await waitFor(() => {
+        const calls = globalThis.fetch.mock.calls;
+        const bodies = calls.map((c) => JSON.parse(c[1].body));
+        const sentTo = bodies.map((b) => b.to[0].email);
+        expect(sentTo).toContain("jane-new@example.com");
+        expect(sentTo).not.toContain("jane@example.com");
+      });
+    });
+  });
+
   describe("subject auto-population", () => {
     it("pre-fills subject with buyers state", () => {
       renderModal(BUYERS_WITH_EMAIL);
@@ -169,6 +211,35 @@ describe("MailMergeModal", () => {
       renderModal();
       const preview = document.querySelector(".mail-merge-preview");
       expect(preview?.textContent).toContain("You Win Estates");
+    });
+
+    it("lets the user edit the generated email body directly", () => {
+      renderModal();
+      const preview = document.querySelector(".mail-merge-preview");
+      fireEvent.change(preview, { target: { value: "Custom message body" } });
+      expect(preview.value).toBe("Custom message body");
+      expect(
+        screen.getByText(/edited — sent as-is to every recipient/i),
+      ).toBeInTheDocument();
+    });
+
+    it("sends the edited body verbatim to every recipient", async () => {
+      renderModal();
+      fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), {
+        target: { value: "123 Oak St" },
+      });
+      fireEvent.change(document.querySelector(".mail-merge-preview"), {
+        target: { value: "Custom message body" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /Send to 2 Buyers/i }),
+      );
+
+      await waitFor(() => {
+        const calls = globalThis.fetch.mock.calls;
+        const bodies = calls.map((c) => JSON.parse(c[1].body).textContent);
+        expect(bodies.every((b) => b === "Custom message body")).toBe(true);
+      });
     });
   });
 

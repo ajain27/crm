@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, CheckCircle, AlertCircle, Loader, X } from "lucide-react";
+import {
+  Send,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+  X,
+  Pencil,
+} from "lucide-react";
 import Modal from "../../modal/Modal";
 
 async function sendViaBrevo({
@@ -113,18 +120,41 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
 
   const [mode, setMode] = useState("deal"); // "deal" | "regular"
   const [dealTemplate, setDealTemplate] = useState(EMPTY_DEAL);
+  const [dealBodyOverride, setDealBodyOverride] = useState(null);
   const [regularTemplate, setRegularTemplate] = useState(EMPTY_REGULAR);
   const [removedIds, setRemovedIds] = useState(new Set());
+  const [emailOverrides, setEmailOverrides] = useState({});
+  const [editingId, setEditingId] = useState(null);
+  const [editingValue, setEditingValue] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [sendProgress, setSendProgress] = useState({ sent: 0, total: 0 });
   const [sendErrors, setSendErrors] = useState([]);
   const abortRef = useRef(false);
 
-  const recipients = selectedBuyers.filter(
-    (b) => b.email?.trim() && !removedIds.has(b.id),
-  );
-  const skipped = selectedBuyers.filter((b) => !b.email?.trim()).length;
+  const recipients = selectedBuyers
+    .filter((b) => !removedIds.has(b.id))
+    .map((b) => ({
+      ...b,
+      email: (emailOverrides[b.id] ?? b.email ?? "").trim(),
+    }))
+    .filter((b) => b.email);
+  const skipped = selectedBuyers.filter(
+    (b) => !(emailOverrides[b.id] ?? b.email ?? "").trim(),
+  ).length;
   const stateLabel = deriveStateLabel(recipients);
+
+  function startEditingEmail(buyer) {
+    setEditingId(buyer.id);
+    setEditingValue(emailOverrides[buyer.id] ?? buyer.email ?? "");
+  }
+
+  function saveEditingEmail() {
+    setEmailOverrides((prev) => ({
+      ...prev,
+      [editingId]: editingValue.trim(),
+    }));
+    setEditingId(null);
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -181,7 +211,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
             : regularTemplate.subject;
         const body =
           mode === "deal"
-            ? buildDealBody(dealTemplate, buyer.fullName)
+            ? (dealBodyOverride ?? buildDealBody(dealTemplate, buyer.fullName))
             : regularTemplate.body;
 
         await sendViaBrevo({
@@ -213,8 +243,11 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     setSendProgress({ sent: 0, total: 0 });
     setSendErrors([]);
     setDealTemplate(EMPTY_DEAL);
+    setDealBodyOverride(null);
     setRegularTemplate(EMPTY_REGULAR);
     setRemovedIds(new Set());
+    setEmailOverrides({});
+    setEditingId(null);
     onClose();
   }
 
@@ -238,7 +271,8 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
       ? dealTemplate.subject || buildSubject(stateLabel)
       : regularTemplate.subject;
   const previewBuyer = recipients[0] || { fullName: "Investor Name" };
-  const dealPreviewBody = buildDealBody(dealTemplate, previewBuyer.fullName);
+  const dealPreviewBody =
+    dealBodyOverride ?? buildDealBody(dealTemplate, previewBuyer.fullName);
 
   return (
     <Modal
@@ -344,23 +378,58 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               No selected buyers have an email address.
             </span>
           ) : (
-            recipients.map((b) => (
-              <span key={b.id} className="mail-merge-chip">
-                {b.fullName}
-                {b.email ? ` <${b.email}>` : ""}
-                <button
-                  type="button"
-                  className="mail-merge-chip-remove"
-                  onClick={() =>
-                    setRemovedIds((prev) => new Set([...prev, b.id]))
-                  }
-                  title="Remove from this send"
-                  disabled={sendStatus === "sending"}
+            recipients.map((b) =>
+              editingId === b.id ? (
+                <span
+                  key={b.id}
+                  className="mail-merge-chip mail-merge-chip-editing"
                 >
-                  <X size={11} />
-                </button>
-              </span>
-            ))
+                  {b.fullName}
+                  <input
+                    type="email"
+                    className="mail-merge-chip-email-input"
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    onBlur={saveEditingEmail}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveEditingEmail();
+                      } else if (e.key === "Escape") {
+                        setEditingId(null);
+                      }
+                    }}
+                    autoFocus
+                    placeholder="email@example.com"
+                  />
+                </span>
+              ) : (
+                <span key={b.id} className="mail-merge-chip">
+                  {b.fullName}
+                  {b.email ? ` <${b.email}>` : ""}
+                  <button
+                    type="button"
+                    className="mail-merge-chip-edit"
+                    onClick={() => startEditingEmail(b)}
+                    title="Edit email"
+                    disabled={sendStatus === "sending"}
+                  >
+                    <Pencil size={11} />
+                  </button>
+                  <button
+                    type="button"
+                    className="mail-merge-chip-remove"
+                    onClick={() =>
+                      setRemovedIds((prev) => new Set([...prev, b.id]))
+                    }
+                    title="Remove from this send"
+                    disabled={sendStatus === "sending"}
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              ),
+            )
           )}
         </div>
 
@@ -462,7 +531,9 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
                     color: "var(--muted)",
                   }}
                 >
-                  (personalized for {getFirstName(previewBuyer.fullName)})
+                  {dealBodyOverride !== null
+                    ? "(edited — sent as-is to every recipient)"
+                    : `(personalized for ${getFirstName(previewBuyer.fullName)})`}
                 </span>
               )}
             </div>
@@ -470,7 +541,13 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               <div className="mail-merge-preview-subject">
                 <span>Subject:</span> {previewSubject}
               </div>
-              <pre className="mail-merge-preview">{dealPreviewBody}</pre>
+              <textarea
+                className="mail-merge-preview mail-merge-preview-editable"
+                value={dealPreviewBody}
+                onChange={(e) => setDealBodyOverride(e.target.value)}
+                disabled={sendStatus === "sending"}
+                rows={12}
+              />
             </div>
           </>
         ) : (
