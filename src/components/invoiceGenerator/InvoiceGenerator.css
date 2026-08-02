@@ -982,6 +982,74 @@
   width: 100%;
 }
 
+.ig-root input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.78;
+}
+
+:root.dark .ig-root input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.15);
+  opacity: 0.92;
+}
+
+/* ── Scheduled payments accordion (grouped per client) ── */
+.ig-sched-accordion {
+  padding: 16px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ig-sched-group {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ig-sched-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--badge-bg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+}
+
+.ig-sched-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.ig-sched-chevron-open {
+  transform: rotate(180deg);
+}
+
+.ig-sched-group-name {
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ig-sched-group-total {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ig-sched-group .ig-history-table-wrap {
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
 /* ── Scheduled payment status badges ── */
 .ig-sched-badge {
   display: inline-flex;

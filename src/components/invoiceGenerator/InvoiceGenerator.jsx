@@ -10,6 +10,7 @@ import {
   CheckCircle,
   AlertCircle,
   Loader,
+  ChevronDown,
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -28,7 +29,7 @@ const SELLER = {
   tagline: "PROFESSIONAL AI & DIGITAL SOLUTIONS",
   address: "1309 Coffeen Avenue STE 1200",
   city: "Sheridan, Wyoming 82801",
-  website: "youwinconcepts.com",
+  website: "https://www.youwinconcepts.com/",
   email: "info@youwinconcepts.com",
   phone: "347-450-3572",
 };
@@ -47,6 +48,18 @@ function genInvoiceNumber() {
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function addMonthsISO(iso, monthsToAdd) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const targetIndex = m - 1 + monthsToAdd;
+  const targetYear = y + Math.floor(targetIndex / 12);
+  const targetMonth = ((targetIndex % 12) + 12) % 12;
+  const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+  const targetDay = Math.min(d, daysInTargetMonth);
+  const result = new Date(targetYear, targetMonth, targetDay);
+  return `${result.getFullYear()}-${String(result.getMonth() + 1).padStart(2, "0")}-${String(result.getDate()).padStart(2, "0")}`;
 }
 
 function fmtDate(iso) {
@@ -148,7 +161,7 @@ function buildInvoiceHtml({
   <div style="height:3px;background:#2563eb"></div>
   <table width="100%" style="border-collapse:collapse"><tr>
     <td width="50%" style="padding:20px 32px 20px 32px;border-right:1px solid #e5e7eb;vertical-align:top">
-      <p style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2563eb;margin:0 0 8px">BILLED FROM (SELLER)</p>
+      <p style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2563eb;margin:0 0 8px">BILLED FROM</p>
       <p style="font-size:15px;font-weight:700;color:#1a3560;margin:0 0 6px">${SELLER.name}</p>
       <p style="margin:2px 0;font-size:12px;color:#374151">${SELLER.address}</p>
       <p style="margin:2px 0;font-size:12px;color:#374151">${SELLER.city}</p>
@@ -157,7 +170,7 @@ function buildInvoiceHtml({
       <p style="margin:2px 0;font-size:12px;color:#374151"><strong>Phone:</strong> ${SELLER.phone}</p>
     </td>
     <td width="50%" style="padding:20px 32px;vertical-align:top">
-      <p style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2563eb;margin:0 0 8px">BILLED TO (CLIENT)</p>
+      <p style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2563eb;margin:0 0 8px">BILLED TO</p>
       <p style="font-size:15px;font-weight:700;color:#1a3560;margin:0 0 6px">${clientName || "—"}</p>
       ${clientAddress ? `<p style="margin:2px 0;font-size:12px;color:#374151">${clientAddress}</p>` : ""}
       ${clientWebsite ? `<p style="margin:2px 0;font-size:12px;color:#374151"><strong>Website:</strong> ${clientWebsite}</p>` : ""}
@@ -239,6 +252,7 @@ export default function InvoiceGenerator({ currentUser }) {
 
   const [sentInvoices, setSentInvoices] = useState([]);
   const [scheduledPayments, setScheduledPayments] = useState([]);
+  const [expandedClients, setExpandedClients] = useState(() => new Set());
 
   // Send email modal state
   const [modal, setModal] = useState({
@@ -272,14 +286,6 @@ export default function InvoiceGenerator({ currentUser }) {
 
   function handleNumPaymentsChange(val) {
     setNumPaymentsRaw(val);
-    const n = Math.max(1, Math.min(12, parseInt(val) || 1));
-    const months = lines
-      .slice(1)
-      .reduce((max, l) => Math.max(max, parseInt(l.months) || 0), 0);
-    const newTotal = Math.max(n, months || 1);
-    setPaymentDates((prev) =>
-      Array.from({ length: newTotal }, (_, i) => prev[i] || ""),
-    );
   }
 
   function updatePaymentDate(idx, val) {
@@ -292,6 +298,18 @@ export default function InvoiceGenerator({ currentUser }) {
 
   function refreshNum() {
     setInvoiceNum(genInvoiceNumber());
+  }
+
+  function toggleClientExpanded(name) {
+    setExpandedClients((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
   }
 
   function addLine() {
@@ -340,6 +358,22 @@ export default function InvoiceGenerator({ currentUser }) {
     .slice(1)
     .reduce((max, l) => Math.max(max, parseInt(l.months) || 0), 0);
   const totalInvoices = Math.max(numPayments, totalMonths || 1);
+
+  // Auto-fill the payment schedule with consecutive monthly dates starting
+  // from the invoice date, without overwriting dates the user already set.
+  useEffect(() => {
+    if (totalInvoices <= 1) return;
+    setPaymentDates((prev) => {
+      const filled = Array.from(
+        { length: totalInvoices },
+        (_, i) => prev[i] || addMonthsISO(date, i),
+      );
+      const unchanged =
+        prev.length === filled.length && prev.every((d, i) => d === filled[i]);
+      return unchanged ? prev : filled;
+    });
+  }, [totalInvoices, date]);
+
   const allDatesSet =
     totalInvoices <= 1 ||
     Array.from(
@@ -350,7 +384,6 @@ export default function InvoiceGenerator({ currentUser }) {
     clientName.trim().length > 0 &&
     date.length > 0 &&
     total > 0 &&
-    numPaymentsRaw !== "" &&
     allDatesSet &&
     (numPayments === 1 || setupFeeAmt > 0);
 
@@ -936,7 +969,7 @@ export default function InvoiceGenerator({ currentUser }) {
           {/* Billing addresses */}
           <div className="ig-inv-billing">
             <div className="ig-inv-from">
-              <p className="ig-inv-billing-label">BILLED FROM (SELLER)</p>
+              <p className="ig-inv-billing-label">BILLED FROM</p>
               <p className="ig-inv-billing-name">{SELLER.name}</p>
               <p>{SELLER.address}</p>
               <p>{SELLER.city}</p>
@@ -951,7 +984,7 @@ export default function InvoiceGenerator({ currentUser }) {
               </p>
             </div>
             <div className="ig-inv-to">
-              <p className="ig-inv-billing-label">BILLED TO (CLIENT)</p>
+              <p className="ig-inv-billing-label">BILLED TO</p>
               <p className="ig-inv-billing-name">
                 {clientName || <em className="ig-placeholder">Client Name</em>}
               </p>
@@ -1069,56 +1102,106 @@ export default function InvoiceGenerator({ currentUser }) {
               pending
             </span>
           </div>
-          <div className="ig-history-table-wrap">
-            <table className="ig-history-table">
-              <thead>
-                <tr>
-                  <th>Invoice #</th>
-                  <th>Client</th>
-                  <th>Payment</th>
-                  <th>Due Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...scheduledPayments]
-                  .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-                  .map((p) => (
-                    <tr key={p.id}>
-                      <td className="ig-history-num">{p.invoiceNum}</td>
-                      <td>{p.clientName}</td>
-                      <td className="ig-history-email">
-                        {p.paymentNum} of {p.totalPayments}
-                      </td>
-                      <td>{fmtDate(p.dueDate)}</td>
-                      <td className="ig-history-total">
-                        {fmt(p.paymentAmount)}
-                      </td>
-                      <td>
-                        <span className={`ig-sched-badge ig-sched-${p.status}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="ig-history-del"
-                          title="Cancel scheduled payment"
-                          onClick={async () => {
-                            await deleteScheduledPaymentById(p.id);
-                            setScheduledPayments((prev) =>
-                              prev.filter((x) => x.id !== p.id),
-                            );
-                          }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          <div className="ig-sched-accordion">
+            {Object.entries(
+              scheduledPayments.reduce((acc, p) => {
+                const key = p.clientName || "—";
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(p);
+                return acc;
+              }, {}),
+            )
+              .map(([clientName, payments]) => ({
+                clientName,
+                payments: [...payments].sort((a, b) =>
+                  a.dueDate.localeCompare(b.dueDate),
+                ),
+              }))
+              .sort((a, b) =>
+                a.payments[0].dueDate.localeCompare(b.payments[0].dueDate),
+              )
+              .map(({ clientName, payments }) => {
+                const isOpen = expandedClients.has(clientName);
+                const pendingCount = payments.filter(
+                  (p) => p.status === "pending",
+                ).length;
+                return (
+                  <div key={clientName} className="ig-sched-group">
+                    <button
+                      type="button"
+                      className="ig-sched-group-header"
+                      onClick={() => toggleClientExpanded(clientName)}
+                      aria-expanded={isOpen}
+                    >
+                      <ChevronDown
+                        size={16}
+                        className={`ig-sched-chevron${isOpen ? " ig-sched-chevron-open" : ""}`}
+                      />
+                      <span className="ig-sched-group-name">{clientName}</span>
+                      <span className="ig-history-count">
+                        {pendingCount} pending
+                      </span>
+                      <span className="ig-sched-group-total">
+                        {payments.length} invoice
+                        {payments.length !== 1 ? "s" : ""}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="ig-history-table-wrap">
+                        <table className="ig-history-table">
+                          <thead>
+                            <tr>
+                              <th>Invoice #</th>
+                              <th>Payment</th>
+                              <th>Due Date</th>
+                              <th>Amount</th>
+                              <th>Status</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {payments.map((p) => (
+                              <tr key={p.id}>
+                                <td className="ig-history-num">
+                                  {p.invoiceNum}
+                                </td>
+                                <td className="ig-history-email">
+                                  {p.paymentNum} of {p.totalPayments}
+                                </td>
+                                <td>{fmtDate(p.dueDate)}</td>
+                                <td className="ig-history-total">
+                                  {fmt(p.paymentAmount)}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`ig-sched-badge ig-sched-${p.status}`}
+                                  >
+                                    {p.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  <button
+                                    className="ig-history-del"
+                                    title="Cancel scheduled payment"
+                                    onClick={async () => {
+                                      await deleteScheduledPaymentById(p.id);
+                                      setScheduledPayments((prev) =>
+                                        prev.filter((x) => x.id !== p.id),
+                                      );
+                                    }}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         </section>
       )}
