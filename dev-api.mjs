@@ -35,6 +35,16 @@ app.get("/api/send-scheduled-invoices", async (req, res) => {
   await handler(req, res);
 });
 
+app.get("/api/send-scheduled-lead-emails", async (req, res) => {
+  const { default: handler } = await import("./api/send-scheduled-lead-emails.js");
+  await handler(req, res);
+});
+
+app.post("/api/lead-webhook", async (req, res) => {
+  const { default: handler } = await import("./api/lead-webhook.js");
+  await handler(req, res);
+});
+
 const PORT = 3001;
 app.listen(PORT, () =>
   console.log(`Dev API server running at http://localhost:${PORT}`),

@@ -33,6 +33,10 @@ import {
   fetchUserStats,
   incrementPpcDeleted,
 } from "../../firebase/firestoreService";
+import {
+  startEmailSequence,
+  stopEmailSequence,
+} from "../../constants/emailSequence";
 import "./Leads.css";
 
 const ITEMS_PER_PAGE = 10;
@@ -463,6 +467,23 @@ export default function PotentialLeads({
   async function handleLeadSave(updated) {
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+  }
+
+  async function handleRunAutomation(lead) {
+    const senderName = [currentUser?.firstName, currentUser?.lastName]
+      .filter(Boolean)
+      .join(" ");
+    await handleLeadSave({
+      ...lead,
+      emailSequence: startEmailSequence(senderName),
+    });
+  }
+
+  async function handleStopAutomation(lead) {
+    await handleLeadSave({
+      ...lead,
+      emailSequence: stopEmailSequence(lead.emailSequence),
+    });
   }
 
   async function handlePpcQuality(lead, quality, reason = "") {
@@ -1350,6 +1371,7 @@ export default function PotentialLeads({
                         <th>Added</th>
                         <th>MLS Link</th>
                         <th></th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1502,6 +1524,34 @@ export default function PotentialLeads({
                                 <CheckCheck size={14} />
                                 CRM
                               </button>
+                            </td>
+                            <td
+                              className="acc-col-action-mobile"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {lead.emailSequence?.status === "running" ? (
+                                <button
+                                  className="leads-automation-btn leads-automation-btn--stop"
+                                  title="Stop email automation"
+                                  onClick={() => handleStopAutomation(lead)}
+                                  disabled={!lead.email}
+                                >
+                                  Stop Automation
+                                </button>
+                              ) : (
+                                <button
+                                  className="leads-automation-btn"
+                                  title={
+                                    lead.email
+                                      ? "Start the email follow-up sequence"
+                                      : "Add an email address to enable automation"
+                                  }
+                                  onClick={() => handleRunAutomation(lead)}
+                                  disabled={!lead.email}
+                                >
+                                  Run Automation
+                                </button>
+                              )}
                             </td>
                           </tr>
                         );
@@ -2008,6 +2058,7 @@ export default function PotentialLeads({
                         <th>Added</th>
                         {!ppcOnly && <th>Quality</th>}
                         {!ppcOnly && <th></th>}
+                        {!ppcOnly && <th></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -2155,6 +2206,39 @@ export default function PotentialLeads({
                                 <CheckCheck size={14} />
                                 CRM
                               </button>
+                            </td>
+                          )}
+                          {!ppcOnly && (
+                            <td
+                              className="acc-col-action-mobile"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {lead.emailSequence?.status === "running" ? (
+                                <button
+                                  className="leads-automation-btn leads-automation-btn--stop"
+                                  title="Stop email automation"
+                                  onClick={() => handleStopAutomation(lead)}
+                                >
+                                  Stop Automation
+                                </button>
+                              ) : (
+                                <button
+                                  className="leads-automation-btn"
+                                  title={
+                                    lead.ppcQuality === "bad"
+                                      ? "Mark lead as good before restarting automation"
+                                      : lead.email
+                                        ? "Start the email follow-up sequence"
+                                        : "Add an email address to enable automation"
+                                  }
+                                  disabled={
+                                    !lead.email || lead.ppcQuality === "bad"
+                                  }
+                                  onClick={() => handleRunAutomation(lead)}
+                                >
+                                  Run Automation
+                                </button>
+                              )}
                             </td>
                           )}
                         </tr>

@@ -3,12 +3,17 @@
   "outputDirectory": "dist",
   "functions": {
     "api/send-invoice.js": { "maxDuration": 30 },
-    "api/send-scheduled-invoices.js": { "maxDuration": 60 }
+    "api/send-scheduled-invoices.js": { "maxDuration": 60 },
+    "api/send-scheduled-lead-emails.js": { "maxDuration": 60 }
   },
   "crons": [
     {
       "path": "/api/send-scheduled-invoices",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/send-scheduled-lead-emails",
+      "schedule": "0 14 * * *"
     }
   ]
 }

@@ -399,6 +399,45 @@
     border-color: color-mix(in srgb, #16a34a 30%, transparent 70%);
   }
 
+  .leads-automation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, #2563eb 30%, transparent 70%);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #2563eb;
+    background: color-mix(in srgb, #2563eb 8%, transparent 92%);
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .leads-automation-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, #2563eb 16%, transparent 84%);
+    border-color: #2563eb;
+  }
+
+  .leads-automation-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .leads-automation-btn--stop {
+    border-color: color-mix(in srgb, #dc2626 30%, transparent 70%);
+    color: #dc2626;
+    background: color-mix(in srgb, #dc2626 8%, transparent 92%);
+  }
+
+  .leads-automation-btn--stop:hover:not(:disabled) {
+    background: color-mix(in srgb, #dc2626 16%, transparent 84%);
+    border-color: #dc2626;
+  }
+
   .leads-delete-btn {
     display: inline-flex;
     align-items: center;
