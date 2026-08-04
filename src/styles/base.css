@@ -1180,6 +1180,18 @@
     background-size: 100% 2px;
   }
 
+  .field input[type="date"]::-webkit-calendar-picker-indicator,
+  .field input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.78;
+  }
+
+  :root.dark .field input[type="date"]::-webkit-calendar-picker-indicator,
+  :root.dark .field input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.15);
+    opacity: 0.92;
+  }
+
   .panel,
   .sidebar,
   .user-card,

@@ -209,6 +209,20 @@ describe("fmtCurrencyInput", () => {
     expect(fmtCurrencyInput("")).toBe("");
     expect(fmtCurrencyInput(undefined)).toBe("");
   });
+
+  it("preserves decimal values while typing", () => {
+    expect(fmtCurrencyInput("799.34")).toBe("$799.34");
+    expect(fmtCurrencyInput("799.")).toBe("$799.");
+    expect(fmtCurrencyInput("799.3")).toBe("$799.3");
+  });
+
+  it("truncates to two decimal places", () => {
+    expect(fmtCurrencyInput("799.3456")).toBe("$799.34");
+  });
+
+  it("ignores extra decimal points", () => {
+    expect(fmtCurrencyInput("7.9.9")).toBe("$7.99");
+  });
 });
 
 describe("formatDate", () => {

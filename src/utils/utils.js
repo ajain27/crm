@@ -114,8 +114,18 @@ function fmt(value) {
 }
 
 function fmtCurrencyInput(value) {
-  const numeric = String(value || "").replace(/[^0-9]/g, "");
-  return numeric ? "$" + parseInt(numeric, 10).toLocaleString("en-US") : "";
+  let raw = String(value || "").replace(/[^0-9.]/g, "");
+  const firstDot = raw.indexOf(".");
+  if (firstDot !== -1) {
+    raw =
+      raw.slice(0, firstDot + 1) + raw.slice(firstDot + 1).replace(/\./g, "");
+  }
+  if (!raw) return "";
+  const [intPart, decPart] = raw.split(".");
+  const formattedInt = parseInt(intPart || "0", 10).toLocaleString("en-US");
+  return decPart === undefined
+    ? "$" + formattedInt
+    : "$" + formattedInt + "." + decPart.slice(0, 2);
 }
 
 function formatDate(dateStr) {
