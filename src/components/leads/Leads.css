@@ -877,6 +877,14 @@
     background: #b91c1c;
   }
 
+  /* Date-added hint next to the name in the collapsed PPC accordion
+     header — only relevant once the row has collapsed into a card,
+     so it stays hidden on the desktop table (which already has its
+     own "Added" column). */
+  .leads-accordion-date {
+    display: none;
+  }
+
   /* ── Lead tables: earlier card collapse ──────────────────────────
      These tables carry far more columns (address, source, seller,
      agent, follow-up, email, phone, notes, added, MLS link, CRM,
@@ -1069,6 +1077,15 @@
       -webkit-line-clamp: unset;
       overflow: visible;
       text-align: right;
+    }
+
+    .leads-accordion-date {
+      display: inline-block;
+      margin-left: 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+      white-space: nowrap;
     }
   }
 }

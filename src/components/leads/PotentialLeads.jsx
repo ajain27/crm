@@ -264,7 +264,9 @@ export default function PotentialLeads({
       (lead) => !leadIdentityKeys(lead).some((key) => localLeadKeys.has(key)),
     ),
   ];
-  const ppcLeads = dedupePpcLeads(visibleLeads.filter(isPpcLead));
+  const ppcLeads = dedupePpcLeads(visibleLeads.filter(isPpcLead)).sort((a, b) =>
+    (b.dateAdded || "").localeCompare(a.dateAdded || ""),
+  );
   const residentialLeads = leads.filter(
     (l) => (!l.leadType || l.leadType === "residential") && !isPpcLead(l),
   );
@@ -1414,7 +1416,11 @@ export default function PotentialLeads({
                             <td data-label="Seller">
                               {lead.sellerName || "—"}
                             </td>
-                            <td className="acc-col-block" data-label="Agent">
+                            <td
+                              className="acc-col-block"
+                              data-label="Agent"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {lead.agentName || lead.agentPhone ? (
                                 <div className="leads-agent-cell">
                                   {lead.agentName && (
@@ -1460,7 +1466,10 @@ export default function PotentialLeads({
                                 "—"
                               )}
                             </td>
-                            <td data-label="Phone">
+                            <td
+                              data-label="Phone"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {lead.source !== "MLS / Zillow" ? (
                                 lead.phone ? (
                                   <a
@@ -1914,7 +1923,10 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td data-label="Phone">
+                          <td
+                            data-label="Phone"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {lead.phone ? (
                               <a
                                 href={`tel:${lead.phone}`}
@@ -2113,7 +2125,14 @@ export default function PotentialLeads({
                           <AccordionHeaderCell
                             id={lead.id}
                             label="Name"
-                            value={lead.sellerName || "—"}
+                            value={
+                              <>
+                                {lead.sellerName || "—"}
+                                <span className="leads-accordion-date">
+                                  {formatDate(lead.dateAdded)}
+                                </span>
+                              </>
+                            }
                           />
                           <td data-label="Email">
                             {lead.email ? (
@@ -2127,7 +2146,10 @@ export default function PotentialLeads({
                               "—"
                             )}
                           </td>
-                          <td data-label="Phone">
+                          <td
+                            data-label="Phone"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {lead.phone ? (
                               <a
                                 href={`tel:${lead.phone}`}
