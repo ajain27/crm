@@ -184,6 +184,7 @@ function mapToLead(body, userId) {
     userId,
     leadType: "residential",
     dateAdded: todayStr(),
+    dateAddedAt: new Date().toISOString(),
     source,
     ppcSource: isPpcSource(source),
     dealType: get("deal_type", "dealType") || "Wholesale",

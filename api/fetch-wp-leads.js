@@ -14,6 +14,15 @@ function normalizeDate(value) {
   return date.toISOString().slice(0, 10);
 }
 
+// Full timestamp (when the source value carries a time-of-day) so
+// same-day leads can still be ordered by submission time, not just date.
+function normalizeDateTime(value) {
+  if (!value) return new Date().toISOString();
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return new Date().toISOString();
+  return date.toISOString();
+}
+
 function getField(source, ...keys) {
   for (const key of keys) {
     const value = source?.[key];
@@ -90,17 +99,17 @@ function normalizeWpLead(raw) {
   );
   const email = getField(raw, "Email", "email", "seller_email", "sellerEmail");
   const phone = getField(raw, "Phone", "phone", "seller_phone", "sellerPhone");
-  const dateAdded = normalizeDate(
-    getField(
-      raw,
-      "Date",
-      "date",
-      "dateAdded",
-      "date_added",
-      "created_at",
-      "createdAt",
-    ),
+  const rawDate = getField(
+    raw,
+    "Date",
+    "date",
+    "dateAdded",
+    "date_added",
+    "created_at",
+    "createdAt",
   );
+  const dateAdded = normalizeDate(rawDate);
+  const dateAddedAt = normalizeDateTime(rawDate);
 
   return {
     id: stableLeadId({
@@ -152,6 +161,7 @@ function normalizeWpLead(raw) {
     sellerAccepted: "No",
     offerPrice: "",
     dateAdded,
+    dateAddedAt,
     wpLeadId: wpLeadId ? Number(wpLeadId) || wpLeadId : null,
   };
 }

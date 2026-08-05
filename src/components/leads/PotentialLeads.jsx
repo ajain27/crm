@@ -61,6 +61,13 @@ function isPpcLead(lead) {
   return PPC_SOURCE_TERMS.some((term) => source.includes(term));
 }
 
+// Prefer the full submission timestamp so same-day leads still sort by
+// time added; fall back to the day-only date for leads saved before
+// dateAddedAt existed.
+function leadSortKey(lead) {
+  return lead?.dateAddedAt || lead?.dateAdded || "";
+}
+
 function leadIdentityKeys(lead) {
   if (lead?.wpLeadId) return [`wp:${lead.wpLeadId}`];
 
@@ -265,7 +272,7 @@ export default function PotentialLeads({
     ),
   ];
   const ppcLeads = dedupePpcLeads(visibleLeads.filter(isPpcLead)).sort((a, b) =>
-    (b.dateAdded || "").localeCompare(a.dateAdded || ""),
+    leadSortKey(b).localeCompare(leadSortKey(a)),
   );
   const residentialLeads = leads.filter(
     (l) => (!l.leadType || l.leadType === "residential") && !isPpcLead(l),
@@ -316,6 +323,7 @@ export default function PotentialLeads({
         id: crypto.randomUUID(),
         userId: currentUser.id,
         dateAdded: todayStr(),
+        dateAddedAt: new Date().toISOString(),
       };
       await saveLead(lead);
       setLeads((prev) => [lead, ...prev]);
@@ -642,6 +650,7 @@ export default function PotentialLeads({
         id: crypto.randomUUID(),
         userId: currentUser.id,
         dateAdded: todayStr(),
+        dateAddedAt: new Date().toISOString(),
       };
       await saveLead(lead);
       setLeads((prev) => [lead, ...prev]);
@@ -2126,12 +2135,12 @@ export default function PotentialLeads({
                             id={lead.id}
                             label="Name"
                             value={
-                              <>
-                                {lead.sellerName || "—"}
+                              <span className="leads-accordion-name-stack">
+                                <span>{lead.sellerName || "—"}</span>
                                 <span className="leads-accordion-date">
                                   {formatDate(lead.dateAdded)}
                                 </span>
-                              </>
+                              </span>
                             }
                           />
                           <td data-label="Email">
