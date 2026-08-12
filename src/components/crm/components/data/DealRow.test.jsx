@@ -65,11 +65,11 @@ describe("DealRow", () => {
     expect(onRowDetailClick).toHaveBeenCalledWith(deal);
   });
 
-  it("clicking the address heading toggles the accordion instead of opening the modal", () => {
+  it("clicking the address heading opens the modal", () => {
     const onRowDetailClick = vi.fn();
     renderRow({ onRowDetailClick });
     fireEvent.click(screen.getByText("1 Main St, Austin, TX 78701"));
-    expect(onRowDetailClick).not.toHaveBeenCalled();
+    expect(onRowDetailClick).toHaveBeenCalled();
   });
 
   it("marks the row closed when deal is closed", () => {

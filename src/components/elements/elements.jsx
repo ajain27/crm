@@ -160,6 +160,7 @@ function AccordionHeaderCell({
   className = "",
   valueClassName = "",
   colSpan,
+  onHeaderClick,
 }) {
   const toggleId = `acc-toggle-${id}`;
   return (
@@ -167,7 +168,10 @@ function AccordionHeaderCell({
       className={`acc-col-header ${className}`.trim()}
       data-label={label}
       colSpan={colSpan}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onHeaderClick?.(e);
+      }}
     >
       <input
         type="checkbox"

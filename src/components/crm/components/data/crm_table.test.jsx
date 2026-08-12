@@ -64,6 +64,22 @@ describe("Wholesale_data", () => {
     expect(screen.getByRole("link", { name: "Details" })).toBeInTheDocument();
   });
 
+  it("opens the details modal by clicking the address cell", () => {
+    render(
+      <Wholesale_data
+        filteredDeals={[deal]}
+        deals={[deal]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("123 Main St, Austin, TX 78701"));
+
+    expect(screen.getByText("Save Changes")).toBeInTheDocument();
+  });
+
   it("opens the details modal and saves changes via updateDealPatch", async () => {
     const saveDeal = vi.fn().mockResolvedValue(undefined);
     const persist = vi.fn();
@@ -254,9 +270,7 @@ describe("Wholesale_data", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Details" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: /View contract for 123 Main St/i }),
-    );
+    fireEvent.click(screen.getByText("purchase-contract.pdf"));
 
     expect(screen.getByText("Contract for 123 Main St")).toBeInTheDocument();
     expect(document.querySelector(".contract-preview-meta")).toHaveTextContent(
@@ -398,9 +412,6 @@ describe("Wholesale_data", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Details" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: /View contract for 123 Main St/i }),
-    );
     fireEvent.click(
       screen.getByRole("button", { name: /Delete purchase-contract\.pdf/i }),
     );

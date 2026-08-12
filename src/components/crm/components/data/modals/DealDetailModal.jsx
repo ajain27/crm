@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Trash2, FileText } from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import {
@@ -76,6 +76,7 @@ function DealDetailModal({
   convertDealToRental,
   openContract,
   handleContractUpload,
+  handleDeleteContractVersion,
   uploadingDealId,
   onReactivate,
 }) {
@@ -107,7 +108,8 @@ function DealDetailModal({
 
   const offerSent = (draft.offerStatus || "Not Sent") === "Offer Sent";
   const locked = offerSent && (draft.sellerAccepted || "No") === "No";
-  const latestContractVersion = getContractVersions(deal)[0];
+  const contractVersions = getContractVersions(deal);
+  const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
 
   async function handleDelete() {
@@ -484,29 +486,17 @@ function DealDetailModal({
           {openContract && handleContractUpload && (
             <Field label="Contract File">
               <div className="contract-actions">
-                {latestContractVersion ? (
-                  <button
-                    type="button"
-                    className="secondary-btn contract-action-btn"
-                    onClick={() => openContract(deal)}
-                    title={
-                      latestContractVersion.name ||
-                      "View latest uploaded contract"
-                    }
-                    aria-label={`View contract for ${deal.address}`}
-                  >
-                    <Eye size={16} />
-                  </button>
-                ) : null}
                 <label
                   htmlFor={`contract-upload-modal-${deal.id}`}
                   className="secondary-btn contract-action-btn"
                   title={
                     uploadingDealId === deal.id
                       ? "Uploading…"
-                      : latestContractVersion
-                        ? "Replace uploaded contract"
-                        : "Upload contract"
+                      : deal.closed === "Yes"
+                        ? "This deal is closed — reopen it to upload or replace the contract"
+                        : latestContractVersion
+                          ? "Replace uploaded contract"
+                          : "Upload contract"
                   }
                   aria-label={
                     uploadingDealId === deal.id
@@ -520,9 +510,19 @@ function DealDetailModal({
                   }
                   style={
                     deal.closed === "Yes" || uploadingDealId === deal.id
-                      ? { opacity: 0.5, pointerEvents: "none" }
+                      ? { opacity: 0.5 }
                       : undefined
                   }
+                  onClick={(e) => {
+                    if (deal.closed === "Yes") {
+                      e.preventDefault();
+                      alert(
+                        "This deal is closed. Reopen it to upload or replace the contract.",
+                      );
+                    } else if (uploadingDealId === deal.id) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
                   {uploadingDealId === deal.id ? (
                     <Loader2 size={16} className="spin" />
@@ -534,6 +534,7 @@ function DealDetailModal({
                   id={`contract-upload-modal-${deal.id}`}
                   className="contract-upload-input"
                   type="file"
+                  multiple
                   accept="application/pdf,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.formula,.odt,.odf,image/*"
                   disabled={
                     deal.closed === "Yes" || uploadingDealId === deal.id
@@ -544,6 +545,50 @@ function DealDetailModal({
             </Field>
           )}
         </Section>
+
+        {openContract && handleDeleteContractVersion && (
+          <Section title="Documents">
+            <div className="ddm-edit-field-wide">
+              {contractVersions.length > 0 ? (
+                <div className="ddm-documents-grid">
+                  {contractVersions.map((version) => (
+                    <div
+                      key={version.id}
+                      className="ddm-document-card"
+                      onClick={() => openContract(deal, version.id)}
+                    >
+                      <FileText size={16} className="ddm-document-icon" />
+                      <div className="ddm-document-copy">
+                        <strong title={version.name}>{version.name}</strong>
+                        <span>
+                          {version.uploadedAt
+                            ? new Date(version.uploadedAt).toLocaleString()
+                            : "Uploaded contract"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ddm-document-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteContractVersion(deal, version.id);
+                        }}
+                        aria-label={`Delete ${version.name}`}
+                        title={`Delete ${version.name}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="ddm-documents-empty">
+                  No documents uploaded yet.
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
 
         {isRental && (
           <Section title="Closing">

@@ -35,12 +35,9 @@ function ContractPreviewModal({
                   className={`contract-version-item ${
                     selectedContractVersion?.id === version.id ? "active" : ""
                   }`}
+                  onClick={() => setSelectedContractVersionId(version.id)}
                 >
-                  <button
-                    type="button"
-                    className="contract-version-select"
-                    onClick={() => setSelectedContractVersionId(version.id)}
-                  >
+                  <div className="contract-version-select">
                     <div className="contract-version-copy">
                       <strong>{version.name}</strong>
                       <span>
@@ -49,16 +46,17 @@ function ContractPreviewModal({
                           : "Uploaded contract"}
                       </span>
                     </div>
-                  </button>
+                  </div>
                   <button
                     type="button"
                     className="secondary-btn contract-version-delete"
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleDeleteContractVersion(
                         selectedContractDeal,
                         version.id,
-                      )
-                    }
+                      );
+                    }}
                     aria-label={`Delete ${version.name}`}
                     title={`Delete ${version.name}`}
                   >
@@ -84,18 +82,21 @@ function ContractPreviewModal({
           ) : selectedContractData ? (
             isImageContract ? (
               <img
+                key={selectedContractVersion.id}
                 src={selectedContractData}
                 alt={selectedContractVersion.name || "Contract preview"}
                 className="contract-preview-image"
               />
             ) : isPdfContract ? (
               <iframe
+                key={selectedContractVersion.id}
                 title={selectedContractVersion.name || "Contract preview"}
                 src={selectedContractData}
                 className="contract-preview-frame"
               />
             ) : (
               <object
+                key={selectedContractVersion.id}
                 data={selectedContractData}
                 type={
                   selectedContractVersion.type || "application/octet-stream"

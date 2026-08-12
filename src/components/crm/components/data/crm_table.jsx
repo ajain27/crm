@@ -29,7 +29,10 @@ function Wholesale_data({
   const [tab, setTab] = useState("active");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
-  const [detailDeal, setDetailDeal] = useState(null);
+  const [detailDealId, setDetailDealId] = useState(null);
+  const detailDeal = detailDealId
+    ? deals.find((d) => d.id === detailDealId) || null
+    : null;
 
   function isInactive(deal) {
     const isRejected =
@@ -206,7 +209,7 @@ function Wholesale_data({
                 key={deal.id}
                 deal={deal}
                 index={index}
-                onRowDetailClick={setDetailDeal}
+                onRowDetailClick={(d) => setDetailDealId(d.id)}
               />
             ))}
           </tbody>
@@ -225,19 +228,20 @@ function Wholesale_data({
 
       <DealDetailModal
         isOpen={!!detailDeal}
-        onClose={() => setDetailDeal(null)}
+        onClose={() => setDetailDealId(null)}
         deal={detailDeal}
         updateDealPatch={updateDealPatch}
         deleteDeal={deleteDeal}
         convertDealToRental={convertDealToRental}
         openContract={openContract}
         handleContractUpload={handleContractUpload}
+        handleDeleteContractVersion={handleDeleteContractVersion}
         uploadingDealId={uploadingDealId}
         onReactivate={
           detailDeal && isInactive(detailDeal)
             ? () => {
                 reactivateDeal(detailDeal);
-                setDetailDeal(null);
+                setDetailDealId(null);
               }
             : undefined
         }

@@ -94,9 +94,25 @@ describe("useContractManager", () => {
       }),
     );
     expect(global.alert).toHaveBeenCalledWith(
-      "Contract file must be smaller than 700 KB.",
+      '"big.pdf" is larger than 700 KB. Choose smaller files.',
     );
     expect(props.saveContractVersion).not.toHaveBeenCalled();
+  });
+
+  it("handleContractUpload saves multiple files as separate versions", async () => {
+    const props = baseProps();
+    const { result } = renderHook(() => useContractManager(props));
+    const fileA = new File(["a"], "a.pdf", { type: "application/pdf" });
+    const fileB = new File(["b"], "b.pdf", { type: "application/pdf" });
+    await act(async () => {
+      result.current.handleContractUpload(dealWithContract, {
+        target: { files: [fileA, fileB], value: "x" },
+      });
+      await waitFor(() => expect(props.updateDealPatch).toHaveBeenCalled());
+    });
+    expect(props.saveContractVersion).toHaveBeenCalledTimes(2);
+    const patch = props.updateDealPatch.mock.calls[0][1];
+    expect(patch.contractVersions).toHaveLength(3);
   });
 
   it("handleDeleteContractVersion respects user cancel", async () => {
