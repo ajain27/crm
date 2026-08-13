@@ -50,6 +50,9 @@ const initialForm = {
   underwritingFees: "",
   closingCosts: "",
   monthlyRent: "",
+  yearlyTaxes: "",
+  yearlyInsurance: "",
+  applianceInsurance: "",
 };
 
 const CURRENCY_FIELDS = new Set([
@@ -59,6 +62,9 @@ const CURRENCY_FIELDS = new Set([
   "underwritingFees",
   "closingCosts",
   "monthlyRent",
+  "yearlyTaxes",
+  "yearlyInsurance",
+  "applianceInsurance",
 ]);
 const PERCENT_FIELDS = new Set([
   "sellerFinancePct",
@@ -203,7 +209,17 @@ function SellerFinanceTab({ tab }) {
   const totalMonthlyPayment = sellerFinanceMonthly + lenderMonthlyPayment;
 
   const monthlyRentAmount = parseCurrency(form.monthlyRent);
-  const cashFlow = monthlyRentAmount - totalMonthlyPayment;
+  const yearlyTaxesAmt = parseCurrency(form.yearlyTaxes);
+  const monthlyTaxes = yearlyTaxesAmt / 12;
+  const yearlyInsuranceAmt = parseCurrency(form.yearlyInsurance);
+  const monthlyInsurance = yearlyInsuranceAmt / 12;
+  const applianceInsuranceAmt = parseCurrency(form.applianceInsurance);
+  const totalMonthlyExpenses =
+    totalMonthlyPayment +
+    monthlyTaxes +
+    monthlyInsurance +
+    applianceInsuranceAmt;
+  const cashFlow = monthlyRentAmount - totalMonthlyExpenses;
   const isCashFlowLow = cashFlow < CASH_FLOW_MIN;
 
   const isFormComplete = Boolean(
@@ -240,6 +256,12 @@ function SellerFinanceTab({ tab }) {
       buyerCashToClose,
       totalMonthlyPayment,
       monthlyRentAmount,
+      yearlyTaxesAmt,
+      monthlyTaxes,
+      yearlyInsuranceAmt,
+      monthlyInsurance,
+      applianceInsuranceAmt,
+      totalMonthlyExpenses,
       cashFlow,
       isOverFinanced,
       isCashFlowLow,
@@ -482,6 +504,48 @@ function SellerFinanceTab({ tab }) {
             placeholder="e.g. $2,200"
             required
           />
+          <Field
+            label="Yearly Property Tax"
+            name="yearlyTaxes"
+            value={form.yearlyTaxes}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. $3,000"
+          />
+          {monthlyTaxes > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>
+                Monthly Property Tax{" "}
+                <span className="deal-analyzer-auto-badge">÷ 12</span>
+              </span>
+              <input value={fmt(monthlyTaxes)} readOnly tabIndex={-1} />
+            </label>
+          )}
+          <Field
+            label="Yearly Insurance"
+            name="yearlyInsurance"
+            value={form.yearlyInsurance}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. $1,200"
+          />
+          {monthlyInsurance > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>
+                Monthly Insurance{" "}
+                <span className="deal-analyzer-auto-badge">÷ 12</span>
+              </span>
+              <input value={fmt(monthlyInsurance)} readOnly tabIndex={-1} />
+            </label>
+          )}
+          <Field
+            label="Appliance Insurance (Monthly)"
+            name="applianceInsurance"
+            value={form.applianceInsurance}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="e.g. $50"
+          />
           {(sellerFinanceMonthly > 0 || lenderMonthlyPayment > 0) && (
             <label className="field deal-analyzer-output">
               <span>
@@ -489,6 +553,15 @@ function SellerFinanceTab({ tab }) {
                 <span className="deal-analyzer-auto-badge">auto</span>
               </span>
               <input value={fmt(totalMonthlyPayment)} readOnly tabIndex={-1} />
+            </label>
+          )}
+          {totalMonthlyExpenses > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>
+                Total Monthly Expenses{" "}
+                <span className="deal-analyzer-auto-badge">auto</span>
+              </span>
+              <input value={fmt(totalMonthlyExpenses)} readOnly tabIndex={-1} />
             </label>
           )}
           {monthlyRentAmount > 0 && (
@@ -736,6 +809,47 @@ function SellerFinanceTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.monthlyTaxes > 0 && (
+                <div>
+                  <span>Property Tax (÷ 12 monthly)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount value={summary.monthlyTaxes} format={fmt} />
+                  </strong>
+                </div>
+              )}
+              {summary.monthlyInsurance > 0 && (
+                <div>
+                  <span>Insurance (÷ 12 monthly)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.monthlyInsurance}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              {summary.applianceInsuranceAmt > 0 && (
+                <div>
+                  <span>Appliance Insurance</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.applianceInsuranceAmt}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
+              <div>
+                <span>
+                  <strong>Total Monthly Expenses</strong>
+                </span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.totalMonthlyExpenses}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
             </div>
 
             <div
@@ -751,11 +865,13 @@ function SellerFinanceTab({ tab }) {
                 {fmt(summary.closingCostsAmt)} = {fmt(summary.buyerCashToClose)}
               </span>
               Monthly Cash Flow = Monthly Rent − (Seller Note Payment + Lender
-              Payments)
+              Payments + Property Tax + Insurance + Appliance Insurance)
               <span>
                 {fmt(summary.monthlyRentAmount)} − (
                 {fmt(summary.sellerFinanceMonthly)} +{" "}
-                {fmt(summary.lenderMonthlyPayment)}) = {fmt(summary.cashFlow)}
+                {fmt(summary.lenderMonthlyPayment)} +{" "}
+                {fmt(summary.monthlyTaxes)} + {fmt(summary.monthlyInsurance)} +{" "}
+                {fmt(summary.applianceInsuranceAmt)}) = {fmt(summary.cashFlow)}
               </span>
               <span>
                 Cash flow below {fmt(CASH_FLOW_MIN)}/month is flagged red.

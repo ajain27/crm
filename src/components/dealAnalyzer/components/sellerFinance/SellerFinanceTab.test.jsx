@@ -359,4 +359,38 @@ describe("SellerFinanceTab", () => {
       "deal-analyzer-output-positive",
     );
   });
+
+  it("factors property tax, insurance, and appliance insurance into cash flow", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fillBaseForm({ monthlyRent: "3000" });
+
+    fireEvent.change(screen.getByLabelText(/Yearly Property Tax/i), {
+      target: { value: "2400" },
+    });
+    fireEvent.change(screen.getByLabelText(/Yearly Insurance/i), {
+      target: { value: "1200" },
+    });
+    fireEvent.change(
+      screen.getByLabelText(/Appliance Insurance \(Monthly\)/i),
+      {
+        target: { value: "50" },
+      },
+    );
+
+    // $2,400/yr tax → $200/mo; $1,200/yr insurance → $100/mo.
+    expect(screen.getByLabelText(/Monthly Property Tax/i)).toHaveValue(
+      "$200.00",
+    );
+    expect(screen.getByLabelText(/Monthly Insurance/i)).toHaveValue("$100.00");
+
+    // Seller note payment for this scenario is $666.12 (verified elsewhere).
+    // Total expenses = $666.12 + $200 + $100 + $50 = $1,016.12.
+    expect(screen.getByLabelText(/Total Monthly Expenses/i)).toHaveValue(
+      "$1,016.12",
+    );
+
+    // Cash Flow = $3,000 − $1,016.12 = $1,983.88.
+    expect(screen.getByLabelText(/^Cash Flow/i)).toHaveValue("$1,983.88");
+  });
 });
