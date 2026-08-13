@@ -78,6 +78,37 @@ function calculateMonthlyPayment(
   return loanPrincipal * ((r * factor) / (factor - 1));
 }
 
+// Remaining loan balance after `paymentsElapsed` amortized monthly payments
+// have been made against a loan amortized over `totalPayments` months.
+// annualRateDecimal: e.g. 0.065 for 6.5%
+function calculateBalloonBalance(
+  loanPrincipal,
+  annualRateDecimal,
+  totalPayments,
+  paymentsElapsed,
+) {
+  if (
+    loanPrincipal <= 0 ||
+    totalPayments <= 0 ||
+    paymentsElapsed <= 0 ||
+    paymentsElapsed >= totalPayments
+  )
+    return 0;
+  const r = annualRateDecimal / 12;
+  const monthlyPayment = calculateMonthlyPayment(
+    loanPrincipal,
+    annualRateDecimal,
+    totalPayments,
+  );
+  if (r <= 0) {
+    return Math.max(0, loanPrincipal - monthlyPayment * paymentsElapsed);
+  }
+  const factor = (1 + r) ** paymentsElapsed;
+  const remainingBalance =
+    loanPrincipal * factor - monthlyPayment * ((factor - 1) / r);
+  return Math.max(0, remainingBalance);
+}
+
 function findDuplicateByAddress(items, address) {
   return findDuplicateByField(items, "address", address);
 }
@@ -171,6 +202,7 @@ export {
   monthKey,
   formatPhone,
   calculateMonthlyPayment,
+  calculateBalloonBalance,
   parseCurrency,
   parsePercent,
   fmt,

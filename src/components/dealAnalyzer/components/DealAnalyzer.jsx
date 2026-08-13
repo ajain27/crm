@@ -7,6 +7,7 @@ import NovationTab from "./novation/NovationTab";
 import RentalTab from "./rental/RentalTab";
 import FindCompsTab from "./findComps/FindCompsTab";
 import MorbyMethodTab from "./morbyMethod/MorbyMethodTab";
+import SellerFinanceTab from "./sellerFinance/SellerFinanceTab";
 
 const analyzerTabs = [
   {
@@ -114,6 +115,19 @@ const analyzerTabs = [
       "Verify DSCR ratio and cash-on-cash return targets",
     ],
   },
+  {
+    id: "seller-finance",
+    label: "Seller Finance",
+    eyebrow: "Creative Finance",
+    title: "Seller-financed note review",
+    description:
+      "Combine any additional lenders with a seller-financed note to calculate the note's monthly payment and balloon due.",
+    prompts: [
+      "Confirm the percentage of purchase price the seller is carrying",
+      "Verify the note's interest rate and term with the seller",
+      "Plan ahead for the balloon payment payoff or refinance",
+    ],
+  },
 ];
 
 function DealAnalyzer() {
@@ -156,6 +170,9 @@ function DealAnalyzer() {
           {activeTab === "rental" && <RentalTab tab={currentTab} />}
           {activeTab === "find-comps" && <FindCompsTab tab={currentTab} />}
           {activeTab === "morby-method" && <MorbyMethodTab tab={currentTab} />}
+          {activeTab === "seller-finance" && (
+            <SellerFinanceTab tab={currentTab} />
+          )}
         </div>
       </section>
     </>

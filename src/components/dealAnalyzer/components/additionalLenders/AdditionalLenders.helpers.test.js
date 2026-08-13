@@ -43,12 +43,11 @@ describe("calcLenderMonthlyPayment", () => {
     expect(calcLenderMonthlyPayment([])).toBe(0);
   });
 
-  it("falls back to interest-only when term is empty", () => {
-    // $10,000 at 12%/yr interest-only = $100/mo
+  it("returns 0 when term is empty, even with a rate set (no interest-only shortcut)", () => {
     const result = calcLenderMonthlyPayment([
       { id: "1", amount: "$10,000", rate: "12%", term: "" },
     ]);
-    expect(result).toBeCloseTo(100, 2);
+    expect(result).toBe(0);
   });
 
   it("amortizes when term is provided", () => {
@@ -85,9 +84,9 @@ describe("calcLenderMonthlyPayment", () => {
 
   it("sums payments across multiple lenders", () => {
     const result = calcLenderMonthlyPayment([
-      { id: "1", amount: "$10,000", rate: "12%", term: "" }, // interest-only $100
-      { id: "2", amount: "$10,000", rate: "12%", term: "" }, // interest-only $100
+      { id: "1", amount: "$10,000", rate: "12%", term: "5" }, // ~$222.44
+      { id: "2", amount: "$10,000", rate: "12%", term: "5" }, // ~$222.44
     ]);
-    expect(result).toBeCloseTo(200, 2);
+    expect(result).toBeCloseTo(444.88, 1);
   });
 });

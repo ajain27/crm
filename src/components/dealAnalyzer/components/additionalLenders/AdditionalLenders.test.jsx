@@ -60,7 +60,7 @@ describe("AdditionalLenders", () => {
     expect(rate).toHaveValue("8%");
   });
 
-  it("renders a monthly payment preview when amount + rate are set", () => {
+  it("prompts for a term instead of guessing an interest-only payment", () => {
     render(<Wrapper initial={[createEmptyLender()]} />);
     fireEvent.change(screen.getByLabelText(/Lender 1 Amount/i), {
       target: { value: "10000" },
@@ -68,12 +68,14 @@ describe("AdditionalLenders", () => {
     fireEvent.change(screen.getByLabelText(/Lender 1 Rate/i), {
       target: { value: "12" },
     });
-    // interest-only fallback: $10,000 × 12% / 12 = $100.00
-    expect(screen.getByText(/Monthly payment: \$100\.00/)).toBeInTheDocument();
-    expect(screen.getByText(/interest-only/)).toBeInTheDocument();
+    // No interest-only fallback: no monthly payment is shown without a term.
+    expect(screen.queryByText(/Monthly payment:/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Add a term to calculate the amortized monthly payment/),
+    ).toBeInTheDocument();
   });
 
-  it("removes the interest-only hint once a term is added", () => {
+  it("shows the amortized monthly payment once a term is added", () => {
     render(<Wrapper initial={[createEmptyLender()]} />);
     fireEvent.change(screen.getByLabelText(/Lender 1 Amount/i), {
       target: { value: "10000" },
@@ -84,7 +86,10 @@ describe("AdditionalLenders", () => {
     fireEvent.change(screen.getByLabelText(/Lender 1 Term/i), {
       target: { value: "5" },
     });
-    expect(screen.queryByText(/interest-only/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Add a term to calculate/),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Monthly payment: \$/)).toBeInTheDocument();
   });
 
   it("Remove button drops the row", () => {

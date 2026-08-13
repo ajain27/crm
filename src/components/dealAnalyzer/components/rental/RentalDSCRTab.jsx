@@ -279,6 +279,8 @@ function RentalDSCRTab() {
         lenders={lenders}
         setLenders={setLenders}
         onMutate={() => setSummary(null)}
+        newLenderRate={form.interestRate}
+        newLenderTerm={form.loanTermYears}
       />
 
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>

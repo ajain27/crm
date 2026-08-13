@@ -6,16 +6,20 @@ import {
   fmtCurrencyInput,
 } from "../../../../utils/utils";
 
-export function createEmptyLender() {
-  return { id: crypto.randomUUID(), amount: "", rate: "", term: "" };
+export function createEmptyLender(
+  amount = "",
+  rate = "",
+  term = "",
+  auto = false,
+) {
+  return { id: crypto.randomUUID(), amount, rate, term, auto };
 }
 
+// Standard amortization (P&I) — no interest-only shortcut. A lender with no
+// term contributes $0 until one is entered, so this preview always agrees
+// with the totals computed from calcLenderMonthlyPayment downstream.
 function calcPMT(annualRatePct, termYears, principal) {
-  if (principal <= 0) return 0;
-  // No term → fall back to interest-only
-  if (termYears <= 0) {
-    return annualRatePct > 0 ? (principal * (annualRatePct / 100)) / 12 : 0;
-  }
+  if (principal <= 0 || termYears <= 0) return 0;
   if (annualRatePct <= 0) return principal / (termYears * 12);
   const r = annualRatePct / 100 / 12;
   const n = termYears * 12;
@@ -36,13 +40,28 @@ export function calcLenderTotal(lenders) {
   return lenders.reduce((sum, l) => sum + parseCurrency(l.amount), 0);
 }
 
-export default function AdditionalLenders({ lenders, setLenders, onMutate }) {
+export default function AdditionalLenders({
+  lenders,
+  setLenders,
+  onMutate,
+  newLenderAmount = "",
+  newLenderRate = "",
+  newLenderTerm = "",
+}) {
   function notify() {
     if (onMutate) onMutate();
   }
 
   function handleAdd() {
-    setLenders((prev) => [...prev, createEmptyLender()]);
+    setLenders((prev) => [
+      ...prev,
+      createEmptyLender(
+        newLenderAmount,
+        newLenderRate,
+        newLenderTerm,
+        Boolean(newLenderAmount),
+      ),
+    ]);
     notify();
   }
 
@@ -54,7 +73,9 @@ export default function AdditionalLenders({ lenders, setLenders, onMutate }) {
   function handleAmountChange(id, value) {
     setLenders((prev) =>
       prev.map((l) =>
-        l.id === id ? { ...l, amount: fmtCurrencyInput(value) } : l,
+        l.id === id
+          ? { ...l, amount: fmtCurrencyInput(value), auto: false }
+          : l,
       ),
     );
     notify();
@@ -108,7 +129,14 @@ export default function AdditionalLenders({ lenders, setLenders, onMutate }) {
               }}
             >
               <Field
-                label={`Lender ${idx + 1} Amount`}
+                label={
+                  <>
+                    {`Lender ${idx + 1} Amount`}
+                    {lender.auto && (
+                      <span className="deal-analyzer-auto-badge">auto</span>
+                    )}
+                  </>
+                }
                 name={`lender-amount-${lender.id}`}
                 value={lender.amount}
                 onChange={(e) => handleAmountChange(lender.id, e.target.value)}
@@ -139,7 +167,7 @@ export default function AdditionalLenders({ lenders, setLenders, onMutate }) {
               >
                 <Trash2 size={14} />
               </button>
-              {monthlyPayment > 0 && (
+              {amount > 0 && rate > 0 && (
                 <span
                   style={{
                     gridColumn: "1 / -1",
@@ -147,12 +175,12 @@ export default function AdditionalLenders({ lenders, setLenders, onMutate }) {
                     color: "var(--muted)",
                   }}
                 >
-                  Monthly payment: $
-                  {monthlyPayment.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                  {term <= 0 && " (interest-only — add term to amortize)"}
+                  {term > 0
+                    ? `Monthly payment: $${monthlyPayment.toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                      )}`
+                    : "Add a term to calculate the amortized monthly payment"}
                 </span>
               )}
             </div>
