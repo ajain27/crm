@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import { Field, Select } from "../../../elements/elements";
 import { X } from "lucide-react";
+import { useAddressAutocomplete } from "../../../../hooks/useAddressAutocomplete";
 
 const SOURCES = [
   "Driving for Dollars",
@@ -31,6 +33,18 @@ function Wholesale_form({
   handleContractFileChange,
   clearContractFile,
 }) {
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(
+    addressInputRef,
+    ({ street, city, state, zipCode }) => {
+      handleChange({ target: { name: "address", value: street } });
+      if (city) handleChange({ target: { name: "city", value: city } });
+      if (state) handleChange({ target: { name: "state", value: state } });
+      if (zipCode)
+        handleChange({ target: { name: "zipCode", value: zipCode } });
+    },
+  );
+
   const today = new Date().toISOString().slice(0, 10);
   const {
     sqft,
@@ -113,7 +127,7 @@ function Wholesale_form({
             options={DEAL_TYPES}
             required
           />
-          <label className="field">
+          <label className="field" style={{ gridColumn: "span 2" }}>
             <span>
               Property Address <span className="required-marker">*</span>
             </span>
@@ -123,6 +137,7 @@ function Wholesale_form({
               </span>
             )}
             <input
+              ref={addressInputRef}
               name="address"
               value={form.address}
               onChange={handleChange}
@@ -139,6 +154,7 @@ function Wholesale_form({
               name="state"
               value={form.state}
               onChange={handleChange}
+              disabled
               required
             >
               {STATE_OPTIONS.map((option) => (

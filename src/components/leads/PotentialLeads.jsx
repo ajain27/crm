@@ -16,6 +16,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
+import { useAddressAutocomplete } from "../../hooks/useAddressAutocomplete";
 import { AccordionHeaderCell, SimpleStat } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import {
@@ -252,6 +253,10 @@ export default function PotentialLeads({
   const [filterFollowUpStatus, setFilterFollowUpStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [detailLead, setDetailLead] = useState(null);
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(addressInputRef, ({ formatted }) => {
+    handleChange({ target: { name: "address", value: formatted } });
+  });
 
   // ── Commercial state ───────────────────────────────────────────────────────
   const [commercialForm, setCommercialForm] = useState(
@@ -262,6 +267,10 @@ export default function PotentialLeads({
   const [commercialSearch, setCommercialSearch] = useState("");
   const [commercialPage, setCommercialPage] = useState(1);
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
+  const commercialAddressInputRef = useRef(null);
+  useAddressAutocomplete(commercialAddressInputRef, ({ formatted }) => {
+    handleCommercialChange({ target: { name: "address", value: formatted } });
+  });
 
   // ── Split leads by type ────────────────────────────────────────────────────
   const localLeadKeys = new Set(leads.flatMap(leadIdentityKeys));
@@ -870,6 +879,7 @@ export default function PotentialLeads({
                 <div className="leads-input-icon-wrap">
                   <MapPin size={15} className="leads-field-icon" />
                   <input
+                    ref={addressInputRef}
                     type="text"
                     name="address"
                     value={form.address}
@@ -1629,6 +1639,7 @@ export default function PotentialLeads({
                 <div className="leads-input-icon-wrap">
                   <MapPin size={15} className="leads-field-icon" />
                   <input
+                    ref={commercialAddressInputRef}
                     type="text"
                     name="address"
                     value={commercialForm.address}

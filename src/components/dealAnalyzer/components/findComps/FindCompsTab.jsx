@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ExternalLink, Search, MapPin, Trash2 } from "lucide-react";
 import Pagination from "../../../pagination/Pagination";
+import { useAddressAutocomplete } from "../../../../hooks/useAddressAutocomplete";
 
 const CACHE_KEY = "findComps_cache";
 const MAX_CACHE = 100;
@@ -120,6 +121,17 @@ function FindCompsTab({ tab }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [compsPage, setCompsPage] = useState(1);
+
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(addressInputRef, ({ formatted }) => {
+    setAddress(formatted);
+    setSuggestions([]);
+    if (status === "done" || status === "error") {
+      setResult(null);
+      setStatus("idle");
+      setErrorMsg("");
+    }
+  });
 
   function saveToCache(searchAddress, data) {
     writeCache(searchAddress, data);
@@ -279,6 +291,7 @@ function FindCompsTab({ tab }) {
               <div className="find-comps-input-inner">
                 <MapPin size={16} className="find-comps-input-icon" />
                 <input
+                  ref={addressInputRef}
                   type="text"
                   style={{ paddingLeft: "2.25rem" }}
                   value={address}

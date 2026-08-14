@@ -1,10 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import RentalManagement from "./RentalManagement";
+import { useAddressAutocomplete } from "../../hooks/useAddressAutocomplete";
+
+vi.mock("../../hooks/useAddressAutocomplete", () => ({
+  useAddressAutocomplete: vi.fn(),
+}));
 
 beforeEach(() => {
   vi.spyOn(global, "alert").mockImplementation(() => {});
   vi.spyOn(window, "confirm").mockReturnValue(true);
+  useAddressAutocomplete.mockClear();
 });
 
 const baseProps = (overrides = {}) => ({
@@ -79,13 +91,14 @@ describe("RentalManagement", () => {
 
   it("saves a new rental when required fields are filled", async () => {
     const saveRental = vi.fn().mockResolvedValue(undefined);
-    const { container } = render(
-      <RentalManagement {...baseProps({ saveRental })} />,
-    );
+    render(<RentalManagement {...baseProps({ saveRental })} />);
     const address = await screen.findByPlaceholderText("123 Main St");
     fireEvent.change(address, { target: { value: "500 Oak Ave" } });
-    fireEvent.change(container.querySelector('select[name="state"]'), {
-      target: { value: "TX" },
+    // Address/state are filled together via Places autocomplete selection
+    // now that the state field is no longer a manual dropdown.
+    const onPlaceSelected = useAddressAutocomplete.mock.calls[0][1];
+    act(() => {
+      onPlaceSelected({ street: "500 Oak Ave", state: "TX" });
     });
     fireEvent.click(screen.getByRole("button", { name: /Add Property/i }));
     await waitFor(() => expect(saveRental).toHaveBeenCalled());

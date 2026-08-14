@@ -1,7 +1,9 @@
+import { useRef } from "react";
 import { Plus } from "lucide-react";
 import { Field } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { TENANT_TYPES } from "./rentalUtils";
+import { useAddressAutocomplete } from "../../hooks/useAddressAutocomplete";
 
 export default function RentalAddForm({
   form,
@@ -12,6 +14,20 @@ export default function RentalAddForm({
   saving,
   isComplete,
 }) {
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(
+    addressInputRef,
+    ({ street, city, state, zipCode }) => {
+      onChange({ target: { name: "address", value: street, dataset: {} } });
+      if (city)
+        onChange({ target: { name: "city", value: city, dataset: {} } });
+      if (zipCode)
+        onChange({ target: { name: "zipCode", value: zipCode, dataset: {} } });
+      if (state)
+        onChange({ target: { name: "state", value: state, dataset: {} } });
+    },
+  );
+
   return (
     <section
       className="panel"
@@ -27,6 +43,7 @@ export default function RentalAddForm({
 
       <form className="add-form" onSubmit={onSubmit}>
         <Field
+          ref={addressInputRef}
           label="Property Address"
           name="address"
           value={form.address}
@@ -39,21 +56,21 @@ export default function RentalAddForm({
           label="City"
           name="city"
           value={form.city}
-          onChange={onChange}
-          placeholder="Austin"
+          disabled
+          placeholder="Auto-filled from address"
         />
         <Field
           label="Zip Code"
           name="zipCode"
           value={form.zipCode}
-          onChange={onChange}
-          placeholder="78701"
+          disabled
+          placeholder="Auto-filled from address"
         />
         <label className="field">
           <span>
             State <span className="required-marker">*</span>
           </span>
-          <select name="state" value={form.state} onChange={onChange}>
+          <select name="state" value={form.state} disabled required>
             {STATE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}

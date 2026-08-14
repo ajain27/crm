@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { useCountUp } from "../../hooks/useCountUp";
 import { trimFieldOnBlur } from "../../utils/utils";
@@ -101,14 +102,10 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
   );
 }
 
-function Field({
-  label,
-  required,
-  wrapperClassName = "",
-  onChange,
-  onBlur,
-  ...props
-}) {
+const Field = forwardRef(function Field(
+  { label, required, wrapperClassName = "", onChange, onBlur, ...props },
+  ref,
+) {
   const trimOnBlur = trimFieldOnBlur(onChange);
   function handleBlur(event) {
     trimOnBlur(event);
@@ -122,6 +119,7 @@ function Field({
         {required && <span className="required-marker">*</span>}
       </span>
       <input
+        ref={ref}
         required={required}
         id={props.id || props.name}
         onChange={onChange}
@@ -130,7 +128,7 @@ function Field({
       />
     </label>
   );
-}
+});
 
 function Select({ label, required, options, ...props }) {
   return (

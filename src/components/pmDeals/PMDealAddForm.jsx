@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { Plus } from "lucide-react";
+import { useAddressAutocomplete } from "../../hooks/useAddressAutocomplete";
 import "./PMDealsTable.css";
 
 export default function PMDealAddForm({
@@ -9,6 +11,11 @@ export default function PMDealAddForm({
   saving,
   isFormComplete,
 }) {
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(addressInputRef, ({ formatted }) => {
+    onChange({ target: { name: "propertyAddress", value: formatted } });
+  });
+
   return (
     <section
       className="panel pm-add-form-panel"
@@ -31,6 +38,7 @@ export default function PMDealAddForm({
             Property Address <span className="required-star">*</span>
           </span>
           <input
+            ref={addressInputRef}
             name="propertyAddress"
             value={form.propertyAddress}
             onChange={onChange}
