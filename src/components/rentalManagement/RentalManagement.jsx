@@ -517,9 +517,7 @@ export default function RentalManagement({
               <thead>
                 <tr>
                   <th className="rm-name rm-col-sticky">Address</th>
-                  <th className="rm-col-extra">City</th>
-                  <th className="rm-col-extra">State</th>
-                  <th>Tenant</th>
+                  <th>City, State</th>
                   <th className="rm-col-extra">Phone</th>
                   <th className="rm-col-extra">Email</th>
                   <th className="rm-col-extra">Type</th>
@@ -561,23 +559,10 @@ export default function RentalManagement({
                         value={rental.address}
                         className="rm-name rm-col-sticky"
                       />
-                      <td className="rm-muted rm-col-extra" data-label="City">
-                        {rental.city || "—"}
-                      </td>
-                      <td className="rm-col-extra" data-label="State">
-                        <span className="rm-state-badge">
-                          {rental.state || "—"}
-                        </span>
-                      </td>
-                      <td data-label="Tenant">
-                        <div className="rm-tenant-display">
-                          <span>{currentTenant?.name || "—"}</span>
-                          {hasMultipleTenants && !currentTenant?.isCurrent && (
-                            <span className="rm-previous-tenant">
-                              Previous Tenant
-                            </span>
-                          )}
-                        </div>
+                      <td className="rm-muted" data-label="City, State">
+                        {rental.city && rental.state
+                          ? `${rental.city}, ${rental.state}`
+                          : rental.city || rental.state || "—"}
                       </td>
                       <td className="rm-muted rm-col-extra" data-label="Phone">
                         {currentTenant?.phone || "—"}
