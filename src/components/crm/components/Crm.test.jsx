@@ -59,25 +59,31 @@ vi.mock("../../loader/LoadingScreen", () => ({
 }));
 
 vi.mock("../../auth/AuthGate", () => ({
-  default: () => <div>Sign in to your CRM</div>,
+  default: ({ onAuthenticated }) => (
+    <div>
+      <p>Sign in to your CRM</p>
+      <button
+        onClick={() =>
+          onAuthenticated({
+            id: "u1",
+            firstName: "Ankit",
+            lastName: "Jain",
+            username: "ankitjain",
+            email: "ankit@example.com",
+            profileImage: "",
+          })
+        }
+      >
+        Mock Sign In
+      </button>
+    </div>
+  ),
 }));
 
 const { fetchDeals } = await import("../../../firebase/firestoreService");
 
-const SESSION_STORAGE_KEY = "crmCurrentUser";
-
-function seedCurrentUser() {
-  localStorage.setItem(
-    SESSION_STORAGE_KEY,
-    JSON.stringify({
-      id: "u1",
-      firstName: "Ankit",
-      lastName: "Jain",
-      username: "ankitjain",
-      email: "ankit@example.com",
-      profileImage: "",
-    }),
-  );
+function signIn() {
+  fireEvent.click(screen.getByRole("button", { name: "Mock Sign In" }));
 }
 
 beforeEach(() => {
@@ -90,10 +96,21 @@ afterEach(() => {
 });
 
 describe("Crm", () => {
-  it("shows account actions in the top-right avatar dropdown", async () => {
-    seedCurrentUser();
+  it("always shows the login screen on a fresh load, even if a prior session exists", () => {
+    localStorage.setItem(
+      "crmCurrentUser",
+      JSON.stringify({ id: "u1", firstName: "Ankit" }),
+    );
 
     render(<Wholesale />);
+
+    expect(screen.getByText("Sign in to your CRM")).toBeInTheDocument();
+    expect(fetchDeals).not.toHaveBeenCalled();
+  });
+
+  it("shows account actions in the top-right avatar dropdown", async () => {
+    render(<Wholesale />);
+    signIn();
 
     await waitFor(() => {
       expect(fetchDeals).toHaveBeenCalledWith("u1");
@@ -115,9 +132,9 @@ describe("Crm", () => {
   it("logs the user out after 30 minutes of inactivity", async () => {
     vi.useFakeTimers();
     const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-    seedCurrentUser();
 
     render(<Wholesale />);
+    signIn();
 
     await act(async () => {
       await Promise.resolve();

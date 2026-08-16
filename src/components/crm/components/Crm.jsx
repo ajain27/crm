@@ -59,14 +59,10 @@ import { useProfileManager } from "./hooks/useProfileManager";
 
 function Wholesale() {
   const { theme, toggleTheme } = useTheme();
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem(SESSION_STORAGE_KEY);
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Never auto-restore a session from storage — every fresh app load (any
+  // device, including a mobile browser/PWA reopening after being killed)
+  // must go through the login screen.
+  const [currentUser, setCurrentUser] = useState(null);
   const [activeView, setActiveView] = useState(() =>
     currentUser?.role === "ppc" ? "leads" : "dashboard",
   );
