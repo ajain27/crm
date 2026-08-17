@@ -13,18 +13,14 @@ function fillRequired({
   arv = "250000",
   rehabCost = "30000",
   wholesaleFee = "10000",
-  buyersProfit = "30",
 } = {}) {
   fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: arv } });
   // No rehab type → enter manual rehab
   fireEvent.change(screen.getByLabelText(/^Rehab Cost/i), {
     target: { value: rehabCost },
   });
-  fireEvent.change(screen.getByLabelText(/Wholesale Fee/i), {
+  fireEvent.change(screen.getByLabelText(/Assignment Fee/i), {
     target: { value: wholesaleFee },
-  });
-  fireEvent.change(screen.getByLabelText(/Buyer's Profit/i), {
-    target: { value: buyersProfit },
   });
 }
 
@@ -54,14 +50,6 @@ describe("WholesaleTab", () => {
     expect(screen.getByLabelText(/Square Footage/i)).toHaveValue("1800");
   });
 
-  it("appends % to Buyer's Profit on blur", () => {
-    render(<WholesaleTab tab={tab} />);
-    const input = screen.getByLabelText(/Buyer's Profit/i);
-    fireEvent.change(input, { target: { value: "30" } });
-    fireEvent.blur(input);
-    expect(input).toHaveValue("30%");
-  });
-
   it("Calculate button is disabled before required fields are filled", () => {
     render(<WholesaleTab tab={tab} />);
     expect(
@@ -73,10 +61,18 @@ describe("WholesaleTab", () => {
     render(<WholesaleTab tab={tab} />);
     fillRequired();
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
-    // MAO = 250,000 × (1 - 0.30) - 30,000 - 10,000 = 175,000 - 40,000 = $135,000
-    expect(screen.getByText("$135,000.00")).toBeInTheDocument();
-    // Assign Deal = MAO + wholesale fee = $145,000
+    // MAO = 250,000 × 70% - 30,000 - 10,000 = 175,000 - 40,000 = $135,000
+    expect(screen.getAllByText("$135,000.00").length).toBeGreaterThanOrEqual(1);
+    // Assign Deal = MAO + assignment fee = $145,000
     expect(screen.getByText("$145,000.00")).toBeInTheDocument();
+  });
+
+  it("renders the ARV allocation pie chart after calculating", () => {
+    render(<WholesaleTab tab={tab} />);
+    fillRequired();
+    fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
+    expect(screen.getByText("ARV Allocation")).toBeInTheDocument();
+    expect(screen.getByText("Buyer's Margin (30%)")).toBeInTheDocument();
   });
 
   it("auto-fills rehab cost when rehab type and sqft are set", () => {

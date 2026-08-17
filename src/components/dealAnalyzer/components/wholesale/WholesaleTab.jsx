@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../constants/stateOptions";
+import WholesalePieChart from "./WholesalePieChart";
 import {
   REHAB_OPTIONS,
   getAutoRehabCost,
   getRehabMultiplier,
   isCheapMarket,
   parseCurrency,
-  parsePercent,
   fmt,
   fmtCurrencyInput,
 } from "../fixAndFlip/fixAndFlipConfig";
@@ -20,7 +20,6 @@ const initialForm = {
   rehabCost: "",
   additionalRehabCost: "",
   wholesaleFee: "",
-  buyersProfit: "",
 };
 
 function WholesaleTab({ tab }) {
@@ -41,23 +40,11 @@ function WholesaleTab({ tab }) {
       setForm((prev) => ({ ...prev, [name]: fmtCurrencyInput(value) }));
       return;
     }
-    if (name === "buyersProfit") {
-      setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
-      return;
-    }
     if (name === "squareFootage") {
       setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9]/g, "") }));
       return;
     }
     setForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function handleBlur(e) {
-    const { name, value } = e.target;
-    if (name === "buyersProfit" && value) {
-      const numeric = value.replace(/[^0-9.]/g, "");
-      if (numeric) setForm((prev) => ({ ...prev, [name]: `${numeric}%` }));
-    }
   }
 
   const sqft = parseInt(form.squareFootage || "0", 10) || 0;
@@ -76,10 +63,7 @@ function WholesaleTab({ tab }) {
     form.rehabCost?.trim();
 
   const isFormComplete =
-    form.arv?.trim() &&
-    rehabCostReady &&
-    form.wholesaleFee?.trim() &&
-    form.buyersProfit?.trim();
+    form.arv?.trim() && rehabCostReady && form.wholesaleFee?.trim();
 
   function handleCalculate() {
     if (!isFormComplete) return;
@@ -89,8 +73,7 @@ function WholesaleTab({ tab }) {
     const additionalRehab = parseCurrency(form.additionalRehabCost);
     const rehab = baseRehab + additionalRehab;
     const wholesaleFee = parseCurrency(form.wholesaleFee);
-    const buyersProfitPct = parsePercent(form.buyersProfit);
-    const mao = arv * (1 - buyersProfitPct / 100) - rehab - wholesaleFee;
+    const mao = arv * 0.7 - rehab - wholesaleFee;
 
     setResult({
       arv,
@@ -98,9 +81,9 @@ function WholesaleTab({ tab }) {
       additionalRehab,
       rehab,
       wholesaleFee,
-      buyersProfitPct,
       mao,
       assignDeal: mao + wholesaleFee,
+      buyerMargin: arv * 0.3,
     });
   }
 
@@ -222,21 +205,11 @@ function WholesaleTab({ tab }) {
           )}
 
           <Field
-            label="Wholesale Fee"
+            label="Assignment Fee"
             name="wholesaleFee"
             value={form.wholesaleFee}
             onChange={handleChange}
             placeholder="e.g. $10,000"
-            required
-          />
-
-          <Field
-            label="Buyer's Profit (%)"
-            name="buyersProfit"
-            value={form.buyersProfit}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. 30"
             required
           />
         </div>
@@ -270,11 +243,15 @@ function WholesaleTab({ tab }) {
               style={{ marginTop: "0.75rem" }}
             >
               <div>
-                <span>Assign Deal (MAO + Wholesale Fee)</span>
+                <span>Assign Deal (MAO + Assignment Fee)</span>
                 <strong>
                   <AnimatedAmount value={result.assignDeal} format={fmt} />
                 </strong>
               </div>
+            </div>
+
+            <div style={{ marginTop: "1.25rem" }}>
+              <WholesalePieChart summary={result} />
             </div>
 
             <div
@@ -317,15 +294,9 @@ function WholesaleTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>Wholesale Fee</span>
-                <strong className="deal-analyzer-return-negative">
+                <span>Assignment Fee</span>
+                <strong className="deal-analyzer-return-positive">
                   <AnimatedAmount value={result.wholesaleFee} format={fmt} />
-                </strong>
-              </div>
-              <div>
-                <span>Buyer's Profit</span>
-                <strong className="deal-analyzer-return-negative">
-                  {result.buyersProfitPct}%
                 </strong>
               </div>
             </div>
