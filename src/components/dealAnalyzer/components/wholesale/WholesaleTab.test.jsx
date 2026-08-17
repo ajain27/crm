@@ -13,6 +13,7 @@ function fillRequired({
   arv = "250000",
   rehabCost = "30000",
   wholesaleFee = "10000",
+  buyersProfit = "30",
 } = {}) {
   fireEvent.change(screen.getByLabelText(/^ARV/i), { target: { value: arv } });
   // No rehab type → enter manual rehab
@@ -21,6 +22,9 @@ function fillRequired({
   });
   fireEvent.change(screen.getByLabelText(/Assignment Fee/i), {
     target: { value: wholesaleFee },
+  });
+  fireEvent.change(screen.getByLabelText(/Buyer's Profit/i), {
+    target: { value: buyersProfit },
   });
 }
 
@@ -50,6 +54,14 @@ describe("WholesaleTab", () => {
     expect(screen.getByLabelText(/Square Footage/i)).toHaveValue("1800");
   });
 
+  it("appends % to Buyer's Profit on blur", () => {
+    render(<WholesaleTab tab={tab} />);
+    const input = screen.getByLabelText(/Buyer's Profit/i);
+    fireEvent.change(input, { target: { value: "30" } });
+    fireEvent.blur(input);
+    expect(input).toHaveValue("30%");
+  });
+
   it("Calculate button is disabled before required fields are filled", () => {
     render(<WholesaleTab tab={tab} />);
     expect(
@@ -72,7 +84,7 @@ describe("WholesaleTab", () => {
     fillRequired();
     fireEvent.click(screen.getByRole("button", { name: /Calculate MAO/i }));
     expect(screen.getByText("ARV Allocation")).toBeInTheDocument();
-    expect(screen.getByText("Buyer's Margin (30%)")).toBeInTheDocument();
+    expect(screen.getByText("Buyer's Margin")).toBeInTheDocument();
   });
 
   it("auto-fills rehab cost when rehab type and sqft are set", () => {

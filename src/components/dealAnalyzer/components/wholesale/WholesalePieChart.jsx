@@ -33,7 +33,7 @@ const SLICE_CONFIG = [
   { key: "mao", label: "Maximum Allowable Offer", color: "#3b82f6" },
   { key: "rehab", label: "Total Rehab", color: "#f97316" },
   { key: "wholesaleFee", label: "Assignment Fee", color: "#a855f7" },
-  { key: "buyerMargin", label: "Buyer's Margin (30%)", color: "#16a34a" },
+  { key: "buyerMargin", label: "Buyer's Margin", color: "#16a34a" },
 ];
 
 function WholesalePieChart({ summary }) {
