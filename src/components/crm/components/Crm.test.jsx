@@ -89,6 +89,7 @@ function signIn() {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
 });
 
 afterEach(() => {
@@ -96,7 +97,21 @@ afterEach(() => {
 });
 
 describe("Crm", () => {
-  it("always shows the login screen on a fresh load, even if a prior session exists", () => {
+  it("restores the session from sessionStorage, so a page refresh doesn't log the user out", async () => {
+    sessionStorage.setItem(
+      "crmCurrentUser",
+      JSON.stringify({ id: "u1", firstName: "Ankit" }),
+    );
+
+    render(<Wholesale />);
+
+    await waitFor(() => {
+      expect(fetchDeals).toHaveBeenCalledWith("u1");
+    });
+    expect(screen.queryByText("Sign in to your CRM")).not.toBeInTheDocument();
+  });
+
+  it("ignores a stale session in localStorage, so it doesn't survive the app being fully closed and reopened", () => {
     localStorage.setItem(
       "crmCurrentUser",
       JSON.stringify({ id: "u1", firstName: "Ankit" }),

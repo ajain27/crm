@@ -59,10 +59,17 @@ import { useProfileManager } from "./hooks/useProfileManager";
 
 function Wholesale() {
   const { theme, toggleTheme } = useTheme();
-  // Never auto-restore a session from storage — every fresh app load (any
-  // device, including a mobile browser/PWA reopening after being killed)
-  // must go through the login screen.
-  const [currentUser, setCurrentUser] = useState(null);
+  // Use sessionStorage (not localStorage) so a page refresh keeps the user
+  // logged in, but the session doesn't survive the tab/app actually closing
+  // — e.g. a mobile browser/PWA killed by the OS and reopened later.
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUser = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeView, setActiveView] = useState(() =>
     currentUser?.role === "ppc" ? "leads" : "dashboard",
   );
@@ -180,14 +187,14 @@ function Wholesale() {
   }, [activeView]);
 
   function handleAuthenticated(user) {
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     setCurrentUser(user);
     if (user.role === "ppc") setActiveView("leads");
     setProfileForm(createProfileForm(user));
   }
 
   function handleSignOut() {
-    localStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
     setCurrentUser(null);
     setDeals([]);
     setLeads([]);

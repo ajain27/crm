@@ -44,7 +44,7 @@ export function useProfileManager({
       });
 
       const nextUser = { ...currentUser, ...updatedNames };
-      localStorage.setItem(sessionStorageKey, JSON.stringify(nextUser));
+      sessionStorage.setItem(sessionStorageKey, JSON.stringify(nextUser));
       setCurrentUser(nextUser);
       setIsProfileModalOpen(false);
       setIsProfileMenuOpen(false);

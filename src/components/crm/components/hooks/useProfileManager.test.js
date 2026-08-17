@@ -10,7 +10,7 @@ const { useProfileManager } = await import("./useProfileManager");
 
 beforeEach(() => {
   updateUserProfile.mockReset();
-  localStorage.clear();
+  sessionStorage.clear();
   global.alert = vi.fn();
 });
 
@@ -58,7 +58,7 @@ describe("useProfileManager", () => {
     });
     expect(updateUserProfile).toHaveBeenCalled();
     expect(props.setCurrentUser).toHaveBeenCalled();
-    expect(localStorage.getItem("crmCurrentUser")).toBeTruthy();
+    expect(sessionStorage.getItem("crmCurrentUser")).toBeTruthy();
     expect(result.current.isProfileModalOpen).toBe(false);
   });
 
