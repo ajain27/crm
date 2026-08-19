@@ -165,6 +165,22 @@ describe("summary calculations", () => {
     expect(screen.getByText("$180,000.00")).toBeInTheDocument();
   });
 
+  it("shows the 10% ARV reserve breakdown", () => {
+    render(<NovationTab tab={tab} />);
+    // ARV=200k → 6%=$12,000, 3%=$6,000, 1%=$2,000
+    fillFields();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Calculate Offer Price/i }),
+    );
+    expect(screen.getByText("10% ARV Reserve Breakdown")).toBeInTheDocument();
+    expect(screen.getByText("Agent Commissions (6%)")).toBeInTheDocument();
+    expect(screen.getByText("$12,000.00")).toBeInTheDocument();
+    expect(screen.getByText("Buffer (3%)")).toBeInTheDocument();
+    expect(screen.getByText("$6,000.00")).toBeInTheDocument();
+    expect(screen.getByText("Closing Costs (1%)")).toBeInTheDocument();
+    expect(screen.getByText("$2,000.00")).toBeInTheDocument();
+  });
+
   it("shows Offer Available when offer price is positive", () => {
     render(<NovationTab tab={tab} />);
     fillFields(); // Offer Price = $150,000 > 0

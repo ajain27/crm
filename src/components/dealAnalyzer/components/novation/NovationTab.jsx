@@ -38,7 +38,15 @@ function NovationTab({ tab }) {
 
   function handleCalculate() {
     if (!isFormComplete) return;
-    setSummary({ arv, repairs, wholesaleFee, offerPrice });
+    setSummary({
+      arv,
+      repairs,
+      wholesaleFee,
+      offerPrice,
+      agentCommission: arv * 0.06,
+      buffer: arv * 0.03,
+      closingCosts: arv * 0.01,
+    });
   }
 
   return (
@@ -185,6 +193,39 @@ function NovationTab({ tab }) {
                 ({fmt(summary.arv)} × 90%) − {fmt(summary.repairs)} −{" "}
                 {fmt(summary.wholesaleFee)} = {fmt(summary.offerPrice)}
               </span>
+            </div>
+
+            <div
+              className="deal-analyzer-summary-grid"
+              style={{ marginTop: "1.25rem" }}
+            >
+              <div
+                className="deal-analyzer-section-label"
+                style={{ gridColumn: "1 / -1", marginTop: 0 }}
+              >
+                10% ARV Reserve Breakdown
+              </div>
+              <div>
+                <span>Agent Commissions (6%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount
+                    value={summary.agentCommission}
+                    format={fmt}
+                  />
+                </strong>
+              </div>
+              <div>
+                <span>Buffer (3%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.buffer} format={fmt} />
+                </strong>
+              </div>
+              <div>
+                <span>Closing Costs (1%)</span>
+                <strong className="deal-analyzer-return-negative">
+                  <AnimatedAmount value={summary.closingCosts} format={fmt} />
+                </strong>
+              </div>
             </div>
           </div>
         )}
