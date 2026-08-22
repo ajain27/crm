@@ -22,8 +22,9 @@ import DSCRSection from "./sections/DSCRSection";
 import SellerCarrybackSection from "./sections/SellerCarrybackSection";
 import IncomeExpenseSection from "./sections/IncomeExpenseSection";
 import MorbyMethodSummary from "./MorbyMethodSummary";
+import { STANDARD_DOWN_PCT_OPTIONS } from "../downPaymentPct/DownPaymentPctField";
 
-const DOWN_OPTIONS = [20, 25];
+const DOWN_OPTIONS = STANDARD_DOWN_PCT_OPTIONS;
 
 function MorbyMethodTab({ tab }) {
   const [form, setForm] = useState(initialForm);

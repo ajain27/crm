@@ -7,6 +7,7 @@ import {
   fmtCurrencyInput,
 } from "../fixAndFlip/fixAndFlipConfig";
 import { calculateMonthlyPayment } from "../../../../utils/utils";
+import DownPaymentPctField from "../downPaymentPct/DownPaymentPctField";
 
 const CLOSING_COSTS_PCT = 2; // 2% of purchase price
 const AGENT_COMMISSION_PCT = 3; // 3% of purchase price
@@ -19,7 +20,6 @@ const initialForm = {
   vacancyRate: "",
   rehabCost: "",
   additionalExpenses: "",
-  downPayment: "",
   interestRate: "",
   loanTermYears: "",
 };
@@ -32,11 +32,12 @@ const CURRENCY_FIELDS = new Set([
   "additionalExpenses",
 ]);
 
-const PERCENT_FIELDS = new Set(["vacancyRate", "downPayment", "interestRate"]);
+const PERCENT_FIELDS = new Set(["vacancyRate", "interestRate"]);
 
 function MultiFamilyTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
+  const [downPct, setDownPct] = useState(25);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -69,7 +70,6 @@ function MultiFamilyTab({ tab }) {
     form.numUnits?.trim() &&
     form.rentPerUnit?.trim() &&
     form.vacancyRate?.trim() &&
-    form.downPayment?.trim() &&
     form.interestRate?.trim() &&
     form.loanTermYears?.trim();
 
@@ -86,7 +86,7 @@ function MultiFamilyTab({ tab }) {
     const rehabCost = parseCurrency(form.rehabCost);
     const closingCosts = purchasePrice * (CLOSING_COSTS_PCT / 100);
     const agentCommission = purchasePrice * (AGENT_COMMISSION_PCT / 100);
-    const downPaymentPct = parsePercent(form.downPayment);
+    const downPaymentPct = downPct;
     const annualInterestRate = parsePercent(form.interestRate) / 100;
     const loanTermYears = parseInt(form.loanTermYears || "0", 10) || 0;
 
@@ -308,14 +308,12 @@ function MultiFamilyTab({ tab }) {
         {/* — Financing */}
         <div className="deal-analyzer-section-label">Financing</div>
         <div className="deal-analyzer-form-grid">
-          <Field
-            label="Down Payment (%)"
-            name="downPayment"
-            value={form.downPayment}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. 25"
-            required
+          <DownPaymentPctField
+            value={downPct}
+            onChange={(val) => {
+              setDownPct(val);
+              setSummary(null);
+            }}
           />
           <Field
             label="Interest Rate (% / year)"

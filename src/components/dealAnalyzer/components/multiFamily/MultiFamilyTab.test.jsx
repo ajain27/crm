@@ -54,10 +54,8 @@ function fill({
     target: { value: vacancyRate },
   });
   fireEvent.blur(screen.getByLabelText(/Vacancy Rate/i));
-  fireEvent.change(screen.getByLabelText(/Down Payment/i), {
-    target: { value: downPayment },
-  });
-  fireEvent.blur(screen.getByLabelText(/Down Payment/i));
+  fireEvent.click(screen.getByLabelText(/Down Payment/i));
+  fireEvent.click(screen.getByRole("option", { name: `${downPayment}%` }));
   fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
     target: { value: interestRate },
   });
@@ -150,12 +148,36 @@ describe("input formatting", () => {
     expect(field).toHaveValue("5%");
   });
 
-  it("appends % to Down Payment on blur", () => {
+  it("Down Payment defaults to 25% and offers 15%–70% in steps of 5", () => {
     render(<MultiFamilyTab tab={tab} />);
-    const field = screen.getByLabelText(/Down Payment/i);
-    fireEvent.change(field, { target: { value: "25" } });
-    fireEvent.blur(field);
-    expect(field).toHaveValue("25%");
+    const trigger = screen.getByLabelText(/Down Payment/i);
+    expect(trigger).toHaveTextContent("25%");
+
+    fireEvent.click(trigger);
+    const options = screen
+      .getAllByRole("option")
+      .map((opt) => opt.textContent.replace(/\s+/g, " ").trim());
+    expect(options).toEqual([
+      "15%",
+      "20%",
+      "25%",
+      "30%",
+      "35%",
+      "40%",
+      "45%",
+      "50%",
+      "55%",
+      "60%",
+      "65%",
+      "70%",
+    ]);
+  });
+
+  it("changes the down payment when a listbox option is picked", () => {
+    render(<MultiFamilyTab tab={tab} />);
+    fireEvent.click(screen.getByLabelText(/Down Payment/i));
+    fireEvent.click(screen.getByRole("option", { name: "40%" }));
+    expect(screen.getByLabelText(/Down Payment/i)).toHaveTextContent("40%");
   });
 
   it("appends % to Interest Rate on blur", () => {

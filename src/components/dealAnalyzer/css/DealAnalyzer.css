@@ -125,21 +125,6 @@
     white-space: nowrap;
   }
 
-  .dscr-down-pct-field {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-    padding-bottom: 2px;
-  }
-
-  .dscr-down-pct-field > span {
-    white-space: nowrap;
-    font-size: 0.8125rem;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-
   .dscr-heloc-field {
     display: flex;
     flex-direction: column;
@@ -175,6 +160,73 @@
   .dscr-down-pct-select:focus {
     outline: none;
     border-color: var(--blue);
+  }
+
+  /* Custom down-payment-% dropdown (DownPaymentPctField) — a real <select>
+     is avoided here because Chrome on macOS renders its native popup at an
+     OS level, positioned wrong whenever the page isn't at exactly 100%
+     browser zoom; this listbox lives in normal page flow instead so it's
+     always positioned correctly. */
+  .down-pct-field {
+    position: relative;
+  }
+
+  .down-pct-trigger {
+    @apply flex h-11 w-full items-center justify-between rounded-[4px] border bg-app-panel px-3 text-left text-app-text outline-none transition-colors;
+    border-color: var(--input-border);
+    cursor: pointer;
+  }
+
+  .down-pct-trigger:focus-visible {
+    border-color: var(--blue);
+  }
+
+  .down-pct-chevron {
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+
+  .down-pct-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .down-pct-listbox {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin: 0;
+    padding: 0.25rem;
+    list-style: none;
+    max-height: 240px;
+    overflow-y: auto;
+    border-radius: 0.6rem;
+    border: 1px solid var(--input-border);
+    background: var(--panel);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  }
+
+  .down-pct-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .down-pct-option:hover {
+    background: color-mix(in srgb, var(--blue-light) 60%, transparent);
+  }
+
+  .down-pct-option.selected {
+    background: color-mix(in srgb, var(--blue) 14%, transparent);
+    color: var(--blue);
+    font-weight: 600;
   }
 
   .deal-analyzer-inline-badge-output {

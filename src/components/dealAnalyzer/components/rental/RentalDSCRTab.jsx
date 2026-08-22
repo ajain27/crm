@@ -1,6 +1,7 @@
 import { Field, Select } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
 import AdditionalLenders from "../additionalLenders/AdditionalLenders";
+import DownPaymentPctField from "../downPaymentPct/DownPaymentPctField";
 import { SellerCreditCarrybackField } from "./SellerCreditCarryback";
 import RentalDSCRSummary from "./RentalDSCRSummary";
 import {
@@ -99,20 +100,11 @@ function RentalDSCRTab() {
 
       <div className="deal-analyzer-section-label">DSCR Loan</div>
       <div className="deal-analyzer-form-grid">
-        <div className="field">
-          <span>Down Payment %</span>
-          <select
-            value={downPct}
-            onChange={(e) => setDownPct(Number(e.target.value))}
-            className="leads-select"
-          >
-            {DOWN_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}%
-              </option>
-            ))}
-          </select>
-        </div>
+        <DownPaymentPctField
+          value={downPct}
+          onChange={setDownPct}
+          options={DOWN_OPTIONS}
+        />
         <label className="field deal-analyzer-output">
           <span>
             Down Payment{" "}
