@@ -200,10 +200,13 @@ function SellerFinanceTab({ tab }) {
     originationFeesAmt + legalFeesAmt + appraisalFeesAmt + underwritingFeesAmt;
   const totalCashToClose = totalLenderFees + closingCostsAmt;
 
-  const buyerCashToClose = Math.max(
-    0,
-    purchasePrice - lenderTotal - sellerFinanceAmount + totalCashToClose,
-  );
+  const unfinancedPrincipal = purchasePrice - lenderTotal - sellerFinanceAmount;
+  // Once seller financing + lender debt cover the full purchase price, fees
+  // are assumed rolled into that financing too — the buyer only ever brings
+  // cash to close for an actual down-payment gap, never for fees alone on a
+  // fully (or over-)financed deal.
+  const buyerCashToClose =
+    unfinancedPrincipal > 0 ? unfinancedPrincipal + totalCashToClose : 0;
   const isOverFinanced =
     purchasePrice > 0 && lenderTotal + sellerFinanceAmount > purchasePrice;
   const totalMonthlyPayment = sellerFinanceMonthly + lenderMonthlyPayment;
@@ -253,6 +256,7 @@ function SellerFinanceTab({ tab }) {
       totalLenderFees,
       closingCostsAmt,
       totalCashToClose,
+      unfinancedPrincipal,
       buyerCashToClose,
       totalMonthlyPayment,
       monthlyRentAmount,
@@ -857,12 +861,16 @@ function SellerFinanceTab({ tab }) {
               style={{ marginTop: "1rem" }}
             >
               Buyer Cash to Close = Purchase Price − Seller Financing − Lender
-              Total + Lender Fees + Closing Costs
+              Total + Lender Fees + Closing Costs (fees roll into financing
+              instead, at $0 cash to close, once seller financing + lender debt
+              cover the full purchase price)
               <span>
                 {fmt(summary.purchasePrice)} −{" "}
                 {fmt(summary.sellerFinanceAmount)} − {fmt(summary.lenderTotal)}{" "}
-                + {fmt(summary.totalLenderFees)} +{" "}
-                {fmt(summary.closingCostsAmt)} = {fmt(summary.buyerCashToClose)}
+                {summary.unfinancedPrincipal > 0
+                  ? `+ ${fmt(summary.totalLenderFees)} + ${fmt(summary.closingCostsAmt)} `
+                  : "(fully financed — fees rolled in) "}
+                = {fmt(summary.buyerCashToClose)}
               </span>
               Monthly Cash Flow = Monthly Rent − (Seller Note Payment + Lender
               Payments + Property Tax + Insurance + Appliance Insurance)

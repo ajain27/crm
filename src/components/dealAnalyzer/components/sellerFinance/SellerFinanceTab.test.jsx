@@ -165,7 +165,7 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Lender 2 Amount/i)).toHaveValue("$190,000");
   });
 
-  it("adds lender fees to Buyer Cash to Close", () => {
+  it("rolls fees into financing when the lender covers the full purchase price", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -198,17 +198,18 @@ describe("SellerFinanceTab", () => {
       "$3,000.00",
     );
 
-    // Total lender fees: $3,000 + $1,000 + $500 + $500 = $5,000, added on
-    // top of the (fully financed) purchase price.
+    // Total lender fees: $3,000 + $1,000 + $500 + $500 = $5,000 — still
+    // shown as a reference line item...
     expect(screen.getByLabelText(/Total Lender Fees/i)).toHaveValue(
       "$5,000.00",
     );
-    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue(
-      "$5,000.00",
-    );
+    // ...but since the lender covers the entire purchase price, there is no
+    // down-payment gap, so the fees are assumed rolled into the loan too:
+    // the buyer brings $0 cash to close.
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
   });
 
-  it("adds general closing costs on top of lender fees in Buyer Cash to Close", () => {
+  it("brings buyer cash to close to $0 when seller financing + lender fully cover the price, even with closing costs", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -221,13 +222,36 @@ describe("SellerFinanceTab", () => {
       target: { value: "2500" },
     });
 
-    // Fully seller-financed (no lender), so cash to close is just the
-    // $2,500 in general closing costs.
+    // Fully seller-financed (no lender) — the price is 100% covered, so
+    // closing costs roll into the financing instead of costing cash.
     expect(screen.getByLabelText(/Total Cash to Close Costs/i)).toHaveValue(
       "$2,500.00",
     );
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
+  });
+
+  it("still charges fees on top of an actual down-payment gap when the deal is only partially financed", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "30" },
+    });
+    // Manually cap the lender at 60% instead of letting it auto-fill the
+    // remaining 70%, leaving a real 10% ($30,000) unfinanced.
+    fireEvent.change(screen.getByLabelText(/Lender 1 Amount/i), {
+      target: { value: "180000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: "2500" },
+    });
+
+    // $300,000 − $180,000 lender − $90,000 seller note = $30,000 gap, plus
+    // the $2,500 closing costs the buyer still has to bring in cash.
     expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue(
-      "$2,500.00",
+      "$32,500.00",
     );
   });
 
