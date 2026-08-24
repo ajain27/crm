@@ -359,7 +359,7 @@ describe("SellerFinanceTab", () => {
     ).toHaveClass("deal-analyzer-output-red");
   });
 
-  it("marks cash flow red when it drops below $400/month", () => {
+  it("marks cash flow red when it's negative", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fillBaseForm({ monthlyRent: "600" });
@@ -374,7 +374,24 @@ describe("SellerFinanceTab", () => {
     expect(cashFlowBanner).toHaveClass("deal-analyzer-verdict-negative");
   });
 
-  it("marks cash flow positive when it stays at or above $400/month", () => {
+  it("marks cash flow green whenever it's positive, even under $400/month", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    // Seller note payment is $666.12/mo (see amortization test below); at
+    // $800 rent, cash flow is $133.88 — positive, but well under $400.
+    fillBaseForm({ monthlyRent: "800" });
+
+    expect(screen.getByLabelText(/^Cash Flow/i).closest("label")).toHaveClass(
+      "deal-analyzer-output-positive",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    const cashFlowBanner = screen.getByText("Monthly Cash Flow").closest("div");
+    expect(cashFlowBanner).toHaveClass("deal-analyzer-verdict-positive");
+  });
+
+  it("marks cash flow positive well above $400/month", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fillBaseForm({ monthlyRent: "3000" });

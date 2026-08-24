@@ -13,8 +13,6 @@ import AdditionalLenders, {
   createEmptyLender,
 } from "../additionalLenders/AdditionalLenders";
 
-const CASH_FLOW_MIN = 400;
-
 // Amortized (P&I) monthly payment for a single lender — always based on the
 // standard amortization formula, never an interest-only shortcut. A lender
 // with no term contributes $0 until a term is entered.
@@ -223,7 +221,7 @@ function SellerFinanceTab({ tab }) {
     monthlyInsurance +
     applianceInsuranceAmt;
   const cashFlow = monthlyRentAmount - totalMonthlyExpenses;
-  const isCashFlowLow = cashFlow < CASH_FLOW_MIN;
+  const isCashFlowNegative = cashFlow < 0;
 
   const isFormComplete = Boolean(
     form.purchasePrice?.trim() &&
@@ -268,7 +266,7 @@ function SellerFinanceTab({ tab }) {
       totalMonthlyExpenses,
       cashFlow,
       isOverFinanced,
-      isCashFlowLow,
+      isCashFlowNegative,
     });
   }
 
@@ -571,7 +569,7 @@ function SellerFinanceTab({ tab }) {
           {monthlyRentAmount > 0 && (
             <label
               className={`field deal-analyzer-output ${
-                isCashFlowLow
+                isCashFlowNegative
                   ? "deal-analyzer-output-red"
                   : "deal-analyzer-output-positive"
               }`}
@@ -599,7 +597,7 @@ function SellerFinanceTab({ tab }) {
           <div className="deal-analyzer-summary">
             <div
               className={`deal-analyzer-final-verdict ${
-                summary.isCashFlowLow
+                summary.isCashFlowNegative
                   ? "deal-analyzer-verdict-negative"
                   : "deal-analyzer-verdict-positive"
               }`}
@@ -882,7 +880,8 @@ function SellerFinanceTab({ tab }) {
                 {fmt(summary.applianceInsuranceAmt)}) = {fmt(summary.cashFlow)}
               </span>
               <span>
-                Cash flow below {fmt(CASH_FLOW_MIN)}/month is flagged red.
+                Negative cash flow is flagged red; positive cash flow is flagged
+                green.
               </span>
               <span>
                 Seller note and lender payments are fully amortized using `M = P
