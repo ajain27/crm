@@ -1,10 +1,15 @@
 import { AnimatedAmount } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
-import { SellerCreditCarrybackSummaryRow } from "./SellerCreditCarryback";
 import RentalPieChart from "./RentalPieChart";
 import { PROP_MGMT_PCT } from "./useDSCRCalculations";
+import RentalDSCRPdfTemplate from "./RentalDSCRPdfTemplate";
+import { useGenerateReport } from "../pdfExport/useGenerateReport";
+import GenerateReportButton from "../pdfExport/GenerateReportButton";
 
 function RentalDSCRSummary({ summary }) {
+  const { printRef, exporting, handleGenerateReport } =
+    useGenerateReport("dscr-rental-report");
+
   return (
     <div className="deal-analyzer-summary">
       <div
@@ -244,11 +249,6 @@ function RentalDSCRSummary({ summary }) {
             </div>
           </>
         )}
-        <SellerCreditCarrybackSummaryRow
-          pct={summary.sellerCarrybackPct}
-          amount={summary.sellerCarryback}
-          fmt={fmt}
-        />
         <div>
           <span>Total Cash Needed to Buy</span>
           <strong className="deal-analyzer-return-negative">
@@ -354,6 +354,13 @@ function RentalDSCRSummary({ summary }) {
           {fmt(summary.monthlyCashFlow)} × 12 = {fmt(summary.annualCashFlow)}
         </span>
       </div>
+
+      <GenerateReportButton
+        onClick={handleGenerateReport}
+        exporting={exporting}
+      />
+
+      {exporting && <RentalDSCRPdfTemplate ref={printRef} summary={summary} />}
     </div>
   );
 }

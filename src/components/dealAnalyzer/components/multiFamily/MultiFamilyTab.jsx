@@ -8,6 +8,9 @@ import {
 } from "../fixAndFlip/fixAndFlipConfig";
 import { calculateMonthlyPayment } from "../../../../utils/utils";
 import DownPaymentPctField from "../downPaymentPct/DownPaymentPctField";
+import MultiFamilyPdfTemplate from "./MultiFamilyPdfTemplate";
+import { useGenerateReport } from "../pdfExport/useGenerateReport";
+import GenerateReportButton from "../pdfExport/GenerateReportButton";
 
 const CLOSING_COSTS_PCT = 2; // 2% of purchase price
 const AGENT_COMMISSION_PCT = 3; // 3% of purchase price
@@ -38,6 +41,9 @@ function MultiFamilyTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
   const [downPct, setDownPct] = useState(25);
+  const { printRef, exporting, handleGenerateReport } = useGenerateReport(
+    "multi-family-report",
+  );
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -636,6 +642,15 @@ function MultiFamilyTab({ tab }) {
               <span>Final Verdict</span>
               <strong>{summary.isDeal ? "Deal" : "No Deal"}</strong>
             </div>
+
+            <GenerateReportButton
+              onClick={handleGenerateReport}
+              exporting={exporting}
+            />
+
+            {exporting && (
+              <MultiFamilyPdfTemplate ref={printRef} summary={summary} />
+            )}
           </div>
         )}
       </section>

@@ -12,6 +12,11 @@ import AdditionalLenders, {
   calcLenderTotal,
   createEmptyLender,
 } from "../additionalLenders/AdditionalLenders";
+import SellerFinancePdfTemplate from "./SellerFinancePdfTemplate";
+import { useGenerateReport } from "../pdfExport/useGenerateReport";
+import GenerateReportButton from "../pdfExport/GenerateReportButton";
+
+const PROP_MGMT_PCT = 10;
 
 // Amortized (P&I) monthly payment for a single lender — always based on the
 // standard amortization formula, never an interest-only shortcut. A lender
@@ -77,6 +82,9 @@ const YEAR_FIELDS = new Set([
 function SellerFinanceTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
+  const { printRef, exporting, handleGenerateReport } = useGenerateReport(
+    "seller-finance-report",
+  );
   // Show one lender row on load (instead of an empty state behind an "Add
   // Lender" click) — marked `auto` so it behaves exactly like a
   // freshly-added row and picks up the remaining balance as the user fills
@@ -215,11 +223,13 @@ function SellerFinanceTab({ tab }) {
   const yearlyInsuranceAmt = parseCurrency(form.yearlyInsurance);
   const monthlyInsurance = yearlyInsuranceAmt / 12;
   const applianceInsuranceAmt = parseCurrency(form.applianceInsurance);
+  const propMgmtFee = monthlyRentAmount * (PROP_MGMT_PCT / 100);
   const totalMonthlyExpenses =
     totalMonthlyPayment +
     monthlyTaxes +
     monthlyInsurance +
-    applianceInsuranceAmt;
+    applianceInsuranceAmt +
+    propMgmtFee;
   const cashFlow = monthlyRentAmount - totalMonthlyExpenses;
   const isCashFlowNegative = cashFlow < 0;
 
@@ -263,6 +273,7 @@ function SellerFinanceTab({ tab }) {
       yearlyInsuranceAmt,
       monthlyInsurance,
       applianceInsuranceAmt,
+      propMgmtFee,
       totalMonthlyExpenses,
       cashFlow,
       isOverFinanced,
@@ -548,6 +559,15 @@ function SellerFinanceTab({ tab }) {
             onBlur={handleBlur}
             placeholder="e.g. $50"
           />
+          {propMgmtFee > 0 && (
+            <label className="field deal-analyzer-output">
+              <span>
+                Property Management ({PROP_MGMT_PCT}%){" "}
+                <span className="deal-analyzer-auto-badge">auto</span>
+              </span>
+              <input value={fmt(propMgmtFee)} readOnly tabIndex={-1} />
+            </label>
+          )}
           {(sellerFinanceMonthly > 0 || lenderMonthlyPayment > 0) && (
             <label className="field deal-analyzer-output">
               <span>
@@ -841,6 +861,14 @@ function SellerFinanceTab({ tab }) {
                   </strong>
                 </div>
               )}
+              {summary.propMgmtFee > 0 && (
+                <div>
+                  <span>Property Management ({PROP_MGMT_PCT}%)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount value={summary.propMgmtFee} format={fmt} />
+                  </strong>
+                </div>
+              )}
               <div>
                 <span>
                   <strong>Total Monthly Expenses</strong>
@@ -871,13 +899,15 @@ function SellerFinanceTab({ tab }) {
                 = {fmt(summary.buyerCashToClose)}
               </span>
               Monthly Cash Flow = Monthly Rent − (Seller Note Payment + Lender
-              Payments + Property Tax + Insurance + Appliance Insurance)
+              Payments + Property Tax + Insurance + Appliance Insurance +
+              Property Management)
               <span>
                 {fmt(summary.monthlyRentAmount)} − (
                 {fmt(summary.sellerFinanceMonthly)} +{" "}
                 {fmt(summary.lenderMonthlyPayment)} +{" "}
                 {fmt(summary.monthlyTaxes)} + {fmt(summary.monthlyInsurance)} +{" "}
-                {fmt(summary.applianceInsuranceAmt)}) = {fmt(summary.cashFlow)}
+                {fmt(summary.applianceInsuranceAmt)} +{" "}
+                {fmt(summary.propMgmtFee)}) = {fmt(summary.cashFlow)}
               </span>
               <span>
                 Negative cash flow is flagged red; positive cash flow is flagged
@@ -890,6 +920,15 @@ function SellerFinanceTab({ tab }) {
                 until one is entered.
               </span>
             </div>
+
+            <GenerateReportButton
+              onClick={handleGenerateReport}
+              exporting={exporting}
+            />
+
+            {exporting && (
+              <SellerFinancePdfTemplate ref={printRef} summary={summary} />
+            )}
           </div>
         ) : null}
       </section>

@@ -39,7 +39,6 @@ const PERCENT_FIELDS = new Set([
   "agentCommission",
   "interestRate",
   "originationFeesPct",
-  "sellerCarryback",
   "cashHelocRate",
   "rateBuyDown",
 ]);
@@ -60,7 +59,6 @@ const initialForm = {
   yearlyTaxes: "",
   annualMiscExpense: "",
   monthlyHomeWarranty: "",
-  sellerCarryback: "",
   cashHelocRate: "",
   rateBuyDown: "",
 };
@@ -149,8 +147,6 @@ export function useDSCRCalculations() {
   const rateBuyDownAmt = effectiveLoanAmount * (rateBuyDownPct / 100);
 
   const lenderMonthlyPayment = calcLenderMonthlyPayment(lenders);
-  const sellerCarrybackPct = parsePercent(form.sellerCarryback);
-  const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const grossCashNeeded =
     loanOutOfPocket +
     closingCosts +
@@ -158,10 +154,7 @@ export function useDSCRCalculations() {
     INSPECTION_COST +
     rateBuyDownAmt;
   const lenderTotal = calcLenderTotal(lenders);
-  const totalFundsNeeded = Math.max(
-    0,
-    grossCashNeeded - sellerCarryback - lenderTotal,
-  );
+  const totalFundsNeeded = Math.max(0, grossCashNeeded - lenderTotal);
 
   // If the cash needed to buy is itself drawn from a HELOC, that draw is
   // interest-only (no amortization term), so it's a straight monthly
@@ -230,8 +223,6 @@ export function useDSCRCalculations() {
       lenders,
       lenderMonthlyPayment,
       lenderTotal,
-      sellerCarrybackPct,
-      sellerCarryback,
       rateBuyDownPct,
       rateBuyDownAmt,
       grossCashNeeded,

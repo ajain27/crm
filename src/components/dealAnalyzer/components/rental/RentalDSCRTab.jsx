@@ -2,7 +2,6 @@ import { Field, Select } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
 import AdditionalLenders from "../additionalLenders/AdditionalLenders";
 import DownPaymentPctField from "../downPaymentPct/DownPaymentPctField";
-import { SellerCreditCarrybackField } from "./SellerCreditCarryback";
 import RentalDSCRSummary from "./RentalDSCRSummary";
 import {
   useDSCRCalculations,
@@ -33,7 +32,6 @@ function RentalDSCRTab() {
     loanMortgage,
     lenderCosts,
     cashHelocMonthlyPayment,
-    purchasePrice,
     propMgmtFee,
     monthlyMiscExpense,
     rateBuyDownPct,
@@ -88,13 +86,6 @@ function RentalDSCRTab() {
           value={form.closingCosts}
           onChange={handleChange}
           placeholder="e.g. $4,000"
-        />
-        <SellerCreditCarrybackField
-          value={form.sellerCarryback}
-          purchasePrice={purchasePrice}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          fmt={fmt}
         />
       </div>
 

@@ -426,12 +426,13 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Monthly Insurance/i)).toHaveValue("$100.00");
 
     // Seller note payment for this scenario is $666.12 (verified elsewhere).
-    // Total expenses = $666.12 + $200 + $100 + $50 = $1,016.12.
+    // Property management is 10% of $3,000 rent = $300.
+    // Total expenses = $666.12 + $200 + $100 + $50 + $300 = $1,316.12.
     expect(screen.getByLabelText(/Total Monthly Expenses/i)).toHaveValue(
-      "$1,016.12",
+      "$1,316.12",
     );
 
-    // Cash Flow = $3,000 − $1,016.12 = $1,983.88.
-    expect(screen.getByLabelText(/^Cash Flow/i)).toHaveValue("$1,983.88");
+    // Cash Flow = $3,000 − $1,316.12 = $1,683.88.
+    expect(screen.getByLabelText(/^Cash Flow/i)).toHaveValue("$1,683.88");
   });
 });

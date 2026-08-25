@@ -1,60 +1,20 @@
-import { useRef, useState } from "react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { Download } from "lucide-react";
 import { AnimatedAmount } from "../../../elements/elements";
 import { fmt } from "../../../../utils/utils";
 import { PROP_MGMT_PCT } from "./morbyMethodConfig";
 import MorbyMethodPdfTemplate from "./MorbyMethodPdfTemplate";
+import { useGenerateReport } from "../pdfExport/useGenerateReport";
+import GenerateReportButton from "../pdfExport/GenerateReportButton";
 
 export default function MorbyMethodSummary({ summary }) {
-  const printRef = useRef(null);
-  const [exporting, setExporting] = useState(false);
+  const { printRef, exporting, handleGenerateReport } = useGenerateReport(
+    "morby-method-report",
+  );
 
   if (!summary) return null;
 
-  async function handleExportPdf() {
-    const el = printRef.current;
-    if (!el) return;
-    setExporting(true);
-    try {
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      // Size the page to the content itself (A4 width, variable height) so
-      // the summary always renders as a single page, however long it gets.
-      const pageW = 595.28;
-      const imgH = pageW * (canvas.height / canvas.width);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "pt",
-        format: [pageW, imgH],
-      });
-      pdf.addImage(imgData, "JPEG", 0, 0, pageW, imgH);
-      const dateStr = new Date().toISOString().slice(0, 10);
-      pdf.save(`morby-method-summary-${dateStr}.pdf`);
-    } finally {
-      setExporting(false);
-    }
-  }
-
   return (
     <div className="deal-analyzer-summary">
-      <div className="deal-analyzer-summary-toolbar">
-        <h3>Deal Summary</h3>
-        <button
-          className="primary-btn form-btn"
-          type="button"
-          onClick={handleExportPdf}
-          disabled={exporting}
-        >
-          <Download size={14} />
-          {exporting ? "Exporting…" : "Export PDF"}
-        </button>
-      </div>
+      <h3>Deal Summary</h3>
 
       {/* Cash Flow verdict */}
       <div
@@ -422,7 +382,12 @@ export default function MorbyMethodSummary({ summary }) {
         </span>
       </div>
 
-      <MorbyMethodPdfTemplate ref={printRef} summary={summary} />
+      <GenerateReportButton
+        onClick={handleGenerateReport}
+        exporting={exporting}
+      />
+
+      {exporting && <MorbyMethodPdfTemplate ref={printRef} summary={summary} />}
     </div>
   );
 }
