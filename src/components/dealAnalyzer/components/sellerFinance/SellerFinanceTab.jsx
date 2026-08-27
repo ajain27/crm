@@ -15,6 +15,7 @@ import AdditionalLenders, {
 import SellerFinancePdfTemplate from "./SellerFinancePdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
 import GenerateReportButton from "../pdfExport/GenerateReportButton";
+import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
 
 const PROP_MGMT_PCT = 10;
 
@@ -82,9 +83,14 @@ const YEAR_FIELDS = new Set([
 function SellerFinanceTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
-  const { printRef, exporting, handleGenerateReport } = useGenerateReport(
-    "seller-finance-report",
-  );
+  const {
+    printRef,
+    exporting,
+    handleGenerateReport,
+    previewImage,
+    closePreview,
+    downloadReport,
+  } = useGenerateReport("seller-finance-report");
   // Show one lender row on load (instead of an empty state behind an "Add
   // Lender" click) — marked `auto` so it behaves exactly like a
   // freshly-added row and picks up the remaining balance as the user fills
@@ -932,6 +938,12 @@ function SellerFinanceTab({ tab }) {
           </div>
         ) : null}
       </section>
+
+      <PdfReportPreviewModal
+        previewImage={previewImage}
+        onClose={closePreview}
+        onDownload={downloadReport}
+      />
     </>
   );
 }

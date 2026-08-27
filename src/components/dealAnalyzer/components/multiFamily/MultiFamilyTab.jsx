@@ -11,6 +11,7 @@ import DownPaymentPctField from "../downPaymentPct/DownPaymentPctField";
 import MultiFamilyPdfTemplate from "./MultiFamilyPdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
 import GenerateReportButton from "../pdfExport/GenerateReportButton";
+import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
 
 const CLOSING_COSTS_PCT = 2; // 2% of purchase price
 const AGENT_COMMISSION_PCT = 3; // 3% of purchase price
@@ -41,9 +42,14 @@ function MultiFamilyTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
   const [downPct, setDownPct] = useState(25);
-  const { printRef, exporting, handleGenerateReport } = useGenerateReport(
-    "multi-family-report",
-  );
+  const {
+    printRef,
+    exporting,
+    handleGenerateReport,
+    previewImage,
+    closePreview,
+    downloadReport,
+  } = useGenerateReport("multi-family-report");
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -654,6 +660,12 @@ function MultiFamilyTab({ tab }) {
           </div>
         )}
       </section>
+
+      <PdfReportPreviewModal
+        previewImage={previewImage}
+        onClose={closePreview}
+        onDownload={downloadReport}
+      />
     </>
   );
 }

@@ -305,7 +305,7 @@
     margin: 0;
   }
 
-  /* ── Morby Method PDF export template (always light, print-ready) ── */
+  /* ── Shared deal-analyzer PDF export template (always light, print-ready) ── */
   .mm-pdf-container {
     position: fixed;
     top: 0;
@@ -1100,5 +1100,34 @@
     .deal-analyzer-pie-legend-val {
       @apply w-20;
     }
+  }
+
+  .pdf-report-preview-dialog {
+    width: min(92vw, 720px);
+    max-width: 720px;
+    max-height: 96vh;
+  }
+
+  .pdf-report-preview-body {
+    @apply rounded-xl border flex-1;
+    background: var(--bg);
+    border-color: var(--input-border);
+    overflow: auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .pdf-report-preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   }
 }

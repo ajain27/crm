@@ -27,6 +27,19 @@
     @apply bg-transparent p-0 text-app-muted flex-shrink-0;
   }
 
+  .modal-header-actions {
+    @apply flex items-center gap-3 flex-shrink-0;
+  }
+
+  .modal-header-icon-btn {
+    @apply bg-transparent p-0 text-app-muted flex-shrink-0;
+    transition: color 0.15s;
+  }
+
+  .modal-header-icon-btn:hover {
+    color: var(--blue);
+  }
+
   .modal h2 {
     @apply mt-0 text-base text-app-text;
     margin-bottom: 0;

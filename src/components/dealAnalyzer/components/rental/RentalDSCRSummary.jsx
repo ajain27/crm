@@ -5,10 +5,17 @@ import { PROP_MGMT_PCT } from "./useDSCRCalculations";
 import RentalDSCRPdfTemplate from "./RentalDSCRPdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
 import GenerateReportButton from "../pdfExport/GenerateReportButton";
+import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
 
 function RentalDSCRSummary({ summary }) {
-  const { printRef, exporting, handleGenerateReport } =
-    useGenerateReport("dscr-rental-report");
+  const {
+    printRef,
+    exporting,
+    handleGenerateReport,
+    previewImage,
+    closePreview,
+    downloadReport,
+  } = useGenerateReport("dscr-rental-report");
 
   return (
     <div className="deal-analyzer-summary">
@@ -361,6 +368,12 @@ function RentalDSCRSummary({ summary }) {
       />
 
       {exporting && <RentalDSCRPdfTemplate ref={printRef} summary={summary} />}
+
+      <PdfReportPreviewModal
+        previewImage={previewImage}
+        onClose={closePreview}
+        onDownload={downloadReport}
+      />
     </div>
   );
 }

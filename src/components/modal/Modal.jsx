@@ -8,6 +8,7 @@ function Modal({
   title,
   children,
   actions,
+  headerActions,
   className = "",
   style,
   closeOnOverlayClick = true,
@@ -40,9 +41,12 @@ function Modal({
       >
         <div className="modal-header">
           <h2>{title}</h2>
-          <button className="danger-btn modal-close" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div className="modal-header-actions">
+            {headerActions}
+            <button className="danger-btn modal-close" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
         {children}
         {actions && <div className="modal-actions">{actions}</div>}

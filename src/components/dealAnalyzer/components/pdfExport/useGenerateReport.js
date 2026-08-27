@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import { exportElementToPdf } from "../../../../utils/pdfExport";
+import {
+  renderElementToPdfAssets,
+  downloadPdfBlob,
+} from "../../../../utils/pdfExport";
 
 // Shared "Generate Report" behavior for every deal-analyzer PDF report:
 // hands back a ref to attach to the hidden print template, an `exporting`
@@ -8,9 +11,16 @@ import { exportElementToPdf } from "../../../../utils/pdfExport";
 // than unconditionally — otherwise its off-screen copy of every summary
 // value sits in the DOM at all times and collides with `getByText` lookups
 // against the visible summary in tests (and any other exact-text query).
+//
+// Generating the report renders it once, then opens a preview modal
+// showing the rendered image (not the PDF itself — embedding the PDF
+// would hand the preview to the browser's native PDF viewer chrome);
+// `downloadReport` saves the actual PDF blob from there.
 export function useGenerateReport(filenamePrefix) {
   const printRef = useRef(null);
   const [exporting, setExporting] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const pdfBlobRef = useRef(null);
 
   async function handleGenerateReport() {
     setExporting(true);
@@ -19,11 +29,33 @@ export function useGenerateReport(filenamePrefix) {
     // synchronously.
     await new Promise((resolve) => requestAnimationFrame(resolve));
     try {
-      await exportElementToPdf(printRef.current, filenamePrefix);
+      const assets = await renderElementToPdfAssets(printRef.current);
+      if (assets) {
+        pdfBlobRef.current = assets.blob;
+        setPreviewImage(assets.imgDataUrl);
+      }
     } finally {
       setExporting(false);
     }
   }
 
-  return { printRef, exporting, handleGenerateReport };
+  function closePreview() {
+    setPreviewImage(null);
+    pdfBlobRef.current = null;
+  }
+
+  function downloadReport() {
+    if (pdfBlobRef.current) {
+      downloadPdfBlob(pdfBlobRef.current, filenamePrefix);
+    }
+  }
+
+  return {
+    printRef,
+    exporting,
+    handleGenerateReport,
+    previewImage,
+    closePreview,
+    downloadReport,
+  };
 }
