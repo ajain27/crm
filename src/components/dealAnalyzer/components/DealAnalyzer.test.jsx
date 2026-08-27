@@ -22,9 +22,6 @@ vi.mock("./rental/RentalTab", () => ({
 vi.mock("./findComps/FindCompsTab", () => ({
   default: () => <div>find-comps-stub</div>,
 }));
-vi.mock("./morbyMethod/MorbyMethodTab", () => ({
-  default: () => <div>morby-stub</div>,
-}));
 
 const { default: DealAnalyzer } = await import("./DealAnalyzer");
 

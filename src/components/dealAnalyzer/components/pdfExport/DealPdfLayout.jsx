@@ -2,10 +2,10 @@ import { forwardRef } from "react";
 import { createPortal } from "react-dom";
 
 // Shared building blocks for every deal-analyzer PDF report (Seller
-// Finance, DSCR, Morby Method, Multi-Family). Kept generic — no
-// tab-specific copy or fields — so each tab supplies its own line items as
-// children while the chrome (header/footer/portal-off-screen rendering)
-// stays identical across reports.
+// Finance, DSCR, Multi-Family). Kept generic — no tab-specific copy or
+// fields — so each tab supplies its own line items as children while the
+// chrome (header/footer/portal-off-screen rendering) stays identical
+// across reports.
 
 export function PdfRow({ label, value, tone, bold }) {
   return (
