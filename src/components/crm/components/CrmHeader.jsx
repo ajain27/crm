@@ -19,7 +19,7 @@ import { usePrimeRate } from "../../../hooks/usePrimeRate";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
-  { id: "leads", label: "Potential Leads", icon: Crosshair },
+  { id: "leads", label: "Leads", icon: Crosshair },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
   { id: "pm-deals", label: "PML Deals", icon: Landmark },
   { id: "rental-management", label: "Rental Management", icon: KeyRound },

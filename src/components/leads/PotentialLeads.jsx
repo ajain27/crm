@@ -551,7 +551,7 @@ export default function PotentialLeads({
   async function handleAddedToCRM(leadId) {
     if (
       !window.confirm(
-        "Add this lead to the CRM pipeline? It will be removed from Potential Leads.",
+        "Add this lead to the CRM pipeline? It will be removed from Leads.",
       )
     )
       return;

@@ -37,7 +37,7 @@ describe("CrmHeader", () => {
   it("calls setActiveView when a nav item is clicked", () => {
     const setActiveView = vi.fn();
     render(<CrmHeader {...baseProps({ setActiveView })} />);
-    fireEvent.click(screen.getByRole("button", { name: /Potential Leads/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Leads/i }));
     expect(setActiveView).toHaveBeenCalledWith("leads");
   });
 
