@@ -503,25 +503,9 @@
     padding-top: 2rem;
   }
 
-  /* ── Per-view description heading ───────────────── */
-  .view-description {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    margin: 0 0 1.75rem;
-    padding: 0.65rem 1.5rem 0.65rem 1rem;
-    background: linear-gradient(
-      105deg,
-      color-mix(in srgb, var(--blue-light) 80%, transparent) 0%,
-      transparent 80%
-    );
-    border-left: 3px solid var(--blue);
-    border-radius: 0 8px 8px 0;
-  }
-
-  /* ── Collapsed brand header ──────────────────────── */
-  .collapsed-brand-header {
+  /* ── Brand header — always visible atop .main, so it naturally
+     resizes with .main as the sidebar (its flex sibling) opens/closes ── */
+  .app-brand-header {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -534,7 +518,7 @@
     margin-right: -46px;
   }
 
-  .collapsed-brand-logo {
+  .app-brand-logo {
     height: 3.25rem;
     width: auto;
     max-width: 240px;
@@ -542,7 +526,7 @@
     mix-blend-mode: multiply;
   }
 
-  .dark .collapsed-brand-logo {
+  .dark .app-brand-logo {
     mix-blend-mode: screen;
     filter: invert(1) hue-rotate(180deg);
   }
@@ -588,7 +572,7 @@
     }
 
     /* Mobile top bar already shows the logo — don't repeat it in .main */
-    .collapsed-brand-header {
+    .app-brand-header {
       display: none;
     }
 

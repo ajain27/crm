@@ -75,16 +75,6 @@ function Wholesale() {
   );
   const ppcOnly = currentUser?.role === "ppc";
 
-  const VIEW_META = {
-    dashboard: "Manage and track your wholesale deals",
-    leads: "Monitor properties before they enter your pipeline",
-    "deal-analyzer": "Analyze deal structures and pressure-test the numbers",
-    "pm-deals": "Track borrower details and private money loans",
-    "rental-management": "Manage your rental portfolio, tenants, and cash flow",
-    mortgage: "Calculate monthly payments and lifetime loan costs",
-    buyers: "Organize and manage your buyers list",
-    "invoice-generator": "Create and send professional invoices",
-  };
   const [sidebarOpen, setSidebarOpen] = useState(
     typeof window !== "undefined" && window.innerWidth >= 901,
   );
@@ -239,21 +229,11 @@ function Wholesale() {
         ppcOnly={ppcOnly}
       />
       <main className="main">
-        {/* Brand header — shown when sidebar drawer is closed */}
-        {!sidebarOpen && (
-          <div className="collapsed-brand-header">
-            <img
-              src={logo}
-              alt="You Win Estates"
-              className="collapsed-brand-logo"
-            />
-          </div>
-        )}
-
-        {/* Per-view description */}
-        {VIEW_META[activeView] && (
-          <p className="view-description">{VIEW_META[activeView]}</p>
-        )}
+        {/* Brand header — always visible; resizes with .main as the sidebar
+            opens/closes since .main is the flex-1 sibling of .app-sidebar */}
+        <div className="app-brand-header">
+          <img src={logo} alt="You Win Estates" className="app-brand-logo" />
+        </div>
 
         {!ppcOnly && activeView === "dashboard" ? (
           <>
