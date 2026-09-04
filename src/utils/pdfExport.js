@@ -19,8 +19,20 @@ export async function renderElementToPdfAssets(element) {
   const imgDataUrl = canvas.toDataURL("image/jpeg", 0.92);
   const pageW = 595.28;
   const imgH = pageW * (canvas.height / canvas.width);
+  // jsPDF's `orientation` doesn't just label the page — when it conflicts
+  // with the given `format` dimensions, jsPDF silently swaps them to
+  // enforce it. A short report (content wider than it is tall, e.g. a
+  // report with few line items) produces `imgH < pageW`, and forcing
+  // "portrait" then swaps width/height under the hood — but the image
+  // below is still drawn at the original (unswapped) size, so it overflows
+  // past the now-narrower page's right edge and gets clipped by whatever
+  // opens the PDF. Only the actual PDF hits this (this preview image
+  // doesn't go through jsPDF's page math), and only short reports trigger
+  // it — matching exactly what was seen: fine on-screen, broken only in
+  // the downloaded file, only for the shorter seller-copy report.
+  const orientation = imgH >= pageW ? "portrait" : "landscape";
   const pdf = new jsPDF({
-    orientation: "portrait",
+    orientation,
     unit: "pt",
     format: [pageW, imgH],
   });

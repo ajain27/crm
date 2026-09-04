@@ -13,6 +13,7 @@ import AdditionalLenders, {
   createEmptyLender,
 } from "../additionalLenders/AdditionalLenders";
 import SellerFinancePdfTemplate from "./SellerFinancePdfTemplate";
+import SellerFinanceSellerReportPdfTemplate from "./SellerFinanceSellerReportPdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
 import GenerateReportButton from "../pdfExport/GenerateReportButton";
 import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
@@ -84,13 +85,21 @@ function SellerFinanceTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
   const {
-    printRef,
-    exporting,
-    handleGenerateReport,
-    previewImage,
-    closePreview,
-    downloadReport,
+    printRef: fullReportRef,
+    exporting: exportingFullReport,
+    handleGenerateReport: handleGenerateFullReport,
+    previewImage: fullReportPreviewImage,
+    closePreview: closeFullReportPreview,
+    downloadReport: downloadFullReport,
   } = useGenerateReport("seller-finance-report");
+  const {
+    printRef: sellerReportRef,
+    exporting: exportingSellerReport,
+    handleGenerateReport: handleGenerateSellerReport,
+    previewImage: sellerReportPreviewImage,
+    closePreview: closeSellerReportPreview,
+    downloadReport: downloadSellerReport,
+  } = useGenerateReport("seller-finance-seller-copy");
   // Show one lender row on load (instead of an empty state behind an "Add
   // Lender" click) — marked `auto` so it behaves exactly like a
   // freshly-added row and picks up the remaining balance as the user fills
@@ -152,6 +161,20 @@ function SellerFinanceTab({ tab }) {
           sellerFinanceBalloonYears * 12,
         )
       : 0;
+
+  // Total interest the seller earns by carrying the note: the sum of every
+  // payment they actually collect (monthly payments up to the balloon, or
+  // the full term if there's no balloon, plus the balloon itself) minus the
+  // principal they financed.
+  const downPaymentAmount = purchasePrice - sellerFinanceAmount;
+  const sellerNoteMonthsElapsed =
+    sellerFinanceBalloonYears > 0 &&
+    sellerFinanceBalloonYears < sellerFinanceTermYears
+      ? sellerFinanceBalloonYears * 12
+      : totalPayments;
+  const sellerNoteTotalReceived =
+    sellerFinanceMonthly * sellerNoteMonthsElapsed + sellerFinanceBalloon;
+  const sellerNoteTotalInterest = sellerNoteTotalReceived - sellerFinanceAmount;
 
   const lenderTotal = calcLenderTotal(lenders);
   const remainingForLender = Math.max(
@@ -258,6 +281,10 @@ function SellerFinanceTab({ tab }) {
       sellerFinanceBalloonYears,
       sellerFinanceBalloon,
       sellerFinanceMonthly,
+      downPaymentAmount,
+      sellerNoteMonthsElapsed,
+      sellerNoteTotalReceived,
+      sellerNoteTotalInterest,
       lenderCount: activeLenders.length,
       lenderBreakdown,
       lenderTotal,
@@ -927,22 +954,46 @@ function SellerFinanceTab({ tab }) {
               </span>
             </div>
 
-            <GenerateReportButton
-              onClick={handleGenerateReport}
-              exporting={exporting}
-            />
+            <div
+              className="deal-analyzer-actions"
+              style={{ marginTop: "1.25rem", gap: "0.75rem" }}
+            >
+              <GenerateReportButton
+                onClick={handleGenerateFullReport}
+                exporting={exportingFullReport}
+                label="Generate Full Report"
+                bare
+              />
+              <GenerateReportButton
+                onClick={handleGenerateSellerReport}
+                exporting={exportingSellerReport}
+                label="Generate Seller Copy"
+                bare
+              />
+            </div>
 
-            {exporting && (
-              <SellerFinancePdfTemplate ref={printRef} summary={summary} />
+            {exportingFullReport && (
+              <SellerFinancePdfTemplate ref={fullReportRef} summary={summary} />
+            )}
+            {exportingSellerReport && (
+              <SellerFinanceSellerReportPdfTemplate
+                ref={sellerReportRef}
+                summary={summary}
+              />
             )}
           </div>
         ) : null}
       </section>
 
       <PdfReportPreviewModal
-        previewImage={previewImage}
-        onClose={closePreview}
-        onDownload={downloadReport}
+        previewImage={fullReportPreviewImage}
+        onClose={closeFullReportPreview}
+        onDownload={downloadFullReport}
+      />
+      <PdfReportPreviewModal
+        previewImage={sellerReportPreviewImage}
+        onClose={closeSellerReportPreview}
+        onDownload={downloadSellerReport}
       />
     </>
   );
