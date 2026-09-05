@@ -1175,9 +1175,17 @@
     }
   }
 
+  /* `.modal` hardcodes `height: 96vh` for modals with variable/scrollable
+     content (forms, tables), but this dialog's content is a single image
+     of whatever size the report happens to render at — forcing it to
+     always fill 96% of the viewport leaves a large empty gap around any
+     report shorter than that. `height: auto` lets it shrink to the image
+     (via `.modal > :not(header):not(actions) { flex: 1 }`), while
+     `max-height` still caps and scrolls a report taller than the screen. */
   .pdf-report-preview-dialog {
     width: min(92vw, 720px);
     max-width: 720px;
+    height: auto;
     max-height: 96vh;
   }
 
