@@ -52,13 +52,12 @@ function WholesalePieChartPdf({ summary }) {
         <ul className="mm-pdf-pie-legend">
           {slices.map((s) => (
             <li key={s.key} className="mm-pdf-pie-legend-item">
-              <span className="mm-pdf-pie-dot-cell">
-                <span
-                  className="mm-pdf-pie-dot"
-                  style={{ background: s.color }}
-                />
+              <span className="mm-pdf-pie-legend-label">
+                <span className="mm-pdf-pie-dot" style={{ color: s.color }}>
+                  ●
+                </span>{" "}
+                {s.label}
               </span>
-              <span className="mm-pdf-pie-legend-label">{s.label}</span>
               <span className="mm-pdf-pie-legend-pct">{pct(s.value)}%</span>
               <strong className="mm-pdf-pie-legend-val">{fmt(s.value)}</strong>
             </li>
