@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../constants/stateOptions";
 import WholesalePieChart from "./WholesalePieChart";
+import WholesalePdfTemplate from "./WholesalePdfTemplate";
+import { useGenerateReport } from "../pdfExport/useGenerateReport";
+import GenerateReportButton from "../pdfExport/GenerateReportButton";
+import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
 import {
   REHAB_OPTIONS,
   getAutoRehabCost,
@@ -14,6 +18,7 @@ import {
 } from "../fixAndFlip/fixAndFlipConfig";
 
 const initialForm = {
+  propertyAddress: "",
   state: "",
   arv: "",
   rehabType: "",
@@ -27,6 +32,14 @@ const initialForm = {
 function WholesaleTab({ tab }) {
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
+  const {
+    printRef,
+    exporting,
+    handleGenerateReport,
+    previewImage,
+    closePreview,
+    downloadReport,
+  } = useGenerateReport("wholesale-report");
 
   const CURRENCY_FIELDS = new Set([
     "arv",
@@ -94,6 +107,7 @@ function WholesaleTab({ tab }) {
     const mao = arv * (1 - buyersProfitPct / 100) - rehab - wholesaleFee;
 
     setResult({
+      propertyAddress: form.propertyAddress.trim(),
       arv,
       baseRehab,
       additionalRehab,
@@ -142,6 +156,14 @@ function WholesaleTab({ tab }) {
         </div>
 
         <div className="deal-analyzer-form-grid">
+          <Field
+            label="Property Address"
+            name="propertyAddress"
+            value={form.propertyAddress}
+            onChange={handleChange}
+            placeholder="e.g. 123 Main St, Austin, TX"
+            wrapperClassName="deal-analyzer-address"
+          />
           <label className="field">
             <span>State</span>
             <select name="state" value={form.state} onChange={handleChange}>
@@ -333,9 +355,24 @@ function WholesaleTab({ tab }) {
                 <strong>{result.buyersProfitPct}%</strong>
               </div>
             </div>
+
+            <GenerateReportButton
+              onClick={handleGenerateReport}
+              exporting={exporting}
+            />
+
+            {exporting && (
+              <WholesalePdfTemplate ref={printRef} result={result} />
+            )}
           </div>
         )}
       </section>
+
+      <PdfReportPreviewModal
+        previewImage={previewImage}
+        onClose={closePreview}
+        onDownload={downloadReport}
+      />
     </>
   );
 }

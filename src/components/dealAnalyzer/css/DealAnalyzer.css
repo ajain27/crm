@@ -469,6 +469,87 @@
     line-height: 1.5;
   }
 
+  .mm-pdf-pie-wrap {
+    margin: 8px 0 4px;
+  }
+
+  .mm-pdf-pie-body {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .mm-pdf-pie-svg {
+    display: block;
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+  }
+
+  /* `display: table` / `table-row` / `table-cell` instead of flex — the
+     same html2canvas flex-alignment unreliability noted on `.mm-pdf-row`
+     above shows up here too: a flex `align-items: center` row with a small
+     inline dot doesn't vertically center against the text in the captured
+     image/PDF (dot ends up sitting on the row boundary instead of next to
+     its label). Table layout centers reliably via `vertical-align`. */
+  .mm-pdf-pie-legend {
+    flex: 1;
+    display: table;
+    width: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mm-pdf-pie-legend-item {
+    display: table-row;
+    font-size: 12px;
+  }
+
+  /* Two layers: the table-cell stretches to the row's height (unavoidable
+     in table layout), so the actual circle has to be a fixed-size child —
+     otherwise `border-radius: 50%` on the stretched cell itself draws an
+     oval, not a circle. */
+  .mm-pdf-pie-dot-cell {
+    display: table-cell;
+    vertical-align: middle;
+  }
+
+  .mm-pdf-pie-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  .mm-pdf-pie-legend-label {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 3px 0 3px 8px;
+    color: #4b5563;
+  }
+
+  .mm-pdf-pie-legend-pct {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 3px 0;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  .mm-pdf-pie-legend-val {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 3px 0 3px 12px;
+    text-align: right;
+    font-weight: 700;
+    color: #1a1a2e;
+    white-space: nowrap;
+  }
+
   .mm-pdf-footer {
     padding: 10px 32px 12px;
     font-size: 10.5px;
