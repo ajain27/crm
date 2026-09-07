@@ -69,9 +69,7 @@ function CrmHeader({
   const primeRate = usePrimeRate();
   const navItems = ppcOnly
     ? NAV_ITEMS.filter(
-        (item) => item.id === "leads" || item.id === "deal-analyzer",
-      ).map((item) =>
-        item.id === "leads" ? { ...item, label: "PPC Leads" } : item,
+        (item) => item.id === "dashboard" || item.id === "deal-analyzer",
       )
     : NAV_ITEMS;
 

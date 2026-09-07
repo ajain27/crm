@@ -267,8 +267,11 @@ function AuthGate({ onAuthenticated }) {
         {view === "signup" && (
           <>
             <div className="auth-copy">
-              <h1>Create your PPC access</h1>
-              <p>Activate by email, then sign in to view PPC leads.</p>
+              <h1>Create your account</h1>
+              <p>
+                Activate by email, then sign in to access the Dashboard and Deal
+                Analyzer.
+              </p>
             </div>
 
             <form className="auth-form" onSubmit={handleSignup}>

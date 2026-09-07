@@ -70,9 +70,9 @@ function Wholesale() {
       return null;
     }
   });
-  const [activeView, setActiveView] = useState(() =>
-    currentUser?.role === "ppc" ? "leads" : "dashboard",
-  );
+  const [activeView, setActiveView] = useState("dashboard");
+  // "ppc" is the role self-signup creates — despite the name, it no longer
+  // grants PPC leads access; it's locked to Dashboard + Deal Analyzer only.
   const ppcOnly = currentUser?.role === "ppc";
 
   const [sidebarOpen, setSidebarOpen] = useState(
@@ -87,8 +87,12 @@ function Wholesale() {
   }, [currentUser?.id]);
 
   useEffect(() => {
-    if (ppcOnly && activeView !== "leads" && activeView !== "deal-analyzer") {
-      setActiveView("leads");
+    if (
+      ppcOnly &&
+      activeView !== "dashboard" &&
+      activeView !== "deal-analyzer"
+    ) {
+      setActiveView("dashboard");
     }
   }, [ppcOnly, activeView]);
 
@@ -179,7 +183,7 @@ function Wholesale() {
   function handleAuthenticated(user) {
     sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     setCurrentUser(user);
-    if (user.role === "ppc") setActiveView("leads");
+    if (user.role === "ppc") setActiveView("dashboard");
     setProfileForm(createProfileForm(user));
   }
 
@@ -235,7 +239,7 @@ function Wholesale() {
           <img src={logo} alt="You Win Estates" className="app-brand-logo" />
         </div>
 
-        {!ppcOnly && activeView === "dashboard" ? (
+        {activeView === "dashboard" ? (
           <>
             {errorMessage && (
               <div
@@ -304,7 +308,7 @@ function Wholesale() {
           </>
         ) : activeView === "deal-analyzer" ? (
           <DealAnalyzer />
-        ) : ppcOnly || activeView === "leads" ? (
+        ) : !ppcOnly && activeView === "leads" ? (
           <PotentialLeads
             currentUser={currentUser}
             leads={leads}
@@ -348,6 +352,8 @@ function Wholesale() {
           <MortgageCalculator />
         ) : !ppcOnly && activeView === "invoice-generator" ? (
           <InvoiceGenerator currentUser={currentUser} />
+        ) : ppcOnly ? (
+          <DealAnalyzer />
         ) : (
           <PotentialLeads
             currentUser={currentUser}
