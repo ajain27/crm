@@ -197,6 +197,25 @@ export default function LeadDetailModal({
                 />
               </Field>
             )}
+            <Field label="Email">
+              <input
+                className="ldm-input"
+                type="email"
+                value={draft.email || ""}
+                onChange={(e) => set("email", e.target.value)}
+                placeholder="seller@email.com"
+              />
+            </Field>
+            <Field label="Phone">
+              <input
+                className="ldm-input"
+                type="tel"
+                value={draft.phone || ""}
+                onChange={(e) => set("phone", formatPhone(e.target.value))}
+                placeholder="555-000-0000"
+                maxLength={12}
+              />
+            </Field>
             {!isPpc && (
               <Field label="Listing URL">
                 <input
@@ -291,10 +310,10 @@ export default function LeadDetailModal({
               </div>
             )}
 
-            <div className="ldm-section">
-              <div className="ldm-section-label">Follow-Up</div>
-              <div className="ldm-grid">
-                {!isPpc && (
+            {!isPpc && (
+              <div className="ldm-section">
+                <div className="ldm-section-label">Follow-Up</div>
+                <div className="ldm-grid">
                   <Field label="Follow-Up Date">
                     <input
                       className="ldm-input"
@@ -304,28 +323,9 @@ export default function LeadDetailModal({
                       onChange={(e) => set("followUpDate", e.target.value)}
                     />
                   </Field>
-                )}
-                <Field label="Email">
-                  <input
-                    className="ldm-input"
-                    type="email"
-                    value={draft.email || ""}
-                    onChange={(e) => set("email", e.target.value)}
-                    placeholder="seller@email.com"
-                  />
-                </Field>
-                <Field label="Phone">
-                  <input
-                    className="ldm-input"
-                    type="tel"
-                    value={draft.phone || ""}
-                    onChange={(e) => set("phone", formatPhone(e.target.value))}
-                    placeholder="555-000-0000"
-                    maxLength={12}
-                  />
-                </Field>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
 
