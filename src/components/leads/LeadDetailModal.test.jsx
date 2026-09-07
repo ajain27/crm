@@ -78,4 +78,23 @@ describe("LeadDetailModal", () => {
     fireEvent.change(input, { target: { value: "2 Oak Ave" } });
     expect(input).toHaveValue("2 Oak Ave");
   });
+
+  it("shows editable email and phone fields for a PPC lead", () => {
+    const ppcLead = { ...lead, email: "seller@example.com", phone: "555-9876" };
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={ppcLead}
+        onSave={vi.fn()}
+        isPpc={true}
+      />,
+    );
+    const emailInput = screen.getByDisplayValue("seller@example.com");
+    const phoneInput = screen.getByDisplayValue("555-9876");
+    fireEvent.change(emailInput, { target: { value: "new@example.com" } });
+    expect(emailInput).toHaveValue("new@example.com");
+    fireEvent.change(phoneInput, { target: { value: "5551234567" } });
+    expect(phoneInput).toHaveValue("555-123-4567");
+  });
 });
