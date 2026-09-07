@@ -32,13 +32,18 @@ export default function LeadDetailModal({
   lead,
   onSave,
   isPpc = false,
+  isPpl = false,
 }) {
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (lead) setDraft({ ...lead, source: isPpc ? "PPC" : lead.source });
-  }, [lead, isPpc]);
+    if (lead)
+      setDraft({
+        ...lead,
+        source: isPpc ? "PPC" : isPpl ? "PPL" : lead.source,
+      });
+  }, [lead, isPpc, isPpl]);
 
   if (!lead) return null;
 
@@ -114,8 +119,12 @@ export default function LeadDetailModal({
               />
             </Field>
             <Field label="Source">
-              {isPpc ? (
-                <input className="ldm-input" value="PPC" disabled />
+              {isPpc || isPpl ? (
+                <input
+                  className="ldm-input"
+                  value={isPpc ? "PPC" : "PPL"}
+                  disabled
+                />
               ) : (
                 <select
                   className="ldm-input"
@@ -182,7 +191,7 @@ export default function LeadDetailModal({
                 />
               </Field>
             )}
-            {(isPpc || (isRental && draft.onMarket !== "Yes")) && (
+            {(isPpc || isPpl || (isRental && draft.onMarket !== "Yes")) && (
               <Field label="Seller Name">
                 <input
                   className="ldm-input"
@@ -216,7 +225,7 @@ export default function LeadDetailModal({
                 maxLength={12}
               />
             </Field>
-            {!isPpc && (
+            {!isPpc && !isPpl && (
               <Field label="Listing URL">
                 <input
                   className="ldm-input ldm-wide"
@@ -310,7 +319,7 @@ export default function LeadDetailModal({
               </div>
             )}
 
-            {!isPpc && (
+            {!isPpc && !isPpl && (
               <div className="ldm-section">
                 <div className="ldm-section-label">Follow-Up</div>
                 <div className="ldm-grid">

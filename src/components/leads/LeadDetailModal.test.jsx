@@ -97,4 +97,25 @@ describe("LeadDetailModal", () => {
     fireEvent.change(phoneInput, { target: { value: "5551234567" } });
     expect(phoneInput).toHaveValue("555-123-4567");
   });
+
+  it("locks Source to PPL and shows editable email/phone for a PPL lead", () => {
+    const pplLead = {
+      ...lead,
+      source: "Leadzolo",
+      email: "seller@example.com",
+      phone: "555-9876",
+    };
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={pplLead}
+        onSave={vi.fn()}
+        isPpl={true}
+      />,
+    );
+    expect(screen.getByDisplayValue("PPL")).toBeDisabled();
+    expect(screen.getByDisplayValue("seller@example.com")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("555-9876")).toBeInTheDocument();
+  });
 });
