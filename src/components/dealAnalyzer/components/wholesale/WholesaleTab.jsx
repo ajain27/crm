@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../constants/stateOptions";
+import { useAddressAutocomplete } from "../../../../hooks/useAddressAutocomplete";
 import WholesalePieChart from "./WholesalePieChart";
 import WholesalePdfTemplate from "./WholesalePdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
@@ -65,6 +66,12 @@ function WholesaleTab({ tab }) {
     }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
+
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(addressInputRef, ({ formatted, state }) => {
+    handleChange({ target: { name: "propertyAddress", value: formatted } });
+    if (state) handleChange({ target: { name: "state", value: state } });
+  });
 
   function handleBlur(e) {
     const { name, value } = e.target;
@@ -157,6 +164,7 @@ function WholesaleTab({ tab }) {
 
         <div className="deal-analyzer-form-grid">
           <Field
+            ref={addressInputRef}
             label="Property Address"
             name="propertyAddress"
             value={form.propertyAddress}
@@ -165,8 +173,13 @@ function WholesaleTab({ tab }) {
             wrapperClassName="deal-analyzer-address"
           />
           <label className="field">
-            <span>State</span>
-            <select name="state" value={form.state} onChange={handleChange}>
+            <span>
+              State
+              {form.state && (
+                <span className="deal-analyzer-auto-badge">auto</span>
+              )}
+            </span>
+            <select name="state" value={form.state} disabled>
               {STATE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
