@@ -28,15 +28,22 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Leadzolo's exact payload shape isn't documented publicly — this pulls
-// from every plausible field-name variant (snake_case, camelCase, and a
-// nested `lead`/`contact` object, which many lead-gen platforms use) so
-// the mapping has the best chance of working on the first real delivery.
-// `raw` always keeps the untouched body too, so nothing is lost even if
-// none of these guesses match — check it in Firestore and tell me the
-// actual key names if fields come through empty, and this gets adjusted.
+// Confirmed against Leadzolo's actual payload template (seen in their
+// webhook "Payload" preview):
+// {
+//   "public_id": "...", "name": "<tenant/account name — NOT the lead>",
+//   "event": "Test" | ..., "lead_type": "...", "scope": "...",
+//   "received_on": "...", "charged_amount": "$80.00",
+//   "deliverable_fields": "...",
+//   "lead": {
+//     "first_name", "last_name", "email", "phone",
+//     "address_1", "address_2", "city", "state", "zip", "county", "country"
+//   }
+// }
+// The top-level `name` is Leadzolo's account/tenant name, not the lead's —
+// only `body.lead.*` holds the actual lead data.
 function mapToLead(body, userId) {
-  const lead = body?.lead || body?.contact || body;
+  const lead = body?.lead || {};
 
   const get = (...keys) => {
     for (const k of keys) {
@@ -48,13 +55,34 @@ function mapToLead(body, userId) {
     return "";
   };
 
-  const firstName = get("first_name", "firstName", "given_name");
-  const lastName = get("last_name", "lastName", "family_name", "surname");
+  const firstName = get("first_name", "firstName");
+  const lastName = get("last_name", "lastName");
   const fullName =
-    get("name", "full_name", "fullName", "seller_name", "sellerName") ||
-    [firstName, lastName].filter(Boolean).join(" ");
+    get("full_name", "name") || [firstName, lastName].filter(Boolean).join(" ");
 
-  const source = get("source", "campaign", "campaign_name") || "Leadzolo";
+  // Built to match the "street[, city, STATE ZIP]" shape parseAddress() in
+  // PotentialLeads.jsx expects — unit goes on the street line (space, not
+  // comma) so it doesn't shift city/state/zip into the wrong segment.
+  const street = [get("address_1", "address"), get("address_2")]
+    .filter(Boolean)
+    .join(" ");
+  const city = get("city");
+  const stateZip = [get("state"), get("zip", "zip_code", "postal_code")]
+    .filter(Boolean)
+    .join(" ");
+  const address = [street, city, stateZip].filter(Boolean).join(", ");
+
+  const isTest = String(body?.event || "").toLowerCase() === "test";
+  const chargedAmount = String(body?.charged_amount || "").trim();
+  const leadTypeLabel = String(body?.lead_type || "").trim();
+  const notes = [
+    isTest ? "[Test delivery from Leadzolo]" : "",
+    get("notes", "message", "comments"),
+    leadTypeLabel ? `Lead Type: ${leadTypeLabel}` : "",
+    chargedAmount ? `Charged: ${chargedAmount}` : "",
+  ]
+    .filter(Boolean)
+    .join(" | ");
 
   return {
     id: randomUUID(),
@@ -62,20 +90,14 @@ function mapToLead(body, userId) {
     leadType: "residential",
     dateAdded: todayStr(),
     dateAddedAt: new Date().toISOString(),
-    source,
+    source: "Leadzolo",
     pplSource: true,
     dealType: "Wholesale",
-    address: get(
-      "address",
-      "property_address",
-      "propertyAddress",
-      "street_address",
-      "full_address",
-    ),
+    address,
     sellerName: fullName,
     email: get("email", "email_address"),
-    phone: get("phone", "phone_number", "phoneNumber", "mobile"),
-    notes: get("notes", "message", "comments", "description"),
+    phone: get("phone", "phone_number", "phoneNumber"),
+    notes,
     followUpDate: "",
     onMarket: "No",
     listedPrice: "",
