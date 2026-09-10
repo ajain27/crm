@@ -23,6 +23,9 @@ import {
   savePmDealFile,
   fetchPmDealFile,
   deletePmDealFileById,
+  fetchTitleCompanies,
+  saveTitleCompany,
+  deleteTitleCompanyById,
   fetchRentals,
   saveRental,
   deleteRentalById,
@@ -32,6 +35,7 @@ import Wholesale_form from "./forms/crm_form";
 import Wholesale_data from "./data/crm_table";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import PMDealsTab from "../../pmDeals/PMDealsTab";
+import TitleCompanies from "../../titleCompanies/TitleCompanies";
 import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
@@ -338,6 +342,13 @@ function Wholesale() {
             savePmDealFile={savePmDealFile}
             fetchPmDealFile={fetchPmDealFile}
             deletePmDealFileById={deletePmDealFileById}
+          />
+        ) : !ppcOnly && activeView === "title-companies" ? (
+          <TitleCompanies
+            currentUser={currentUser}
+            fetchTitleCompanies={fetchTitleCompanies}
+            saveTitleCompany={saveTitleCompany}
+            deleteTitleCompanyById={deleteTitleCompanyById}
           />
         ) : !ppcOnly && activeView === "rental-management" ? (
           <RentalManagement
