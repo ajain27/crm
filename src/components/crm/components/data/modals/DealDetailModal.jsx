@@ -2,11 +2,17 @@ import { useState, useEffect } from "react";
 import { Upload, Loader2, Trash2, FileText } from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
+import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
 import {
   getSuggestedWholesaleMao,
   getContractVersions,
   DEAL_TYPES,
 } from "../../crmConfig";
+
+function formatFullAddress(deal) {
+  const stateZip = [deal?.state, deal?.zipCode].filter(Boolean).join(" ");
+  return [deal?.address, deal?.city, stateZip].filter(Boolean).join(", ");
+}
 
 const PROPERTY_TYPES = ["Single Family", "Multi Family", "Land"];
 const OFFER_STATUSES = ["Not Sent", "Offer Sent", "Offer Withdrawn"];
@@ -211,7 +217,11 @@ function DealDetailModal({
       onClose={onClose}
       title={
         <span className="ddm-title-row">
-          <span>{draft.address || deal.address || "Deal Details"}</span>
+          <span>
+            {formatFullAddress(draft) ||
+              formatFullAddress(deal) ||
+              "Deal Details"}
+          </span>
           <Badge value={draft.dealType || deal.dealType || "Wholesale"} />
         </span>
       }
@@ -278,6 +288,35 @@ function DealDetailModal({
               value={draft.address || ""}
               onChange={(e) => set("address", e.target.value)}
               placeholder="Street address"
+            />
+          </Field>
+          <Field label="City">
+            <input
+              disabled={locked}
+              value={draft.city || ""}
+              onChange={(e) => set("city", e.target.value)}
+              placeholder="City"
+            />
+          </Field>
+          <Field label="State">
+            <select
+              disabled={locked}
+              value={draft.state || ""}
+              onChange={(e) => set("state", e.target.value)}
+            >
+              {STATE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Zip Code">
+            <input
+              disabled={locked}
+              value={draft.zipCode || ""}
+              onChange={(e) => set("zipCode", e.target.value)}
+              placeholder="Zip code"
             />
           </Field>
           <Field label="Property Type">

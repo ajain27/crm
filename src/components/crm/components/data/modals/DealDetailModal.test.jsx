@@ -42,6 +42,35 @@ describe("DealDetailModal", () => {
     expect(screen.getByText(/1 Main St/i)).toBeInTheDocument();
   });
 
+  it("renders the complete address (street, city, state, zip) in the title", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("1 Main St, Austin, TX 78701")).toBeInTheDocument();
+  });
+
+  it("shows editable City, State, and Zip Code fields", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    const cityInput = screen.getByDisplayValue("Austin");
+    const zipInput = screen.getByDisplayValue("78701");
+    fireEvent.change(cityInput, { target: { value: "Round Rock" } });
+    expect(cityInput).toHaveValue("Round Rock");
+    fireEvent.change(zipInput, { target: { value: "78664" } });
+    expect(zipInput).toHaveValue("78664");
+  });
+
   it("Cancel button calls onClose", () => {
     const onClose = vi.fn();
     render(
