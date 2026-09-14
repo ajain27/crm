@@ -360,7 +360,10 @@ function SellerFinanceTab({ tab }) {
         </div>
 
         <div className="deal-analyzer-section-label">Property</div>
-        <div className="deal-analyzer-form-grid">
+        <div
+          className="deal-analyzer-form-grid"
+          style={{ gridTemplateColumns: "minmax(280px, 480px)" }}
+        >
           <Field
             ref={addressInputRef}
             label="Property Address"
@@ -368,7 +371,6 @@ function SellerFinanceTab({ tab }) {
             value={form.propertyAddress}
             onChange={handleChange}
             placeholder="e.g. 123 Main St, Austin, TX"
-            wrapperClassName="deal-analyzer-address"
           />
         </div>
 
