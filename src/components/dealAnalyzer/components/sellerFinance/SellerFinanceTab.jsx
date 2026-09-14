@@ -362,7 +362,9 @@ function SellerFinanceTab({ tab }) {
         <div className="deal-analyzer-section-label">Property</div>
         <div
           className="deal-analyzer-form-grid"
-          style={{ gridTemplateColumns: "minmax(280px, 480px)" }}
+          style={{
+            gridTemplateColumns: "minmax(280px, 480px) minmax(180px, 220px)",
+          }}
         >
           <Field
             ref={addressInputRef}
@@ -372,13 +374,6 @@ function SellerFinanceTab({ tab }) {
             onChange={handleChange}
             placeholder="e.g. 123 Main St, Austin, TX"
           />
-        </div>
-
-        <div className="deal-analyzer-section-label">Purchase</div>
-        <div
-          className="deal-analyzer-form-grid"
-          style={{ gridTemplateColumns: "minmax(220px, 280px)" }}
-        >
           <Field
             label="Purchase Price"
             name="purchasePrice"
