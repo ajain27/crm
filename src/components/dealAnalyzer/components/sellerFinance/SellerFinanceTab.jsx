@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Field, AnimatedAmount } from "../../../elements/elements";
+import { useAddressAutocomplete } from "../../../../hooks/useAddressAutocomplete";
 import {
   parseCurrency,
   parsePercent,
@@ -44,6 +45,7 @@ function calcLenderAmortizedBreakdown(lenders) {
 }
 
 const initialForm = {
+  propertyAddress: "",
   purchasePrice: "",
   sellerFinancePct: "",
   sellerFinanceRate: "",
@@ -125,6 +127,11 @@ function SellerFinanceTab({ tab }) {
     }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
+
+  const addressInputRef = useRef(null);
+  useAddressAutocomplete(addressInputRef, ({ formatted }) => {
+    handleChange({ target: { name: "propertyAddress", value: formatted } });
+  });
 
   function handleBlur(e) {
     const { name, value } = e.target;
@@ -273,6 +280,7 @@ function SellerFinanceTab({ tab }) {
   function handleCalculate() {
     if (!isFormComplete) return;
     setSummary({
+      propertyAddress: form.propertyAddress.trim(),
       purchasePrice,
       sellerFinancePct,
       sellerFinanceAmount,
@@ -349,6 +357,19 @@ function SellerFinanceTab({ tab }) {
               whatever's left to finance.
             </p>
           </div>
+        </div>
+
+        <div className="deal-analyzer-section-label">Property</div>
+        <div className="deal-analyzer-form-grid">
+          <Field
+            ref={addressInputRef}
+            label="Property Address"
+            name="propertyAddress"
+            value={form.propertyAddress}
+            onChange={handleChange}
+            placeholder="e.g. 123 Main St, Austin, TX"
+            wrapperClassName="deal-analyzer-address"
+          />
         </div>
 
         <div className="deal-analyzer-section-label">Purchase</div>

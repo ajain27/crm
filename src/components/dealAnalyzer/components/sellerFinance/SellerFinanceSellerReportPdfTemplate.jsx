@@ -21,6 +21,13 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
         verdictValue={fmt(summary.sellerFinanceMonthly)}
         verdictPositive
       >
+        {summary.propertyAddress && (
+          <>
+            <PdfSectionTitle>Property</PdfSectionTitle>
+            <PdfRow label="Property Address" value={summary.propertyAddress} />
+          </>
+        )}
+
         <PdfSectionTitle>Sale Breakdown</PdfSectionTitle>
         <PdfRow label="Purchase Price" value={fmt(summary.purchasePrice)} />
         <PdfRow

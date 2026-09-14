@@ -21,6 +21,13 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
       verdictValue={fmt(summary.cashFlow)}
       verdictPositive={!summary.isCashFlowNegative}
     >
+      {summary.propertyAddress && (
+        <>
+          <PdfSectionTitle>Property</PdfSectionTitle>
+          <PdfRow label="Property Address" value={summary.propertyAddress} />
+        </>
+      )}
+
       <PdfSectionTitle>Capital Stack</PdfSectionTitle>
       <PdfRow label="Purchase Price" value={fmt(summary.purchasePrice)} />
       <PdfRow
