@@ -46,7 +46,7 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
       )}
       {summary.originationFeesAmt > 0 && (
         <PdfRow
-          label={`Origination Fees (${summary.originationFeesPct}%)`}
+          label="Origination Fees"
           value={fmt(summary.originationFeesAmt)}
           tone="negative"
         />

@@ -197,8 +197,8 @@ describe("SellerFinanceTab", () => {
       target: { value: "30" },
     });
 
-    fireEvent.change(screen.getByLabelText(/Origination Fees \(%\)/i), {
-      target: { value: "1" },
+    fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
+      target: { value: "3000" },
     });
     fireEvent.change(screen.getByLabelText(/Doc Fees/i), {
       target: { value: "1000" },
@@ -209,12 +209,6 @@ describe("SellerFinanceTab", () => {
     fireEvent.change(screen.getByLabelText(/Underwriting Fees/i), {
       target: { value: "500" },
     });
-
-    // Lender defaulted to the full $300,000 (no seller financing entered),
-    // so origination is 1% of $300,000 = $3,000.
-    expect(screen.getByLabelText(/Origination Fees Amount/i)).toHaveValue(
-      "$3,000.00",
-    );
 
     // Total lender fees: $3,000 + $1,000 + $500 + $500 = $5,000 — still
     // shown as a reference line item...
@@ -267,10 +261,29 @@ describe("SellerFinanceTab", () => {
     });
 
     // $300,000 − $180,000 lender − $90,000 seller note = $30,000 gap, plus
-    // the $2,500 closing costs the buyer still has to bring in cash.
+    // the $2,500 closing costs and the $7,850 default lender fees the buyer
+    // still has to bring in cash.
     expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue(
-      "$32,500.00",
+      "$40,350.00",
     );
+  });
+
+  it("defaults the lender fees once seller financing is under 100% and a lender is present", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    expect(screen.getByLabelText(/Origination Fees/i)).toHaveValue("");
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "20" },
+    });
+
+    expect(screen.getByLabelText(/Origination Fees/i)).toHaveValue("$2,500");
+    expect(screen.getByLabelText(/Doc Fees/i)).toHaveValue("$3,000");
+    expect(screen.getByLabelText(/Appraisal Fees/i)).toHaveValue("$750");
+    expect(screen.getByLabelText(/Underwriting Fees/i)).toHaveValue("$1,600");
   });
 
   it("includes each additional lender's monthly payment in the summary", () => {

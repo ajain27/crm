@@ -21,6 +21,13 @@ import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
 
 const PROP_MGMT_PCT = 10;
 
+const DEFAULT_LENDER_FEES = {
+  originationFees: "$2,500",
+  legalFees: "$3,000",
+  appraisalFees: "$750",
+  underwritingFees: "$1,600",
+};
+
 // Amortized (P&I) monthly payment for a single lender — always based on the
 // standard amortization formula, never an interest-only shortcut. A lender
 // with no term contributes $0 until a term is entered.
@@ -52,7 +59,7 @@ const initialForm = {
   sellerFinancePaymentType: "amortized",
   sellerFinanceTermYears: "",
   sellerFinanceBalloonYears: "",
-  originationFeesPct: "",
+  originationFees: "",
   legalFees: "",
   appraisalFees: "",
   underwritingFees: "",
@@ -65,6 +72,7 @@ const initialForm = {
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "originationFees",
   "legalFees",
   "appraisalFees",
   "underwritingFees",
@@ -74,11 +82,7 @@ const CURRENCY_FIELDS = new Set([
   "yearlyInsurance",
   "applianceInsurance",
 ]);
-const PERCENT_FIELDS = new Set([
-  "sellerFinancePct",
-  "sellerFinanceRate",
-  "originationFeesPct",
-]);
+const PERCENT_FIELDS = new Set(["sellerFinancePct", "sellerFinanceRate"]);
 const YEAR_FIELDS = new Set([
   "sellerFinanceTermYears",
   "sellerFinanceBalloonYears",
@@ -241,6 +245,24 @@ function SellerFinanceTab({ tab }) {
   // A lender row always exists in the UI (there's one on load), so filter
   // out empty placeholder rows before computing payments/totals shown in
   // the results — otherwise every deal would show a stray "$0" lender.
+  // Once seller financing leaves a gap for a lender, seed the typical
+  // lender fees once. After that the fields are the user's to edit or clear.
+  const feeDefaultsApplied = useRef(false);
+  useEffect(() => {
+    if (feeDefaultsApplied.current) return;
+    if (!form.sellerFinancePct.trim()) return;
+    if (lenderTotal <= 0 || sellerFinancePct >= 100) return;
+    feeDefaultsApplied.current = true;
+    setForm((prev) => ({
+      ...prev,
+      originationFees:
+        prev.originationFees || DEFAULT_LENDER_FEES.originationFees,
+      legalFees: prev.legalFees || DEFAULT_LENDER_FEES.legalFees,
+      appraisalFees: prev.appraisalFees || DEFAULT_LENDER_FEES.appraisalFees,
+      underwritingFees:
+        prev.underwritingFees || DEFAULT_LENDER_FEES.underwritingFees,
+    }));
+  }, [lenderTotal, sellerFinancePct, form.sellerFinancePct]);
   const activeLenders = lenders.filter((l) => parseCurrency(l.amount) > 0);
   const lenderBreakdown = calcLenderAmortizedBreakdown(activeLenders);
   const lenderMonthlyPayment = lenderBreakdown.reduce(
@@ -248,8 +270,7 @@ function SellerFinanceTab({ tab }) {
     0,
   );
 
-  const originationFeesPct = parsePercent(form.originationFeesPct);
-  const originationFeesAmt = lenderTotal * (originationFeesPct / 100);
+  const originationFeesAmt = parseCurrency(form.originationFees);
   const legalFeesAmt = parseCurrency(form.legalFees);
   const appraisalFeesAmt = parseCurrency(form.appraisalFees);
   const underwritingFeesAmt = parseCurrency(form.underwritingFees);
@@ -315,7 +336,6 @@ function SellerFinanceTab({ tab }) {
       lenderBreakdown,
       lenderTotal,
       lenderMonthlyPayment,
-      originationFeesPct,
       originationFeesAmt,
       legalFeesAmt,
       appraisalFeesAmt,
@@ -498,22 +518,13 @@ function SellerFinanceTab({ tab }) {
         </div>
         <div className="deal-analyzer-form-grid">
           <Field
-            label="Origination Fees (%)"
-            name="originationFeesPct"
-            value={form.originationFeesPct}
+            label="Origination Fees"
+            name="originationFees"
+            value={form.originationFees}
             onChange={handleChange}
             onBlur={handleBlur}
-            placeholder="e.g. 1.5"
+            placeholder="e.g. $2,500"
           />
-          {originationFeesAmt > 0 && (
-            <label className="field deal-analyzer-output">
-              <span>
-                Origination Fees Amount{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
-              <input value={fmt(originationFeesAmt)} readOnly tabIndex={-1} />
-            </label>
-          )}
           <Field
             label="Doc Fees"
             name="legalFees"
@@ -749,7 +760,7 @@ function SellerFinanceTab({ tab }) {
               )}
               {summary.originationFeesAmt > 0 && (
                 <div>
-                  <span>Origination Fees ({summary.originationFeesPct}%)</span>
+                  <span>Origination Fees</span>
                   <strong className="deal-analyzer-return-negative">
                     <AnimatedAmount
                       value={summary.originationFeesAmt}
