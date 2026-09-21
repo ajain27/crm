@@ -82,16 +82,26 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
       <PdfSectionTitle>Seller Note — Promissory Note</PdfSectionTitle>
       <PdfRow label="Note Rate" value={`${summary.sellerFinanceRatePct}%`} />
       <PdfRow
+        label="Payment Type"
+        value={
+          summary.isInterestOnly
+            ? "Interest only"
+            : "Amortized (principal + interest)"
+        }
+      />
+      <PdfRow
         label="Note Term"
         value={`${summary.sellerFinanceTermYears} years`}
       />
       <PdfRow
-        label="Seller Note Monthly Payment"
+        label={`Seller Note Monthly Payment${
+          summary.isInterestOnly ? " (Interest Only)" : ""
+        }`}
         value={fmt(summary.sellerFinanceMonthly)}
         tone="negative"
       />
       <PdfRow
-        label="Balloon Due"
+        label={summary.isInterestOnly ? "Principal Due" : "Balloon Due"}
         value={
           summary.sellerFinanceBalloonYears > 0
             ? `${fmt(summary.sellerFinanceBalloon)} at year ${summary.sellerFinanceBalloonYears}`

@@ -49,6 +49,7 @@ const initialForm = {
   purchasePrice: "",
   sellerFinancePct: "",
   sellerFinanceRate: "",
+  sellerFinancePaymentType: "amortized",
   sellerFinanceTermYears: "",
   sellerFinanceBalloonYears: "",
   originationFeesPct: "",
@@ -153,14 +154,31 @@ function SellerFinanceTab({ tab }) {
   const totalPayments = sellerFinanceTermYears * 12;
   const annualRateDecimal = sellerFinanceRatePct / 100;
 
-  const sellerFinanceMonthly = calculateMonthlyPayment(
-    sellerFinanceAmount,
-    annualRateDecimal,
-    totalPayments,
-  );
-  const sellerFinanceBalloon =
+  // Interest-only: the seller collects just the interest each month and the
+  // entire principal comes due as a balloon — at the balloon year if one is
+  // set, otherwise at the end of the note term. Amortized: level P&I
+  // payments, with an optional balloon of the remaining balance.
+  const isInterestOnly = form.sellerFinancePaymentType === "interestOnly";
+  const hasEarlyBalloon =
     sellerFinanceBalloonYears > 0 &&
-    sellerFinanceBalloonYears < sellerFinanceTermYears
+    sellerFinanceBalloonYears < sellerFinanceTermYears;
+  const sellerFinanceMonthly = isInterestOnly
+    ? (sellerFinanceAmount * annualRateDecimal) / 12
+    : calculateMonthlyPayment(
+        sellerFinanceAmount,
+        annualRateDecimal,
+        totalPayments,
+      );
+  const sellerFinanceBalloonDueYears = isInterestOnly
+    ? hasEarlyBalloon
+      ? sellerFinanceBalloonYears
+      : sellerFinanceTermYears
+    : hasEarlyBalloon
+      ? sellerFinanceBalloonYears
+      : 0;
+  const sellerFinanceBalloon = isInterestOnly
+    ? sellerFinanceAmount
+    : hasEarlyBalloon
       ? calculateBalloonBalance(
           sellerFinanceAmount,
           annualRateDecimal,
@@ -174,11 +192,9 @@ function SellerFinanceTab({ tab }) {
   // the full term if there's no balloon, plus the balloon itself) minus the
   // principal they financed.
   const downPaymentAmount = purchasePrice - sellerFinanceAmount;
-  const sellerNoteMonthsElapsed =
-    sellerFinanceBalloonYears > 0 &&
-    sellerFinanceBalloonYears < sellerFinanceTermYears
-      ? sellerFinanceBalloonYears * 12
-      : totalPayments;
+  const sellerNoteMonthsElapsed = hasEarlyBalloon
+    ? sellerFinanceBalloonYears * 12
+    : totalPayments;
   const sellerNoteTotalReceived =
     sellerFinanceMonthly * sellerNoteMonthsElapsed + sellerFinanceBalloon;
   const sellerNoteTotalInterest = sellerNoteTotalReceived - sellerFinanceAmount;
@@ -286,9 +302,11 @@ function SellerFinanceTab({ tab }) {
       sellerFinanceAmount,
       sellerFinanceRatePct,
       sellerFinanceTermYears,
-      sellerFinanceBalloonYears,
+      sellerFinanceBalloonYears: sellerFinanceBalloonDueYears,
       sellerFinanceBalloon,
       sellerFinanceMonthly,
+      sellerFinancePaymentType: form.sellerFinancePaymentType,
+      isInterestOnly,
       downPaymentAmount,
       sellerNoteMonthsElapsed,
       sellerNoteTotalReceived,
@@ -360,12 +378,7 @@ function SellerFinanceTab({ tab }) {
         </div>
 
         <div className="deal-analyzer-section-label">Property</div>
-        <div
-          className="deal-analyzer-form-grid"
-          style={{
-            gridTemplateColumns: "minmax(280px, 480px) minmax(180px, 220px)",
-          }}
-        >
+        <div className="deal-analyzer-form-grid seller-finance-property-grid">
           <Field
             ref={addressInputRef}
             label="Property Address"
@@ -416,6 +429,19 @@ function SellerFinanceTab({ tab }) {
             placeholder="e.g. 6"
             required
           />
+          <label className="field">
+            <span>Payment Type</span>
+            <select
+              name="sellerFinancePaymentType"
+              value={form.sellerFinancePaymentType}
+              onChange={handleChange}
+            >
+              <option value="amortized">
+                Amortized (principal + interest)
+              </option>
+              <option value="interestOnly">Interest only</option>
+            </select>
+          </label>
           <Field
             label="Note Term (Years)"
             name="sellerFinanceTermYears"
@@ -425,25 +451,34 @@ function SellerFinanceTab({ tab }) {
             required
           />
           <Field
-            label="Balloon Payment at (Years)"
+            label={
+              isInterestOnly
+                ? "Principal Due at (Years)"
+                : "Balloon Payment at (Years)"
+            }
             name="sellerFinanceBalloonYears"
             value={form.sellerFinanceBalloonYears}
             onChange={handleChange}
-            placeholder="e.g. 5 (optional)"
+            placeholder={
+              isInterestOnly
+                ? "Defaults to note term (optional)"
+                : "e.g. 5 (optional)"
+            }
           />
           {sellerFinanceAmount > 0 && totalPayments > 0 && (
             <label className="field deal-analyzer-output">
               <span>
-                Monthly Payment{" "}
+                Monthly Payment{isInterestOnly ? " (interest only)" : ""}{" "}
                 <span className="deal-analyzer-auto-badge">auto</span>
               </span>
               <input value={fmt(sellerFinanceMonthly)} readOnly tabIndex={-1} />
             </label>
           )}
-          {sellerFinanceBalloonYears > 0 && sellerFinanceBalloon > 0 && (
+          {sellerFinanceBalloonDueYears > 0 && sellerFinanceBalloon > 0 && (
             <label className="field deal-analyzer-output">
               <span>
-                Balloon Payment at Year {sellerFinanceBalloonYears}{" "}
+                {isInterestOnly ? "Principal Due" : "Balloon Payment"} at Year{" "}
+                {sellerFinanceBalloonDueYears}{" "}
                 <span className="deal-analyzer-auto-badge">auto</span>
               </span>
               <input value={fmt(sellerFinanceBalloon)} readOnly tabIndex={-1} />
@@ -532,10 +567,7 @@ function SellerFinanceTab({ tab }) {
         </div>
 
         {purchasePrice > 0 && (
-          <div
-            className="deal-analyzer-form-grid"
-            style={{ gridTemplateColumns: "minmax(220px, 280px)" }}
-          >
+          <div className="deal-analyzer-form-grid seller-finance-cash-grid">
             <label
               className={`field deal-analyzer-output ${
                 isOverFinanced ? "deal-analyzer-output-red" : ""
@@ -800,7 +832,10 @@ function SellerFinanceTab({ tab }) {
                 <strong>{summary.sellerFinanceTermYears} years</strong>
               </div>
               <div>
-                <span>Seller Note Monthly Payment</span>
+                <span>
+                  Seller Note Monthly Payment
+                  {summary.isInterestOnly ? " (Interest Only)" : ""}
+                </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={summary.sellerFinanceMonthly}
@@ -809,7 +844,9 @@ function SellerFinanceTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>Balloon Due</span>
+                <span>
+                  {summary.isInterestOnly ? "Principal Due" : "Balloon Due"}
+                </span>
                 <strong className="deal-analyzer-return-negative">
                   {summary.sellerFinanceBalloonYears > 0
                     ? `${fmt(summary.sellerFinanceBalloon)} at year ${summary.sellerFinanceBalloonYears}`
@@ -965,10 +1002,12 @@ function SellerFinanceTab({ tab }) {
                 green.
               </span>
               <span>
-                Seller note and lender payments are fully amortized using `M = P
-                x [r(1 + r)^n / ((1 + r)^n - 1)]`, where `r = annual interest /
-                12` and `n = term x 12`. A lender without a term contributes $0
-                until one is entered.
+                {summary.isInterestOnly
+                  ? "The seller note is interest only (M = P x annual rate / 12), with the full principal due as a balloon. "
+                  : "The seller note is fully amortized. "}
+                Amortized payments use `M = P x [r(1 + r)^n / ((1 + r)^n - 1)]`,
+                where `r = annual interest / 12` and `n = term x 12`. A lender
+                without a term contributes $0 until one is entered.
               </span>
             </div>
 

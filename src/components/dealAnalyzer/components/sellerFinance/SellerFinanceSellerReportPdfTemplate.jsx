@@ -43,16 +43,28 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
         <PdfSectionTitle>Promissory Note Terms</PdfSectionTitle>
         <PdfRow label="Note Rate" value={`${summary.sellerFinanceRatePct}%`} />
         <PdfRow
+          label="Payment Type"
+          value={
+            summary.isInterestOnly
+              ? "Interest only"
+              : "Amortized (principal + interest)"
+          }
+        />
+        <PdfRow
           label="Note Term"
           value={`${summary.sellerFinanceTermYears} years`}
         />
         <PdfRow
-          label="Monthly Payment"
+          label={
+            summary.isInterestOnly
+              ? "Monthly Payment (Interest Only)"
+              : "Monthly Payment"
+          }
           value={fmt(summary.sellerFinanceMonthly)}
           tone="positive"
         />
         <PdfRow
-          label="Balloon Due"
+          label={summary.isInterestOnly ? "Principal Due" : "Balloon Due"}
           value={
             summary.sellerFinanceBalloonYears > 0
               ? `${fmt(summary.sellerFinanceBalloon)} at year ${summary.sellerFinanceBalloonYears}`
@@ -74,8 +86,9 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
         />
 
         <p className="mm-pdf-formula">
-          Extra Income From Interest = (Monthly Payment × Months Collected) +
-          Balloon − Amount Financed
+          Extra Income From Interest = (Monthly Payment × Months Collected) +{" "}
+          {summary.isInterestOnly ? "Principal Repaid" : "Balloon"} − Amount
+          Financed
           <br />({fmt(summary.sellerFinanceMonthly)} ×{" "}
           {summary.sellerNoteMonthsElapsed}) +{" "}
           {fmt(summary.sellerFinanceBalloon)} −{" "}

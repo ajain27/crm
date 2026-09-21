@@ -1211,4 +1211,59 @@
     border-radius: 4px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   }
+
+  .seller-finance-property-grid {
+    grid-template-columns: minmax(280px, 480px) minmax(180px, 220px);
+  }
+
+  .seller-finance-cash-grid {
+    grid-template-columns: minmax(220px, 280px);
+  }
+
+  .additional-lender-row {
+    @apply grid items-end gap-3;
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr 1fr auto;
+  }
+
+  @media (max-width: 600px) {
+    .deal-analyzer-section-label,
+    .deal-analyzer-form-grid,
+    .deal-analyzer-actions,
+    .deal-analyzer-summary {
+      @apply px-4;
+    }
+
+    .deal-analyzer-form-grid,
+    .deal-analyzer-summary-grid,
+    .seller-finance-property-grid,
+    .seller-finance-cash-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .additional-lender-row {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .additional-lender-row > :first-child {
+      grid-column: 1 / -1;
+    }
+
+    .additional-lender-remove {
+      grid-column: 1 / -1;
+      justify-self: end;
+    }
+
+    .deal-analyzer-actions {
+      @apply flex-col items-stretch;
+    }
+
+    .deal-analyzer-final-verdict {
+      @apply flex-col items-start gap-1;
+    }
+
+    .deal-analyzer-calculation {
+      overflow-wrap: anywhere;
+    }
+  }
 }

@@ -56,6 +56,24 @@ describe("SellerFinanceTab", () => {
     expect(amountInput).toBeInTheDocument();
   });
 
+  it("uses interest-only payments with the principal due at the end of the term", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fillBaseForm();
+    fireEvent.change(screen.getByLabelText(/Payment Type/i), {
+      target: { value: "interestOnly" },
+    });
+
+    // $60,000 x 6% / 12 = $300.00
+    expect(screen.getAllByDisplayValue("$300.00").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    const principalLabel = screen.getByText("Principal Due");
+    const principalValue = principalLabel.parentElement.querySelector("strong");
+    expect(principalValue).toHaveTextContent("$60,000.00 at year 10");
+  });
+
   it("calculates the monthly payment and balloon payment in the summary", () => {
     render(<SellerFinanceTab tab={tab} />);
 

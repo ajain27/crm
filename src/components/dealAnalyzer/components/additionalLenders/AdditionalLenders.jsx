@@ -118,16 +118,7 @@ export default function AdditionalLenders({
           const term = parseInt(lender.term || "0", 10) || 0;
           const monthlyPayment = calcPMT(rate, term, amount);
           return (
-            <div
-              key={lender.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr auto",
-                gap: "0.75rem",
-                alignItems: "end",
-                gridColumn: "1 / -1",
-              }}
-            >
+            <div key={lender.id} className="additional-lender-row">
               <Field
                 label={
                   <>
@@ -159,7 +150,7 @@ export default function AdditionalLenders({
               />
               <button
                 type="button"
-                className="leads-delete-btn"
+                className="leads-delete-btn additional-lender-remove"
                 onClick={() => handleRemove(lender.id)}
                 title={`Remove lender ${idx + 1}`}
                 aria-label={`Remove lender ${idx + 1}`}
