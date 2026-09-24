@@ -13,6 +13,7 @@ import AdditionalLenders, {
   calcLenderTotal,
   createEmptyLender,
 } from "../additionalLenders/AdditionalLenders";
+import SellerFinancePieChart from "./SellerFinancePieChart";
 import SellerFinancePdfTemplate from "./SellerFinancePdfTemplate";
 import SellerFinanceSellerReportPdfTemplate from "./SellerFinanceSellerReportPdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
@@ -178,6 +179,35 @@ function computeSellerNote({
     totalReceived,
     totalInterest: totalReceived - amount,
   };
+}
+
+const RENT_INCREMENTS = [0, 50, 100, 150, 200, 250];
+
+// Cash flow at each rent increment, holding debt service, taxes, insurance
+// and appliance insurance fixed — only rent and the property-management fee
+// (which is a % of rent) move. `debtService` is the seller note + lender
+// payment for whichever phase is being modeled; pass `debtServiceAfterIo`
+// for a hybrid note to get a second column for after the interest-only
+// period ends.
+function computeRentSensitivity({
+  monthlyRentAmount,
+  debtService,
+  debtServiceAfterIo,
+  monthlyTaxes,
+  monthlyInsurance,
+  applianceInsuranceAmt,
+}) {
+  const fixedCosts = monthlyTaxes + monthlyInsurance + applianceInsuranceAmt;
+  return RENT_INCREMENTS.map((increment) => {
+    const rent = monthlyRentAmount + increment;
+    const propMgmtFee = rent * (PROP_MGMT_PCT / 100);
+    const cashFlow = rent - (debtService + fixedCosts + propMgmtFee);
+    const cashFlowAfterIo =
+      debtServiceAfterIo > 0
+        ? rent - (debtServiceAfterIo + fixedCosts + propMgmtFee)
+        : null;
+    return { increment, rent, propMgmtFee, cashFlow, cashFlowAfterIo };
+  });
 }
 
 // Amortized (P&I) monthly payment for a single lender — always based on the
@@ -454,6 +484,37 @@ function SellerFinanceTab({ tab }) {
   const cashFlow = monthlyRentAmount - totalMonthlyExpenses;
   const isCashFlowNegative = cashFlow < 0;
 
+  // Once the hybrid note's interest-only period ends, the seller note
+  // payment steps up to the amortized amount — recompute cash flow with
+  // that higher payment so the drop is visible instead of hiding behind
+  // the interest-only figure for the life of the deal.
+  const hasHybridPhase2 = isHybrid && sellerFinanceHybridPhase2Monthly > 0;
+  const totalMonthlyPaymentAfterIo = hasHybridPhase2
+    ? sellerFinanceHybridPhase2Monthly + lenderMonthlyPayment
+    : 0;
+  const totalMonthlyExpensesAfterIo = hasHybridPhase2
+    ? totalMonthlyPaymentAfterIo +
+      monthlyTaxes +
+      monthlyInsurance +
+      applianceInsuranceAmt +
+      propMgmtFee
+    : 0;
+  const cashFlowAfterIo = hasHybridPhase2
+    ? monthlyRentAmount - totalMonthlyExpensesAfterIo
+    : 0;
+  const isCashFlowAfterIoNegative = cashFlowAfterIo < 0;
+
+  // Predictive analysis: how cash flow moves if achieved rent comes in
+  // higher than what's entered, in $50 steps up to +$250.
+  const rentSensitivity = computeRentSensitivity({
+    monthlyRentAmount,
+    debtService: totalMonthlyPayment,
+    debtServiceAfterIo: totalMonthlyPaymentAfterIo,
+    monthlyTaxes,
+    monthlyInsurance,
+    applianceInsuranceAmt,
+  });
+
   const isFormComplete = Boolean(
     form.purchasePrice?.trim() &&
     form.sellerFinancePct?.trim() &&
@@ -508,8 +569,14 @@ function SellerFinanceTab({ tab }) {
       propMgmtFee,
       totalMonthlyExpenses,
       cashFlow,
+      hasHybridPhase2,
+      totalMonthlyPaymentAfterIo,
+      totalMonthlyExpensesAfterIo,
+      cashFlowAfterIo,
+      rentSensitivity,
       isOverFinanced,
       isCashFlowNegative,
+      isCashFlowAfterIoNegative,
     });
   }
 
@@ -586,10 +653,7 @@ function SellerFinanceTab({ tab }) {
           />
           {sellerFinanceAmount > 0 && (
             <label className="field deal-analyzer-output">
-              <span>
-                Seller Financing Amount{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
+              <span>Seller Financing Amount</span>
               <input value={fmt(sellerFinanceAmount)} readOnly tabIndex={-1} />
             </label>
           )}
@@ -656,8 +720,7 @@ function SellerFinanceTab({ tab }) {
               <span>
                 {isHybrid
                   ? `Monthly Payment (Months 1–${sellerFinanceHybridIoMonths || "N"}, Interest Only)`
-                  : `Monthly Payment${isInterestOnly ? " (interest only)" : ""}`}{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
+                  : `Monthly Payment${isInterestOnly ? " (interest only)" : ""}`}
               </span>
               <input value={fmt(sellerFinanceMonthly)} readOnly tabIndex={-1} />
             </label>
@@ -668,8 +731,7 @@ function SellerFinanceTab({ tab }) {
               <label className="field deal-analyzer-output">
                 <span>
                   Monthly Payment (Month {sellerFinanceHybridIoMonths + 1}+,
-                  Amortized){" "}
-                  <span className="deal-analyzer-auto-badge">auto</span>
+                  Amortized)
                 </span>
                 <input
                   value={fmt(sellerFinanceHybridPhase2Monthly)}
@@ -684,8 +746,7 @@ function SellerFinanceTab({ tab }) {
                 {sellerFinanceBalloonIsFullPrincipal
                   ? "Principal Due"
                   : "Balloon Payment"}{" "}
-                at Year {sellerFinanceBalloonDueYears}{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
+                at Year {sellerFinanceBalloonDueYears}
               </span>
               <input value={fmt(sellerFinanceBalloon)} readOnly tabIndex={-1} />
             </label>
@@ -737,10 +798,7 @@ function SellerFinanceTab({ tab }) {
           />
           {totalLenderFees > 0 && (
             <label className="field deal-analyzer-output">
-              <span>
-                Total Lender Fees{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
+              <span>Total Lender Fees</span>
               <input value={fmt(totalLenderFees)} readOnly tabIndex={-1} />
             </label>
           )}
@@ -754,10 +812,7 @@ function SellerFinanceTab({ tab }) {
           />
           {totalCashToClose > 0 && (
             <label className="field deal-analyzer-output deal-analyzer-output-red">
-              <span>
-                Total Cash to Close Costs{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
+              <span>Total Cash to Close Costs</span>
               <input value={fmt(totalCashToClose)} readOnly tabIndex={-1} />
             </label>
           )}
@@ -841,28 +896,19 @@ function SellerFinanceTab({ tab }) {
           />
           {propMgmtFee > 0 && (
             <label className="field deal-analyzer-output">
-              <span>
-                Property Management ({PROP_MGMT_PCT}%){" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
+              <span>Property Management ({PROP_MGMT_PCT}%)</span>
               <input value={fmt(propMgmtFee)} readOnly tabIndex={-1} />
             </label>
           )}
           {(sellerFinanceMonthly > 0 || lenderMonthlyPayment > 0) && (
             <label className="field deal-analyzer-output">
-              <span>
-                Total Monthly Debt Service{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
+              <span>Total Monthly Debt Service</span>
               <input value={fmt(totalMonthlyPayment)} readOnly tabIndex={-1} />
             </label>
           )}
           {totalMonthlyExpenses > 0 && (
             <label className="field deal-analyzer-output">
-              <span>
-                Total Monthly Expenses{" "}
-                <span className="deal-analyzer-auto-badge">auto</span>
-              </span>
+              <span>Total Monthly Expenses</span>
               <input value={fmt(totalMonthlyExpenses)} readOnly tabIndex={-1} />
             </label>
           )}
@@ -875,9 +921,22 @@ function SellerFinanceTab({ tab }) {
               }`}
             >
               <span>
-                Cash Flow <span className="deal-analyzer-auto-badge">auto</span>
+                Cash Flow
+                {isHybrid ? ` (Months 1–${sellerFinanceHybridIoMonths})` : ""}
               </span>
               <input value={fmt(cashFlow)} readOnly tabIndex={-1} />
+            </label>
+          )}
+          {hasHybridPhase2 && monthlyRentAmount > 0 && (
+            <label
+              className={`field deal-analyzer-output ${
+                isCashFlowAfterIoNegative
+                  ? "deal-analyzer-output-red"
+                  : "deal-analyzer-output-positive"
+              }`}
+            >
+              <span>Cash Flow (Month {sellerFinanceHybridIoMonths + 1}+)</span>
+              <input value={fmt(cashFlowAfterIo)} readOnly tabIndex={-1} />
             </label>
           )}
         </div>
@@ -902,10 +961,22 @@ function SellerFinanceTab({ tab }) {
                   : "deal-analyzer-verdict-positive"
               }`}
             >
-              <span>Monthly Cash Flow</span>
+              <span>
+                Monthly Cash Flow
+                {summary.isHybrid
+                  ? ` (Months 1–${summary.sellerFinanceHybridIoMonths})`
+                  : ""}
+              </span>
               <strong>
                 <AnimatedAmount value={summary.cashFlow} format={fmt} />
               </strong>
+              {summary.hasHybridPhase2 && (
+                <p className="deal-analyzer-verdict-reason">
+                  Drops to {fmt(summary.cashFlowAfterIo)}/mo from month{" "}
+                  {summary.sellerFinanceHybridIoMonths + 1} on, once the note
+                  amortizes.
+                </p>
+              )}
             </div>
 
             <div
@@ -1186,7 +1257,74 @@ function SellerFinanceTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.hasHybridPhase2 && (
+                <div>
+                  <span>
+                    Cash Flow (Month {summary.sellerFinanceHybridIoMonths + 1}
+                    +)
+                  </span>
+                  <strong
+                    className={
+                      summary.isCashFlowAfterIoNegative
+                        ? "deal-analyzer-return-negative"
+                        : "deal-analyzer-return-positive"
+                    }
+                  >
+                    <AnimatedAmount
+                      value={summary.cashFlowAfterIo}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
             </div>
+
+            {summary.monthlyRentAmount > 0 && (
+              <>
+                <div
+                  className="deal-analyzer-section-label"
+                  style={{ marginTop: "1.25rem" }}
+                >
+                  Rent Sensitivity — If Achieved Rent Is Higher
+                </div>
+                <div className="deal-analyzer-summary-grid">
+                  {summary.rentSensitivity.map((row) => (
+                    <div key={row.increment}>
+                      <span>
+                        {row.increment === 0
+                          ? "Current Rent"
+                          : `Rent +$${row.increment}`}{" "}
+                        ({fmt(row.rent)})
+                      </span>
+                      <strong
+                        className={
+                          row.cashFlow < 0
+                            ? "deal-analyzer-return-negative"
+                            : "deal-analyzer-return-positive"
+                        }
+                      >
+                        <AnimatedAmount value={row.cashFlow} format={fmt} />
+                      </strong>
+                      {row.cashFlowAfterIo !== null && (
+                        <strong
+                          className={
+                            row.cashFlowAfterIo < 0
+                              ? "deal-analyzer-return-negative"
+                              : "deal-analyzer-return-positive"
+                          }
+                          style={{ fontSize: "0.8rem", opacity: 0.85 }}
+                        >
+                          {fmt(row.cashFlowAfterIo)} after month{" "}
+                          {summary.sellerFinanceHybridIoMonths + 1}
+                        </strong>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <SellerFinancePieChart summary={summary} />
 
             <div
               className="deal-analyzer-calculation"
@@ -1229,6 +1367,14 @@ function SellerFinanceTab({ tab }) {
                 where `r = annual interest / 12` and `n = term x 12`. A lender
                 without a term contributes $0 until one is entered.
               </span>
+              {summary.monthlyRentAmount > 0 && (
+                <span>
+                  Rent Sensitivity holds debt service, taxes, insurance and
+                  appliance insurance fixed and re-runs cash flow at $50
+                  increments of achieved rent — property management (10%) moves
+                  with rent since it's a percentage of it.
+                </span>
+              )}
             </div>
 
             <div
