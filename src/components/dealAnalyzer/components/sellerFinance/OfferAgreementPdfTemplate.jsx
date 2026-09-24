@@ -60,11 +60,12 @@ function SigLine({ label, value }) {
 
 // Purchase & Sale Agreement, generated from the Seller Finance tab's
 // calculated numbers once a summary exists. Modeled on the uploaded You
-// Win Estates contract template — the existing clauses (1, 3-9 below) are
-// reproduced verbatim; the only new clause is "2. SELLER FINANCING",
-// inserted after "1. PURCHASE PRICE & FINANCIAL TERMS" and pushing the
-// rest of the numbering down by one. Seller Name(s) is left blank, same
-// as the source template, since the calculator doesn't collect it —
+// Win Estates contract template — the source template's clauses are
+// reproduced verbatim (minus "Successors, Assignment & Novation", dropped
+// per request), with one new clause added: "2. SELLER FINANCING",
+// inserted after "1. PURCHASE PRICE & FINANCIAL TERMS". Seller Name(s) is
+// left blank, same as the source template, since the calculator doesn't
+// collect it —
 // Purchase Price, Property Address, the Seller-Financed Amount, the
 // Effective Date (today, since that's when this offer is generated) and
 // the EMD (10% of Purchase Price) are filled in.
@@ -213,25 +214,7 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
           </p>
         </Section>
 
-        <Section number={7} title="SUCCESSORS, ASSIGNMENT & NOVATION">
-          <p>
-            This Agreement shall bind and benefit the parties hereto and their
-            respective heirs, successors, representatives, and designees. Buyer
-            reserves the unrestricted right to assign this Agreement or novate
-            its rights and obligations to any affiliate, nominee, partner, or
-            third-party purchaser (<strong>"Assignee/New Buyer"</strong>). Upon
-            execution of a novation agreement or written notice of assignment
-            and assumption, the original Buyer shall be fully and
-            unconditionally released and discharged from all further liability,
-            covenants, and performance under this Agreement, and the
-            Assignee/New Buyer shall assume all rights and obligations
-            hereunder. Seller consents in advance to such assignment or novation
-            and agrees to execute all closing and transfer documents necessary
-            to complete the transaction with such final designee.
-          </p>
-        </Section>
-
-        <Section number={8} title="ENTIRE AGREEMENT">
+        <Section number={7} title="ENTIRE AGREEMENT">
           <p>
             This contract constitutes the final and entire agreement between the
             parties and supersedes all prior discussions, negotiations,
@@ -240,7 +223,7 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
           </p>
         </Section>
 
-        <Section number={9} title="OFFER EXPIRATION & ACCEPTANCE">
+        <Section number={8} title="OFFER EXPIRATION & ACCEPTANCE">
           <p>
             This offer is strictly conditioned upon acceptance and is valid only
             for twenty-four (24) hours after being transmitted and delivered to
