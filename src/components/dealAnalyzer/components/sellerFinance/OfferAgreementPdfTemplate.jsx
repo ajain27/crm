@@ -15,6 +15,15 @@ const SELLER = {
 const BUYER_NAME = "You Win Estates LLC, and/or assigns";
 const BUYER_COMPANY = "You Win Estates LLC";
 const BUYER_REP = "Ankit Jain";
+const EMD_PCT = 10;
+
+function todayFormatted() {
+  return new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 function Field({ label, value }) {
   return (
@@ -54,16 +63,19 @@ function SigLine({ label, value }) {
 // Win Estates contract template — the existing clauses (1, 3-9 below) are
 // reproduced verbatim; the only new clause is "2. SELLER FINANCING",
 // inserted after "1. PURCHASE PRICE & FINANCIAL TERMS" and pushing the
-// rest of the numbering down by one. Seller Name(s) and the Earnest Money
-// Deposit are left blank, same as the source template, since the
-// calculator doesn't collect either — Purchase Price, Property Address
-// and the Seller-Financed Amount are the only fields it fills in.
+// rest of the numbering down by one. Seller Name(s) is left blank, same
+// as the source template, since the calculator doesn't collect it —
+// Purchase Price, Property Address, the Seller-Financed Amount, the
+// Effective Date (today, since that's when this offer is generated) and
+// the EMD (10% of Purchase Price) are filled in.
 const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
   { summary },
   ref,
 ) {
   if (!summary) return null;
   if (typeof document === "undefined") return null;
+
+  const emdAmount = summary.purchasePrice * (EMD_PCT / 100);
 
   return createPortal(
     <div className="oa-pdf-container" ref={ref}>
@@ -106,6 +118,7 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
         </p>
 
         <div className="oa-pdf-fields">
+          <Field label="Effective Date:" value={todayFormatted()} />
           <Field label="Seller Name(s):" value="" />
           <Field label="Buyer Name:" value={BUYER_NAME} />
           <Field label="Property Address:" value={summary.propertyAddress} />
@@ -117,7 +130,9 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
             <span className="oa-pdf-inline-field">
               {fmt(summary.purchasePrice)}
             </span>{" "}
-            &nbsp;&nbsp; Earnest Money Deposit (EMD): $ ________________
+            &nbsp;&nbsp; Earnest Money Deposit (EMD, {EMD_PCT}% of Purchase
+            Price):{" "}
+            <span className="oa-pdf-inline-field">{fmt(emdAmount)}</span>
           </p>
           <p>
             The Purchase Price shall be paid at closing in immediately available
