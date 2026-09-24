@@ -51,7 +51,7 @@ function Section({ number, title, children, isNew }) {
 // SVG (no source image file was available to embed directly).
 function BrandIcon() {
   return (
-    <svg viewBox="0 0 100 100" width="30" height="30">
+    <svg viewBox="0 0 100 100" className="oa-pdf-brand-icon-svg">
       <polygon
         points="50,16 86,48 72,48 72,56 60,56 60,38 40,38 40,56 28,56 28,48 14,48"
         fill="#16223f"

@@ -35,14 +35,20 @@
   }
 
   .oa-pdf-brand-icon {
-    width: 44px;
-    height: 44px;
+    width: 54px;
+    height: 54px;
     flex-shrink: 0;
-    border-radius: 10px;
+    border-radius: 12px;
     background: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .oa-pdf-brand-icon-svg {
+    display: block;
+    width: 40px;
+    height: 40px;
   }
 
   .oa-pdf-company-name {
