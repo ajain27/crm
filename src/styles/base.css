@@ -176,41 +176,58 @@
       flex: 0 0 auto;
       margin: 0 auto;
     }
+
+    .app-sidebar:not(.is-open) .sb-header {
+      justify-content: center;
+    }
+
+    .app-sidebar:not(.is-open) .sb-header-logo {
+      display: none;
+    }
   }
 
-  /* Collapse/expand control — a pill that straddles the sidebar's edge
-     near the top, instead of a button buried in the bottom user card.
-     `.app-sidebar` is `position: sticky`, which (like `relative`) is a
-     valid containing block for this `absolute` child. */
-  .sb-edge-toggle {
-    position: absolute;
-    top: 4.25rem;
-    right: -0.8125rem;
-    z-index: 41;
-    width: 1.625rem;
-    height: 1.625rem;
+  /* Sidebar header — hamburger toggle + logo, YouTube-style: sits above
+     the nav instead of a control buried in the bottom user card. */
+  .sb-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 0.75rem;
     flex-shrink: 0;
-    border-radius: 9999px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    color: var(--muted);
+  }
+
+  .sb-hamburger-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     transition:
       background 0.14s,
-      color 0.14s,
-      border-color 0.14s,
-      transform 0.14s;
+      border-color 0.14s;
   }
 
-  .sb-edge-toggle:hover {
-    background: var(--blue-light);
-    color: var(--blue);
-    border-color: color-mix(in srgb, var(--blue) 30%, var(--line) 70%);
-    transform: scale(1.08);
+  .sb-hamburger-btn:hover {
+    background: var(--badge-bg);
+    border-color: var(--line);
+  }
+
+  .sb-header-logo {
+    height: 1.5rem;
+    width: auto;
+    max-width: 130px;
+    mix-blend-mode: multiply;
+  }
+
+  .dark .sb-header-logo {
+    mix-blend-mode: screen;
+    filter: invert(1) hue-rotate(180deg);
   }
 
   /* Nav items */
@@ -554,7 +571,7 @@
     border-color: rgba(45, 212, 191, 0.3);
   }
 
-  :root.dark .sb-edge-toggle:hover {
+  :root.dark .sb-hamburger-btn:hover {
     background: rgba(20, 184, 166, 0.14);
     color: #2dd4bf;
     border-color: rgba(45, 212, 191, 0.3);
