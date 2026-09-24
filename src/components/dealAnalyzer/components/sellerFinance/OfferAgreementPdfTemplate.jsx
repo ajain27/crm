@@ -65,10 +65,11 @@ function SigLine({ label, value }) {
 // per request), with one new clause added: "2. SELLER FINANCING",
 // inserted after "1. PURCHASE PRICE & FINANCIAL TERMS". Seller Name(s) is
 // left blank, same as the source template, since the calculator doesn't
-// collect it —
-// Purchase Price, Property Address, the Seller-Financed Amount, the
-// Effective Date (today, since that's when this offer is generated) and
-// the EMD (10% of Purchase Price) are filled in.
+// collect it — Purchase Price, Property Address, the Seller-Financed
+// Amount, the Effective Date (today, since that's when this offer is
+// generated) and the EMD (10% of Purchase Price) are filled in. For a
+// hybrid note, the interest-only month count is stated too, but not the
+// dollar payment amounts, since those can still change before closing.
 const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
   { summary },
   ref,
@@ -158,6 +159,17 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
             (the <strong>"Seller Financing"</strong>), shall be financed by
             Seller.
           </p>
+          {summary.isHybrid && (
+            <p>
+              <strong>Payment Structure:</strong> The Seller Financing shall be
+              structured on an interest-only basis for the first{" "}
+              {summary.sellerFinanceHybridIoMonths} months following Closing,
+              after which payments shall convert to a fully amortized
+              principal-and-interest schedule for the remainder of the note
+              term. Exact payment amounts will be set forth in the Promissory
+              Note at Closing.
+            </p>
+          )}
           <p>
             <strong>Lien Position:</strong> The Seller Financing shall be
             secured by a promissory note and a deed of trust/mortgage against
