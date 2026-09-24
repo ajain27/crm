@@ -120,18 +120,14 @@ export default function AdditionalLenders({
           return (
             <div key={lender.id} className="additional-lender-row">
               <Field
-                label={
-                  <>
-                    {`Lender ${idx + 1} Amount`}
-                    {lender.auto && (
-                      <span className="deal-analyzer-auto-badge">auto</span>
-                    )}
-                  </>
-                }
+                label={`Lender ${idx + 1} Amount`}
+                wrapperClassName={lender.auto ? "deal-analyzer-output" : ""}
                 name={`lender-amount-${lender.id}`}
                 value={lender.amount}
                 onChange={(e) => handleAmountChange(lender.id, e.target.value)}
                 placeholder="e.g. $25,000"
+                readOnly={lender.auto}
+                tabIndex={lender.auto ? -1 : undefined}
               />
               <Field
                 label={`Lender ${idx + 1} Rate (%)`}
