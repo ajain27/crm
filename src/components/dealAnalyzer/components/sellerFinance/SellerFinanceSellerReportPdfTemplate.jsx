@@ -13,6 +13,23 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
   function SellerFinanceSellerReportPdfTemplate({ summary }, ref) {
     if (!summary) return null;
 
+    // For a hybrid note, split the months actually collected between the
+    // interest-only and amortized phases — clamped so an early balloon that
+    // cuts the note short during the interest-only phase never lets the
+    // amortized-phase term go negative.
+    const ioMonthsCollected = summary.isHybrid
+      ? Math.min(
+          summary.sellerFinanceHybridIoMonths,
+          summary.sellerNoteMonthsElapsed,
+        )
+      : 0;
+    const amortizedMonthsCollected = summary.isHybrid
+      ? Math.max(
+          0,
+          summary.sellerNoteMonthsElapsed - summary.sellerFinanceHybridIoMonths,
+        )
+      : 0;
+
     return (
       <DealPdfLayout
         ref={ref}
@@ -47,7 +64,9 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
           value={
             summary.isInterestOnly
               ? "Interest only"
-              : "Amortized (principal + interest)"
+              : summary.isHybrid
+                ? `Hybrid — interest only for ${summary.sellerFinanceHybridIoMonths} months, then amortized`
+                : "Amortized (principal + interest)"
           }
         />
         <PdfRow
@@ -58,13 +77,26 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
           label={
             summary.isInterestOnly
               ? "Monthly Payment (Interest Only)"
-              : "Monthly Payment"
+              : summary.isHybrid
+                ? `Monthly Payment (Months 1–${summary.sellerFinanceHybridIoMonths}, Interest Only)`
+                : "Monthly Payment"
           }
           value={fmt(summary.sellerFinanceMonthly)}
           tone="positive"
         />
+        {summary.isHybrid && summary.sellerFinanceHybridPhase2Monthly > 0 && (
+          <PdfRow
+            label={`Monthly Payment (Month ${summary.sellerFinanceHybridIoMonths + 1}+, Amortized)`}
+            value={fmt(summary.sellerFinanceHybridPhase2Monthly)}
+            tone="positive"
+          />
+        )}
         <PdfRow
-          label={summary.isInterestOnly ? "Principal Due" : "Balloon Due"}
+          label={
+            summary.sellerFinanceBalloonIsFullPrincipal
+              ? "Principal Due"
+              : "Balloon Due"
+          }
           value={
             summary.sellerFinanceBalloonYears > 0
               ? `${fmt(summary.sellerFinanceBalloon)} at year ${summary.sellerFinanceBalloonYears}`
@@ -85,16 +117,34 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
           tone="positive"
         />
 
-        <p className="mm-pdf-formula">
-          Extra Income From Interest = (Monthly Payment × Months Collected) +{" "}
-          {summary.isInterestOnly ? "Principal Repaid" : "Balloon"} − Amount
-          Financed
-          <br />({fmt(summary.sellerFinanceMonthly)} ×{" "}
-          {summary.sellerNoteMonthsElapsed}) +{" "}
-          {fmt(summary.sellerFinanceBalloon)} −{" "}
-          {fmt(summary.sellerFinanceAmount)} ={" "}
-          {fmt(summary.sellerNoteTotalInterest)}
-        </p>
+        {summary.isHybrid ? (
+          <p className="mm-pdf-formula">
+            Extra Income From Interest = (Interest-Only Payment × IO Months) +
+            (Amortized Payment × Months After) +{" "}
+            {summary.sellerFinanceBalloonIsFullPrincipal
+              ? "Principal Repaid"
+              : "Balloon"}{" "}
+            − Amount Financed
+            <br />({fmt(summary.sellerFinanceMonthly)} × {ioMonthsCollected}) +
+            ({fmt(summary.sellerFinanceHybridPhase2Monthly || 0)} ×{" "}
+            {amortizedMonthsCollected}) + {fmt(summary.sellerFinanceBalloon)} −{" "}
+            {fmt(summary.sellerFinanceAmount)} ={" "}
+            {fmt(summary.sellerNoteTotalInterest)}
+          </p>
+        ) : (
+          <p className="mm-pdf-formula">
+            Extra Income From Interest = (Monthly Payment × Months Collected) +{" "}
+            {summary.sellerFinanceBalloonIsFullPrincipal
+              ? "Principal Repaid"
+              : "Balloon"}{" "}
+            − Amount Financed
+            <br />({fmt(summary.sellerFinanceMonthly)} ×{" "}
+            {summary.sellerNoteMonthsElapsed}) +{" "}
+            {fmt(summary.sellerFinanceBalloon)} −{" "}
+            {fmt(summary.sellerFinanceAmount)} ={" "}
+            {fmt(summary.sellerNoteTotalInterest)}
+          </p>
+        )}
       </DealPdfLayout>
     );
   },

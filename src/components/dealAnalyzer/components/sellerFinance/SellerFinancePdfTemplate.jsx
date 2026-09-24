@@ -86,7 +86,9 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
         value={
           summary.isInterestOnly
             ? "Interest only"
-            : "Amortized (principal + interest)"
+            : summary.isHybrid
+              ? `Hybrid — interest only for ${summary.sellerFinanceHybridIoMonths} months, then amortized`
+              : "Amortized (principal + interest)"
         }
       />
       <PdfRow
@@ -95,13 +97,28 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
       />
       <PdfRow
         label={`Seller Note Monthly Payment${
-          summary.isInterestOnly ? " (Interest Only)" : ""
+          summary.isInterestOnly
+            ? " (Interest Only)"
+            : summary.isHybrid
+              ? ` (Months 1–${summary.sellerFinanceHybridIoMonths}, Interest Only)`
+              : ""
         }`}
         value={fmt(summary.sellerFinanceMonthly)}
         tone="negative"
       />
+      {summary.isHybrid && summary.sellerFinanceHybridPhase2Monthly > 0 && (
+        <PdfRow
+          label={`Seller Note Monthly Payment (Month ${summary.sellerFinanceHybridIoMonths + 1}+, Amortized)`}
+          value={fmt(summary.sellerFinanceHybridPhase2Monthly)}
+          tone="negative"
+        />
+      )}
       <PdfRow
-        label={summary.isInterestOnly ? "Principal Due" : "Balloon Due"}
+        label={
+          summary.sellerFinanceBalloonIsFullPrincipal
+            ? "Principal Due"
+            : "Balloon Due"
+        }
         value={
           summary.sellerFinanceBalloonYears > 0
             ? `${fmt(summary.sellerFinanceBalloon)} at year ${summary.sellerFinanceBalloonYears}`
@@ -190,6 +207,16 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
         + {fmt(summary.lenderMonthlyPayment)} + {fmt(summary.monthlyTaxes)} +{" "}
         {fmt(summary.monthlyInsurance)} + {fmt(summary.applianceInsuranceAmt)} +{" "}
         {fmt(summary.propMgmtFee)}) = {fmt(summary.cashFlow)}
+        {summary.isHybrid && summary.sellerFinanceHybridPhase2Monthly > 0 && (
+          <>
+            <br />
+            Reflects the interest-only payment in months 1–
+            {summary.sellerFinanceHybridIoMonths}. From month{" "}
+            {summary.sellerFinanceHybridIoMonths + 1} on, the seller note
+            payment rises to {fmt(summary.sellerFinanceHybridPhase2Monthly)}
+            /mo, which lowers cash flow accordingly.
+          </>
+        )}
       </p>
     </DealPdfLayout>
   );

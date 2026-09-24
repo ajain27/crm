@@ -74,6 +74,92 @@ describe("SellerFinanceTab", () => {
     expect(principalValue).toHaveTextContent("$60,000.00 at year 10");
   });
 
+  it("uses hybrid payments that self-amortize to a full payoff when no balloon is set", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fillBaseForm();
+    fireEvent.change(screen.getByLabelText(/Payment Type/i), {
+      target: { value: "hybrid" },
+    });
+    fireEvent.change(screen.getByLabelText(/Interest-Only Period/i), {
+      target: { value: "12" },
+    });
+
+    // $60,000 x 6% / 12 = $300.00 for the first 12 months.
+    expect(screen.getAllByDisplayValue("$300.00").length).toBeGreaterThan(0);
+    // The amortized payment for months 13+ is higher than the IO payment,
+    // since it now has to pay down principal over the remaining 108 months.
+    expect(
+      screen.getByLabelText(/Monthly Payment \(Month 13\+, Amortized\)/i),
+    ).not.toHaveValue("$300.00");
+
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    expect(
+      screen.getAllByText(/Months 1–12, Interest Only/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Month 13\+, Amortized/i).length,
+    ).toBeGreaterThan(0);
+
+    // Sized to amortize over exactly the remaining term, so it fully pays
+    // off by year 10 — no balloon left over.
+    const balloonLabel = screen.getByText("Balloon Due");
+    const balloonValue = balloonLabel.parentElement.querySelector("strong");
+    expect(balloonValue).toHaveTextContent("None");
+  });
+
+  it("treats a hybrid balloon during the interest-only period as the full principal", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fillBaseForm();
+    fireEvent.change(screen.getByLabelText(/Payment Type/i), {
+      target: { value: "hybrid" },
+    });
+    fireEvent.change(screen.getByLabelText(/Interest-Only Period/i), {
+      target: { value: "24" },
+    });
+    // Balloon at year 1 (month 12) falls before the 24-month IO period ends
+    // — no principal has been paid down yet.
+    fireEvent.change(screen.getByLabelText(/Balloon Payment at \(Years\)/i), {
+      target: { value: "1" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    const principalLabel = screen.getByText("Principal Due");
+    const principalValue = principalLabel.parentElement.querySelector("strong");
+    expect(principalValue).toHaveTextContent("$60,000.00 at year 1");
+  });
+
+  it("treats a hybrid balloon during the amortized period as a partial balance", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fillBaseForm();
+    fireEvent.change(screen.getByLabelText(/Payment Type/i), {
+      target: { value: "hybrid" },
+    });
+    fireEvent.change(screen.getByLabelText(/Interest-Only Period/i), {
+      target: { value: "12" },
+    });
+    // Balloon at year 3 (month 36) falls well after the 12-month IO period
+    // — some principal has already amortized down.
+    fireEvent.change(screen.getByLabelText(/Balloon Payment at \(Years\)/i), {
+      target: { value: "3" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    const balloonLabel = screen.getByText("Balloon Due");
+    const balloonValue = balloonLabel.parentElement.querySelector("strong");
+    expect(balloonValue).toHaveTextContent("at year 3");
+    // Partial payoff — strictly less than the full $60,000 financed.
+    const [, amountText] = balloonValue.textContent.match(/\$([\d,]+\.\d{2})/);
+    const amount = Number(amountText.replace(/,/g, ""));
+    expect(amount).toBeGreaterThan(0);
+    expect(amount).toBeLessThan(60000);
+  });
+
   it("calculates the monthly payment and balloon payment in the summary", () => {
     render(<SellerFinanceTab tab={tab} />);
 

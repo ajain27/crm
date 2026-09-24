@@ -28,6 +28,158 @@ const DEFAULT_LENDER_FEES = {
   underwritingFees: "$1,600",
 };
 
+// Models the seller note's payment schedule for all three payment types:
+//   - amortized: level P&I payments for the whole term, with an optional
+//     balloon of the remaining balance.
+//   - interestOnly: interest-only payments; the full principal comes due as
+//     a balloon — at the balloon year if one is set, otherwise at term end.
+//   - hybrid: interest-only for `ioMonths`, then the full principal
+//     amortizes over whatever term remains — self-paying off by term end
+//     unless a balloon year cuts it short.
+// `earlyBalloonMonths` is 0 when no balloon year is set (or it's >= the
+// term, which isn't an "early" balloon).
+function computeSellerNote({
+  amount,
+  annualRateDecimal,
+  termMonths,
+  paymentType,
+  ioMonths,
+  earlyBalloonMonths,
+}) {
+  const zero = {
+    monthly: 0,
+    phase2Monthly: null,
+    ioMonths: 0,
+    monthsElapsed: 0,
+    balloon: 0,
+    balloonDueMonths: 0,
+    balloonIsFullPrincipal: false,
+    totalReceived: 0,
+    totalInterest: 0,
+  };
+  if (amount <= 0 || termMonths <= 0) return zero;
+
+  if (paymentType === "interestOnly") {
+    const monthly = (amount * annualRateDecimal) / 12;
+    const balloonDueMonths = earlyBalloonMonths || termMonths;
+    const totalReceived = monthly * balloonDueMonths + amount;
+    return {
+      ...zero,
+      monthly,
+      monthsElapsed: balloonDueMonths,
+      balloon: amount,
+      balloonDueMonths,
+      balloonIsFullPrincipal: true,
+      totalReceived,
+      totalInterest: totalReceived - amount,
+    };
+  }
+
+  if (paymentType === "hybrid") {
+    // Need at least one amortized month after the interest-only period.
+    const clampedIoMonths = Math.min(
+      Math.max(ioMonths, 0),
+      Math.max(termMonths - 1, 0),
+    );
+    const monthly = (amount * annualRateDecimal) / 12;
+    const remainingTermMonths = termMonths - clampedIoMonths;
+    const phase2Monthly = calculateMonthlyPayment(
+      amount,
+      annualRateDecimal,
+      remainingTermMonths,
+    );
+
+    if (earlyBalloonMonths > 0 && earlyBalloonMonths <= clampedIoMonths) {
+      // Balloon falls inside the interest-only period — no principal has
+      // been paid down yet, so the full amount is due.
+      const totalReceived = monthly * earlyBalloonMonths + amount;
+      return {
+        ...zero,
+        monthly,
+        phase2Monthly,
+        ioMonths: clampedIoMonths,
+        monthsElapsed: earlyBalloonMonths,
+        balloon: amount,
+        balloonDueMonths: earlyBalloonMonths,
+        balloonIsFullPrincipal: true,
+        totalReceived,
+        totalInterest: totalReceived - amount,
+      };
+    }
+
+    if (earlyBalloonMonths > clampedIoMonths) {
+      // Balloon falls inside the amortized period — the remaining balance
+      // is whatever's left of the phase-2 amortization schedule.
+      const monthsIntoPhase2 = earlyBalloonMonths - clampedIoMonths;
+      const balloon = calculateBalloonBalance(
+        amount,
+        annualRateDecimal,
+        remainingTermMonths,
+        monthsIntoPhase2,
+      );
+      const totalReceived =
+        monthly * clampedIoMonths + phase2Monthly * monthsIntoPhase2 + balloon;
+      return {
+        ...zero,
+        monthly,
+        phase2Monthly,
+        ioMonths: clampedIoMonths,
+        monthsElapsed: earlyBalloonMonths,
+        balloon,
+        balloonDueMonths: earlyBalloonMonths,
+        balloonIsFullPrincipal: false,
+        totalReceived,
+        totalInterest: totalReceived - amount,
+      };
+    }
+
+    // No early balloon — the phase-2 schedule is sized to the remaining
+    // term, so it pays itself off completely by the end of the note.
+    const totalReceived =
+      monthly * clampedIoMonths + phase2Monthly * remainingTermMonths;
+    return {
+      ...zero,
+      monthly,
+      phase2Monthly,
+      ioMonths: clampedIoMonths,
+      monthsElapsed: termMonths,
+      balloon: 0,
+      balloonDueMonths: 0,
+      balloonIsFullPrincipal: false,
+      totalReceived,
+      totalInterest: totalReceived - amount,
+    };
+  }
+
+  // Amortized (default).
+  const monthly = calculateMonthlyPayment(
+    amount,
+    annualRateDecimal,
+    termMonths,
+  );
+  const balloonDueMonths = earlyBalloonMonths;
+  const balloon = balloonDueMonths
+    ? calculateBalloonBalance(
+        amount,
+        annualRateDecimal,
+        termMonths,
+        balloonDueMonths,
+      )
+    : 0;
+  const monthsElapsed = balloonDueMonths || termMonths;
+  const totalReceived = monthly * monthsElapsed + balloon;
+  return {
+    ...zero,
+    monthly,
+    monthsElapsed,
+    balloon,
+    balloonDueMonths,
+    balloonIsFullPrincipal: false,
+    totalReceived,
+    totalInterest: totalReceived - amount,
+  };
+}
+
 // Amortized (P&I) monthly payment for a single lender — always based on the
 // standard amortization formula, never an interest-only shortcut. A lender
 // with no term contributes $0 until a term is entered.
@@ -58,6 +210,7 @@ const initialForm = {
   sellerFinanceRate: "",
   sellerFinancePaymentType: "amortized",
   sellerFinanceTermYears: "",
+  sellerFinanceHybridMonths: "",
   sellerFinanceBalloonYears: "",
   originationFees: "",
   legalFees: "",
@@ -83,9 +236,11 @@ const CURRENCY_FIELDS = new Set([
   "applianceInsurance",
 ]);
 const PERCENT_FIELDS = new Set(["sellerFinancePct", "sellerFinanceRate"]);
+// Digits-only fields — years and the hybrid interest-only month count.
 const YEAR_FIELDS = new Set([
   "sellerFinanceTermYears",
   "sellerFinanceBalloonYears",
+  "sellerFinanceHybridMonths",
 ]);
 
 function SellerFinanceTab({ tab }) {
@@ -158,50 +313,43 @@ function SellerFinanceTab({ tab }) {
   const totalPayments = sellerFinanceTermYears * 12;
   const annualRateDecimal = sellerFinanceRatePct / 100;
 
-  // Interest-only: the seller collects just the interest each month and the
-  // entire principal comes due as a balloon — at the balloon year if one is
-  // set, otherwise at the end of the note term. Amortized: level P&I
-  // payments, with an optional balloon of the remaining balance.
   const isInterestOnly = form.sellerFinancePaymentType === "interestOnly";
+  const isHybrid = form.sellerFinancePaymentType === "hybrid";
   const hasEarlyBalloon =
     sellerFinanceBalloonYears > 0 &&
     sellerFinanceBalloonYears < sellerFinanceTermYears;
-  const sellerFinanceMonthly = isInterestOnly
-    ? (sellerFinanceAmount * annualRateDecimal) / 12
-    : calculateMonthlyPayment(
-        sellerFinanceAmount,
-        annualRateDecimal,
-        totalPayments,
-      );
-  const sellerFinanceBalloonDueYears = isInterestOnly
-    ? hasEarlyBalloon
-      ? sellerFinanceBalloonYears
-      : sellerFinanceTermYears
-    : hasEarlyBalloon
-      ? sellerFinanceBalloonYears
-      : 0;
-  const sellerFinanceBalloon = isInterestOnly
-    ? sellerFinanceAmount
-    : hasEarlyBalloon
-      ? calculateBalloonBalance(
-          sellerFinanceAmount,
-          annualRateDecimal,
-          totalPayments,
-          sellerFinanceBalloonYears * 12,
-        )
-      : 0;
+  const sellerFinanceHybridMonths =
+    parseInt(form.sellerFinanceHybridMonths || "0", 10) || 0;
+
+  // Interest-only: the seller collects just the interest each month and the
+  // entire principal comes due as a balloon — at the balloon year if one is
+  // set, otherwise at the end of the note term. Hybrid: interest-only for
+  // the chosen number of months, then the remaining principal amortizes
+  // over the rest of the term (self-paying off by term end unless a
+  // balloon year cuts it short). Amortized: level P&I payments for the
+  // whole term, with an optional balloon of the remaining balance.
+  const sellerNote = computeSellerNote({
+    amount: sellerFinanceAmount,
+    annualRateDecimal,
+    termMonths: totalPayments,
+    paymentType: form.sellerFinancePaymentType,
+    ioMonths: sellerFinanceHybridMonths,
+    earlyBalloonMonths: hasEarlyBalloon ? sellerFinanceBalloonYears * 12 : 0,
+  });
+  const sellerFinanceMonthly = sellerNote.monthly;
+  const sellerFinanceHybridPhase2Monthly = sellerNote.phase2Monthly;
+  const sellerFinanceHybridIoMonths = sellerNote.ioMonths;
+  const sellerFinanceBalloon = sellerNote.balloon;
+  const sellerFinanceBalloonDueYears = sellerNote.balloonDueMonths / 12;
+  const sellerFinanceBalloonIsFullPrincipal = sellerNote.balloonIsFullPrincipal;
 
   // Total interest the seller earns by carrying the note: the sum of every
-  // payment they actually collect (monthly payments up to the balloon, or
-  // the full term if there's no balloon, plus the balloon itself) minus the
-  // principal they financed.
+  // payment they actually collect (across both phases, up to the balloon or
+  // the full term) plus the balloon itself, minus the principal financed.
   const downPaymentAmount = purchasePrice - sellerFinanceAmount;
-  const sellerNoteMonthsElapsed = hasEarlyBalloon
-    ? sellerFinanceBalloonYears * 12
-    : totalPayments;
-  const sellerNoteTotalReceived =
-    sellerFinanceMonthly * sellerNoteMonthsElapsed + sellerFinanceBalloon;
-  const sellerNoteTotalInterest = sellerNoteTotalReceived - sellerFinanceAmount;
+  const sellerNoteMonthsElapsed = sellerNote.monthsElapsed;
+  const sellerNoteTotalReceived = sellerNote.totalReceived;
+  const sellerNoteTotalInterest = sellerNote.totalInterest;
 
   const lenderTotal = calcLenderTotal(lenders);
   const remainingForLender = Math.max(
@@ -311,6 +459,7 @@ function SellerFinanceTab({ tab }) {
     form.sellerFinancePct?.trim() &&
     form.sellerFinanceRate?.trim() &&
     form.sellerFinanceTermYears?.trim() &&
+    (!isHybrid || form.sellerFinanceHybridMonths?.trim()) &&
     form.monthlyRent?.trim(),
   );
 
@@ -325,9 +474,13 @@ function SellerFinanceTab({ tab }) {
       sellerFinanceTermYears,
       sellerFinanceBalloonYears: sellerFinanceBalloonDueYears,
       sellerFinanceBalloon,
+      sellerFinanceBalloonIsFullPrincipal,
       sellerFinanceMonthly,
+      sellerFinanceHybridPhase2Monthly,
+      sellerFinanceHybridIoMonths,
       sellerFinancePaymentType: form.sellerFinancePaymentType,
       isInterestOnly,
+      isHybrid,
       downPaymentAmount,
       sellerNoteMonthsElapsed,
       sellerNoteTotalReceived,
@@ -460,6 +613,9 @@ function SellerFinanceTab({ tab }) {
                 Amortized (principal + interest)
               </option>
               <option value="interestOnly">Interest only</option>
+              <option value="hybrid">
+                Hybrid (interest only, then amortized)
+              </option>
             </select>
           </label>
           <Field
@@ -470,6 +626,16 @@ function SellerFinanceTab({ tab }) {
             placeholder="e.g. 10"
             required
           />
+          {isHybrid && (
+            <Field
+              label="Interest-Only Period (Months)"
+              name="sellerFinanceHybridMonths"
+              value={form.sellerFinanceHybridMonths}
+              onChange={handleChange}
+              placeholder="e.g. 12"
+              required
+            />
+          )}
           <Field
             label={
               isInterestOnly
@@ -488,17 +654,37 @@ function SellerFinanceTab({ tab }) {
           {sellerFinanceAmount > 0 && totalPayments > 0 && (
             <label className="field deal-analyzer-output">
               <span>
-                Monthly Payment{isInterestOnly ? " (interest only)" : ""}{" "}
+                {isHybrid
+                  ? `Monthly Payment (Months 1–${sellerFinanceHybridIoMonths || "N"}, Interest Only)`
+                  : `Monthly Payment${isInterestOnly ? " (interest only)" : ""}`}{" "}
                 <span className="deal-analyzer-auto-badge">auto</span>
               </span>
               <input value={fmt(sellerFinanceMonthly)} readOnly tabIndex={-1} />
             </label>
           )}
+          {isHybrid &&
+            sellerFinanceAmount > 0 &&
+            sellerFinanceHybridPhase2Monthly > 0 && (
+              <label className="field deal-analyzer-output">
+                <span>
+                  Monthly Payment (Month {sellerFinanceHybridIoMonths + 1}+,
+                  Amortized){" "}
+                  <span className="deal-analyzer-auto-badge">auto</span>
+                </span>
+                <input
+                  value={fmt(sellerFinanceHybridPhase2Monthly)}
+                  readOnly
+                  tabIndex={-1}
+                />
+              </label>
+            )}
           {sellerFinanceBalloonDueYears > 0 && sellerFinanceBalloon > 0 && (
             <label className="field deal-analyzer-output">
               <span>
-                {isInterestOnly ? "Principal Due" : "Balloon Payment"} at Year{" "}
-                {sellerFinanceBalloonDueYears}{" "}
+                {sellerFinanceBalloonIsFullPrincipal
+                  ? "Principal Due"
+                  : "Balloon Payment"}{" "}
+                at Year {sellerFinanceBalloonDueYears}{" "}
                 <span className="deal-analyzer-auto-badge">auto</span>
               </span>
               <input value={fmt(sellerFinanceBalloon)} readOnly tabIndex={-1} />
@@ -845,7 +1031,11 @@ function SellerFinanceTab({ tab }) {
               <div>
                 <span>
                   Seller Note Monthly Payment
-                  {summary.isInterestOnly ? " (Interest Only)" : ""}
+                  {summary.isInterestOnly
+                    ? " (Interest Only)"
+                    : summary.isHybrid
+                      ? ` (Months 1–${summary.sellerFinanceHybridIoMonths}, Interest Only)`
+                      : ""}
                 </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
@@ -854,9 +1044,26 @@ function SellerFinanceTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.isHybrid &&
+                summary.sellerFinanceHybridPhase2Monthly > 0 && (
+                  <div>
+                    <span>
+                      Seller Note Monthly Payment (Month{" "}
+                      {summary.sellerFinanceHybridIoMonths + 1}+, Amortized)
+                    </span>
+                    <strong className="deal-analyzer-return-negative">
+                      <AnimatedAmount
+                        value={summary.sellerFinanceHybridPhase2Monthly}
+                        format={fmt}
+                      />
+                    </strong>
+                  </div>
+                )}
               <div>
                 <span>
-                  {summary.isInterestOnly ? "Principal Due" : "Balloon Due"}
+                  {summary.sellerFinanceBalloonIsFullPrincipal
+                    ? "Principal Due"
+                    : "Balloon Due"}
                 </span>
                 <strong className="deal-analyzer-return-negative">
                   {summary.sellerFinanceBalloonYears > 0
@@ -1015,7 +1222,9 @@ function SellerFinanceTab({ tab }) {
               <span>
                 {summary.isInterestOnly
                   ? "The seller note is interest only (M = P x annual rate / 12), with the full principal due as a balloon. "
-                  : "The seller note is fully amortized. "}
+                  : summary.isHybrid
+                    ? `The seller note is interest only for the first ${summary.sellerFinanceHybridIoMonths} months, then amortizes the full principal over the remaining term (fully paying off by term end unless a balloon cuts it short). `
+                    : "The seller note is fully amortized. "}
                 Amortized payments use `M = P x [r(1 + r)^n / ((1 + r)^n - 1)]`,
                 where `r = annual interest / 12` and `n = term x 12`. A lender
                 without a term contributes $0 until one is entered.
