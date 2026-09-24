@@ -140,7 +140,10 @@ function Wholesale_data({
           justifyContent: "space-between",
         }}
       >
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div
+          className="deal-tab-group"
+          style={{ display: "flex", gap: "0.5rem" }}
+        >
           <button
             className={`deal-tab-btn${tab === "active" ? " deal-tab-btn--active" : ""}`}
             onClick={() => {

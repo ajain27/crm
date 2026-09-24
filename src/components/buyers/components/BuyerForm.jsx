@@ -135,7 +135,7 @@ function BuyerForm({
           textarea
         />
 
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div className="buyer-form-actions">
           <button
             className="secondary-btn form-btn"
             type="button"

@@ -779,9 +779,26 @@
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
+  /* The line-item columns (desc, amount, months, total, delete) can't
+     shrink below a usable width — let the row scroll horizontally inside
+     its panel instead of clipping or squeezing the inputs unreadably. */
+  .ig-lines-scroll {
+    overflow-x: auto;
+  }
+
+  /* The invoice preview mirrors the printed document's fixed layout
+     (nowrap labels, percentage columns that can't go below their content's
+     natural width) — it isn't meant to reflow, so let it scroll instead of
+     silently clipping under `.ig-invoice`'s own `overflow: hidden`. */
+  .ig-invoice {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
   .ig-lines-head,
   .ig-line-row {
-    grid-template-columns: 1fr 100px 60px 100px 36px;
+    grid-template-columns: 220px 100px 60px 100px 36px;
+    min-width: 560px;
   }
 
   .ig-inv-billing {

@@ -858,4 +858,17 @@
       content: none;
     }
   }
+
+  @media (max-width: 480px) {
+    /* Active/Inactive/Closed tabs at 3x their padded width can run a few
+       pixels past a narrow phone screen — let them wrap instead. */
+    .deal-tab-bar,
+    .deal-tab-group {
+      @apply flex-wrap;
+    }
+
+    .deal-tab-btn {
+      @apply px-3;
+    }
+  }
 }

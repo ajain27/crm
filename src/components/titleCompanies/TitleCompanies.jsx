@@ -227,62 +227,67 @@ export default function TitleCompanies({
 
         <form className="tc-add-form" onSubmit={handleAdd}>
           <div className="tc-inline-row">
-            {/* Row 1 — labels */}
-            <span className="tc-row-label">
-              Company Name <span className="required-star">*</span>
-            </span>
-            <span className="tc-row-label">Phone</span>
-            <span className="tc-row-label">
-              State <span className="required-star">*</span>
-            </span>
-            <span className="tc-row-label">Email</span>
-
-            {/* Row 2 — controls */}
-            <input
-              className="tc-control"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              onBlur={handleNameBlur}
-              placeholder="First American Title"
-            />
-            <input
-              className="tc-control"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              placeholder="555-000-0000"
-              maxLength={12}
-            />
-            <select
-              className="tc-control tc-control--select"
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-            >
-              {STATE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <div className="tc-email-input-row">
+            <div className="tc-field">
+              <span className="tc-row-label">
+                Company Name <span className="required-star">*</span>
+              </span>
               <input
-                name="emailInput"
-                type="text"
-                value={form.emailInput}
+                className="tc-control"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
-                onKeyDown={handleEmailKeyDown}
-                placeholder="closing@titleco.com"
+                onBlur={handleNameBlur}
+                placeholder="First American Title"
               />
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={handleAddEmail}
+            </div>
+            <div className="tc-field">
+              <span className="tc-row-label">Phone</span>
+              <input
+                className="tc-control"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="555-000-0000"
+                maxLength={12}
+              />
+            </div>
+            <div className="tc-field">
+              <span className="tc-row-label">
+                State <span className="required-star">*</span>
+              </span>
+              <select
+                className="tc-control tc-control--select"
+                name="state"
+                value={form.state}
+                onChange={handleChange}
               >
-                <Plus size={14} />
-                Add
-              </button>
+                {STATE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="tc-field">
+              <span className="tc-row-label">Email</span>
+              <div className="tc-email-input-row">
+                <input
+                  name="emailInput"
+                  type="text"
+                  value={form.emailInput}
+                  onChange={handleChange}
+                  onKeyDown={handleEmailKeyDown}
+                  placeholder="closing@titleco.com"
+                />
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={handleAddEmail}
+                >
+                  <Plus size={14} />
+                  Add
+                </button>
+              </div>
             </div>
           </div>
 

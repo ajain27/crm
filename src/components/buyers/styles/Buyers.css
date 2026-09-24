@@ -19,6 +19,11 @@
     grid-column: 1 / -1;
   }
 
+  .buyer-form-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
   /* ── Pill-style property type toggles ───────────────── */
   .buyer-type-checkboxes {
     display: flex;
@@ -107,6 +112,13 @@
     .buyer-add-form .field:first-of-type,
     .buyer-buys-field {
       grid-column: 1;
+    }
+
+    /* Two 200px-min buttons side by side no longer fit a single mobile
+       column — stack them so the row can't force the grid wider than its
+       container. */
+    .buyer-form-actions {
+      flex-direction: column;
     }
   }
 }

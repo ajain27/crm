@@ -788,76 +788,78 @@ export default function InvoiceGenerator({ currentUser }) {
               <Plus size={13} /> Add Line
             </button>
           </div>
-          <div className="ig-lines-head">
-            <span className="igc-desc">Description</span>
-            <span className="igc-amt">Amount / Rate</span>
-            <span className="igc-months">Months</span>
-            <span className="igc-total">Line Total</span>
-            <span className="igc-del" />
-          </div>
-          {lines.map((line) => {
-            const lt = lineTotal(line);
-            return (
-              <div key={line.id} className="ig-line-row">
-                <div className="igc-desc ig-desc-cell">
-                  <input
-                    value={line.title}
-                    onChange={(e) =>
-                      updateLine(line.id, "title", e.target.value)
-                    }
-                    placeholder="e.g. Setup Fee  /  Monthly Maintenance"
-                    className="ig-line-title-input"
-                  />
-                  <input
-                    value={line.subtitle}
-                    onChange={(e) =>
-                      updateLine(line.id, "subtitle", e.target.value)
-                    }
-                    placeholder="Additional description (optional)"
-                    className="ig-line-sub-input"
-                  />
-                </div>
-                <div className="igc-amt">
-                  <input
-                    value={line.amount}
-                    onChange={(e) =>
-                      updateLine(line.id, "amount", e.target.value)
-                    }
-                    placeholder="$0.00"
-                  />
-                </div>
-                <div className="igc-months">
-                  <input
-                    value={line.months}
-                    onChange={(e) =>
-                      updateLine(line.id, "months", e.target.value)
-                    }
-                    placeholder="—"
-                  />
-                </div>
-                <div className="igc-total">
-                  <span className="ig-line-total-val">
-                    {lt > 0 ? fmt(lt) : "—"}
-                  </span>
-                  {parseAmt(line.months) > 0 && parseAmt(line.amount) > 0 && (
-                    <span className="igc-hint">
-                      {line.amount} × {line.months} mo
+          <div className="ig-lines-scroll">
+            <div className="ig-lines-head">
+              <span className="igc-desc">Description</span>
+              <span className="igc-amt">Amount / Rate</span>
+              <span className="igc-months">Months</span>
+              <span className="igc-total">Line Total</span>
+              <span className="igc-del" />
+            </div>
+            {lines.map((line) => {
+              const lt = lineTotal(line);
+              return (
+                <div key={line.id} className="ig-line-row">
+                  <div className="igc-desc ig-desc-cell">
+                    <input
+                      value={line.title}
+                      onChange={(e) =>
+                        updateLine(line.id, "title", e.target.value)
+                      }
+                      placeholder="e.g. Setup Fee  /  Monthly Maintenance"
+                      className="ig-line-title-input"
+                    />
+                    <input
+                      value={line.subtitle}
+                      onChange={(e) =>
+                        updateLine(line.id, "subtitle", e.target.value)
+                      }
+                      placeholder="Additional description (optional)"
+                      className="ig-line-sub-input"
+                    />
+                  </div>
+                  <div className="igc-amt">
+                    <input
+                      value={line.amount}
+                      onChange={(e) =>
+                        updateLine(line.id, "amount", e.target.value)
+                      }
+                      placeholder="$0.00"
+                    />
+                  </div>
+                  <div className="igc-months">
+                    <input
+                      value={line.months}
+                      onChange={(e) =>
+                        updateLine(line.id, "months", e.target.value)
+                      }
+                      placeholder="—"
+                    />
+                  </div>
+                  <div className="igc-total">
+                    <span className="ig-line-total-val">
+                      {lt > 0 ? fmt(lt) : "—"}
                     </span>
-                  )}
+                    {parseAmt(line.months) > 0 && parseAmt(line.amount) > 0 && (
+                      <span className="igc-hint">
+                        {line.amount} × {line.months} mo
+                      </span>
+                    )}
+                  </div>
+                  <div className="igc-del">
+                    <button
+                      type="button"
+                      className="ig-del-btn"
+                      onClick={() => removeLine(line.id)}
+                      disabled={lines.length === 1}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
-                <div className="igc-del">
-                  <button
-                    type="button"
-                    className="ig-del-btn"
-                    onClick={() => removeLine(line.id)}
-                    disabled={lines.length === 1}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* Payment Options */}
