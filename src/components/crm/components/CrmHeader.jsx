@@ -12,8 +12,8 @@ import {
   TrendingUp,
   Receipt,
   Menu,
-  ChevronLeft,
-  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
@@ -210,26 +210,26 @@ function CrmHeader({
               >
                 {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
               </button>
-
-              {/* Collapse/expand sidebar */}
-              <button
-                type="button"
-                className="sb-collapse-btn"
-                onClick={() => onToggleSidebar(!isSidebarOpen)}
-                aria-label={
-                  isSidebarOpen ? "Close navigation" : "Open navigation"
-                }
-                title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-              >
-                {isSidebarOpen ? (
-                  <ChevronLeft size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </button>
             </div>
           </div>
         </div>
+
+        {/* Collapse/expand sidebar — floats on the sidebar's edge near the
+            top instead of living down in the user card, so it's reachable
+            without scrolling and reads as a dedicated rail control. */}
+        <button
+          type="button"
+          className="sb-edge-toggle"
+          onClick={() => onToggleSidebar(!isSidebarOpen)}
+          aria-label={isSidebarOpen ? "Close navigation" : "Open navigation"}
+          title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isSidebarOpen ? (
+            <ChevronsLeft size={15} />
+          ) : (
+            <ChevronsRight size={15} />
+          )}
+        </button>
       </aside>
 
       {/* ── Fixed prime rate badge — always visible top-right ── */}
