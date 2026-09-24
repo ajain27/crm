@@ -307,7 +307,7 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
   });
 
-  it("brings buyer cash to close to $0 when seller financing + lender fully cover the price, even with closing costs", () => {
+  it("brings buyer cash to close to $0 when seller financing fully covers the price", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -316,16 +316,55 @@ describe("SellerFinanceTab", () => {
     fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
       target: { value: "100" },
     });
-    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
-      target: { value: "2500" },
+
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
+  });
+
+  it("hides all lender and lender-fee UI once seller financing covers 100% of the price", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "80" },
     });
 
-    // Fully seller-financed (no lender) — the price is 100% covered, so
-    // closing costs roll into the financing instead of costing cash.
-    expect(screen.getByLabelText(/Total Cash to Close Costs/i)).toHaveValue(
-      "$2,500.00",
-    );
-    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
+    // Below 100%, the lender/fee UI is present as usual.
+    expect(screen.getByLabelText(/Lender 1 Amount/i)).toBeInTheDocument();
+    expect(screen.getByText("Additional Lenders")).toBeInTheDocument();
+    expect(screen.getByText("Lender Fees & Closing Costs")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Origination Fees/i), {
+      target: { value: "2500" },
+    });
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: "1000" },
+    });
+
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "100" },
+    });
+
+    // At 100%, there's no lender — the whole section disappears instead of
+    // showing a block of zeros, and any fee values entered earlier are
+    // cleared out rather than lingering hidden.
+    expect(screen.queryByText("Additional Lenders")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Lender Fees & Closing Costs"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Lender 1 Amount/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/Origination Fees/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Closing Costs/i)).not.toBeInTheDocument();
+
+    // Dropping back below 100% brings the section back, empty — the
+    // cleared fees don't reappear, and defaults can seed again.
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "80" },
+    });
+    expect(screen.getByLabelText(/Origination Fees/i)).toHaveValue("$2,500");
   });
 
   it("still charges fees on top of an actual down-payment gap when the deal is only partially financed", () => {

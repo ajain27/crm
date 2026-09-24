@@ -344,6 +344,9 @@ function SellerFinanceTab({ tab }) {
 
   const sellerFinancePct = parsePercent(form.sellerFinancePct);
   const sellerFinanceAmount = purchasePrice * (sellerFinancePct / 100);
+  // A 100% seller-financed deal has no lender at all — hide the lender and
+  // lender-fee UI entirely instead of showing a section full of zeros.
+  const isFullySellerFinanced = sellerFinancePct >= 100;
   const sellerFinanceRatePct = parsePercent(form.sellerFinanceRate);
   const sellerFinanceTermYears =
     parseInt(form.sellerFinanceTermYears || "0", 10) || 0;
@@ -450,6 +453,41 @@ function SellerFinanceTab({ tab }) {
         prev.underwritingFees || DEFAULT_LENDER_FEES.underwritingFees,
     }));
   }, [lenderTotal, sellerFinancePct, form.sellerFinancePct]);
+  // Once seller financing covers the full purchase price, there's no
+  // lender left to carry — clear out any lenders and lender-related fees
+  // so a stale value from before doesn't linger, hidden, and re-arm the
+  // fee defaults in case financing later drops back below 100%. Dropping
+  // back below 100% with no lender rows left reseeds a single fresh auto
+  // row, same as the one the tab starts with.
+  useEffect(() => {
+    if (isFullySellerFinanced) {
+      feeDefaultsApplied.current = false;
+      setLenders((prev) => (prev.length === 0 ? prev : []));
+      setForm((prev) =>
+        prev.originationFees ||
+        prev.legalFees ||
+        prev.appraisalFees ||
+        prev.underwritingFees ||
+        prev.closingCosts
+          ? {
+              ...prev,
+              originationFees: "",
+              legalFees: "",
+              appraisalFees: "",
+              underwritingFees: "",
+              closingCosts: "",
+            }
+          : prev,
+      );
+    } else {
+      setLenders((prev) =>
+        prev.length === 0
+          ? [createEmptyLender(newLenderAmount, "", "", true)]
+          : prev,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullySellerFinanced]);
   const activeLenders = lenders.filter((l) => parseCurrency(l.amount) > 0);
   const lenderBreakdown = calcLenderAmortizedBreakdown(activeLenders);
   const lenderMonthlyPayment = lenderBreakdown.reduce(
@@ -762,70 +800,74 @@ function SellerFinanceTab({ tab }) {
           )}
         </div>
 
-        <AdditionalLenders
-          lenders={lenders}
-          setLenders={setLenders}
-          onMutate={() => setSummary(null)}
-          newLenderAmount={newLenderAmount}
-        />
+        {!isFullySellerFinanced && (
+          <>
+            <AdditionalLenders
+              lenders={lenders}
+              setLenders={setLenders}
+              onMutate={() => setSummary(null)}
+              newLenderAmount={newLenderAmount}
+            />
 
-        <div className="deal-analyzer-section-label">
-          Lender Fees &amp; Closing Costs
-        </div>
-        <div className="deal-analyzer-form-grid">
-          <Field
-            label="Origination Fees"
-            name="originationFees"
-            value={form.originationFees}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. $2,500"
-          />
-          <Field
-            label="Doc Fees"
-            name="legalFees"
-            value={form.legalFees}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. $1,000"
-          />
-          <Field
-            label="Appraisal Fees"
-            name="appraisalFees"
-            value={form.appraisalFees}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. $500"
-          />
-          <Field
-            label="Underwriting Fees"
-            name="underwritingFees"
-            value={form.underwritingFees}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. $500"
-          />
-          {totalLenderFees > 0 && (
-            <label className="field deal-analyzer-output">
-              <span>Total Lender Fees</span>
-              <input value={fmt(totalLenderFees)} readOnly tabIndex={-1} />
-            </label>
-          )}
-          <Field
-            label="Closing Costs"
-            name="closingCosts"
-            value={form.closingCosts}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="e.g. $2,500"
-          />
-          {totalCashToClose > 0 && (
-            <label className="field deal-analyzer-output deal-analyzer-output-red">
-              <span>Total Cash to Close Costs</span>
-              <input value={fmt(totalCashToClose)} readOnly tabIndex={-1} />
-            </label>
-          )}
-        </div>
+            <div className="deal-analyzer-section-label">
+              Lender Fees &amp; Closing Costs
+            </div>
+            <div className="deal-analyzer-form-grid">
+              <Field
+                label="Origination Fees"
+                name="originationFees"
+                value={form.originationFees}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $2,500"
+              />
+              <Field
+                label="Doc Fees"
+                name="legalFees"
+                value={form.legalFees}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $1,000"
+              />
+              <Field
+                label="Appraisal Fees"
+                name="appraisalFees"
+                value={form.appraisalFees}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $500"
+              />
+              <Field
+                label="Underwriting Fees"
+                name="underwritingFees"
+                value={form.underwritingFees}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $500"
+              />
+              {totalLenderFees > 0 && (
+                <label className="field deal-analyzer-output">
+                  <span>Total Lender Fees</span>
+                  <input value={fmt(totalLenderFees)} readOnly tabIndex={-1} />
+                </label>
+              )}
+              <Field
+                label="Closing Costs"
+                name="closingCosts"
+                value={form.closingCosts}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $2,500"
+              />
+              {totalCashToClose > 0 && (
+                <label className="field deal-analyzer-output deal-analyzer-output-red">
+                  <span>Total Cash to Close Costs</span>
+                  <input value={fmt(totalCashToClose)} readOnly tabIndex={-1} />
+                </label>
+              )}
+            </div>
+          </>
+        )}
 
         {purchasePrice > 0 && (
           <div className="deal-analyzer-form-grid seller-finance-cash-grid">
