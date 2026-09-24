@@ -17,7 +17,11 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
     <DealPdfLayout
       ref={ref}
       tagline="Seller Finance Deal Summary"
-      verdictLabel="Monthly Cash Flow"
+      verdictLabel={
+        summary.hasHybridPhase2
+          ? `Monthly Cash Flow (Months 1–${summary.sellerFinanceHybridIoMonths})`
+          : "Monthly Cash Flow"
+      }
       verdictValue={fmt(summary.cashFlow)}
       verdictPositive={!summary.isCashFlowNegative}
     >
@@ -152,7 +156,12 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
         </>
       )}
 
-      <PdfSectionTitle>Cash Flow</PdfSectionTitle>
+      <PdfSectionTitle>
+        Cash Flow
+        {summary.hasHybridPhase2
+          ? ` — Months 1–${summary.sellerFinanceHybridIoMonths} (Interest Only)`
+          : ""}
+      </PdfSectionTitle>
       <PdfRow
         label="Monthly Rent"
         value={fmt(summary.monthlyRentAmount)}
@@ -194,8 +203,17 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
       <PdfRow
         label="Total Monthly Expenses"
         value={fmt(summary.totalMonthlyExpenses)}
-        bold
         tone="negative"
+      />
+      <PdfRow
+        label={
+          summary.hasHybridPhase2
+            ? `Cash Flow (Months 1–${summary.sellerFinanceHybridIoMonths})`
+            : "Cash Flow"
+        }
+        value={fmt(summary.cashFlow)}
+        bold
+        tone={summary.isCashFlowNegative ? "negative" : "positive"}
       />
 
       <p className="mm-pdf-formula">
@@ -207,17 +225,83 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
         + {fmt(summary.lenderMonthlyPayment)} + {fmt(summary.monthlyTaxes)} +{" "}
         {fmt(summary.monthlyInsurance)} + {fmt(summary.applianceInsuranceAmt)} +{" "}
         {fmt(summary.propMgmtFee)}) = {fmt(summary.cashFlow)}
-        {summary.isHybrid && summary.sellerFinanceHybridPhase2Monthly > 0 && (
-          <>
-            <br />
-            Reflects the interest-only payment in months 1–
-            {summary.sellerFinanceHybridIoMonths}. From month{" "}
-            {summary.sellerFinanceHybridIoMonths + 1} on, the seller note
-            payment rises to {fmt(summary.sellerFinanceHybridPhase2Monthly)}
-            /mo, which lowers cash flow accordingly.
-          </>
-        )}
       </p>
+
+      {summary.hasHybridPhase2 && (
+        <>
+          <PdfSectionTitle>
+            Cash Flow — Month {summary.sellerFinanceHybridIoMonths + 1}+
+            (Amortized)
+          </PdfSectionTitle>
+          <PdfRow
+            label="Monthly Rent"
+            value={fmt(summary.monthlyRentAmount)}
+            tone="positive"
+          />
+          <PdfRow
+            label="Total Monthly Debt Service"
+            value={fmt(summary.totalMonthlyPaymentAfterIo)}
+            tone="negative"
+          />
+          {summary.monthlyTaxes > 0 && (
+            <PdfRow
+              label="Property Tax (÷ 12 monthly)"
+              value={fmt(summary.monthlyTaxes)}
+              tone="negative"
+            />
+          )}
+          {summary.monthlyInsurance > 0 && (
+            <PdfRow
+              label="Insurance (÷ 12 monthly)"
+              value={fmt(summary.monthlyInsurance)}
+              tone="negative"
+            />
+          )}
+          {summary.applianceInsuranceAmt > 0 && (
+            <PdfRow
+              label="Appliance Insurance"
+              value={fmt(summary.applianceInsuranceAmt)}
+              tone="negative"
+            />
+          )}
+          {summary.propMgmtFee > 0 && (
+            <PdfRow
+              label={`Property Management (${PROP_MGMT_PCT}%)`}
+              value={fmt(summary.propMgmtFee)}
+              tone="negative"
+            />
+          )}
+          <PdfRow
+            label="Total Monthly Expenses"
+            value={fmt(summary.totalMonthlyExpensesAfterIo)}
+            tone="negative"
+          />
+          <PdfRow
+            label={`Cash Flow (Month ${summary.sellerFinanceHybridIoMonths + 1}+)`}
+            value={fmt(summary.cashFlowAfterIo)}
+            bold
+            tone={summary.isCashFlowAfterIoNegative ? "negative" : "positive"}
+          />
+
+          <p className="mm-pdf-formula">
+            Monthly Cash Flow = Monthly Rent − (Seller Note Payment + Lender
+            Payments + Property Tax + Insurance + Appliance Insurance + Property
+            Management)
+            <br />
+            {fmt(summary.monthlyRentAmount)} − (
+            {fmt(summary.sellerFinanceHybridPhase2Monthly)} +{" "}
+            {fmt(summary.lenderMonthlyPayment)} + {fmt(summary.monthlyTaxes)} +{" "}
+            {fmt(summary.monthlyInsurance)} +{" "}
+            {fmt(summary.applianceInsuranceAmt)} + {fmt(summary.propMgmtFee)}) ={" "}
+            {fmt(summary.cashFlowAfterIo)}
+            <br />
+            Once the interest-only period ends, the seller note payment steps up
+            from {fmt(summary.sellerFinanceMonthly)}/mo to{" "}
+            {fmt(summary.sellerFinanceHybridPhase2Monthly)}/mo, which lowers
+            cash flow accordingly.
+          </p>
+        </>
+      )}
     </DealPdfLayout>
   );
 });
