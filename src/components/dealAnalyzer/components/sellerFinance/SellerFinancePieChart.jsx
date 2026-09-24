@@ -30,11 +30,7 @@ function donutPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 }
 
 const SLICE_CONFIG = [
-  {
-    key: "sellerFinanceMonthly",
-    label: "Seller Note Payment",
-    color: "#3b82f6",
-  },
+  { key: "sellerNotePayment", label: "Seller Note Payment", color: "#3b82f6" },
   { key: "lenderMonthlyPayment", label: "Lender Payment", color: "#eab308" },
   { key: "monthlyTaxes", label: "Property Taxes", color: "#06b6d4" },
   { key: "monthlyInsurance", label: "Insurance", color: "#a855f7" },
@@ -46,14 +42,31 @@ const SLICE_CONFIG = [
   { key: "propMgmtFee", label: "Property Mgmt", color: "#f97316" },
 ];
 
-// Monthly expense breakdown for the current phase of the note — for a
-// hybrid note that's months 1..N (interest only); the seller note slice
-// steps up once the amortized phase kicks in, same as the rest of the
-// results panel.
-function SellerFinancePieChart({ summary }) {
+// Monthly expense breakdown for one phase of the note — the caller passes
+// in whichever phase's numbers it wants charted (the interest-only phase,
+// or the amortized phase once a hybrid note's IO period ends), plus that
+// phase's resulting cash flow.
+function SellerFinancePieChart({
+  title,
+  sellerNotePayment,
+  lenderMonthlyPayment,
+  monthlyTaxes,
+  monthlyInsurance,
+  applianceInsuranceAmt,
+  propMgmtFee,
+  cashFlow,
+}) {
+  const values = {
+    sellerNotePayment,
+    lenderMonthlyPayment,
+    monthlyTaxes,
+    monthlyInsurance,
+    applianceInsuranceAmt,
+    propMgmtFee,
+  };
   const rawSlices = SLICE_CONFIG.map((s) => ({
     ...s,
-    value: summary[s.key] ?? 0,
+    value: values[s.key] ?? 0,
   })).filter((s) => s.value > 0);
 
   const total = rawSlices.reduce((sum, s) => sum + s.value, 0);
@@ -72,6 +85,7 @@ function SellerFinancePieChart({ summary }) {
   });
 
   const pct = (v) => ((v / total) * 100).toFixed(1);
+  const isCashFlowNegative = cashFlow < 0;
 
   return (
     <div className="deal-analyzer-pie-wrap">
@@ -79,10 +93,7 @@ function SellerFinancePieChart({ summary }) {
         className="deal-analyzer-section-label"
         style={{ padding: "0 0 0.75rem" }}
       >
-        Monthly Expenses Breakdown
-        {summary.isHybrid
-          ? ` (Months 1–${summary.sellerFinanceHybridIoMonths})`
-          : ""}
+        {title}
       </div>
       <div className="deal-analyzer-pie-body">
         <div className="deal-analyzer-pie-svg-wrap">
@@ -142,6 +153,19 @@ function SellerFinancePieChart({ summary }) {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="deal-analyzer-pie-cashflow">
+        <span>Cash Flow (Rent − Total Expenses)</span>
+        <strong
+          className={
+            isCashFlowNegative
+              ? "deal-analyzer-return-negative"
+              : "deal-analyzer-return-positive"
+          }
+        >
+          {fmt(cashFlow)}
+        </strong>
       </div>
     </div>
   );

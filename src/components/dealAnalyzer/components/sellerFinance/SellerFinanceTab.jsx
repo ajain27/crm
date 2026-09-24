@@ -1324,7 +1324,35 @@ function SellerFinanceTab({ tab }) {
               </>
             )}
 
-            <SellerFinancePieChart summary={summary} />
+            <SellerFinancePieChart
+              title={`Monthly Expenses Breakdown${
+                summary.isHybrid
+                  ? ` (Months 1–${summary.sellerFinanceHybridIoMonths})`
+                  : ""
+              }`}
+              sellerNotePayment={summary.sellerFinanceMonthly}
+              lenderMonthlyPayment={summary.lenderMonthlyPayment}
+              monthlyTaxes={summary.monthlyTaxes}
+              monthlyInsurance={summary.monthlyInsurance}
+              applianceInsuranceAmt={summary.applianceInsuranceAmt}
+              propMgmtFee={summary.propMgmtFee}
+              cashFlow={summary.cashFlow}
+            />
+
+            {summary.hasHybridPhase2 && (
+              <SellerFinancePieChart
+                title={`Monthly Expenses Breakdown (Month ${
+                  summary.sellerFinanceHybridIoMonths + 1
+                }+, Amortized)`}
+                sellerNotePayment={summary.sellerFinanceHybridPhase2Monthly}
+                lenderMonthlyPayment={summary.lenderMonthlyPayment}
+                monthlyTaxes={summary.monthlyTaxes}
+                monthlyInsurance={summary.monthlyInsurance}
+                applianceInsuranceAmt={summary.applianceInsuranceAmt}
+                propMgmtFee={summary.propMgmtFee}
+                cashFlow={summary.cashFlowAfterIo}
+              />
+            )}
 
             <div
               className="deal-analyzer-calculation"

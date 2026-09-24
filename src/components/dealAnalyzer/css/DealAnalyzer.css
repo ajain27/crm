@@ -612,6 +612,14 @@
     color: #dc2626;
   }
 
+  .deal-analyzer-pie-cashflow strong.deal-analyzer-return-positive {
+    color: #16a34a;
+  }
+
+  .deal-analyzer-pie-cashflow strong.deal-analyzer-return-negative {
+    color: #dc2626;
+  }
+
   .deal-analyzer-highlight-value {
     color: #2563eb !important;
     text-shadow: 0 14px 32px color-mix(in srgb, #2563eb 28%, transparent 72%);
@@ -796,6 +804,16 @@
   .deal-analyzer-pie-legend-val {
     @apply w-24 text-right font-semibold;
     color: var(--text);
+  }
+
+  .deal-analyzer-pie-cashflow {
+    @apply mt-4 flex items-center justify-between border-t pt-3 text-sm;
+    border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);
+    color: var(--muted);
+  }
+
+  .deal-analyzer-pie-cashflow strong {
+    @apply text-base font-bold;
   }
 
   /* ── Find Comps ──────────────────────────────────────────────── */
