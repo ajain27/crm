@@ -120,9 +120,16 @@
   }
 
   @media (max-width: 600px) {
+    /* A single explicit column — otherwise the two-column spans (address,
+       notes) create a narrow implicit second column at phone widths. */
+    .add-form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .add-form .field:first-of-type,
+    .add-form .field,
     .notes-field {
-      grid-column: span 1;
+      grid-column: span 1 !important;
     }
 
     .form-btn {
