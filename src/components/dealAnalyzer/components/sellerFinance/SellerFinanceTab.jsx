@@ -16,6 +16,7 @@ import AdditionalLenders, {
 import SellerFinancePieChart from "./SellerFinancePieChart";
 import SellerFinancePdfTemplate from "./SellerFinancePdfTemplate";
 import SellerFinanceSellerReportPdfTemplate from "./SellerFinanceSellerReportPdfTemplate";
+import OfferAgreementPdfTemplate from "./OfferAgreementPdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
 import GenerateReportButton from "../pdfExport/GenerateReportButton";
 import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
@@ -292,6 +293,14 @@ function SellerFinanceTab({ tab }) {
     closePreview: closeSellerReportPreview,
     downloadReport: downloadSellerReport,
   } = useGenerateReport("seller-finance-seller-copy");
+  const {
+    printRef: offerRef,
+    exporting: exportingOffer,
+    handleGenerateReport: handleGenerateOffer,
+    previewImage: offerPreviewImage,
+    closePreview: closeOfferPreview,
+    downloadReport: downloadOffer,
+  } = useGenerateReport("seller-finance-purchase-agreement");
   // Show one lender row on load (instead of an empty state behind an "Add
   // Lender" click) — marked `auto` so it behaves exactly like a
   // freshly-added row and picks up the remaining balance as the user fills
@@ -1421,6 +1430,12 @@ function SellerFinanceTab({ tab }) {
                 label="Generate Seller Copy"
                 bare
               />
+              <GenerateReportButton
+                onClick={handleGenerateOffer}
+                exporting={exportingOffer}
+                label="Generate Offer"
+                bare
+              />
             </div>
 
             {exportingFullReport && (
@@ -1431,6 +1446,9 @@ function SellerFinanceTab({ tab }) {
                 ref={sellerReportRef}
                 summary={summary}
               />
+            )}
+            {exportingOffer && (
+              <OfferAgreementPdfTemplate ref={offerRef} summary={summary} />
             )}
           </div>
         ) : null}
@@ -1445,6 +1463,11 @@ function SellerFinanceTab({ tab }) {
         previewImage={sellerReportPreviewImage}
         onClose={closeSellerReportPreview}
         onDownload={downloadSellerReport}
+      />
+      <PdfReportPreviewModal
+        previewImage={offerPreviewImage}
+        onClose={closeOfferPreview}
+        onDownload={downloadOffer}
       />
     </>
   );
