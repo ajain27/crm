@@ -7,15 +7,14 @@ import "./OfferAgreementPdfTemplate.css";
 const SELLER = {
   name: "YOU WIN ESTATES",
   tagline: "REAL ESTATE INVESTMENT & ACQUISITIONS",
-  website: "https://www.uvinestates.com/",
-  email: "ankit.jain@youwinestates.com",
+  email: "youwinestates@gmail.com",
   phone: "+1 206-822-8019",
 };
 
-const BUYER_NAME = "You Win Estates LLC, and/or assigns";
+const BUYER_NAME = "You Win Estates LLC";
 const BUYER_COMPANY = "You Win Estates LLC";
 const BUYER_REP = "Ankit Jain";
-const EMD_PCT = 10;
+const EMD_AMOUNT = 2000;
 
 function todayFormatted() {
   return new Date().toLocaleDateString("en-US", {
@@ -66,18 +65,16 @@ function SigLine({ label, value }) {
 // inserted after "1. PURCHASE PRICE & FINANCIAL TERMS". Seller Name(s) is
 // left blank, same as the source template, since the calculator doesn't
 // collect it — Purchase Price, Property Address, the Seller-Financed
-// Amount, the Effective Date (today, since that's when this offer is
-// generated) and the EMD (10% of Purchase Price) are filled in. For a
-// hybrid note, the interest-only month count is stated too, but not the
-// dollar payment amounts, since those can still change before closing.
+// Amount and the Effective Date (today, since that's when this offer is
+// generated) are filled in; the EMD is a flat $2,000. For a hybrid note,
+// the interest-only month count is stated too, but not the dollar
+// payment amounts, since those can still change before closing.
 const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
   { summary },
   ref,
 ) {
   if (!summary) return null;
   if (typeof document === "undefined") return null;
-
-  const emdAmount = summary.purchasePrice * (EMD_PCT / 100);
 
   return createPortal(
     <div className="oa-pdf-container" ref={ref}>
@@ -92,10 +89,6 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
           </div>
         </div>
         <div className="oa-pdf-contact">
-          <p>
-            <strong>Web: </strong>
-            {SELLER.website}
-          </p>
           <p>
             <strong>Email: </strong>
             {SELLER.email}
@@ -132,9 +125,8 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
             <span className="oa-pdf-inline-field">
               {fmt(summary.purchasePrice)}
             </span>{" "}
-            &nbsp;&nbsp; Earnest Money Deposit (EMD, {EMD_PCT}% of Purchase
-            Price):{" "}
-            <span className="oa-pdf-inline-field">{fmt(emdAmount)}</span>
+            &nbsp;&nbsp; Earnest Money Deposit (EMD):{" "}
+            <span className="oa-pdf-inline-field">{fmt(EMD_AMOUNT)}</span>
           </p>
           <p>
             The Purchase Price shall be paid at closing in immediately available
