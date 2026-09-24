@@ -21,7 +21,7 @@
   .oa-pdf-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     background: #1a3560;
     color: #fff;
     padding: 26px 32px;
