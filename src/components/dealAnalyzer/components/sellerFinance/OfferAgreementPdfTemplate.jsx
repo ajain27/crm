@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import { createPortal } from "react-dom";
-import { Home } from "lucide-react";
 import { fmt } from "../../../../utils/utils";
 import "./OfferAgreementPdfTemplate.css";
 
@@ -46,6 +45,49 @@ function Section({ number, title, children, isNew }) {
   );
 }
 
+// Approximation of the You Win Estates house/key/checkmark icon — a house
+// roofline behind an orange key whose round bow holds a checkmark instead
+// of a keyhole, with a couple of small sparkle accents. Built as inline
+// SVG (no source image file was available to embed directly).
+function BrandIcon() {
+  return (
+    <svg viewBox="0 0 100 100" width="30" height="30">
+      <polygon
+        points="50,16 86,48 72,48 72,56 60,56 60,38 40,38 40,56 28,56 28,48 14,48"
+        fill="#16223f"
+      />
+      <rect x="60" y="22" width="8" height="14" fill="#16223f" />
+      <path
+        d="M78 24 L80.5 29 L86 31.5 L80.5 34 L78 39 L75.5 34 L70 31.5 L75.5 29 Z"
+        fill="#8ec9ff"
+      />
+      <path
+        d="M87 36 L88.3 38.7 L91 40 L88.3 41.3 L87 44 L85.7 41.3 L83 40 L85.7 38.7 Z"
+        fill="#8ec9ff"
+      />
+      <rect x="52" y="60" width="34" height="12" rx="3" fill="#f5811f" />
+      <rect x="70" y="72" width="6" height="9" fill="#f5811f" />
+      <rect x="79" y="72" width="6" height="11" fill="#f5811f" />
+      <circle
+        cx="38"
+        cy="66"
+        r="21"
+        fill="#f5811f"
+        stroke="#16223f"
+        strokeWidth="3"
+      />
+      <path
+        d="M28 66 L35 73 L50 55"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function SigLine({ label, value }) {
   return (
     <div className="oa-pdf-sig-line">
@@ -81,7 +123,7 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
       <div className="oa-pdf-header">
         <div className="oa-pdf-brand">
           <div className="oa-pdf-brand-icon">
-            <Home size={22} />
+            <BrandIcon />
           </div>
           <div>
             <p className="oa-pdf-company-name">{SELLER.name}</p>
