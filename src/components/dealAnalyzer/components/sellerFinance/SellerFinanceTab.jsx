@@ -617,6 +617,7 @@ function SellerFinanceTab({ tab }) {
       sellerFinancePaymentType: form.sellerFinancePaymentType,
       isInterestOnly,
       isHybrid,
+      isFullySellerFinanced,
       downPaymentAmount,
       sellerNoteMonthsElapsed,
       sellerNoteTotalReceived,

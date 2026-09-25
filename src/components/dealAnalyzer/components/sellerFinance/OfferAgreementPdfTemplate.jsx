@@ -180,9 +180,29 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
 
         <Section number={2} title="SELLER FINANCING" isNew>
           <p>
-            <strong>Down Payment:</strong> Buyer shall pay a down payment equal
-            to seventy percent (70%) of the Purchase Price at the time of
-            Closing, in immediately available funds.
+            <strong>Down Payment:</strong>{" "}
+            {summary.isFullySellerFinanced ? (
+              summary.downPaymentAmount > 0 ? (
+                <>
+                  Buyer shall pay a down payment of{" "}
+                  <span className="oa-pdf-inline-field">
+                    {fmt(summary.downPaymentAmount)}
+                  </span>{" "}
+                  at the time of Closing, in immediately available funds.
+                </>
+              ) : (
+                <>
+                  Buyer shall pay no down payment at the time of Closing —
+                  Seller shall finance the full Purchase Price.
+                </>
+              )
+            ) : (
+              <>
+                Buyer shall pay a down payment equal to seventy percent (70%) of
+                the Purchase Price at the time of Closing, in immediately
+                available funds.
+              </>
+            )}
           </p>
           <p>
             <strong>Seller-Financed Amount:</strong> The remaining balance of
