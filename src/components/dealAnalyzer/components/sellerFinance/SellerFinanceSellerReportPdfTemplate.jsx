@@ -53,7 +53,7 @@ const SellerFinanceSellerReportPdfTemplate = forwardRef(
           tone="positive"
         />
         <PdfRow
-          label={`Amount You're Financing (${summary.sellerFinancePct}%)`}
+          label={`Amount You're Financing (${summary.sellerFinanceDisplayPct}%)`}
           value={fmt(summary.sellerFinanceAmount)}
         />
 

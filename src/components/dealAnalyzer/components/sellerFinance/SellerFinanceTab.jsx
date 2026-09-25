@@ -23,6 +23,15 @@ import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
 
 const PROP_MGMT_PCT = 10;
 
+// One decimal place, trimmed to a whole number when it lands on one — used
+// for the "Seller Financing (X%)" labels, since at 100% + a down payment
+// the true financed share of the price is no longer the round number typed
+// into the Seller Financing (%) field.
+function formatPct(n) {
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 const DEFAULT_LENDER_FEES = {
   originationFees: "$2,500",
   legalFees: "$3,000",
@@ -238,6 +247,7 @@ const initialForm = {
   propertyAddress: "",
   purchasePrice: "",
   sellerFinancePct: "",
+  downPayment: "",
   sellerFinanceRate: "",
   sellerFinancePaymentType: "amortized",
   sellerFinanceTermYears: "",
@@ -256,6 +266,7 @@ const initialForm = {
 
 const CURRENCY_FIELDS = new Set([
   "purchasePrice",
+  "downPayment",
   "originationFees",
   "legalFees",
   "appraisalFees",
@@ -343,10 +354,26 @@ function SellerFinanceTab({ tab }) {
   const purchasePrice = parseCurrency(form.purchasePrice);
 
   const sellerFinancePct = parsePercent(form.sellerFinancePct);
-  const sellerFinanceAmount = purchasePrice * (sellerFinancePct / 100);
   // A 100% seller-financed deal has no lender at all — hide the lender and
   // lender-fee UI entirely instead of showing a section full of zeros.
   const isFullySellerFinanced = sellerFinancePct >= 100;
+  // At 100%, the buyer can still put a down payment in at closing — the
+  // seller only carries a note for what's left, instead of the full price.
+  // Only kicks in once a down payment is actually entered, so a plain
+  // >=100% (including an intentionally over-financed >100%) still behaves
+  // exactly as before.
+  const downPaymentAmt = parseCurrency(form.downPayment);
+  const sellerFinanceAmount =
+    isFullySellerFinanced && downPaymentAmt > 0
+      ? Math.max(0, purchasePrice - downPaymentAmt)
+      : purchasePrice * (sellerFinancePct / 100);
+  // What's actually financed as a share of the price — matches
+  // sellerFinancePct except at 100% with a down payment entered, where the
+  // financed share drops below the round number typed into that field.
+  const sellerFinanceDisplayPct =
+    purchasePrice > 0
+      ? formatPct((sellerFinanceAmount / purchasePrice) * 100)
+      : formatPct(sellerFinancePct);
   const sellerFinanceRatePct = parsePercent(form.sellerFinanceRate);
   const sellerFinanceTermYears =
     parseInt(form.sellerFinanceTermYears || "0", 10) || 0;
@@ -577,6 +604,7 @@ function SellerFinanceTab({ tab }) {
       propertyAddress: form.propertyAddress.trim(),
       purchasePrice,
       sellerFinancePct,
+      sellerFinanceDisplayPct,
       sellerFinanceAmount,
       sellerFinanceRatePct,
       sellerFinanceTermYears,
@@ -698,9 +726,24 @@ function SellerFinanceTab({ tab }) {
             placeholder="e.g. 20"
             required
           />
+          {isFullySellerFinanced && (
+            <Field
+              label="Down Payment (Optional)"
+              name="downPayment"
+              value={form.downPayment}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="e.g. $30,000"
+            />
+          )}
           {sellerFinanceAmount > 0 && (
             <label className="field deal-analyzer-output">
-              <span>Seller Financing Amount</span>
+              <span>
+                Seller Financing Amount
+                {isFullySellerFinanced && downPaymentAmt > 0
+                  ? " (After Down Payment)"
+                  : ""}
+              </span>
               <input value={fmt(sellerFinanceAmount)} readOnly tabIndex={-1} />
             </label>
           )}
@@ -1047,7 +1090,9 @@ function SellerFinanceTab({ tab }) {
                 </strong>
               </div>
               <div>
-                <span>Seller Financing ({summary.sellerFinancePct}%)</span>
+                <span>
+                  Seller Financing ({summary.sellerFinanceDisplayPct}%)
+                </span>
                 <strong className="deal-analyzer-return-negative">
                   <AnimatedAmount
                     value={summary.sellerFinanceAmount}
@@ -1055,6 +1100,17 @@ function SellerFinanceTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.downPaymentAmount > 0 && (
+                <div>
+                  <span>Down Payment (Cash at Closing)</span>
+                  <strong className="deal-analyzer-return-negative">
+                    <AnimatedAmount
+                      value={summary.downPaymentAmount}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
               {summary.lenderTotal > 0 && (
                 <div>
                   <span>

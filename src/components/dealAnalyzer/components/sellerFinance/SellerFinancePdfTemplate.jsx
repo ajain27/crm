@@ -35,10 +35,17 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
       <PdfSectionTitle>Capital Stack</PdfSectionTitle>
       <PdfRow label="Purchase Price" value={fmt(summary.purchasePrice)} />
       <PdfRow
-        label={`Seller Financing (${summary.sellerFinancePct}%)`}
+        label={`Seller Financing (${summary.sellerFinanceDisplayPct}%)`}
         value={fmt(summary.sellerFinanceAmount)}
         tone="negative"
       />
+      {summary.downPaymentAmount > 0 && (
+        <PdfRow
+          label="Down Payment (Cash at Closing)"
+          value={fmt(summary.downPaymentAmount)}
+          tone="negative"
+        />
+      )}
       {summary.lenderTotal > 0 && (
         <PdfRow
           label={`Lender Total (${summary.lenderCount} lender${

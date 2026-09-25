@@ -367,6 +367,64 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Origination Fees/i)).toHaveValue("$2,500");
   });
 
+  it("shows a Down Payment field at 100% and finances only what's left over it", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+
+    // Below 100%, there's no Down Payment field.
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "80" },
+    });
+    expect(
+      screen.queryByLabelText(/Down Payment \(Optional\)/i),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "100" },
+    });
+    expect(
+      screen.getByLabelText(/Down Payment \(Optional\)/i),
+    ).toBeInTheDocument();
+    // With no down payment entered, the full price is still financed.
+    expect(screen.getByLabelText(/Seller Financing Amount/i)).toHaveValue(
+      "$300,000.00",
+    );
+
+    fireEvent.change(screen.getByLabelText(/Down Payment \(Optional\)/i), {
+      target: { value: "30000" },
+    });
+
+    // Only the remaining $270,000 is financed once a down payment is set.
+    expect(
+      screen.getByLabelText(/Seller Financing Amount \(After Down Payment\)/i),
+    ).toHaveValue("$270,000.00");
+    // Buyer Cash to Close is exactly the down payment — no lender, no fees.
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue(
+      "$30,000.00",
+    );
+  });
+
+  it("still over-finances normally above 100% when no down payment is entered", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "150" },
+    });
+
+    // 150% of price, same as before this feature existed — the Down
+    // Payment field being newly available doesn't change this unless a
+    // down payment is actually typed into it.
+    expect(screen.getByLabelText(/Seller Financing Amount/i)).toHaveValue(
+      "$450,000.00",
+    );
+  });
+
   it("still charges fees on top of an actual down-payment gap when the deal is only partially financed", () => {
     render(<SellerFinanceTab tab={tab} />);
 
