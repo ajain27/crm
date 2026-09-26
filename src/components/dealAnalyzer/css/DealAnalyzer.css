@@ -1244,6 +1244,10 @@
     grid-template-columns: 1fr 1fr 1fr auto;
   }
 
+  .additional-lender-row--with-leading {
+    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  }
+
   @media (max-width: 600px) {
     .deal-analyzer-section-label,
     .deal-analyzer-form-grid,
@@ -1265,6 +1269,10 @@
 
     .additional-lender-row > :first-child {
       grid-column: 1 / -1;
+    }
+
+    .additional-lender-spacer {
+      display: none;
     }
 
     .additional-lender-remove {

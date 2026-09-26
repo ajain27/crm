@@ -226,6 +226,32 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$320,000");
   });
 
+  it("sizes the auto-filled lender from the selected lender LTV", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    expect(screen.getByLabelText(/Lender LTV/i)).toHaveValue("80");
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "30" },
+    });
+
+    fireEvent.change(screen.getByLabelText(/Lender LTV/i), {
+      target: { value: "70" },
+    });
+    expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$210,000");
+
+    fireEvent.change(screen.getByLabelText(/Lender LTV/i), {
+      target: { value: "85" },
+    });
+    expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$255,000");
+    // 30% seller + 85% lender = $45,000 over − $7,850 default lender fees.
+    expect(screen.getByLabelText(/Cash Back to Buyer/i)).toHaveValue(
+      "$37,150.00",
+    );
+  });
+
   it("uses financing above the price to pay fees and gives the rest back to the buyer", () => {
     render(<SellerFinanceTab tab={tab} />);
 

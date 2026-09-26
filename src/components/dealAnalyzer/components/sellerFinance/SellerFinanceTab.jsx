@@ -32,11 +32,13 @@ function formatPct(n) {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
 
-// The lender always funds this share of the purchase price, regardless of
-// how much the seller carries. When seller financing + the lender's 80% add
-// up to more than 100% of the price, that excess pays the lender fees and
-// closing costs first, and whatever's left goes back to the buyer.
-const LENDER_LTV_PCT = 80;
+// The lender always funds the selected share (LTV) of the purchase price,
+// regardless of how much the seller carries. When seller financing + the
+// lender's share add up to more than 100% of the price, that excess pays the
+// lender fees and closing costs first, and whatever's left goes back to the
+// buyer.
+const LENDER_LTV_OPTIONS = ["70", "75", "80", "85"];
+const DEFAULT_LENDER_LTV_PCT = "80";
 
 const DEFAULT_LENDER_FEES = {
   originationFees: "$2,500",
@@ -259,6 +261,7 @@ const initialForm = {
   sellerFinanceTermYears: "",
   sellerFinanceHybridMonths: "",
   sellerFinanceBalloonYears: "",
+  lenderLtvPct: DEFAULT_LENDER_LTV_PCT,
   originationFees: "",
   legalFees: "",
   appraisalFees: "",
@@ -427,11 +430,13 @@ function SellerFinanceTab({ tab }) {
   const sellerNoteTotalInterest = sellerNote.totalInterest;
 
   const lenderTotal = calcLenderTotal(lenders);
-  // Total the lenders fund — a fixed 80% of the price, independent of the
-  // seller note. No lender at all once the seller carries 100%.
+  // Total the lenders fund — the selected LTV share of the price,
+  // independent of the seller note. No lender at all once the seller
+  // carries 100%.
+  const lenderLtvPct = Number(form.lenderLtvPct) || 0;
   const lenderCap = isFullySellerFinanced
     ? 0
-    : purchasePrice * (LENDER_LTV_PCT / 100);
+    : purchasePrice * (lenderLtvPct / 100);
   const remainingForLender = Math.max(0, lenderCap - lenderTotal);
   const newLenderAmount =
     remainingForLender > 0
@@ -445,7 +450,7 @@ function SellerFinanceTab({ tab }) {
   // clears that row's `auto` flag and this effect leaves it alone.
   // Manually-set lenders are treated as fixed and subtracted first;
   // remaining auto lenders (in order) each absorb whatever's left of the
-  // 80% lender share after any earlier lenders.
+  // lender's LTV share after any earlier lenders.
   useEffect(() => {
     setLenders((prev) => {
       let used = 0;
@@ -630,6 +635,7 @@ function SellerFinanceTab({ tab }) {
       sellerNoteMonthsElapsed,
       sellerNoteTotalReceived,
       sellerNoteTotalInterest,
+      lenderLtvPct,
       lenderCount: activeLenders.length,
       lenderBreakdown,
       lenderTotal,
@@ -698,7 +704,7 @@ function SellerFinanceTab({ tab }) {
             <p>
               Enter the purchase price and the seller-financed note first, then
               add any additional lenders — the lender amount will auto-fill with
-              80% of the purchase price.
+              the selected lender LTV share of the purchase price.
             </p>
           </div>
         </div>
@@ -857,6 +863,22 @@ function SellerFinanceTab({ tab }) {
         {!isFullySellerFinanced && (
           <>
             <AdditionalLenders
+              leadingField={
+                <label className="field">
+                  <span>Lender LTV (%)</span>
+                  <select
+                    name="lenderLtvPct"
+                    value={form.lenderLtvPct}
+                    onChange={handleChange}
+                  >
+                    {LENDER_LTV_OPTIONS.map((pct) => (
+                      <option key={pct} value={pct}>
+                        {pct}%
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              }
               lenders={lenders}
               setLenders={setLenders}
               onMutate={() => setSummary(null)}
@@ -1496,10 +1518,10 @@ function SellerFinanceTab({ tab }) {
               style={{ marginTop: "1rem" }}
             >
               Buyer Cash at Closing = Purchase Price − Seller Financing − Lender
-              Total ({LENDER_LTV_PCT}% of price) + Lender Fees + Closing Costs
-              (any financing above the purchase price pays the fees and closing
-              costs first; if it's more than enough, the rest goes back to the
-              buyer as cash back)
+              Total ({summary.lenderLtvPct}% of price) + Lender Fees + Closing
+              Costs (any financing above the purchase price pays the fees and
+              closing costs first; if it's more than enough, the rest goes back
+              to the buyer as cash back)
               <span>
                 {fmt(summary.purchasePrice)} −{" "}
                 {fmt(summary.sellerFinanceAmount)} − {fmt(summary.lenderTotal)}{" "}

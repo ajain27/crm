@@ -47,6 +47,9 @@ export default function AdditionalLenders({
   newLenderAmount = "",
   newLenderRate = "",
   newLenderTerm = "",
+  // Optional deal-level field (e.g. Lender LTV) shown as the first column of
+  // the first lender row; later rows get a spacer so their columns line up.
+  leadingField = null,
 }) {
   function notify() {
     if (onMutate) onMutate();
@@ -118,7 +121,18 @@ export default function AdditionalLenders({
           const term = parseInt(lender.term || "0", 10) || 0;
           const monthlyPayment = calcPMT(rate, term, amount);
           return (
-            <div key={lender.id} className="additional-lender-row">
+            <div
+              key={lender.id}
+              className={`additional-lender-row${
+                leadingField ? " additional-lender-row--with-leading" : ""
+              }`}
+            >
+              {leadingField &&
+                (idx === 0 ? (
+                  leadingField
+                ) : (
+                  <div className="additional-lender-spacer" aria-hidden />
+                ))}
               <Field
                 label={`Lender ${idx + 1} Amount`}
                 wrapperClassName={lender.auto ? "deal-analyzer-output" : ""}
