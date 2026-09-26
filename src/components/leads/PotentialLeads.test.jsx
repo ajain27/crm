@@ -30,6 +30,7 @@ describe("PotentialLeads", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("renders the Add Lead form", () => {
@@ -204,5 +205,113 @@ describe("PotentialLeads", () => {
     fireEvent.change(addressInput, { target: { value: "1 Main St" } });
     fireEvent.blur(addressInput);
     expect(screen.getByText(/already in your lead list/i)).toBeInTheDocument();
+  });
+  it("adds a commercial lead from the Commercial tab", async () => {
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    const setLeads = vi.fn();
+    render(<PotentialLeads {...baseProps({ saveLead, setLeads })} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Commercial$/i }));
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/500 Commerce St, Dallas, TX 75201/i),
+      { target: { value: "  500 Commerce St  " } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Add Lead/i }));
+
+    await waitFor(() => {
+      expect(saveLead).toHaveBeenCalledWith(
+        expect.objectContaining({
+          leadType: "commercial",
+          address: "500 Commerce St",
+          userId: "u1",
+        }),
+      );
+    });
+    expect(setLeads).toHaveBeenCalled();
+  });
+
+  it("saves the reason when a PPC lead is marked bad", async () => {
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    const lead = {
+      id: "l1",
+      source: "Google Ads",
+      sellerName: "Jane PPC",
+      email: "jane@example.com",
+    };
+    render(<PotentialLeads {...baseProps({ leads: [lead], saveLead })} />);
+    fireEvent.click(screen.getByRole("button", { name: /PPC Leads/i }));
+
+    fireEvent.click(screen.getByTitle(/Mark as bad lead/i));
+    fireEvent.change(
+      screen.getByPlaceholderText(/Not motivated, wrong price range/i),
+      { target: { value: "Unreachable" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Confirm Bad Lead/i }));
+
+    await waitFor(() => {
+      expect(saveLead).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "l1",
+          ppcQuality: "bad",
+          ppcBadReason: "Unreachable",
+        }),
+      );
+    });
+    expect(screen.queryByText(/Mark Lead as Bad/i)).toBeNull();
+  });
+
+  it("bulk-deletes selected PPL leads", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const deleteLeadById = vi.fn().mockResolvedValue(undefined);
+    const leads = [
+      { id: "p1", source: "Leadzolo", sellerName: "Pat PPL" },
+      { id: "p2", source: "Leadzolo", sellerName: "Sam PPL" },
+    ];
+    render(<PotentialLeads {...baseProps({ leads, deleteLeadById })} />);
+    fireEvent.click(screen.getByRole("button", { name: /PPL Leads/i }));
+
+    const [selectAll] = screen.getAllByRole("checkbox", { hidden: false });
+    fireEvent.click(selectAll);
+    fireEvent.click(screen.getByRole("button", { name: /Delete \(2\)/i }));
+
+    await waitFor(() => {
+      expect(deleteLeadById).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.queryByRole("button", { name: /Delete \(/i })).toBeNull();
+  });
+
+  it("moves a residential lead into the CRM as a deal", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const saveDeal = vi.fn().mockResolvedValue(undefined);
+    const deleteLeadById = vi.fn().mockResolvedValue(undefined);
+    const setActiveView = vi.fn();
+    const leads = [
+      {
+        id: "l1",
+        address: "1 Main St, Dallas, TX 75201",
+        source: "Cold Call",
+        sellerName: "Jane",
+      },
+    ];
+    render(
+      <PotentialLeads
+        {...baseProps({ leads, saveDeal, deleteLeadById, setActiveView })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^CRM$/i }));
+
+    await waitFor(() => {
+      expect(setActiveView).toHaveBeenCalledWith("dashboard");
+    });
+    expect(saveDeal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: "1 Main St",
+        city: "Dallas",
+        state: "TX",
+        zipCode: "75201",
+      }),
+    );
+    expect(deleteLeadById).toHaveBeenCalledWith("l1");
   });
 });
