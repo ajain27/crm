@@ -185,7 +185,7 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Lender 1 Term/i)).toBeInTheDocument();
   });
 
-  it("auto-fills the default lender row with the remaining amount after seller financing", () => {
+  it("auto-fills the default lender row with 80% of the purchase price", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -195,33 +195,74 @@ describe("SellerFinanceTab", () => {
       target: { value: "20" },
     });
 
-    // $300,000 purchase − $60,000 (20%) seller financing = $240,000 remaining
-    // — no need to click Add Lender, the default row already picks it up.
+    // 80% of $300,000 = $240,000 — no need to click Add Lender, the default
+    // row already picks it up.
     expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$240,000");
 
     fireEvent.click(screen.getByRole("button", { name: /Add Lender/i }));
 
-    // With the first lender covering the full remaining balance, the second
+    // With the first lender covering the full 80% lender share, the second
     // lender has nothing left to auto-fill.
     expect(screen.getByLabelText(/Lender 2 Amount/i)).toHaveValue("");
   });
 
-  it("keeps an auto-filled lender amount in sync when seller financing % changes afterward", () => {
+  it("keeps the auto-filled lender at 80% of price regardless of seller financing %", () => {
     render(<SellerFinanceTab tab={tab} />);
 
-    // The default lender row seeds with the full purchase price since
-    // nothing else has been carved out yet.
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
       target: { value: "300000" },
     });
-    expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$300,000");
+    expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$240,000");
 
-    // Entering Seller Financing % afterward should recalculate the
-    // still-auto lender amount instead of leaving it stale.
     fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
-      target: { value: "20" },
+      target: { value: "30" },
     });
     expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$240,000");
+
+    // Changing the price afterward re-syncs the still-auto lender.
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "400000" },
+    });
+    expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$320,000");
+  });
+
+  it("uses financing above the price to pay fees and gives the rest back to the buyer", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    // 30% seller + 80% lender = 110% → $30,000 over the price.
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "30" },
+    });
+    fireEvent.change(screen.getByLabelText(/Closing Costs/i), {
+      target: { value: "2500" },
+    });
+
+    // $30,000 excess − $7,850 default lender fees − $2,500 closing costs.
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
+    expect(screen.getByLabelText(/Cash Back to Buyer/i)).toHaveValue(
+      "$19,650.00",
+    );
+  });
+
+  it("has the buyer cover only the fees the excess financing can't", () => {
+    render(<SellerFinanceTab tab={tab} />);
+
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "300000" },
+    });
+    // 22% seller + 80% lender = 102% → $6,000 over the price.
+    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
+      target: { value: "22" },
+    });
+
+    // $7,850 default lender fees − $6,000 excess = $1,850 from the buyer.
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue(
+      "$1,850.00",
+    );
+    expect(screen.queryByLabelText(/Cash Back to Buyer/i)).toBeNull();
   });
 
   it("stops auto-syncing a lender amount once the user edits it manually", () => {
@@ -256,20 +297,21 @@ describe("SellerFinanceTab", () => {
       target: { value: "50000" },
     });
 
-    // Second lender: added after, so it auto-fills with what's left.
+    // Second lender: added after, so it auto-fills with what's left of the
+    // 80% lender share ($240,000 − $50,000).
     fireEvent.click(screen.getByRole("button", { name: /Add Lender/i }));
-    expect(screen.getByLabelText(/Lender 2 Amount/i)).toHaveValue("$250,000");
+    expect(screen.getByLabelText(/Lender 2 Amount/i)).toHaveValue("$190,000");
 
-    // Seller financing % carves out $60,000 — only the auto (second) lender
-    // should absorb the change; the manual first lender stays put.
-    fireEvent.change(screen.getByLabelText(/Seller Financing \(%\)/i), {
-      target: { value: "20" },
+    // A price change re-syncs only the auto (second) lender; the manual
+    // first lender stays put.
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "400000" },
     });
     expect(screen.getByLabelText(/Lender 1 Amount/i)).toHaveValue("$50,000");
-    expect(screen.getByLabelText(/Lender 2 Amount/i)).toHaveValue("$190,000");
+    expect(screen.getByLabelText(/Lender 2 Amount/i)).toHaveValue("$270,000");
   });
 
-  it("rolls fees into financing when the lender covers the full purchase price", () => {
+  it("has the buyer bring the 20% gap plus fees with no seller financing", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -301,10 +343,11 @@ describe("SellerFinanceTab", () => {
     expect(screen.getByLabelText(/Total Lender Fees/i)).toHaveValue(
       "$5,000.00",
     );
-    // ...but since the lender covers the entire purchase price, there is no
-    // down-payment gap, so the fees are assumed rolled into the loan too:
-    // the buyer brings $0 cash to close.
-    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
+    // ...and since the lender only funds 80%, the buyer brings the $60,000
+    // gap plus the $5,000 in fees.
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue(
+      "$65,000.00",
+    );
   });
 
   it("brings buyer cash to close to $0 when seller financing fully covers the price", () => {
@@ -552,7 +595,7 @@ describe("SellerFinanceTab", () => {
     );
   });
 
-  it("flags the buyer cash to close when the deal is over-financed", () => {
+  it("returns the excess to the buyer when the deal is over-financed", () => {
     render(<SellerFinanceTab tab={tab} />);
 
     fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
@@ -568,9 +611,13 @@ describe("SellerFinanceTab", () => {
       target: { value: "10" },
     });
 
+    expect(screen.getByLabelText(/Buyer Cash to Close/i)).toHaveValue("$0.00");
     expect(
-      screen.getByLabelText(/Buyer Cash to Close/i).closest("label"),
-    ).toHaveClass("deal-analyzer-output-red");
+      screen.getByLabelText(/Cash Back to Buyer/i).closest("label"),
+    ).toHaveClass("deal-analyzer-output-positive");
+    expect(screen.getByLabelText(/Cash Back to Buyer/i)).toHaveValue(
+      "$150,000.00",
+    );
   });
 
   it("marks cash flow red when it's negative", () => {

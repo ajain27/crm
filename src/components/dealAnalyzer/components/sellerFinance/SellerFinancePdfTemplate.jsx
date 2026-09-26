@@ -90,6 +90,18 @@ const SellerFinancePdfTemplate = forwardRef(function SellerFinancePdfTemplate(
           tone="negative"
         />
       )}
+      <PdfRow
+        label="Buyer Cash to Close"
+        value={fmt(summary.buyerCashToClose)}
+        tone={summary.buyerCashToClose > 0 ? "negative" : "positive"}
+      />
+      {summary.cashBackToBuyer > 0 && (
+        <PdfRow
+          label="Cash Back to Buyer"
+          value={fmt(summary.cashBackToBuyer)}
+          tone="positive"
+        />
+      )}
       <PdfSectionTitle>Seller Note — Promissory Note</PdfSectionTitle>
       <PdfRow label="Note Rate" value={`${summary.sellerFinanceRatePct}%`} />
       <PdfRow

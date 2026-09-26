@@ -32,6 +32,12 @@ function formatPct(n) {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
 
+// The lender always funds this share of the purchase price, regardless of
+// how much the seller carries. When seller financing + the lender's 80% add
+// up to more than 100% of the price, that excess pays the lender fees and
+// closing costs first, and whatever's left goes back to the buyer.
+const LENDER_LTV_PCT = 80;
+
 const DEFAULT_LENDER_FEES = {
   originationFees: "$2,500",
   legalFees: "$3,000",
@@ -421,34 +427,35 @@ function SellerFinanceTab({ tab }) {
   const sellerNoteTotalInterest = sellerNote.totalInterest;
 
   const lenderTotal = calcLenderTotal(lenders);
-  const remainingForLender = Math.max(
-    0,
-    purchasePrice - sellerFinanceAmount - lenderTotal,
-  );
+  // Total the lenders fund — a fixed 80% of the price, independent of the
+  // seller note. No lender at all once the seller carries 100%.
+  const lenderCap = isFullySellerFinanced
+    ? 0
+    : purchasePrice * (LENDER_LTV_PCT / 100);
+  const remainingForLender = Math.max(0, lenderCap - lenderTotal);
   const newLenderAmount =
     remainingForLender > 0
       ? fmtCurrencyInput(String(Math.round(remainingForLender)))
       : "";
 
   // Keep every still-"auto" lender's amount in sync with the purchase price
-  // / seller-financing inputs as they change after the row was added —
-  // otherwise the seeded amount goes stale the moment the user edits
-  // Purchase Price or Seller Financing % afterward. Once the user types
-  // into a lender's Amount field directly, AdditionalLenders clears that
-  // row's `auto` flag and this effect leaves it alone. Manually-set lenders
-  // are treated as fixed and subtracted first; remaining auto lenders (in
-  // order) each absorb whatever's left after seller financing and any
-  // earlier lenders.
+  // as it changes after the row was added — otherwise the seeded amount
+  // goes stale the moment the user edits Purchase Price afterward. Once the
+  // user types into a lender's Amount field directly, AdditionalLenders
+  // clears that row's `auto` flag and this effect leaves it alone.
+  // Manually-set lenders are treated as fixed and subtracted first;
+  // remaining auto lenders (in order) each absorb whatever's left of the
+  // 80% lender share after any earlier lenders.
   useEffect(() => {
     setLenders((prev) => {
-      let used = sellerFinanceAmount;
+      let used = 0;
       let changed = false;
       const next = prev.map((l) => {
         if (!l.auto) {
           used += parseCurrency(l.amount);
           return l;
         }
-        const target = Math.max(0, purchasePrice - used);
+        const target = Math.max(0, lenderCap - used);
         const suggested =
           target > 0 ? fmtCurrencyInput(String(Math.round(target))) : "";
         used += target;
@@ -458,7 +465,7 @@ function SellerFinanceTab({ tab }) {
       });
       return changed ? next : prev;
     });
-  }, [purchasePrice, sellerFinanceAmount]);
+  }, [lenderCap]);
   // A lender row always exists in the UI (there's one on load), so filter
   // out empty placeholder rows before computing payments/totals shown in
   // the results — otherwise every deal would show a stray "$0" lender.
@@ -532,14 +539,15 @@ function SellerFinanceTab({ tab }) {
   const totalCashToClose = totalLenderFees + closingCostsAmt;
 
   const unfinancedPrincipal = purchasePrice - lenderTotal - sellerFinanceAmount;
-  // Once seller financing + lender debt cover the full purchase price, fees
-  // are assumed rolled into that financing too — the buyer only ever brings
-  // cash to close for an actual down-payment gap, never for fees alone on a
-  // fully (or over-)financed deal.
-  const buyerCashToClose =
-    unfinancedPrincipal > 0 ? unfinancedPrincipal + totalCashToClose : 0;
-  const isOverFinanced =
-    purchasePrice > 0 && lenderTotal + sellerFinanceAmount > purchasePrice;
+  // Seller financing + lender debt beyond the purchase price (e.g. 30% seller
+  // + 80% lender = 10% over). That excess pays the lender fees and closing
+  // costs first; the buyer only brings cash for whatever it doesn't cover,
+  // and anything left over after all costs goes back to the buyer.
+  const excessFinancing = Math.max(0, -unfinancedPrincipal);
+  const buyerNetAtClosing = unfinancedPrincipal + totalCashToClose;
+  const buyerCashToClose = Math.max(0, buyerNetAtClosing);
+  const cashBackToBuyer = Math.max(0, -buyerNetAtClosing);
+  const isOverFinanced = purchasePrice > 0 && excessFinancing > 0;
   const totalMonthlyPayment = sellerFinanceMonthly + lenderMonthlyPayment;
 
   const monthlyRentAmount = parseCurrency(form.monthlyRent);
@@ -634,7 +642,9 @@ function SellerFinanceTab({ tab }) {
       closingCostsAmt,
       totalCashToClose,
       unfinancedPrincipal,
+      excessFinancing,
       buyerCashToClose,
+      cashBackToBuyer,
       totalMonthlyPayment,
       monthlyRentAmount,
       yearlyTaxesAmt,
@@ -688,7 +698,7 @@ function SellerFinanceTab({ tab }) {
             <p>
               Enter the purchase price and the seller-financed note first, then
               add any additional lenders — the lender amount will auto-fill with
-              whatever's left to finance.
+              80% of the purchase price.
             </p>
           </div>
         </div>
@@ -917,12 +927,18 @@ function SellerFinanceTab({ tab }) {
           <div className="deal-analyzer-form-grid seller-finance-cash-grid">
             <label
               className={`field deal-analyzer-output ${
-                isOverFinanced ? "deal-analyzer-output-red" : ""
+                buyerCashToClose > 0 ? "deal-analyzer-output-red" : ""
               }`}
             >
               <span>Buyer Cash to Close</span>
               <input value={fmt(buyerCashToClose)} readOnly tabIndex={-1} />
             </label>
+            {cashBackToBuyer > 0 && (
+              <label className="field deal-analyzer-output deal-analyzer-output-positive">
+                <span>Cash Back to Buyer</span>
+                <input value={fmt(cashBackToBuyer)} readOnly tabIndex={-1} />
+              </label>
+            )}
           </div>
         )}
 
@@ -1181,7 +1197,7 @@ function SellerFinanceTab({ tab }) {
                 </span>
                 <strong
                   className={
-                    summary.isOverFinanced
+                    summary.buyerCashToClose > 0
                       ? "deal-analyzer-return-negative"
                       : "deal-analyzer-return-positive"
                   }
@@ -1192,6 +1208,19 @@ function SellerFinanceTab({ tab }) {
                   />
                 </strong>
               </div>
+              {summary.cashBackToBuyer > 0 && (
+                <div>
+                  <span>
+                    <strong>Cash Back to Buyer</strong>
+                  </span>
+                  <strong className="deal-analyzer-return-positive">
+                    <AnimatedAmount
+                      value={summary.cashBackToBuyer}
+                      format={fmt}
+                    />
+                  </strong>
+                </div>
+              )}
 
               <div
                 className="deal-analyzer-section-label"
@@ -1466,17 +1495,19 @@ function SellerFinanceTab({ tab }) {
               className="deal-analyzer-calculation"
               style={{ marginTop: "1rem" }}
             >
-              Buyer Cash to Close = Purchase Price − Seller Financing − Lender
-              Total + Lender Fees + Closing Costs (fees roll into financing
-              instead, at $0 cash to close, once seller financing + lender debt
-              cover the full purchase price)
+              Buyer Cash at Closing = Purchase Price − Seller Financing − Lender
+              Total ({LENDER_LTV_PCT}% of price) + Lender Fees + Closing Costs
+              (any financing above the purchase price pays the fees and closing
+              costs first; if it's more than enough, the rest goes back to the
+              buyer as cash back)
               <span>
                 {fmt(summary.purchasePrice)} −{" "}
                 {fmt(summary.sellerFinanceAmount)} − {fmt(summary.lenderTotal)}{" "}
-                {summary.unfinancedPrincipal > 0
-                  ? `+ ${fmt(summary.totalLenderFees)} + ${fmt(summary.closingCostsAmt)} `
-                  : "(fully financed — fees rolled in) "}
-                = {fmt(summary.buyerCashToClose)}
+                + {fmt(summary.totalLenderFees)} +{" "}
+                {fmt(summary.closingCostsAmt)} ={" "}
+                {summary.cashBackToBuyer > 0
+                  ? `${fmt(summary.cashBackToBuyer)} cash back to buyer`
+                  : `${fmt(summary.buyerCashToClose)} cash to close`}
               </span>
               Monthly Cash Flow = Monthly Rent − (Seller Note Payment + Lender
               Payments + Property Tax + Insurance + Appliance Insurance +
