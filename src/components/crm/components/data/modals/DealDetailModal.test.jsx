@@ -165,4 +165,17 @@ describe("DealDetailModal", () => {
     expect(text).toContain("Earnest Money Deposit (EMD): $100");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
+
+  it("fills the seller name from the notes for older deals", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, notes: "Source: PPL\nSeller: Pat Isom\nPhone: 1" }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByPlaceholderText("First name")).toHaveValue("Pat");
+    expect(screen.getByPlaceholderText("Last name")).toHaveValue("Isom");
+  });
 });

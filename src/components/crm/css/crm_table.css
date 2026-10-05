@@ -872,3 +872,15 @@
     }
   }
 }
+
+/* Solid green Generate Offer button in the deal modal, so it reads as its
+   own action next to Cancel and Save. Unlayered on purpose: gloss.css's
+   unlayered dark-mode .secondary-btn background would otherwise win. */
+.deal-detail-modal .modal-actions .secondary-btn.ddm-offer-btn {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.deal-detail-modal .modal-actions .secondary-btn.ddm-offer-btn:hover {
+  background: color-mix(in srgb, var(--green) 88%, #000000 12%);
+}

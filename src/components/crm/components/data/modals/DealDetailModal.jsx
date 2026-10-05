@@ -3,7 +3,7 @@ import { Upload, Loader2, Trash2, FileText } from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
-import { joinName } from "../../../../leads/leadUtils";
+import { joinName, splitName } from "../../../../leads/leadUtils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
 import WholesaleOfferPdfTemplate from "./WholesaleOfferPdfTemplate";
@@ -46,8 +46,20 @@ function parseCurrency(val) {
   return parseInt(String(val ?? "").replace(/[^0-9]/g, ""), 10) || 0;
 }
 
+// Deals added from leads before the seller name fields existed only have
+// the name in their notes, as a "Seller: Jane Doe" line.
+function sellerNameFromNotes(notes) {
+  const match = String(notes || "").match(/^Seller:\s*(.+)$/m);
+  return splitName(match ? match[1] : "");
+}
+
 function initDraft(deal) {
   const d = { ...deal };
+  if (!d.sellerFirstName && !d.sellerLastName) {
+    const { firstName, lastName } = sellerNameFromNotes(d.notes);
+    d.sellerFirstName = firstName;
+    d.sellerLastName = lastName;
+  }
   CURRENCY_FIELDS.forEach((f) => {
     d[f] = d[f] ? fmtCurrency(String(d[f])) : "";
   });
@@ -265,7 +277,7 @@ function DealDetailModal({
             </button>
             {!isRental && (
               <button
-                className="secondary-btn"
+                className="secondary-btn ddm-offer-btn"
                 onClick={handleGenerateOffer}
                 disabled={saving || exportingOffer}
               >
