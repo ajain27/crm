@@ -819,6 +819,11 @@
     color: var(--text);
   }
 
+  .dt-listing-links {
+    display: inline-flex;
+    gap: 0.75rem;
+  }
+
   .deal-detail-modal .modal-actions .ddm-delete-btn {
     margin-right: auto;
   }

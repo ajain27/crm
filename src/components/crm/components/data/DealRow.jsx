@@ -4,6 +4,7 @@ import {
   Badge,
 } from "../../../elements/elements";
 import { currency } from "../../../../utils/utils";
+import { zillowUrl } from "../../../leads/leadUtils";
 
 function formatFullAddress(deal) {
   const stateZip = [deal.state, deal.zipCode].filter(Boolean).join(" ");
@@ -27,6 +28,8 @@ function DealRow({ deal, index, onRowDetailClick }) {
         : isWithdrawn
           ? "withdrawn"
           : undefined;
+
+  const zillowLink = zillowUrl(formatFullAddress(deal));
 
   function handleTrClick(e) {
     const tag = e.target.tagName.toLowerCase();
@@ -64,15 +67,30 @@ function DealRow({ deal, index, onRowDetailClick }) {
         className="dt-col-action"
         onClick={(e) => e.stopPropagation()}
       >
-        {deal.listingUrl ? (
-          <a
-            href={deal.listingUrl}
-            className="details-link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            MLS
-          </a>
+        {deal.listingUrl || zillowLink ? (
+          <span className="dt-listing-links">
+            {deal.listingUrl && (
+              <a
+                href={deal.listingUrl}
+                className="details-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                MLS
+              </a>
+            )}
+            {zillowLink && (
+              <a
+                href={zillowLink}
+                className="details-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`View ${formatFullAddress(deal)} on Zillow`}
+              >
+                Zillow
+              </a>
+            )}
+          </span>
         ) : (
           <span style={{ color: "var(--text-muted, #aaa)" }}>—</span>
         )}

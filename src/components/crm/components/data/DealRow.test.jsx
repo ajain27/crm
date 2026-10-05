@@ -46,6 +46,21 @@ describe("DealRow", () => {
     expect(screen.getByText("$30,000")).toBeInTheDocument();
   });
 
+  it("links to the property on Zillow in the Listing column", () => {
+    renderRow();
+    expect(screen.getByRole("link", { name: "Zillow" })).toHaveAttribute(
+      "href",
+      "https://www.zillow.com/homes/1-Main-St-Austin-TX-78701_rb/",
+    );
+    expect(screen.queryByRole("link", { name: "MLS" })).toBeNull();
+  });
+
+  it("shows MLS alongside Zillow when the deal has a listing URL", () => {
+    renderRow({ deal: { ...deal, listingUrl: "https://mls.example/1" } });
+    expect(screen.getByRole("link", { name: "MLS" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Zillow" })).toBeInTheDocument();
+  });
+
   it("renders the offer status badge", () => {
     renderRow();
     expect(screen.getByText("Not Sent")).toBeInTheDocument();
