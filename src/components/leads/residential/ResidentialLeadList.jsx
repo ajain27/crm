@@ -205,9 +205,9 @@ export default function ResidentialLeadList({
                       "—"
                     )}
                   </td>
-                  {/* MLS leads carry the agent's contact, not the seller's. */}
+                  {/* MLS leads carry the agent's email, not the seller's. */}
                   <EmailCell email={isMls ? "" : lead.email} />
-                  <PhoneCell phone={isMls ? "" : lead.phone} />
+                  <PhoneCell phone={lead.phone} />
                   <NotesCell notes={lead.notes} />
                   <DateAddedCell date={lead.dateAdded} />
                   <ActionCell data-label="MLS Link">

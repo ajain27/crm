@@ -2,7 +2,13 @@ import { createEmptyDealForm } from "../crm/components/crmConfig";
 
 export const ITEMS_PER_PAGE = 10;
 
-export const SOURCES = ["MLS / Zillow", "Cold Call", "Propwire", "Auction.com"];
+export const SOURCES = [
+  "MLS / Zillow",
+  "Cold Call",
+  "Propwire",
+  "Auction.com",
+  "PPL",
+];
 
 const PPC_SOURCE_TERMS = [
   "website",
@@ -25,7 +31,10 @@ export function isPpcLead(lead) {
   return PPC_SOURCE_TERMS.some((term) => source.includes(term));
 }
 
+// Commercial leads can also be tagged "PPL" as a source but stay in the
+// Commercial list.
 export function isPplLead(lead) {
+  if (lead?.leadType === "commercial") return false;
   if (lead?.pplSource === true) return true;
   const source = String(lead?.source || "").toLowerCase();
   return PPL_SOURCE_TERMS.some((term) => source.includes(term));
@@ -127,6 +136,12 @@ export function createEmptyResidentialForm() {
     agentName: "",
     agentPhone: "",
     sellerName: "",
+    firstName: "",
+    lastName: "",
+    askingPrice: "",
+    occupant: "",
+    sellingUrgency: "",
+    sellerMotivation: "",
     url: "",
     followUpDate: "",
     email: "",
@@ -155,6 +170,23 @@ export function createEmptyCommercialForm() {
     phone: "",
     notes: "",
   };
+}
+
+// "Jane" + "Doe" → "Jane Doe"; blank parts are dropped.
+export function joinName(firstName, lastName) {
+  return [firstName, lastName]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+// "Jane Q Doe" → { firstName: "Jane", lastName: "Q Doe" }, for leads saved
+// with only a combined sellerName.
+export function splitName(fullName) {
+  const [firstName = "", ...rest] = String(fullName || "")
+    .trim()
+    .split(/\s+/);
+  return { firstName, lastName: rest.join(" ") };
 }
 
 export function todayStr() {
@@ -249,6 +281,12 @@ export function buildDealFromLead(lead, userId) {
       lead.sellerName ? `Seller: ${lead.sellerName}` : "",
       lead.email ? `Email: ${lead.email}` : "",
       lead.phone ? `Phone: ${lead.phone}` : "",
+      lead.askingPrice ? `Asking Price: ${lead.askingPrice}` : "",
+      lead.occupant ? `Living in Property: ${lead.occupant}` : "",
+      lead.sellingUrgency ? `Selling Urgency: ${lead.sellingUrgency}` : "",
+      lead.sellerMotivation
+        ? `Seller Motivation: ${lead.sellerMotivation}`
+        : "",
       lead.notes || "",
     ]
       .filter(Boolean)

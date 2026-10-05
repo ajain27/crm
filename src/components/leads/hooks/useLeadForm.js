@@ -4,7 +4,7 @@ import {
   formatPhone,
   trimFieldOnBlur,
 } from "../../../utils/utils";
-import { todayStr } from "../leadUtils";
+import { joinName, todayStr } from "../leadUtils";
 
 // State + handlers for an "Add Lead" form (residential and commercial share
 // this). Rejects addresses already in `existingLeads`, and on submit saves a
@@ -64,6 +64,9 @@ export function useLeadForm({
         ...form,
         leadType,
         address: form.address.trim(),
+        // Residential leads collect first/last name separately; keep the
+        // combined sellerName the rest of the app reads.
+        sellerName: joinName(form.firstName, form.lastName) || form.sellerName,
         id: crypto.randomUUID(),
         userId: currentUser.id,
         dateAdded: todayStr(),

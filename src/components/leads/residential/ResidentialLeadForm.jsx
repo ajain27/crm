@@ -12,6 +12,11 @@ import {
   TextField,
 } from "../components/LeadFormFields";
 import { todayStr } from "../leadUtils";
+import {
+  OCCUPANT_OPTIONS,
+  SELLER_MOTIVATION_OPTIONS,
+  SELLING_URGENCY_OPTIONS,
+} from "../leadsConfig";
 
 const YES_NO = ["No", "Yes"];
 
@@ -192,7 +197,61 @@ export default function ResidentialLeadForm({ leadForm }) {
               </>
             )}
 
-            {form.source === "Cold Call" ? sellerNameField : listingUrlField}
+            <TextField
+              label="First Name"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleNameChange}
+              onBlur={handleTrimBlur}
+              placeholder="Seller's first name"
+            />
+            <TextField
+              label="Last Name"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleNameChange}
+              onBlur={handleTrimBlur}
+              placeholder="Seller's last name"
+            />
+            <PhoneField
+              name="phone"
+              value={form.phone}
+              onChange={handlePhoneChange}
+            />
+            <TextField
+              label="Asking Price"
+              name="askingPrice"
+              value={form.askingPrice}
+              onChange={handleChange}
+              onBlur={handleTrimBlur}
+              placeholder="$0"
+            />
+            <LeadSelectField
+              label="Who's Living in the Property"
+              name="occupant"
+              value={form.occupant}
+              onChange={handleChange}
+              options={OCCUPANT_OPTIONS}
+              placeholder="Select…"
+            />
+            <LeadSelectField
+              label="Selling Urgency"
+              name="sellingUrgency"
+              value={form.sellingUrgency}
+              onChange={handleChange}
+              options={SELLING_URGENCY_OPTIONS}
+              placeholder="Select…"
+            />
+            <LeadSelectField
+              label="Seller Motivation"
+              name="sellerMotivation"
+              value={form.sellerMotivation}
+              onChange={handleChange}
+              options={SELLER_MOTIVATION_OPTIONS}
+              placeholder="Select…"
+            />
+
+            {form.source !== "Cold Call" && listingUrlField}
 
             <LeadField label="Follow-Up Date" required>
               <input
@@ -206,23 +265,16 @@ export default function ResidentialLeadForm({ leadForm }) {
             </LeadField>
 
             {form.source !== "MLS / Zillow" && (
-              <>
-                <TextField
-                  label="Email"
-                  icon={Mail}
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  onBlur={handleTrimBlur}
-                  placeholder="seller@email.com"
-                />
-                <PhoneField
-                  name="phone"
-                  value={form.phone}
-                  onChange={handlePhoneChange}
-                />
-              </>
+              <TextField
+                label="Email"
+                icon={Mail}
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                onBlur={handleTrimBlur}
+                placeholder="seller@email.com"
+              />
             )}
           </>
         )}

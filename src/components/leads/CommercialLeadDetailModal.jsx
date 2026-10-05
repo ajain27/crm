@@ -3,9 +3,8 @@ import Modal from "../modal/Modal";
 import { formatPhone } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { COMMERCIAL_PROPERTY_TYPES } from "./leadsConfig";
+import { SOURCES } from "./leadUtils";
 import "./Leads.css";
-
-const SOURCES = ["MLS / Zillow", "Cold Call", "Propwire", "Auction.com"];
 
 function Field({ label, children }) {
   return (

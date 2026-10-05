@@ -3,6 +3,12 @@ import Modal from "../modal/Modal";
 import { Badge } from "../elements/elements";
 import { formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
+import { joinName, splitName } from "./leadUtils";
+import {
+  OCCUPANT_OPTIONS,
+  SELLER_MOTIVATION_OPTIONS,
+  SELLING_URGENCY_OPTIONS,
+} from "./leadsConfig";
 
 const SOURCES = [
   "Driving for Dollars",
@@ -14,8 +20,26 @@ const SOURCES = [
   "PropStream",
   "Propwire",
   "Auction.com",
+  "PPL",
   "Other",
 ];
+
+function OptionSelect({ value, onChange, options }) {
+  return (
+    <select
+      className="ldm-input"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      <option value="">Select…</option>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function Field({ label, children }) {
   return (
@@ -40,6 +64,8 @@ export default function LeadDetailModal({
   useEffect(() => {
     if (lead)
       setDraft({
+        // Older leads only have a combined sellerName.
+        ...(lead.firstName || lead.lastName ? {} : splitName(lead.sellerName)),
         ...lead,
         source: isPpc ? "PPC" : isPpl ? "PPL" : lead.source,
       });
@@ -51,10 +77,20 @@ export default function LeadDetailModal({
     setDraft((prev) => ({ ...prev, [field]: value }));
   }
 
+  const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
+  const hasSellerSection = !isRental && !isPpc && !isPpl;
+
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({ ...draft });
+      await onSave(
+        hasSellerSection
+          ? {
+              ...draft,
+              sellerName: joinName(draft.firstName, draft.lastName),
+            }
+          : { ...draft },
+      );
       onClose();
     } finally {
       setSaving(false);
@@ -62,7 +98,6 @@ export default function LeadDetailModal({
   }
 
   const isMLS = draft.source === "MLS / Zillow";
-  const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
   const _d = new Date();
   const today = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, "0")}-${String(_d.getDate()).padStart(2, "0")}`;
 
@@ -298,21 +333,57 @@ export default function LeadDetailModal({
           </div>
         ) : (
           <>
-            {draft.source === "Cold Call" && (
+            {hasSellerSection && (
               <div className="ldm-section">
                 <div className="ldm-section-label">Seller</div>
                 <div className="ldm-grid">
-                  <Field label="Seller Name">
+                  {["firstName", "lastName"].map((field) => (
+                    <Field
+                      key={field}
+                      label={field === "firstName" ? "First Name" : "Last Name"}
+                    >
+                      <input
+                        className="ldm-input"
+                        value={draft[field] || ""}
+                        onChange={(e) =>
+                          set(
+                            field,
+                            e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
+                          )
+                        }
+                        placeholder={
+                          field === "firstName" ? "First name" : "Last name"
+                        }
+                      />
+                    </Field>
+                  ))}
+                  <Field label="Asking Price">
                     <input
                       className="ldm-input"
-                      value={draft.sellerName || ""}
-                      onChange={(e) =>
-                        set(
-                          "sellerName",
-                          e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
-                        )
-                      }
-                      placeholder="Seller's name"
+                      value={draft.askingPrice || ""}
+                      onChange={(e) => set("askingPrice", e.target.value)}
+                      placeholder="$0"
+                    />
+                  </Field>
+                  <Field label="Who's Living in the Property">
+                    <OptionSelect
+                      value={draft.occupant}
+                      onChange={(v) => set("occupant", v)}
+                      options={OCCUPANT_OPTIONS}
+                    />
+                  </Field>
+                  <Field label="Selling Urgency">
+                    <OptionSelect
+                      value={draft.sellingUrgency}
+                      onChange={(v) => set("sellingUrgency", v)}
+                      options={SELLING_URGENCY_OPTIONS}
+                    />
+                  </Field>
+                  <Field label="Seller Motivation">
+                    <OptionSelect
+                      value={draft.sellerMotivation}
+                      onChange={(v) => set("sellerMotivation", v)}
+                      options={SELLER_MOTIVATION_OPTIONS}
                     />
                   </Field>
                 </div>
