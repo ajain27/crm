@@ -82,7 +82,9 @@ export default function LeadDetailModal({
   }
 
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
-  const hasSellerSection = !isRental && !isPpc && !isPpl;
+  // PPL leads are entered with full seller details, so they get the same
+  // sections as other residential leads; only website PPC leads stay minimal.
+  const hasSellerSection = !isRental && !isPpc;
 
   async function handleSave() {
     setSaving(true);
@@ -96,6 +98,11 @@ export default function LeadDetailModal({
           : { ...draft },
       );
       onClose();
+    } catch (error) {
+      console.error("Failed to save lead", error);
+      alert(
+        `Unable to save lead. Check your database connection.${error?.message ? `\n\n${error.message}` : ""}`,
+      );
     } finally {
       setSaving(false);
     }
@@ -233,7 +240,7 @@ export default function LeadDetailModal({
                 />
               </Field>
             )}
-            {(isPpc || isPpl || (isRental && draft.onMarket !== "Yes")) && (
+            {(isPpc || (isRental && draft.onMarket !== "Yes")) && (
               <Field label="Seller Name">
                 <input
                   className="ldm-input"
@@ -267,7 +274,7 @@ export default function LeadDetailModal({
                 maxLength={12}
               />
             </Field>
-            {!isPpc && !isPpl && (
+            {!isPpc && (
               <Field label="Listing URL">
                 <input
                   className="ldm-input ldm-wide"
@@ -397,7 +404,7 @@ export default function LeadDetailModal({
               </div>
             )}
 
-            {!isPpc && !isPpl && (
+            {!isPpc && (
               <div className="ldm-section">
                 <div className="ldm-section-label">Follow-Up</div>
                 <div className="ldm-grid">

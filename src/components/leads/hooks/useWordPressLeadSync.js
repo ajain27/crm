@@ -24,6 +24,9 @@ export function useWordPressLeadSync({
     try {
       const wpLeads = await fetchWordPressLeads();
       const existingKeys = new Set(leads.flatMap(leadIdentityKeys));
+      // Edited leads no longer match their WordPress copy by content, so also
+      // match by id — re-importing would overwrite the user's edits.
+      const existingIds = new Set(leads.map((l) => l.id));
       const imported = [];
       const fetched = wpLeads.map((wpLead) => ({
         ...wpLead,
@@ -37,6 +40,7 @@ export function useWordPressLeadSync({
 
       for (const lead of fetched) {
         const keys = leadIdentityKeys(lead);
+        if (existingIds.has(lead.id)) continue;
         if (keys.some((key) => existingKeys.has(key))) continue;
 
         await saveLead(lead);
@@ -47,8 +51,11 @@ export function useWordPressLeadSync({
       if (imported.length) {
         setLeads((prev) => {
           const prevKeys = new Set(prev.flatMap(leadIdentityKeys));
+          const prevIds = new Set(prev.map((l) => l.id));
           const freshImported = imported.filter(
-            (lead) => !leadIdentityKeys(lead).some((key) => prevKeys.has(key)),
+            (lead) =>
+              !prevIds.has(lead.id) &&
+              !leadIdentityKeys(lead).some((key) => prevKeys.has(key)),
           );
           return [...freshImported, ...prev];
         });

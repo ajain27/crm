@@ -80,11 +80,15 @@ export default function PotentialLeads({
   // ── Split leads by type ────────────────────────────────────────────────────
   // WordPress leads show in the PPC list straight from the sync, even before
   // (or without) being imported into the local lead list.
+  // Match by id too: once a lead is edited its content no longer matches the
+  // stale WordPress copy, which would otherwise show up as a second row.
   const localLeadKeys = new Set(leads.flatMap(leadIdentityKeys));
+  const localLeadIds = new Set(leads.map((l) => l.id));
   const visibleLeads = [
     ...leads,
     ...wpSync.fetchedLeads.filter(
-      (lead) => !leadMatchesAnyKey(lead, localLeadKeys),
+      (lead) =>
+        !localLeadIds.has(lead.id) && !leadMatchesAnyKey(lead, localLeadKeys),
     ),
   ];
   const ppcLeads = sortNewestFirst(dedupeLeads(visibleLeads.filter(isPpcLead)));

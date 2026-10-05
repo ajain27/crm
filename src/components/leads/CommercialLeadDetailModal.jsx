@@ -40,6 +40,11 @@ export default function CommercialLeadDetailModal({
     try {
       await onSave({ ...draft });
       onClose();
+    } catch (error) {
+      console.error("Failed to save lead", error);
+      alert(
+        `Unable to save lead. Check your database connection.${error?.message ? `\n\n${error.message}` : ""}`,
+      );
     } finally {
       setSaving(false);
     }
