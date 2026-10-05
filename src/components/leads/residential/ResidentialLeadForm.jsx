@@ -11,6 +11,7 @@ import {
   SourceSelectField,
   TextField,
 } from "../components/LeadFormFields";
+import { ZillowLink } from "../components/LeadTableCells";
 import { todayStr } from "../leadUtils";
 import {
   OCCUPANT_OPTIONS,
@@ -114,6 +115,7 @@ export default function ResidentialLeadForm({ leadForm }) {
           onChange={handleChange}
           onBlur={handleAddressBlur}
           placeholder="e.g. 123 Main St, Dallas, TX 75201"
+          action={<ZillowLink address={form.address} />}
         />
 
         {isRental ? (

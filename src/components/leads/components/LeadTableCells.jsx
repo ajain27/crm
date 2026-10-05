@@ -1,5 +1,12 @@
-import { CheckCheck, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
+import {
+  CheckCheck,
+  ExternalLink,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+} from "lucide-react";
 import { formatDate } from "../../../utils/utils";
+import { zillowUrl } from "../leadUtils";
 
 const EMPTY = "—";
 
@@ -15,6 +22,23 @@ export function ActionCell({ className, children, ...props }) {
       {children}
     </td>
   );
+}
+
+export function ZillowLink({ address }) {
+  const url = zillowUrl(address);
+  return url ? (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="leads-mls-link"
+      title={`View ${address} on Zillow`}
+      onClick={stopPropagation}
+    >
+      <ExternalLink size={12} />
+      Zillow
+    </a>
+  ) : null;
 }
 
 export function EmailLink({ email }) {

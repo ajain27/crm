@@ -16,6 +16,7 @@ import {
   PhoneCell,
   PhoneLink,
   SourceCell,
+  ZillowLink,
 } from "../components/LeadTableCells";
 import { followUpStatus, leadMatchesSearch, parseAddress } from "../leadUtils";
 
@@ -159,7 +160,7 @@ export default function ResidentialLeadList({
               <th>Phone</th>
               <th>Notes</th>
               <th>Added</th>
-              <th>MLS Link</th>
+              <th>Links</th>
               <th></th>
               <th></th>
             </tr>
@@ -210,18 +211,23 @@ export default function ResidentialLeadList({
                   <PhoneCell phone={lead.phone} />
                   <NotesCell notes={lead.notes} />
                   <DateAddedCell date={lead.dateAdded} />
-                  <ActionCell data-label="MLS Link">
-                    {lead.url ? (
-                      <a
-                        href={lead.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="leads-mls-link"
-                        title={lead.url}
-                      >
-                        <ExternalLink size={12} />
-                        {isMls ? "MLS" : "Link"}
-                      </a>
+                  <ActionCell data-label="Links">
+                    {lead.url || lead.address ? (
+                      <div className="leads-link-stack">
+                        {lead.url && (
+                          <a
+                            href={lead.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="leads-mls-link"
+                            title={lead.url}
+                          >
+                            <ExternalLink size={12} />
+                            {isMls ? "MLS" : "Link"}
+                          </a>
+                        )}
+                        <ZillowLink address={lead.address} />
+                      </div>
                     ) : (
                       "—"
                     )}

@@ -7,6 +7,7 @@ import { SOURCES } from "../leadUtils";
 export function LeadField({
   label,
   required,
+  action,
   icon: Icon,
   className = "",
   style,
@@ -22,6 +23,7 @@ export function LeadField({
             <span className="required-star">*</span>
           </>
         )}
+        {action && <span className="leads-field-action">{action}</span>}
       </span>
       {Icon ? (
         <div className="leads-input-icon-wrap">
@@ -122,13 +124,14 @@ export function TextField({
 }
 
 export const AddressField = forwardRef(function AddressField(
-  { value, onChange, onBlur, placeholder },
+  { value, onChange, onBlur, placeholder, action },
   ref,
 ) {
   return (
     <LeadField
       label="Property Address"
       required
+      action={action}
       icon={MapPin}
       className="leads-address-field"
     >

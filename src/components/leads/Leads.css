@@ -227,6 +227,19 @@
     text-decoration: underline;
   }
 
+  .leads-link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  /* A small link (e.g. Zillow) shown beside a field's label. */
+  .leads-field-action {
+    margin-left: 0.5rem;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
   .leads-file-actions {
     display: flex;
     align-items: center;

@@ -4,6 +4,7 @@ import { Badge } from "../elements/elements";
 import { formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
+import { ZillowLink } from "./components/LeadTableCells";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -41,10 +42,13 @@ function OptionSelect({ value, onChange, options }) {
   );
 }
 
-function Field({ label, children }) {
+function Field({ label, action, children }) {
   return (
     <div className="ldm-field">
-      <span className="ldm-label">{label}</span>
+      <span className="ldm-label">
+        {label}
+        {action && <span className="leads-field-action">{action}</span>}
+      </span>
       {children}
     </div>
   );
@@ -145,7 +149,10 @@ export default function LeadDetailModal({
                 ))}
               </select>
             </Field>
-            <Field label="Address">
+            <Field
+              label="Address"
+              action={<ZillowLink address={draft.address} />}
+            >
               <input
                 className="ldm-input ldm-wide"
                 value={draft.address || ""}

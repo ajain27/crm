@@ -189,6 +189,18 @@ export function splitName(fullName) {
   return { firstName, lastName: rest.join(" ") };
 }
 
+// Zillow search URL for an address — Zillow lands on the property page when
+// the address matches a single home.
+export function zillowUrl(address) {
+  const slug = String(address || "")
+    .replace(/[#,]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-");
+  return slug
+    ? `https://www.zillow.com/homes/${encodeURIComponent(slug)}_rb/`
+    : "";
+}
+
 export function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
