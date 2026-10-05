@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -13,10 +13,19 @@ function Modal({
   style,
   closeOnOverlayClick = true,
 }) {
+  const overlayRef = useRef(null);
+
   useEffect(() => {
     if (!isOpen) return;
     function handleKeyDown(e) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // With modals stacked (e.g. a preview over a detail modal), only the
+      // topmost — the last overlay in the DOM — should close.
+      const overlays = document.querySelectorAll(".modal-overlay");
+      const topmost = overlays[overlays.length - 1];
+      if (overlayRef.current && topmost && topmost !== overlayRef.current)
+        return;
+      onClose();
     }
     document.addEventListener("keydown", handleKeyDown);
     const prev = document.body.style.overflow;
@@ -31,6 +40,7 @@ function Modal({
 
   const modalContent = (
     <div
+      ref={overlayRef}
       className="modal-overlay"
       onClick={closeOnOverlayClick ? onClose : undefined}
     >

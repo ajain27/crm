@@ -23,7 +23,7 @@ function todayFormatted() {
   });
 }
 
-function Field({ label, value }) {
+export function Field({ label, value }) {
   return (
     <div className="oa-pdf-field-row">
       <span className="oa-pdf-field-label">{label}</span>
@@ -34,7 +34,7 @@ function Field({ label, value }) {
   );
 }
 
-function Section({ number, title, children, isNew }) {
+export function Section({ number, title, children, isNew }) {
   return (
     <div className={`oa-pdf-section${isNew ? " oa-pdf-section-new" : ""}`}>
       <h2>
@@ -49,7 +49,7 @@ function Section({ number, title, children, isNew }) {
 // roofline behind an orange key whose round bow holds a checkmark instead
 // of a keyhole, with a couple of small sparkle accents. Built as inline
 // SVG (no source image file was available to embed directly).
-function BrandIcon() {
+export function BrandIcon() {
   return (
     <svg viewBox="0 0 100 100" className="oa-pdf-brand-icon-svg">
       <polygon
@@ -88,7 +88,7 @@ function BrandIcon() {
   );
 }
 
-function SigLine({ label, value }) {
+export function SigLine({ label, value }) {
   return (
     <div className="oa-pdf-sig-line">
       <div className="oa-pdf-sig-line-rule">

@@ -273,6 +273,14 @@ export function buildDealFromLead(lead, userId) {
   if (!hasUsableAddress(fullAddress)) return null;
 
   const { address, city, state, zipCode } = parseAddress(fullAddress);
+  // Older leads only have a combined sellerName.
+  const { firstName, lastName } =
+    lead.firstName || lead.lastName
+      ? {
+          firstName: String(lead.firstName || "").trim(),
+          lastName: String(lead.lastName || "").trim(),
+        }
+      : splitName(lead.sellerName);
   return {
     ...createEmptyDealForm(),
     id: crypto.randomUUID(),
@@ -286,6 +294,8 @@ export function buildDealFromLead(lead, userId) {
     agentPhone: lead.agentPhone || "",
     onMarket: lead.onMarket || (lead.source === "MLS / Zillow" ? "Yes" : "No"),
     listedPrice: lead.listedPrice || "",
+    sellerFirstName: firstName,
+    sellerLastName: lastName,
     sellerPhone: lead.phone || "",
     source: lead.source || "Website",
     notes: [

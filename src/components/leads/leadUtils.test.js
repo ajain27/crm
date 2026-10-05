@@ -60,10 +60,34 @@ describe("leadUtils", () => {
     );
     expect(deal).toMatchObject({
       userId: "u1",
+      sellerFirstName: "Jo",
+      sellerLastName: "",
       address: "9 Elm St",
       city: "Austin",
       onMarket: "Yes",
       notes: "Source: MLS / Zillow\nSeller: Jo",
     });
+  });
+
+  it("copies the seller's first and last name onto the CRM deal", () => {
+    const deal = buildDealFromLead(
+      {
+        address: "9 Elm St, Austin, TX 78701",
+        firstName: "Jane",
+        lastName: "Q Doe",
+        sellerName: "Jane Q Doe",
+      },
+      "u1",
+    );
+    expect(deal).toMatchObject({
+      sellerFirstName: "Jane",
+      sellerLastName: "Q Doe",
+    });
+    expect(
+      buildDealFromLead(
+        { address: "9 Elm St, Austin, TX 78701", sellerName: "Jane Q Doe" },
+        "u1",
+      ),
+    ).toMatchObject({ sellerFirstName: "Jane", sellerLastName: "Q Doe" });
   });
 });

@@ -1,6 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import DealDetailModal from "./DealDetailModal";
+import { renderElementToPdfAssets } from "../../../../../utils/pdfExport";
+
+vi.mock("../../../../../utils/pdfExport", () => ({
+  renderElementToPdfAssets: vi.fn(async () => ({
+    blob: new Blob(),
+    imgDataUrl: "data:image/jpeg;base64,",
+  })),
+  downloadPdfBlob: vi.fn(),
+}));
 
 const deal = {
   id: "d1",
@@ -129,5 +138,31 @@ describe("DealDetailModal", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
     expect(updateDealPatch).toHaveBeenCalled();
+  });
+
+  it("generates an offer from the form with the seller name and a $100 EMD", async () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          sellerFirstName: "Jane",
+          sellerLastName: "Doe",
+          contractPrice: 210000,
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Generate Offer"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
+    expect(text).toContain("Jane Doe");
+    expect(text).toContain("1 Main St, Austin, TX 78701");
+    expect(text).toContain("$210,000");
+    expect(text).toContain("Earnest Money Deposit (EMD): $100");
+    expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
 });
