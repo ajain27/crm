@@ -8,28 +8,33 @@ function digitsOnly(value) {
   return String(value ?? "").replace(/[^0-9]/g, "");
 }
 
-function toForm(options) {
+function toForm(options, sellerName) {
   return {
+    sellerName: sellerName || "",
     allowAssignment: options.allowAssignment,
     emdAmount: String(options.emdAmount),
     inspectionDays: String(options.inspectionDays),
   };
 }
 
-// Asks for the offer's assignment variant, EMD and inspection period before
-// the Purchase & Sale Agreement is generated. Opens with the last values
-// used (or the defaults), so regenerating doesn't mean retyping them.
+// Asks for the seller's name, the offer's assignment variant, EMD and
+// inspection period before the Purchase & Sale Agreement is generated.
+// Opens with the deal's seller name and the last options used (or the
+// defaults), so regenerating doesn't mean retyping them.
 export default function OfferOptionsModal({
   isOpen,
   onClose,
   onGenerate,
+  sellerName = "",
   initialOptions = DEFAULT_OFFER_OPTIONS,
 }) {
-  const [form, setForm] = useState(() => toForm(initialOptions));
+  const [form, setForm] = useState(() => toForm(initialOptions, sellerName));
 
+  // Reset only when the window opens, so typing isn't overwritten.
   useEffect(() => {
-    if (isOpen) setForm(toForm(initialOptions));
-  }, [isOpen, initialOptions]);
+    if (isOpen) setForm(toForm(initialOptions, sellerName));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const emdAmount = parseInt(form.emdAmount, 10) || 0;
   const inspectionDays = parseInt(form.inspectionDays, 10) || 0;
@@ -43,6 +48,7 @@ export default function OfferOptionsModal({
     e?.preventDefault();
     if (emdError || daysError) return;
     onGenerate({
+      sellerName: form.sellerName.trim().replace(/\s+/g, " "),
       allowAssignment: form.allowAssignment,
       emdAmount,
       inspectionDays,
@@ -77,6 +83,18 @@ export default function OfferOptionsModal({
       }
     >
       <form className="offer-options-body" onSubmit={handleSubmit}>
+        <label className="field">
+          <span>Seller Name</span>
+          <input
+            value={form.sellerName}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, sellerName: e.target.value }))
+            }
+            placeholder="Seller's first and last name"
+            aria-label="Seller Name"
+          />
+        </label>
+
         <fieldset className="offer-options-choice">
           <legend>Assignment</legend>
           <label>

@@ -120,7 +120,15 @@ function DealDetailModal({
 
   // The options are committed together with the print template's mount, so
   // the template renders with what was just chosen.
-  function handleOfferOptionsSubmit(options) {
+  // The seller name typed there is written back to the deal's name fields,
+  // so Save Changes keeps it.
+  function handleOfferOptionsSubmit({ sellerName, ...options }) {
+    const { firstName, lastName } = splitName(sellerName);
+    setDraft((prev) => ({
+      ...prev,
+      sellerFirstName: firstName,
+      sellerLastName: lastName,
+    }));
     setOfferOptions(options);
     setOfferOptionsOpen(false);
     handleGenerateOffer();
@@ -867,6 +875,7 @@ function DealDetailModal({
         onClose={() => setOfferOptionsOpen(false)}
         onGenerate={handleOfferOptionsSubmit}
         initialOptions={offerOptions}
+        sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
       />
       <PdfReportPreviewModal
         previewImage={offerPreviewImage}

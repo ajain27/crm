@@ -112,6 +112,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
   ref,
 ) {
   const variant = allowAssignment ? VARIANTS.assignable : VARIANTS.noAssignment;
+  const today = todayFormatted();
   // Clauses after Default & Remedies shift up by one without assignment.
   const afterRemedies = allowAssignment ? 7 : 6;
 
@@ -158,7 +159,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
         </p>
 
         <div className="oa-pdf-fields">
-          <Field label="Effective Date:" value={todayFormatted()} />
+          <Field label="Effective Date:" value={today} />
           <Field label="Seller Name(s):" value={sellerName} />
           <Field label="Buyer Name:" value={variant.buyerName} />
           <Field label="Property Address:" value={propertyAddress} />
@@ -284,15 +285,15 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           <div className="oa-pdf-sig-box">
             <h3>SELLER</h3>
             <SigLine label="Signature" />
-            <SigLine label="Printed Name" />
-            <SigLine label="Date" />
+            <SigLine label="Printed Name" value={sellerName} />
+            <SigLine label="Date" value={today} />
           </div>
           <div className="oa-pdf-sig-box">
             <h3>BUYER</h3>
             <SigLine label="Company" value={BUYER_COMPANY} />
             <SigLine label="Authorized Representative" value={BUYER_REP} />
             <SigLine label="Signature" />
-            <SigLine label="Date" />
+            <SigLine label="Date" value={today} />
             <p className="oa-pdf-sig-caption">{variant.sigCaption}</p>
           </div>
         </div>

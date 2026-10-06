@@ -171,6 +171,9 @@ describe("DealDetailModal", () => {
       day: "numeric",
     });
     expect(text).toContain(`Effective Date:${today}`);
+    expect(text).toContain("Jane DoePrinted Name");
+    // Effective Date, plus the seller's and buyer's signature dates.
+    expect(text.split(today)).toHaveLength(4);
     expect(text).toContain("You Win Estates, and/or assigns");
     expect(text).toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
@@ -238,5 +241,31 @@ describe("DealDetailModal", () => {
     );
     expect(screen.getByPlaceholderText("First name")).toHaveValue("Pat");
     expect(screen.getByPlaceholderText("Last name")).toHaveValue("Isom");
+  });
+
+  it("asks for the seller name when the deal has none and keeps it on the deal", async () => {
+    const updateDealPatch = vi.fn(async () => {});
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={updateDealPatch}
+      />,
+    );
+    fireEvent.click(screen.getByText("Generate Offer"));
+    expect(screen.getByLabelText("Seller Name")).toHaveValue("");
+    fireEvent.change(screen.getByLabelText("Seller Name"), {
+      target: { value: "  Sam  Q Seller " },
+    });
+    renderElementToPdfAssets.mockClear();
+    fireEvent.click(screen.getByText("Generate"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
+    expect(text).toContain("Seller Name(s):Sam Q Seller");
+    expect(text).toContain("Sam Q SellerPrinted Name");
+    expect(screen.getByPlaceholderText("First name")).toHaveValue("Sam");
+    expect(screen.getByPlaceholderText("Last name")).toHaveValue("Q Seller");
   });
 });
