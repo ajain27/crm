@@ -6,7 +6,10 @@ import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
 import { joinName, splitName } from "../../../../leads/leadUtils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
-import WholesaleOfferPdfTemplate from "./WholesaleOfferPdfTemplate";
+import WholesaleOfferPdfTemplate, {
+  DEFAULT_OFFER_OPTIONS,
+} from "./WholesaleOfferPdfTemplate";
+import OfferOptionsModal from "./OfferOptionsModal";
 import {
   getSuggestedWholesaleMao,
   getContractVersions,
@@ -112,6 +115,16 @@ function DealDetailModal({
     closePreview: closeOfferPreview,
     downloadReport: downloadOffer,
   } = useGenerateReport("purchase-and-sale-agreement");
+  const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
+  const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
+
+  // The options are committed together with the print template's mount, so
+  // the template renders with what was just chosen.
+  function handleOfferOptionsSubmit(options) {
+    setOfferOptions(options);
+    setOfferOptionsOpen(false);
+    handleGenerateOffer();
+  }
 
   useEffect(() => {
     if (deal) setDraft(initDraft(deal));
@@ -278,7 +291,7 @@ function DealDetailModal({
             {!isRental && (
               <button
                 className="secondary-btn ddm-offer-btn"
-                onClick={handleGenerateOffer}
+                onClick={() => setOfferOptionsOpen(true)}
                 disabled={saving || exportingOffer}
               >
                 {exportingOffer ? "Generating…" : "Generate Offer"}
@@ -846,8 +859,15 @@ function DealDetailModal({
           sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
           propertyAddress={formatFullAddress(draft)}
           purchasePrice={offerPurchasePrice}
+          {...offerOptions}
         />
       )}
+      <OfferOptionsModal
+        isOpen={offerOptionsOpen}
+        onClose={() => setOfferOptionsOpen(false)}
+        onGenerate={handleOfferOptionsSubmit}
+        initialOptions={offerOptions}
+      />
       <PdfReportPreviewModal
         previewImage={offerPreviewImage}
         onClose={closeOfferPreview}

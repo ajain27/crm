@@ -13,23 +13,108 @@ const COMPANY = {
   name: "YOU WIN ESTATES",
   tagline: "REAL ESTATE INVESTMENT & ACQUISITIONS",
   web: "https://www.uvinestates.com/",
-  email: "ankit.jain@youwinestates.com",
   phone: "+1 206-822-8019",
 };
 
-const BUYER_NAME = "You Win Estates, and/or assigns";
 const BUYER_COMPANY = "You Win Estates";
 const BUYER_REP = "Ankit Jain";
-export const WHOLESALE_EMD_AMOUNT = 100;
+
+// The two uploaded agreements differ only in assignment: the assignable one
+// names the buyer "and/or assigns" and has the Successors, Assignment &
+// Novation clause; the no-assignment one drops both and lists a different
+// contact email.
+const VARIANTS = {
+  assignable: {
+    email: "ankit.jain@youwinestates.com",
+    buyerName: "You Win Estates, and/or assigns",
+    sigCaption: "YouWin Estates, and/or assigns",
+  },
+  noAssignment: {
+    email: "youwinestates@gmail.com",
+    buyerName: "You Win Estates",
+    sigCaption: "YouWin Estates",
+  },
+};
+
+// The offer's generation date, e.g. "October 6, 2026".
+function todayFormatted() {
+  return new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export const DEFAULT_OFFER_OPTIONS = {
+  allowAssignment: true,
+  emdAmount: 100,
+  inspectionDays: 14,
+};
+
+const ONES = [
+  "zero",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+  "thirteen",
+  "fourteen",
+  "fifteen",
+  "sixteen",
+  "seventeen",
+  "eighteen",
+  "nineteen",
+];
+const TENS = [
+  "",
+  "",
+  "twenty",
+  "thirty",
+  "forty",
+  "fifty",
+  "sixty",
+  "seventy",
+  "eighty",
+  "ninety",
+];
+
+// 14 → "fourteen", 21 → "twenty-one", 120 → "one hundred twenty", for the
+// "fourteen (14) calendar days" wording.
+export function numberToWords(n) {
+  if (n < 20) return ONES[n];
+  if (n < 100)
+    return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
+  const rest = n % 100;
+  return `${ONES[Math.floor(n / 100)]} hundred${rest ? ` ${numberToWords(rest)}` : ""}`;
+}
 
 // Purchase & Sale Agreement generated from a dashboard deal. Reproduces the
-// uploaded You Win Estates wholesale contract clause for clause; Seller
+// uploaded You Win Estates wholesale contracts clause for clause; Seller
 // Name(s), Property Address and Purchase Price come from the deal, and the
-// EMD is always a flat $100.
+// EMD, inspection period and assignment variant are chosen when generating.
 const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
-  { sellerName, propertyAddress, purchasePrice },
+  {
+    sellerName,
+    propertyAddress,
+    purchasePrice,
+    allowAssignment = DEFAULT_OFFER_OPTIONS.allowAssignment,
+    emdAmount = DEFAULT_OFFER_OPTIONS.emdAmount,
+    inspectionDays = DEFAULT_OFFER_OPTIONS.inspectionDays,
+  },
   ref,
 ) {
+  const variant = allowAssignment ? VARIANTS.assignable : VARIANTS.noAssignment;
+  // Clauses after Default & Remedies shift up by one without assignment.
+  const afterRemedies = allowAssignment ? 7 : 6;
+
   if (typeof document === "undefined") return null;
 
   return createPortal(
@@ -51,7 +136,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           </p>
           <p>
             <strong>Email: </strong>
-            {COMPANY.email}
+            {variant.email}
           </p>
           <p>
             <strong>Phone: </strong>
@@ -73,8 +158,9 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
         </p>
 
         <div className="oa-pdf-fields">
+          <Field label="Effective Date:" value={todayFormatted()} />
           <Field label="Seller Name(s):" value={sellerName} />
-          <Field label="Buyer Name:" value={BUYER_NAME} />
+          <Field label="Buyer Name:" value={variant.buyerName} />
           <Field label="Property Address:" value={propertyAddress} />
         </div>
 
@@ -85,9 +171,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
               {purchasePrice > 0 ? fmt(purchasePrice) : "$ ________________"}
             </span>{" "}
             &nbsp;&nbsp; Earnest Money Deposit (EMD):{" "}
-            <span className="oa-pdf-inline-field">
-              {fmt(WHOLESALE_EMD_AMOUNT)}
-            </span>
+            <span className="oa-pdf-inline-field">{fmt(emdAmount)}</span>
           </p>
           <p>
             The Purchase Price shall be paid at closing in immediately available
@@ -99,9 +183,10 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
 
         <Section number={2} title="INSPECTION & DUE DILIGENCE">
           <p>
-            Buyer shall have a feasibility and inspection period of fourteen
-            (14) calendar days following the Effective Date (
-            <strong>"Inspection Period"</strong>) to evaluate the Property.
+            Buyer shall have a feasibility and inspection period of{" "}
+            {numberToWords(inspectionDays)} ({inspectionDays}) calendar{" "}
+            {inspectionDays === 1 ? "day" : "days"} following the Effective Date
+            (<strong>"Inspection Period"</strong>) to evaluate the Property.
             Buyer, its consultants, and invited prospective partners or
             representatives shall have reasonable access to inspect and show the
             Property. Buyer may cancel this Agreement for any reason or no
@@ -145,25 +230,28 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           </p>
         </Section>
 
-        <Section number={6} title="SUCCESSORS, ASSIGNMENT & NOVATION">
-          <p>
-            This Agreement shall bind and benefit the parties hereto and their
-            respective heirs, successors, representatives, and designees. Buyer
-            reserves the unrestricted right to assign this Agreement or novate
-            its rights and obligations to any affiliate, nominee, partner, or
-            third-party purchaser (<strong>"Assignee/New Buyer"</strong>). Upon
-            execution of a novation agreement or written notice of assignment
-            and assumption, the original Buyer shall be fully and
-            unconditionally released and discharged from all further liability,
-            covenants, and performance under this Agreement, and the
-            Assignee/New Buyer shall assume all rights and obligations
-            hereunder. Seller consents in advance to such assignment or novation
-            and agrees to execute all closing and transfer documents necessary
-            to complete the transaction with such final designee.
-          </p>
-        </Section>
+        {allowAssignment && (
+          <Section number={6} title="SUCCESSORS, ASSIGNMENT & NOVATION">
+            <p>
+              This Agreement shall bind and benefit the parties hereto and their
+              respective heirs, successors, representatives, and designees.
+              Buyer reserves the unrestricted right to assign this Agreement or
+              novate its rights and obligations to any affiliate, nominee,
+              partner, or third-party purchaser (
+              <strong>"Assignee/New Buyer"</strong>). Upon execution of a
+              novation agreement or written notice of assignment and assumption,
+              the original Buyer shall be fully and unconditionally released and
+              discharged from all further liability, covenants, and performance
+              under this Agreement, and the Assignee/New Buyer shall assume all
+              rights and obligations hereunder. Seller consents in advance to
+              such assignment or novation and agrees to execute all closing and
+              transfer documents necessary to complete the transaction with such
+              final designee.
+            </p>
+          </Section>
+        )}
 
-        <Section number={7} title="ENTIRE AGREEMENT">
+        <Section number={afterRemedies} title="ENTIRE AGREEMENT">
           <p>
             This contract constitutes the final and entire agreement between the
             parties and supersedes all prior discussions, negotiations,
@@ -172,7 +260,10 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           </p>
         </Section>
 
-        <Section number={8} title="OFFER EXPIRATION & ACCEPTANCE">
+        <Section
+          number={afterRemedies + 1}
+          title="OFFER EXPIRATION & ACCEPTANCE"
+        >
           <p>
             This offer is strictly conditioned upon acceptance and is valid only
             for twenty-four (24) hours after being transmitted and delivered to
@@ -202,7 +293,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
             <SigLine label="Authorized Representative" value={BUYER_REP} />
             <SigLine label="Signature" />
             <SigLine label="Date" />
-            <p className="oa-pdf-sig-caption">YouWin Estates, and/or assigns</p>
+            <p className="oa-pdf-sig-caption">{variant.sigCaption}</p>
           </div>
         </div>
       </div>

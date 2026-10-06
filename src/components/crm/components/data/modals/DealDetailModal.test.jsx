@@ -156,14 +156,75 @@ describe("DealDetailModal", () => {
     );
 
     fireEvent.click(screen.getByText("Generate Offer"));
+    fireEvent.click(screen.getByText("Generate"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
-    const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
     expect(text).toContain("Jane Doe");
     expect(text).toContain("1 Main St, Austin, TX 78701");
     expect(text).toContain("$210,000");
     expect(text).toContain("Earnest Money Deposit (EMD): $100");
+    expect(text).toContain("fourteen (14) calendar days");
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    expect(text).toContain(`Effective Date:${today}`);
+    expect(text).toContain("You Win Estates, and/or assigns");
+    expect(text).toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
+  });
+
+  it("generates a no-assignment offer with the chosen EMD and inspection period", async () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, contractPrice: 210000 }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Generate Offer"));
+    fireEvent.click(screen.getByLabelText(/No assignment/));
+    fireEvent.change(screen.getByLabelText("Earnest Money Deposit"), {
+      target: { value: "$1,500" },
+    });
+    fireEvent.change(screen.getByLabelText("Inspection Period"), {
+      target: { value: "21" },
+    });
+    renderElementToPdfAssets.mockClear();
+    fireEvent.click(screen.getByText("Generate"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
+    expect(text).toContain("Earnest Money Deposit (EMD): $1,500");
+    expect(text).toContain("twenty-one (21) calendar days");
+    expect(text).toContain("Effective Date:");
+    expect(text).not.toContain("and/or assigns");
+    expect(text).not.toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
+    expect(text).toContain("6. ENTIRE AGREEMENT");
+    expect(text).toContain("7. OFFER EXPIRATION & ACCEPTANCE");
+  });
+
+  it("won't generate an offer without an EMD or inspection period", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Generate Offer"));
+    fireEvent.change(screen.getByLabelText("Inspection Period"), {
+      target: { value: "" },
+    });
+    expect(screen.getByText("Generate")).toBeDisabled();
+    expect(
+      screen.getByText(/Enter between 1 and 365 days/),
+    ).toBeInTheDocument();
   });
 
   it("fills the seller name from the notes for older deals", () => {

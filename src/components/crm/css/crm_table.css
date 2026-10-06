@@ -819,6 +819,67 @@
     color: var(--text);
   }
 
+  .offer-options-body {
+    display: grid;
+    align-content: start;
+    gap: 1.1rem;
+    padding: 0.25rem 0 1.25rem;
+  }
+
+  .offer-options-body .field {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .offer-options-choice {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .offer-options-choice legend {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .offer-options-choice label {
+    display: flex;
+    margin: 0;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    cursor: pointer;
+  }
+
+  .offer-options-choice label:has(input:checked) {
+    border-color: var(--green);
+    background: var(--bg-green-light);
+  }
+
+  .offer-options-choice input {
+    margin-top: 0.2rem;
+    accent-color: var(--green);
+  }
+
+  .offer-options-choice span {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .offer-options-body .field-error {
+    color: var(--red);
+    font-size: 0.8rem;
+  }
+
+  .offer-options-choice small {
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
   .dt-listing-links {
     display: inline-flex;
     gap: 0.75rem;
