@@ -1,13 +1,55 @@
 import { useState, useEffect } from "react";
-import { Trash2, Plus, X, Building2 } from "lucide-react";
+import { Trash2, Plus, X, Building2, Download } from "lucide-react";
 import Modal from "../modal/Modal";
 import { Select, AccordionHeaderCell } from "../elements/elements";
-import { formatPhone, findDuplicateByField } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
+import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
 import "./TitleCompanies.css";
 
 function createEmptyForm() {
-  return { name: "", phone: "", state: "", emailInput: "", emails: [] };
+  return {
+    name: "",
+    contact: "",
+    phone: "",
+    state: "",
+    emailInput: "",
+    emails: [],
+    notes: "",
+  };
+}
+
+const norm = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+// The same company can serve several states, so a duplicate is the same
+// name in the same state (or in any state, until one is picked).
+function findDuplicateCompany(companies, name, state, excludeId = null) {
+  if (!norm(name)) return null;
+  return (
+    companies.find(
+      (c) =>
+        c.id !== excludeId &&
+        norm(c.name) === norm(name) &&
+        (!state || c.state === state),
+    ) ?? null
+  );
+}
+
+function duplicateMessage(dup) {
+  return `"${dup.name}"${dup.state ? ` (${dup.state})` : ""} is already in your list.`;
+}
+
+const SEARCH_FIELDS = ["name", "contact", "phone", "notes", "state"];
+
+function matchesSearch(company, query) {
+  const q = norm(query);
+  if (!q) return true;
+  return (
+    SEARCH_FIELDS.some((f) => norm(company[f]).includes(q)) ||
+    (company.emails || []).some((e) => norm(e).includes(q))
+  );
 }
 
 function isComplete(form) {
@@ -32,6 +74,8 @@ export default function TitleCompanies({
   const [nameError, setNameError] = useState("");
   const [saving, setSaving] = useState(false);
   const [filterState, setFilterState] = useState("All");
+  const [search, setSearch] = useState("");
+  const [importing, setImporting] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [editNameError, setEditNameError] = useState("");
@@ -46,18 +90,17 @@ export default function TitleCompanies({
 
   function handleChange(e) {
     const { name, value } = e.target;
-    if (name === "name") setNameError("");
-    setForm((p) => ({
-      ...p,
-      [name]: name === "phone" ? formatPhone(value) : value,
-    }));
+    if (name === "name" || name === "state") setNameError("");
+    setForm((p) => ({ ...p, [name]: value }));
+    if (name === "state") {
+      const dup = findDuplicateCompany(companies, form.name, value);
+      if (dup) setNameError(duplicateMessage(dup));
+    }
   }
 
   function handleNameBlur(e) {
-    const value = e.target.value;
-    if (!value.trim()) return;
-    const dup = findDuplicateByField(companies, "name", value);
-    if (dup) setNameError(`"${dup.name}" is already in your list.`);
+    const dup = findDuplicateCompany(companies, e.target.value, form.state);
+    if (dup) setNameError(duplicateMessage(dup));
   }
 
   function handleAddEmail() {
@@ -86,9 +129,11 @@ export default function TitleCompanies({
         id: crypto.randomUUID(),
         userId: currentUser?.id || "",
         name: form.name.trim(),
-        phone: form.phone,
+        contact: form.contact.trim(),
+        phone: form.phone.trim(),
         state: form.state,
         emails: flushEmails(form),
+        notes: form.notes.trim(),
         createdAt: new Date().toISOString(),
       };
       await saveTitleCompany(company);
@@ -112,10 +157,12 @@ export default function TitleCompanies({
     setEditNameError("");
     setEditForm({
       name: company.name || "",
+      contact: company.contact || "",
       phone: company.phone || "",
       state: company.state || "",
       emailInput: "",
       emails: Array.isArray(company.emails) ? [...company.emails] : [],
+      notes: company.notes || "",
     });
   }
 
@@ -127,23 +174,27 @@ export default function TitleCompanies({
 
   function handleEditChange(e) {
     const { name, value } = e.target;
-    if (name === "name") setEditNameError("");
-    setEditForm((p) => ({
-      ...p,
-      [name]: name === "phone" ? formatPhone(value) : value,
-    }));
+    if (name === "name" || name === "state") setEditNameError("");
+    setEditForm((p) => ({ ...p, [name]: value }));
+    if (name === "state") {
+      const dup = findDuplicateCompany(
+        companies,
+        editForm.name,
+        value,
+        editingCompany?.id,
+      );
+      if (dup) setEditNameError(duplicateMessage(dup));
+    }
   }
 
   function handleEditNameBlur(e) {
-    const value = e.target.value;
-    if (!value.trim()) return;
-    const dup = findDuplicateByField(
+    const dup = findDuplicateCompany(
       companies,
-      "name",
-      value,
+      e.target.value,
+      editForm.state,
       editingCompany?.id,
     );
-    if (dup) setEditNameError(`"${dup.name}" is already in your list.`);
+    if (dup) setEditNameError(duplicateMessage(dup));
   }
 
   function handleEditAddEmail() {
@@ -174,9 +225,11 @@ export default function TitleCompanies({
       const updated = {
         ...editingCompany,
         name: editForm.name.trim(),
-        phone: editForm.phone,
+        contact: editForm.contact.trim(),
+        phone: editForm.phone.trim(),
         state: editForm.state,
         emails: flushEmails(editForm),
+        notes: editForm.notes.trim(),
       };
       await saveTitleCompany(updated);
       setCompanies((p) => p.map((c) => (c.id === updated.id ? updated : c)));
@@ -198,10 +251,54 @@ export default function TitleCompanies({
     ),
   ];
 
-  const filtered =
-    filterState === "All"
-      ? companies
-      : companies.filter((c) => c.state === filterState);
+  const filtered = companies
+    .filter((c) => filterState === "All" || c.state === filterState)
+    .filter((c) => matchesSearch(c, search))
+    .sort(
+      (a, b) =>
+        (a.state || "").localeCompare(b.state || "") ||
+        (a.name || "").localeCompare(b.name || ""),
+    );
+
+  // Directory entries not yet in the user's list (same name + state).
+  const missingDirectoryEntries = TITLE_COMPANY_DIRECTORY.filter(
+    (entry) => !findDuplicateCompany(companies, entry.name, entry.state),
+  );
+
+  async function handleImportDirectory() {
+    const count = missingDirectoryEntries.length;
+    if (!count) return;
+    if (
+      !window.confirm(
+        `Add ${count} recommended title compan${count !== 1 ? "ies" : "y"} to your list?`,
+      )
+    )
+      return;
+    setImporting(true);
+    const now = new Date().toISOString();
+    const added = [];
+    try {
+      for (const entry of missingDirectoryEntries) {
+        const company = {
+          ...entry,
+          id: crypto.randomUUID(),
+          userId: currentUser?.id || "",
+          createdAt: now,
+        };
+        await saveTitleCompany(company);
+        added.push(company);
+      }
+    } catch {
+      alert(
+        `Imported ${added.length} of ${count}. Check your connection and try again to add the rest.`,
+      );
+    } finally {
+      setCompanies((p) => [...added, ...p]);
+      setImporting(false);
+    }
+  }
+
+  const hasFilters = filterState !== "All" || norm(search) !== "";
 
   return (
     <>
@@ -210,6 +307,19 @@ export default function TitleCompanies({
           <h1>Title Companies</h1>
           <span>Manage your closing contacts by state.</span>
         </div>
+        {missingDirectoryEntries.length > 0 && (
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={handleImportDirectory}
+            disabled={importing}
+          >
+            <Download size={14} />
+            {importing
+              ? "Importing…"
+              : `Import Directory (${missingDirectoryEntries.length})`}
+          </button>
+        )}
       </header>
 
       {/* ── Add form ─────────────────────────────────────── */}
@@ -241,6 +351,16 @@ export default function TitleCompanies({
               />
             </div>
             <div className="tc-field">
+              <span className="tc-row-label">Point of Contact</span>
+              <input
+                className="tc-control"
+                name="contact"
+                value={form.contact}
+                onChange={handleChange}
+                placeholder="Escrow officer"
+              />
+            </div>
+            <div className="tc-field">
               <span className="tc-row-label">Phone</span>
               <input
                 className="tc-control"
@@ -248,7 +368,6 @@ export default function TitleCompanies({
                 value={form.phone}
                 onChange={handleChange}
                 placeholder="555-000-0000"
-                maxLength={12}
               />
             </div>
             <div className="tc-field">
@@ -313,6 +432,18 @@ export default function TitleCompanies({
             </div>
           )}
 
+          <div className="tc-field tc-notes-field">
+            <span className="tc-row-label">Notes</span>
+            <textarea
+              className="tc-control tc-notes-input"
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="How was it working with them?"
+              rows={2}
+            />
+          </div>
+
           <div className="tc-submit-row">
             <button
               className="primary-btn"
@@ -344,13 +475,37 @@ export default function TitleCompanies({
             </p>
           </div>
           {companies.length > 0 && (
-            <Select
-              label="Filter by State"
-              name="filterState"
-              value={filterState}
-              onChange={(e) => setFilterState(e.target.value)}
-              options={stateOptions}
-            />
+            <div className="tc-filters">
+              <label className="tc-search">
+                <span className="tc-row-label">Search</span>
+                <input
+                  className="tc-control"
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Company, contact, email, notes…"
+                />
+              </label>
+              <Select
+                label="Filter by State"
+                name="filterState"
+                value={filterState}
+                onChange={(e) => setFilterState(e.target.value)}
+                options={stateOptions}
+              />
+              {hasFilters && (
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => {
+                    setSearch("");
+                    setFilterState("All");
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -358,11 +513,14 @@ export default function TitleCompanies({
           <div className="tc-empty">
             <Building2 size={32} className="tc-empty-icon" />
             <p>No title companies yet.</p>
-            <span>Add your first one above.</span>
+            <span>
+              Add your first one above, or use Import Directory to load the
+              recommended list.
+            </span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="tc-empty">
-            <p>No companies match the selected state.</p>
+            <p>No companies match your filters.</p>
           </div>
         ) : (
           <div className="table-wrap acc-card-container">
@@ -371,8 +529,10 @@ export default function TitleCompanies({
                 <tr>
                   <th>Company Name</th>
                   <th>State</th>
+                  <th>Point of Contact</th>
                   <th>Phone</th>
                   <th>Emails</th>
+                  <th>Notes</th>
                   <th></th>
                 </tr>
               </thead>
@@ -394,7 +554,10 @@ export default function TitleCompanies({
                         {company.state || "—"}
                       </span>
                     </td>
-                    <td className="tc-muted" data-label="Phone">
+                    <td data-label="Point of Contact">
+                      {company.contact || <span className="tc-muted">—</span>}
+                    </td>
+                    <td className="tc-muted tc-phone" data-label="Phone">
                       {company.phone || "—"}
                     </td>
                     <td className="acc-col-block" data-label="Emails">
@@ -406,6 +569,15 @@ export default function TitleCompanies({
                             </span>
                           ))}
                         </div>
+                      ) : (
+                        <span className="tc-muted">—</span>
+                      )}
+                    </td>
+                    <td className="acc-col-block" data-label="Notes">
+                      {company.notes ? (
+                        <span className="tc-notes" title={company.notes}>
+                          {company.notes}
+                        </span>
                       ) : (
                         <span className="tc-muted">—</span>
                       )}
@@ -436,7 +608,7 @@ export default function TitleCompanies({
         isOpen={!!editingCompany}
         onClose={closeEdit}
         title={editingCompany?.name || "Edit Title Company"}
-        style={{ maxWidth: 520, height: "auto", minHeight: 320 }}
+        style={{ maxWidth: 640, height: "auto", minHeight: 320 }}
         actions={
           <>
             <button className="secondary-btn" onClick={closeEdit}>
@@ -475,13 +647,22 @@ export default function TitleCompanies({
               </label>
 
               <label className="field">
+                <span>Point of Contact</span>
+                <input
+                  name="contact"
+                  value={editForm.contact}
+                  onChange={handleEditChange}
+                  placeholder="Escrow officer"
+                />
+              </label>
+
+              <label className="field">
                 <span>Phone</span>
                 <input
                   name="phone"
                   value={editForm.phone}
                   onChange={handleEditChange}
                   placeholder="555-000-0000"
-                  maxLength={12}
                 />
               </label>
 
@@ -538,6 +719,17 @@ export default function TitleCompanies({
                   </div>
                 )}
               </div>
+
+              <label className="field tc-email-field">
+                <span>Notes</span>
+                <textarea
+                  name="notes"
+                  value={editForm.notes}
+                  onChange={handleEditChange}
+                  placeholder="How was it working with them?"
+                  rows={5}
+                />
+              </label>
             </div>
           </div>
         )}

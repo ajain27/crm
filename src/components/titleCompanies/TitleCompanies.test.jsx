@@ -58,4 +58,88 @@ describe("TitleCompanies", () => {
       await screen.findByText(/already in your list/i),
     ).toBeInTheDocument();
   });
+
+  it("shows contact and notes columns and filters by search", async () => {
+    const fetchTitleCompanies = vi.fn().mockResolvedValue([
+      {
+        id: "c1",
+        name: "Acme Title",
+        contact: "Jane Closer",
+        phone: "555-1212",
+        state: "TX",
+        emails: ["jane@acme.com"],
+        notes: "Great at double closes",
+      },
+      {
+        id: "c2",
+        name: "Beta Escrow",
+        contact: "Bob Escrow",
+        phone: "555-3434",
+        state: "OH",
+        emails: [],
+        notes: "",
+      },
+    ]);
+    render(<TitleCompanies {...baseProps({ fetchTitleCompanies })} />);
+    expect(await screen.findByText("Jane Closer")).toBeInTheDocument();
+    expect(screen.getByText("Great at double closes")).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Company, contact, email, notes/i),
+      { target: { value: "double close" } },
+    );
+    expect(screen.getByText("Acme Title")).toBeInTheDocument();
+    expect(screen.queryByText("Beta Escrow")).toBeNull();
+    expect(screen.getByText("1 of 2 companies")).toBeInTheDocument();
+  });
+
+  it("allows the same company name in a different state", async () => {
+    const fetchTitleCompanies = vi
+      .fn()
+      .mockResolvedValue([
+        { id: "c1", name: "Red Door Title", state: "ME", emails: [] },
+      ]);
+    render(<TitleCompanies {...baseProps({ fetchTitleCompanies })} />);
+    await screen.findByText("Red Door Title");
+    const [nameInput] = screen.getAllByPlaceholderText(/First American Title/i);
+    fireEvent.change(nameInput, { target: { value: "Red Door Title" } });
+    const [stateSelect] = screen.getAllByDisplayValue("Select State...");
+    fireEvent.change(stateSelect, { target: { value: "NH" } });
+    fireEvent.blur(nameInput);
+    expect(screen.queryByText(/already in your list/i)).toBeNull();
+
+    fireEvent.change(stateSelect, { target: { value: "ME" } });
+    expect(
+      await screen.findByText(/already in your list/i),
+    ).toBeInTheDocument();
+  });
+
+  it("imports the directory entries the user doesn't have yet", async () => {
+    const { TITLE_COMPANY_DIRECTORY } = await import("./titleCompanyDirectory");
+    const existing = TITLE_COMPANY_DIRECTORY[0];
+    const fetchTitleCompanies = vi
+      .fn()
+      .mockResolvedValue([{ ...existing, id: "c1" }]);
+    const saveTitleCompany = vi.fn().mockResolvedValue(undefined);
+    render(
+      <TitleCompanies
+        {...baseProps({ fetchTitleCompanies, saveTitleCompany })}
+      />,
+    );
+    const total = TITLE_COMPANY_DIRECTORY.length;
+    fireEvent.click(await screen.findByText(`Import Directory (${total - 1})`));
+    await waitFor(() =>
+      expect(saveTitleCompany).toHaveBeenCalledTimes(total - 1),
+    );
+    expect(saveTitleCompany.mock.calls[0][0]).toMatchObject({
+      userId: "u1",
+      name: TITLE_COMPANY_DIRECTORY[1].name,
+      contact: TITLE_COMPANY_DIRECTORY[1].contact,
+      notes: TITLE_COMPANY_DIRECTORY[1].notes,
+    });
+    await waitFor(() =>
+      expect(screen.queryByText(/Import Directory/)).toBeNull(),
+    );
+    expect(screen.getByText(`${total} companies`)).toBeInTheDocument();
+  });
 });

@@ -13,7 +13,7 @@
    */
   .tc-inline-row {
     display: grid;
-    grid-template-columns: 1.4fr 130px 210px 1.6fr;
+    grid-template-columns: 1.3fr 1.1fr 1fr 190px 1.5fr;
     column-gap: 0.75rem;
     row-gap: 0.75rem;
     align-items: end;
@@ -172,6 +172,49 @@
     opacity: 1;
   }
 
+  .tc-notes-field {
+    margin-top: 0.75rem;
+  }
+
+  .tc-notes-input {
+    height: auto;
+    min-height: 3.5rem;
+    padding: 0.6rem 0.75rem;
+    resize: vertical;
+    font: inherit;
+  }
+
+  .tc-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+
+  .tc-search {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 240px;
+  }
+
+  .tc-phone {
+    white-space: normal;
+    min-width: 130px;
+  }
+
+  /* Long reviews stay readable in the table: clamp to three lines, the
+     full text is in the hover title and the edit modal. */
+  .tc-notes {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 360px;
+    min-width: 220px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+
   .tc-email-chips--table {
     margin-top: 0;
     gap: 0.25rem;
@@ -231,6 +274,12 @@
   }
 
   /* ── Responsive ──────────────────────────────────────── */
+  @media (max-width: 1200px) {
+    .tc-inline-row {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+
   @media (max-width: 860px) {
     .tc-inline-row {
       grid-template-columns: 1fr 1fr;
@@ -240,6 +289,16 @@
   @media (max-width: 480px) {
     .tc-inline-row {
       grid-template-columns: 1fr;
+    }
+
+    .tc-search {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .tc-notes {
+      max-width: none;
+      min-width: 0;
     }
 
     .tc-form--modal {
