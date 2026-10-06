@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Trash2, Plus, X, Building2, Download } from "lucide-react";
 import Modal from "../modal/Modal";
+import Pagination from "../pagination/Pagination";
 import { Select, AccordionHeaderCell } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
@@ -41,6 +42,8 @@ function duplicateMessage(dup) {
   return `"${dup.name}"${dup.state ? ` (${dup.state})` : ""} is already in your list.`;
 }
 
+const PAGE_SIZE = 10;
+
 const SEARCH_FIELDS = ["name", "contact", "phone", "notes", "state"];
 
 function matchesSearch(company, query) {
@@ -75,6 +78,7 @@ export default function TitleCompanies({
   const [saving, setSaving] = useState(false);
   const [filterState, setFilterState] = useState("All");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [importing, setImporting] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
   const [editForm, setEditForm] = useState(null);
@@ -300,6 +304,13 @@ export default function TitleCompanies({
 
   const hasFilters = filterState !== "All" || norm(search) !== "";
 
+  // Clamp rather than store, so deleting the last row of the last page or
+  // narrowing the filters never leaves an empty page showing.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageCompanies = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
   return (
     <>
       <header className="page-header" data-reveal="left">
@@ -482,7 +493,10 @@ export default function TitleCompanies({
                   className="tc-control"
                   type="search"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
                   placeholder="Company, contact, email, notes…"
                 />
               </label>
@@ -490,7 +504,10 @@ export default function TitleCompanies({
                 label="Filter by State"
                 name="filterState"
                 value={filterState}
-                onChange={(e) => setFilterState(e.target.value)}
+                onChange={(e) => {
+                  setFilterState(e.target.value);
+                  setPage(1);
+                }}
                 options={stateOptions}
               />
               {hasFilters && (
@@ -500,6 +517,7 @@ export default function TitleCompanies({
                   onClick={() => {
                     setSearch("");
                     setFilterState("All");
+                    setPage(1);
                   }}
                 >
                   Clear
@@ -537,7 +555,7 @@ export default function TitleCompanies({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((company) => (
+                {pageCompanies.map((company) => (
                   <tr
                     key={company.id}
                     className="tc-row"
@@ -599,6 +617,16 @@ export default function TitleCompanies({
                 ))}
               </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setPage}
+            >
+              <span className="pagination-summary">
+                Showing {pageStart + 1}–{pageStart + pageCompanies.length} of{" "}
+                {filtered.length}
+              </span>
+            </Pagination>
           </div>
         )}
       </section>
