@@ -14,6 +14,7 @@ import {
   SourceCell,
 } from "../components/LeadTableCells";
 import LeadExportButton from "../components/LeadExportButton";
+import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { leadMatchesSearch } from "../leadUtils";
 
 const SEARCH_FIELDS = ["address", "source", "phone"];
@@ -25,6 +26,7 @@ export default function CommercialLeadList({
   onSyncWordPress,
   onOpen,
   onDelete,
+  onBulkDelete,
 }) {
   const { selectedIds } = listState;
   const filtered = leads.filter((l) =>
@@ -49,6 +51,11 @@ export default function CommercialLeadList({
         placeholder="Search address, source or phone…"
       />
       <LeadClearFilters listState={listState} />
+      <LeadBulkDeleteButton
+        selectedLeads={selectedLeads}
+        listState={listState}
+        onDelete={onBulkDelete}
+      />
       <LeadExportButton
         selectedLeads={selectedLeads}
         listTitle="Commercial Leads"

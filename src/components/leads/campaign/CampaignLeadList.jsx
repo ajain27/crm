@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import { AccordionHeaderCell } from "../../elements/elements";
 import { formatDate } from "../../../utils/utils";
 import LeadListPanel, {
@@ -21,6 +20,7 @@ import {
 } from "../components/LeadTableCells";
 import MarkBadLeadModal from "../components/MarkBadLeadModal";
 import LeadExportButton from "../components/LeadExportButton";
+import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { leadMatchesSearch } from "../leadUtils";
 
 const SEARCH_FIELDS = ["address", "sellerName", "email", "phone"];
@@ -64,10 +64,6 @@ export default function CampaignLeadList({
 
   const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
 
-  async function handleBulkDelete() {
-    if (await onBulkDelete(selectedLeads)) listState.clearSelection();
-  }
-
   const filterBar = (
     <>
       <LeadSearchInput
@@ -76,11 +72,12 @@ export default function CampaignLeadList({
         placeholder="Search name, email, phone or address…"
       />
       <LeadClearFilters listState={listState} />
-      {!readOnly && selectedIds.size > 0 && (
-        <button className="leads-bulk-delete-btn" onClick={handleBulkDelete}>
-          <Trash2 size={13} />
-          Delete ({selectedIds.size})
-        </button>
+      {!readOnly && (
+        <LeadBulkDeleteButton
+          selectedLeads={selectedLeads}
+          listState={listState}
+          onDelete={onBulkDelete}
+        />
       )}
       {!readOnly && (
         <LeadExportButton

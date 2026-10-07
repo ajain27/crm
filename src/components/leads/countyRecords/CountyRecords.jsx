@@ -123,6 +123,8 @@ export default function CountyRecords({
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [columnFilters, setColumnFilters] = useState(NO_FILTERS);
+  // Ticked records (row indexes in the selected import), for bulk delete.
+  const [selectedRows, setSelectedRows] = useState(() => new Set());
   // The open record, as its index in the selected import's rows.
   const [openRowIndex, setOpenRowIndex] = useState(null);
   const fileInputRef = useRef(null);
@@ -158,6 +160,7 @@ export default function CountyRecords({
   function selectImport(id) {
     setSelectedId(id);
     setOpenRowIndex(null);
+    setSelectedRows(new Set());
     setSearch("");
     setColumnFilters(NO_FILTERS);
     setPage(1);
@@ -234,23 +237,61 @@ export default function CountyRecords({
     const label = [ownerName, address].filter(Boolean).join(", ");
     if (!window.confirm(`Delete this record${label ? ` (${label})` : ""}?`))
       return;
+    await deleteRows([index]);
+  }
+
+  async function handleDeleteSelected() {
+    const indexes = [...selectedRows];
+    if (indexes.length === 0) return;
+    const noun = indexes.length === 1 ? "record" : "records";
+    if (!window.confirm(`Delete ${indexes.length} selected ${noun}?`)) return;
+    await deleteRows(indexes);
+  }
+
+  async function deleteRows(indexes) {
     try {
-      await deleteCountyRecordRows(selectedId, [index]);
+      await deleteCountyRecordRows(selectedId, indexes);
       setImports((prev) =>
         prev.map((i) =>
           i.id === selectedId
             ? {
                 ...i,
-                deletedRows: [...(i.deletedRows || []), index],
-                rowCount: i.rowCount - 1,
+                deletedRows: [...(i.deletedRows || []), ...indexes],
+                rowCount: i.rowCount - indexes.length,
               }
             : i,
         ),
       );
-      if (openRowIndex === index) setOpenRowIndex(null);
+      setSelectedRows((prev) => {
+        const next = new Set(prev);
+        indexes.forEach((index) => next.delete(index));
+        return next;
+      });
+      if (indexes.includes(openRowIndex)) setOpenRowIndex(null);
     } catch {
-      setError("Couldn't delete this record. Check your connection.");
+      setError(
+        `Couldn't delete ${indexes.length === 1 ? "this record" : "these records"}. Check your connection.`,
+      );
     }
+  }
+
+  function toggleRow(index) {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
+  function setPageSelected(indexes, checked) {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      indexes.forEach((index) =>
+        checked ? next.add(index) : next.delete(index),
+      );
+      return next;
+    });
   }
 
   const selected = imports.find((i) => i.id === selectedId);
@@ -410,6 +451,17 @@ export default function CountyRecords({
             <Upload size={13} />
             {importing ? "Importing…" : "Import CSV"}
           </button>
+          {selectedRows.size > 0 && (
+            <button
+              type="button"
+              className="leads-bulk-delete-btn"
+              onClick={handleDeleteSelected}
+              disabled={importing}
+            >
+              <Trash2 size={13} />
+              Delete ({selectedRows.size})
+            </button>
+          )}
           {selected && (
             <button
               type="button"
@@ -456,6 +508,23 @@ export default function CountyRecords({
               <table className="compact-table county-records-table">
                 <thead>
                   <tr>
+                    <th className="county-row-select">
+                      <input
+                        type="checkbox"
+                        className="buyer-checkbox"
+                        aria-label="Select all on this page"
+                        checked={
+                          pageRows.length > 0 &&
+                          pageRows.every(({ index }) => selectedRows.has(index))
+                        }
+                        onChange={(e) =>
+                          setPageSelected(
+                            pageRows.map(({ index }) => index),
+                            e.target.checked,
+                          )
+                        }
+                      />
+                    </th>
                     <th className="county-row-action" aria-label="Actions" />
                     {selected.columns.map((column) => (
                       <th
@@ -478,6 +547,18 @@ export default function CountyRecords({
                       className="clickable-row"
                       onClick={() => setOpenRowIndex(index)}
                     >
+                      <td
+                        className="county-row-select"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          className="buyer-checkbox"
+                          aria-label="Select record"
+                          checked={selectedRows.has(index)}
+                          onChange={() => toggleRow(index)}
+                        />
+                      </td>
                       <td className="county-row-action">
                         <button
                           type="button"

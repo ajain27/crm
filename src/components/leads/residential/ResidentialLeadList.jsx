@@ -22,6 +22,7 @@ import {
   ZillowLink,
 } from "../components/LeadTableCells";
 import LeadExportButton from "../components/LeadExportButton";
+import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { followUpStatus, leadMatchesSearch, parseAddress } from "../leadUtils";
 
 export const RESIDENTIAL_FILTERS = {
@@ -60,6 +61,7 @@ export default function ResidentialLeadList({
   listState,
   onOpen,
   onDelete,
+  onBulkDelete,
   onAddToCrm,
   onRunAutomation,
   onStopAutomation,
@@ -136,6 +138,11 @@ export default function ResidentialLeadList({
         })}
       </div>
       <LeadClearFilters listState={listState} />
+      <LeadBulkDeleteButton
+        selectedLeads={selectedLeads}
+        listState={listState}
+        onDelete={onBulkDelete}
+      />
       <LeadExportButton
         selectedLeads={selectedLeads}
         listTitle="Residential Leads"

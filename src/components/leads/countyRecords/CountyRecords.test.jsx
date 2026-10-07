@@ -475,4 +475,55 @@ describe("CountyRecords", () => {
       "county-amount-due",
     );
   });
+
+  it("deletes several selected records together", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name"],
+        rowCount: 3,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([["Ann"], ["Ben"], ["Cal"]]);
+    render(<CountyRecords currentUser={user} />);
+
+    const select = async (name) =>
+      fireEvent.click(
+        within((await findInTable(name)).closest("tr")).getByLabelText(
+          "Select record",
+        ),
+      );
+    await select("Ann");
+    await select("Cal");
+    fireEvent.click(screen.getByText("Delete (2)"));
+
+    expect(window.confirm).toHaveBeenCalledWith("Delete 2 selected records?");
+    await waitFor(() =>
+      expect(deleteCountyRecordRows).toHaveBeenCalledWith("i1", [0, 2]),
+    );
+    await waitFor(() => expect(screen.queryByText("Ann")).toBeNull());
+    expect(screen.queryByText("Cal")).toBeNull();
+    expect(inTable().getByText("Ben")).toBeInTheDocument();
+    expect(screen.getByText("1 record · 1 column")).toBeInTheDocument();
+    expect(screen.queryByText(/Delete \(\d+\)/)).toBeNull();
+  });
+
+  it("selects every record on the page from the header checkbox", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name"],
+        rowCount: 2,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([["Ann"], ["Ben"]]);
+    render(<CountyRecords currentUser={user} />);
+    await findInTable("Ann");
+    fireEvent.click(screen.getByLabelText("Select all on this page"));
+    expect(screen.getByText("Delete (2)")).toBeInTheDocument();
+  });
 });

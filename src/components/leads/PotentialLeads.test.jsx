@@ -314,4 +314,36 @@ describe("PotentialLeads", () => {
     );
     expect(deleteLeadById).toHaveBeenCalledWith("l1");
   });
+
+  it("deletes the selected residential leads together", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const deleteLeadById = vi.fn().mockResolvedValue(undefined);
+    const setLeads = vi.fn();
+    const leads = [
+      { id: "l1", address: "1 Main St, Dallas, TX 75201", sellerName: "Ann" },
+      { id: "l2", address: "2 Oak Ave, Dallas, TX 75201", sellerName: "Ben" },
+      { id: "l3", address: "3 Elm St, Dallas, TX 75201", sellerName: "Cal" },
+    ];
+    render(
+      <PotentialLeads {...baseProps({ leads, deleteLeadById, setLeads })} />,
+    );
+
+    const rowCheckbox = (name) =>
+      screen
+        .getByText(name)
+        .closest("tr")
+        .querySelector("td.buyer-checkbox-cell input");
+    fireEvent.click(rowCheckbox("Ann"));
+    fireEvent.click(rowCheckbox("Cal"));
+    fireEvent.click(screen.getByText("Delete (2)"));
+
+    expect(window.confirm).toHaveBeenCalledWith("Delete 2 selected leads?");
+    await waitFor(() => expect(deleteLeadById).toHaveBeenCalledTimes(2));
+    expect(deleteLeadById.mock.calls.map(([id]) => id).sort()).toEqual([
+      "l1",
+      "l3",
+    ]);
+    const update = setLeads.mock.calls.at(-1)[0];
+    expect(update(leads).map((l) => l.id)).toEqual(["l2"]);
+  });
 });

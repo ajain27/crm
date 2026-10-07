@@ -773,6 +773,12 @@
     cursor: pointer;
   }
 
+  .county-records-table .county-row-select {
+    width: 1%;
+    max-width: none;
+    padding-right: 0.25rem;
+  }
+
   .county-records-table .county-row-action {
     width: 1%;
     max-width: none;

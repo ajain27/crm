@@ -134,8 +134,9 @@ export default function PotentialLeads({
     wpSync.setFetchedLeads((prev) => prev.filter((l) => !matches(l)));
 
     const removedIds = [...ids, ...matchingLocalLeads.map((l) => l.id)];
-    ppcList.setManySelected(removedIds, false);
-    pplList.setManySelected(removedIds, false);
+    [residentialList, commercialList, ppcList, pplList].forEach((list) =>
+      list.setManySelected(removedIds, false),
+    );
   }
 
   async function recordPpcDeleted(count) {
@@ -240,6 +241,16 @@ export default function PotentialLeads({
     setActiveView("dashboard");
   }
 
+  // Residential and commercial bulk delete: same as deleting each one —
+  // gone locally first, then any WordPress copy.
+  async function handleBulkDelete(selected) {
+    if (ppcOnly || selected.length === 0) return false;
+    if (!confirmBulkDelete(selected.length)) return false;
+    await removeLeads(selected);
+    selected.forEach((lead) => deleteWordPressLead(lead));
+    return true;
+  }
+
   async function handleCommercialLeadDelete(id) {
     if (!window.confirm("Delete this commercial lead?")) return;
     const lead = leads.find((l) => l.id === id);
@@ -288,6 +299,7 @@ export default function PotentialLeads({
           <ResidentialLeadList
             leads={residentialLeads}
             listState={residentialList}
+            onBulkDelete={handleBulkDelete}
             {...leadActions}
           />
         </>
@@ -299,6 +311,7 @@ export default function PotentialLeads({
           <CommercialLeadList
             leads={commercialLeads}
             listState={commercialList}
+            onBulkDelete={handleBulkDelete}
             wpSyncing={wpSync.syncing}
             onSyncWordPress={() => wpSync.sync()}
             onOpen={setCommercialDetailLead}
