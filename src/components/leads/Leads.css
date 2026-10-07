@@ -752,6 +752,10 @@
     font-size: 0.875rem;
   }
 
+  .county-records-loading {
+    padding: 0.5rem 1.5rem 1.5rem;
+  }
+
   .county-records-empty {
     display: grid;
     justify-items: center;

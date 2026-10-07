@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FileSpreadsheet, Trash2, Upload } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
+import LoadingScreen from "../../loader/LoadingScreen";
 import { LeadSearchInput } from "../components/LeadListPanel";
 import {
   deleteCountyRecordImportById,
@@ -92,6 +93,14 @@ function formatImportedAt(iso) {
       });
 }
 
+// What the tab has loaded, per user, kept while the app is open so leaving
+// the tab and coming back renders straight away (then refreshes).
+const sessionCache = new Map();
+
+export function clearCountyRecordsCache() {
+  sessionCache.clear();
+}
+
 // County Records tab: import a county's CSV export and browse it with the
 // file's own columns. Each import is saved to the user's account; pick one
 // from the list to view it, search across every column, or delete it.
@@ -101,10 +110,12 @@ export default function CountyRecords({
   saveDeal,
   setDeals,
 }) {
-  const [imports, setImports] = useState([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [rowsById, setRowsById] = useState({});
-  const [loadingRows, setLoadingRows] = useState(false);
+  const cached = sessionCache.get(currentUser?.id);
+  const [imports, setImports] = useState(cached?.imports || []);
+  const [selectedId, setSelectedId] = useState(cached?.selectedId || "");
+  const [rowsById, setRowsById] = useState(cached?.rowsById || {});
+  // Until the first list of imports arrives, "no imports" isn't known yet.
+  const [importsLoaded, setImportsLoaded] = useState(Boolean(cached));
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -120,20 +131,26 @@ export default function CountyRecords({
       .then((list) => {
         const sorted = [...list].sort(newestFirst);
         setImports(sorted);
-        setSelectedId((current) => current || sorted[0]?.id || "");
+        setSelectedId((current) =>
+          sorted.some((i) => i.id === current) ? current : sorted[0]?.id || "",
+        );
       })
-      .catch(() => setError("Couldn't load your county record imports."));
+      .catch(() => setError("Couldn't load your county record imports."))
+      .finally(() => setImportsLoaded(true));
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!currentUser?.id || !importsLoaded) return;
+    sessionCache.set(currentUser.id, { imports, selectedId, rowsById });
+  }, [currentUser?.id, importsLoaded, imports, selectedId, rowsById]);
 
   // Rows are loaded on demand per import and kept, so switching back is
   // instant.
   useEffect(() => {
     if (!selectedId || rowsById[selectedId]) return;
-    setLoadingRows(true);
     fetchCountyRecordRows(selectedId)
       .then((rows) => setRowsById((prev) => ({ ...prev, [selectedId]: rows })))
-      .catch(() => setError("Couldn't load these records."))
-      .finally(() => setLoadingRows(false));
+      .catch(() => setError("Couldn't load these records."));
   }, [selectedId, rowsById]);
 
   function selectImport(id) {
@@ -209,6 +226,10 @@ export default function CountyRecords({
   }
 
   const selected = imports.find((i) => i.id === selectedId);
+  // Imports not fetched yet, or the selected file's rows still on the way
+  // (unless that failed — the error shows instead).
+  const isLoading =
+    !importsLoaded || (Boolean(selected) && !rowsById[selectedId] && !error);
   const columns = selected?.columns || [];
   const phoneColumns = columns.map((c) => PHONE_COLUMN.test(c));
   const crmKeys = new Set(deals.map(propertyKey).filter(Boolean));
@@ -269,8 +290,10 @@ export default function CountyRecords({
           <h2>County Records</h2>
           <p>
             {selected
-              ? `${selected.rowCount.toLocaleString()} records · ${selected.columns.length} columns`
-              : "Import a county's CSV export to browse it here."}
+              ? `${selected.rowCount.toLocaleString()} record${selected.rowCount === 1 ? "" : "s"} · ${selected.columns.length} column${selected.columns.length === 1 ? "" : "s"}`
+              : importsLoaded
+                ? "Import a county's CSV export to browse it here."
+                : "Loading…"}
           </p>
         </div>
         <div className="leads-filters">
@@ -366,7 +389,15 @@ export default function CountyRecords({
 
       {error && <p className="county-records-error">{error}</p>}
 
-      {!selected ? (
+      {isLoading ? (
+        <div className="county-records-loading">
+          <LoadingScreen
+            isLoading
+            minDuration={0}
+            loadingContent={<span>Loading county records…</span>}
+          />
+        </div>
+      ) : !selected ? (
         <div className="leads-empty county-records-empty">
           <FileSpreadsheet size={28} />
           <p>No county records yet.</p>
@@ -374,10 +405,6 @@ export default function CountyRecords({
             Click Import CSV and choose a file exported from the county. The
             first row should hold the column names.
           </span>
-        </div>
-      ) : loadingRows && allRows.length === 0 ? (
-        <div className="leads-empty">
-          <p>Loading records…</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="leads-empty">

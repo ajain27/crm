@@ -6,7 +6,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import CountyRecords from "./CountyRecords";
+import CountyRecords, { clearCountyRecordsCache } from "./CountyRecords";
 import {
   deleteCountyRecordImportById,
   fetchCountyRecordImports,
@@ -39,6 +39,7 @@ function uploadCsv(text, name = "shelby.csv") {
 describe("CountyRecords", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearCountyRecordsCache();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     fetchCountyRecordImports.mockResolvedValue([]);
     saveCountyRecordImport.mockResolvedValue(undefined);
@@ -320,5 +321,61 @@ describe("CountyRecords", () => {
     expect(document.querySelector(".county-record-fields")).toHaveTextContent(
       "Phone 1206-795-9395",
     );
+  });
+
+  it("shows a loader, not the empty state, until data arrives", async () => {
+    let resolveImports;
+    fetchCountyRecordImports.mockReturnValue(
+      new Promise((resolve) => (resolveImports = resolve)),
+    );
+    let resolveRows;
+    fetchCountyRecordRows.mockReturnValue(
+      new Promise((resolve) => (resolveRows = resolve)),
+    );
+    render(<CountyRecords currentUser={user} />);
+
+    expect(screen.getByText("Loading county records…")).toBeInTheDocument();
+    expect(screen.queryByText("No county records yet.")).toBeNull();
+
+    resolveImports([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    // Still loading: the import is known but its rows aren't here yet.
+    await waitFor(() =>
+      expect(screen.getByText("1 record · 1 column")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Loading county records…")).toBeInTheDocument();
+
+    resolveRows([["Jane"]]);
+    expect(await findInTable("Jane")).toBeInTheDocument();
+    expect(screen.queryByText("Loading county records…")).toBeNull();
+  });
+
+  it("renders straight from the cache when the tab is reopened", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([["Jane"]]);
+    const { unmount } = render(<CountyRecords currentUser={user} />);
+    await findInTable("Jane");
+    unmount();
+
+    fetchCountyRecordImports.mockReturnValue(new Promise(() => {}));
+    render(<CountyRecords currentUser={user} />);
+    expect(inTable().getByText("Jane")).toBeInTheDocument();
+    expect(screen.queryByText("Loading county records…")).toBeNull();
+    expect(fetchCountyRecordRows).toHaveBeenCalledTimes(1);
   });
 });
