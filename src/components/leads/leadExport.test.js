@@ -24,6 +24,17 @@ describe("leadExport", () => {
     expect(rows[2][col("Listing / Website URL")]).toBe("https://acme.com");
   });
 
+  it("leaves the agent columns out of campaign (PPC/PPL) exports", () => {
+    const [header, row] = leadsToRows([{ phone: "425-478-0576" }], {
+      includeAgent: false,
+    });
+    expect(header).not.toContain("Agent Name");
+    expect(header).not.toContain("Agent Phone");
+    expect(header.filter((h) => /phone/i.test(h))).toEqual(["Phone"]);
+    expect(row[header.indexOf("Phone")]).toBe("425-478-0576");
+    expect(leadsToRows([])[0]).toContain("Agent Phone");
+  });
+
   it("trims blank lines around values so notes don't get a formula guard", () => {
     const rows = leadsToRows([{ notes: "\r\nMajor remodel\nZIP code\n" }]);
     const notes = rows[1][rows[0].indexOf("Notes")];

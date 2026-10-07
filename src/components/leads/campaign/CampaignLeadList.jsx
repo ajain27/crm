@@ -83,7 +83,11 @@ export default function CampaignLeadList({
         </button>
       )}
       {!readOnly && (
-        <LeadExportButton selectedLeads={selectedLeads} listTitle={title} />
+        <LeadExportButton
+          selectedLeads={selectedLeads}
+          listTitle={title}
+          includeAgent={false}
+        />
       )}
     </>
   );

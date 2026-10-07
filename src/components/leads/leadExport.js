@@ -23,12 +23,19 @@ const COLUMNS = [
   ["Notes", (l) => l.notes],
 ];
 
+// Campaign (PPC/PPL) leads never have an agent, so their export leaves the
+// agent columns out and Phone is the only phone column.
+const AGENT_COLUMNS = ["Agent Name", "Agent Phone"];
+
 // Header row first, then one row per lead; every cell is a string.
-export function leadsToRows(leads) {
+export function leadsToRows(leads, { includeAgent = true } = {}) {
+  const columns = includeAgent
+    ? COLUMNS
+    : COLUMNS.filter(([header]) => !AGENT_COLUMNS.includes(header));
   return [
-    COLUMNS.map(([header]) => header),
+    columns.map(([header]) => header),
     ...leads.map((lead) =>
-      COLUMNS.map(([, get]) => {
+      columns.map(([, get]) => {
         const value = get(lead);
         // Leading/trailing blank lines (common in imported notes) would
         // otherwise show as empty lines in the cell.
