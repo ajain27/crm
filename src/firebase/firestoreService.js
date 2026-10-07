@@ -39,6 +39,7 @@ const pmDealsCollection = collection(db, "pmDeals");
 const titleCompaniesCollection = collection(db, "titleCompanies");
 const rentalsCollection = collection(db, "rentals");
 const invoicesCollection = collection(db, "invoices");
+const countyRecordImportsCollection = collection(db, "countyRecordImports");
 
 function leadFilesSubcollection(leadId) {
   return collection(db, "leads", leadId, "files");
@@ -50,6 +51,10 @@ function contractsSubcollection(dealId) {
 
 function pmDealFilesSubcollection(pmDealId) {
   return collection(db, "pmDeals", pmDealId, "files");
+}
+
+function countyRecordChunksSubcollection(importId) {
+  return collection(db, "countyRecordImports", importId, "chunks");
 }
 
 function mapSnapshot(snapshot) {
@@ -663,4 +668,50 @@ export async function updateScheduledPaymentStatus(id, status) {
 
 export async function deleteScheduledPaymentById(id) {
   await deleteDoc(doc(scheduledPaymentsCollection, id));
+}
+
+// ── County records ──────────────────────────────────────────────────────
+// An import is a summary doc (file name, columns, row count) plus its rows
+// split across "chunks" subcollection docs, each a JSON string of rows kept
+// under Firestore's 1MB document limit. The summary is written last, so an
+// import that fails partway never shows up in the list.
+
+export async function fetchCountyRecordImports(userId) {
+  const snapshot = await getDocs(
+    query(countyRecordImportsCollection, where("userId", "==", userId)),
+  );
+  return mapSnapshot(snapshot);
+}
+
+export async function saveCountyRecordImport(summary, chunks) {
+  const chunkRefs = chunks.map((_, index) =>
+    doc(countyRecordChunksSubcollection(summary.id), String(index)),
+  );
+  try {
+    for (let index = 0; index < chunks.length; index += 1) {
+      await setDoc(chunkRefs[index], { index, rows: chunks[index] });
+    }
+    await setDoc(doc(countyRecordImportsCollection, summary.id), {
+      ...summary,
+      chunkCount: chunks.length,
+    });
+  } catch (error) {
+    await Promise.all(chunkRefs.map((ref) => deleteDoc(ref).catch(() => {})));
+    throw error;
+  }
+}
+
+// Resolves with every row of the import, in file order.
+export async function fetchCountyRecordRows(importId) {
+  const snapshot = await getDocs(countyRecordChunksSubcollection(importId));
+  return snapshot.docs
+    .map((d) => d.data())
+    .sort((a, b) => a.index - b.index)
+    .flatMap((chunk) => JSON.parse(chunk.rows));
+}
+
+export async function deleteCountyRecordImportById(importId) {
+  const snapshot = await getDocs(countyRecordChunksSubcollection(importId));
+  await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
+  await deleteDoc(doc(countyRecordImportsCollection, importId));
 }

@@ -1,9 +1,20 @@
+import { splitName } from "./leadUtils";
+
 // Turns leads into spreadsheet rows for the CSV download. One column set
 // covers every lead type; fields a lead doesn't have are left blank.
+
+function sellerNameParts(lead) {
+  return lead.firstName || lead.lastName
+    ? { firstName: lead.firstName, lastName: lead.lastName }
+    : splitName(lead.sellerName);
+}
 
 const COLUMNS = [
   // Commercial leads use `name`; everything else uses `sellerName`.
   ["Name", (l) => l.sellerName || l.name],
+  // Leads saved with only a combined name (e.g. from Leadzolo) get it split.
+  ["First Name", (l) => sellerNameParts(l).firstName],
+  ["Last Name", (l) => sellerNameParts(l).lastName],
   ["Email", (l) => l.email],
   ["Phone", (l) => l.phone],
   ["Address", (l) => l.address],

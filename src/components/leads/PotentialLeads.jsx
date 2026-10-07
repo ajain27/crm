@@ -10,6 +10,7 @@ import ResidentialLeadList, {
 import CommercialLeadForm from "./commercial/CommercialLeadForm";
 import CommercialLeadList from "./commercial/CommercialLeadList";
 import CampaignLeadList from "./campaign/CampaignLeadList";
+import CountyRecords from "./countyRecords/CountyRecords";
 import { useLeadForm } from "./hooks/useLeadForm";
 import { useLeadListState } from "./hooks/useLeadListState";
 import { useWordPressLeadSync } from "./hooks/useWordPressLeadSync";
@@ -264,6 +265,7 @@ export default function PotentialLeads({
         ]),
     { id: "ppc", label: "PPC Leads", count: ppcLeads.length },
     { id: "ppl", label: "PPL Leads", count: pplLeads.length },
+    ...(ppcOnly ? [] : [{ id: "county", label: "County Records" }]),
   ];
 
   return (
@@ -330,6 +332,10 @@ export default function PotentialLeads({
           onSetQuality={handleSetQuality}
           {...leadActions}
         />
+      )}
+
+      {activeTab === "county" && !ppcOnly && (
+        <CountyRecords currentUser={currentUser} />
       )}
 
       {!ppcOnly && (

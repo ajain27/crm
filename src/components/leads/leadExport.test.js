@@ -18,8 +18,11 @@ describe("leadExport", () => {
     expect(rows[1][col("Name")]).toBe("Jane Doe");
     expect(rows[1][col("ARV")]).toBe("$135,000");
     expect(rows[1][col("Phone")]).toBe("");
-    expect(header).not.toContain("First Name");
-    expect(header).not.toContain("Last Name");
+    expect(header.slice(0, 3)).toEqual(["Name", "First Name", "Last Name"]);
+    // Split from the combined name when the lead has no separate fields.
+    expect(rows[1][col("First Name")]).toBe("Jane");
+    expect(rows[1][col("Last Name")]).toBe("Doe");
+    expect(rows[2][col("First Name")]).toBe("");
     expect(rows[2][col("Name")]).toBe("Acme Plaza");
     expect(rows[2][col("Listing / Website URL")]).toBe("https://acme.com");
   });

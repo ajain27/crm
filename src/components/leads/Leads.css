@@ -729,6 +729,51 @@
     background: color-mix(in srgb, var(--green) 18%, var(--panel) 82%);
   }
 
+  .leads-export-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* ── County Records ─────────────────────────────────────────── */
+  .county-import-select {
+    max-width: 280px;
+  }
+
+  .county-records-error {
+    margin: 0 1.5rem 0.75rem;
+    color: var(--red);
+    font-size: 0.875rem;
+  }
+
+  .county-records-empty {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .county-records-empty span {
+    max-width: 420px;
+    font-size: 0.8125rem;
+  }
+
+  /* County files have any number of columns, so the table scrolls
+     sideways instead of collapsing into cards. */
+  .county-records-table-wrap {
+    overflow-x: auto;
+    margin: 0 1.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .county-records-table th,
+  .county-records-table td {
+    white-space: nowrap;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .leads-sync-btn {
     display: inline-flex;
     align-items: center;
