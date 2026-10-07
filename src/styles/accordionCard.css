@@ -13,7 +13,9 @@
                                label/value side-by-side (e.g. multi-line
                                buyer info).
      - `acc-col-hide-mobile`  always hidden on mobile regardless of expand
-                               state (e.g. a bulk-select checkbox).
+                               state (e.g. a bulk-select checkbox column —
+                               pass the card's checkbox as
+                               AccordionHeaderCell's `leading` instead).
      - `acc-col-action-mobile` hidden while collapsed; once expanded,
                                renders centered with no label, pinned to
                                the end of the card (e.g. a delete action).
@@ -79,6 +81,11 @@
   .acc-card-container .acc-card .acc-accordion-address {
     display: flex;
     align-items: center;
+  }
+
+  /* `leading` header content only appears in card view. */
+  .acc-header-leading {
+    display: none;
   }
 
   @container (max-width: 900px) {
@@ -223,6 +230,28 @@
     /* Doesn't fit the per-row accordion on mobile (e.g. bulk-select checkbox) */
     .acc-card-container .acc-card .acc-col-hide-mobile {
       display: none !important;
+    }
+
+    /* AccordionHeaderCell's `leading` content (a row-select checkbox):
+       outside the card in a left gutter, centered on the header whatever
+       its height, visible whether the card is collapsed or expanded.
+       Cards with one are inset to make the gutter. */
+    .acc-card-container .acc-card tr:has(.acc-header-leading) {
+      width: calc(100% - 2rem);
+      margin-left: 2rem;
+    }
+
+    .acc-card-container .acc-card .acc-col-header:has(.acc-header-leading) {
+      position: relative;
+    }
+
+    .acc-card-container .acc-card .acc-header-leading {
+      display: flex;
+      align-items: center;
+      position: absolute;
+      top: 50%;
+      left: -2rem;
+      transform: translateY(-50%);
     }
 
     /* Hidden while collapsed (like any other field); once the accordion

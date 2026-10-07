@@ -223,6 +223,20 @@ export function SelectCell({ checked, onToggle }) {
   );
 }
 
+// The same row checkbox for card view, passed as AccordionHeaderCell's
+// `leading` so it sits beside the collapsed card.
+export function CardSelectCheckbox({ checked, onToggle }) {
+  return (
+    <input
+      type="checkbox"
+      className="buyer-checkbox"
+      checked={checked}
+      onChange={onToggle}
+      aria-label="Select lead"
+    />
+  );
+}
+
 // Header checkbox that selects/deselects every row on the current page.
 export function SelectAllHeader({ ids, selectedIds, onChange }) {
   return (

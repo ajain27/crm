@@ -159,6 +159,7 @@ function AccordionHeaderCell({
   valueClassName = "",
   colSpan,
   onHeaderClick,
+  leading,
 }) {
   const toggleId = `acc-toggle-${id}`;
   return (
@@ -171,6 +172,9 @@ function AccordionHeaderCell({
         onHeaderClick?.(e);
       }}
     >
+      {/* Card view only: shown just outside the card's left edge, centered
+          on the header (e.g. a row-select checkbox). */}
+      {leading && <span className="acc-header-leading">{leading}</span>}
       <input
         type="checkbox"
         id={toggleId}

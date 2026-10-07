@@ -8,8 +8,12 @@ import {
   DateAddedCell,
   DeleteCell,
   PhoneCell,
+  CardSelectCheckbox,
+  SelectAllHeader,
+  SelectCell,
   SourceCell,
 } from "../components/LeadTableCells";
+import LeadExportButton from "../components/LeadExportButton";
 import { leadMatchesSearch } from "../leadUtils";
 
 const SEARCH_FIELDS = ["address", "source", "phone"];
@@ -22,9 +26,11 @@ export default function CommercialLeadList({
   onOpen,
   onDelete,
 }) {
+  const { selectedIds } = listState;
   const filtered = leads.filter((l) =>
     leadMatchesSearch(l, listState.search, SEARCH_FIELDS),
   );
+  const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
 
   const filterBar = (
     <>
@@ -43,6 +49,10 @@ export default function CommercialLeadList({
         placeholder="Search address, source or phone…"
       />
       <LeadClearFilters listState={listState} />
+      <LeadExportButton
+        selectedLeads={selectedLeads}
+        listTitle="Commercial Leads"
+      />
     </>
   );
 
@@ -61,6 +71,11 @@ export default function CommercialLeadList({
         <>
           <thead>
             <tr>
+              <SelectAllHeader
+                ids={pageLeads.map((l) => l.id)}
+                selectedIds={selectedIds}
+                onChange={listState.setManySelected}
+              />
               <th></th>
               <th>Name</th>
               <th>Address</th>
@@ -78,8 +93,18 @@ export default function CommercialLeadList({
                 onClick={() => onOpen(lead)}
                 style={{ cursor: "pointer" }}
               >
+                <SelectCell
+                  checked={selectedIds.has(lead.id)}
+                  onToggle={() => listState.toggleSelected(lead.id)}
+                />
                 <DeleteCell onDelete={() => onDelete(lead.id)} />
                 <AccordionHeaderCell
+                  leading={
+                    <CardSelectCheckbox
+                      checked={selectedIds.has(lead.id)}
+                      onToggle={() => listState.toggleSelected(lead.id)}
+                    />
+                  }
                   id={lead.id}
                   label="Name"
                   value={lead.name || "—"}

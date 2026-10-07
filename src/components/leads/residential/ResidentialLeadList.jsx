@@ -15,9 +15,13 @@ import {
   NotesCell,
   PhoneCell,
   PhoneLink,
+  CardSelectCheckbox,
+  SelectAllHeader,
+  SelectCell,
   SourceCell,
   ZillowLink,
 } from "../components/LeadTableCells";
+import LeadExportButton from "../components/LeadExportButton";
 import { followUpStatus, leadMatchesSearch, parseAddress } from "../leadUtils";
 
 export const RESIDENTIAL_FILTERS = {
@@ -60,7 +64,8 @@ export default function ResidentialLeadList({
   onRunAutomation,
   onStopAutomation,
 }) {
-  const { search, filters, setFilter } = listState;
+  const { search, filters, setFilter, selectedIds } = listState;
+  const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
 
   const filtered = leads
     .filter(
@@ -131,6 +136,10 @@ export default function ResidentialLeadList({
         })}
       </div>
       <LeadClearFilters listState={listState} />
+      <LeadExportButton
+        selectedLeads={selectedLeads}
+        listTitle="Residential Leads"
+      />
     </>
   );
 
@@ -150,6 +159,11 @@ export default function ResidentialLeadList({
         <>
           <thead>
             <tr>
+              <SelectAllHeader
+                ids={pageLeads.map((l) => l.id)}
+                selectedIds={selectedIds}
+                onChange={listState.setManySelected}
+              />
               <th></th>
               <th>Address</th>
               <th>Source</th>
@@ -174,8 +188,18 @@ export default function ResidentialLeadList({
                   className="clickable-row"
                   onClick={() => onOpen(lead)}
                 >
+                  <SelectCell
+                    checked={selectedIds.has(lead.id)}
+                    onToggle={() => listState.toggleSelected(lead.id)}
+                  />
                   <DeleteCell onDelete={() => onDelete(lead.id)} />
                   <AccordionHeaderCell
+                    leading={
+                      <CardSelectCheckbox
+                        checked={selectedIds.has(lead.id)}
+                        onToggle={() => listState.toggleSelected(lead.id)}
+                      />
+                    }
                     id={lead.id}
                     label="Address"
                     value={lead.address}

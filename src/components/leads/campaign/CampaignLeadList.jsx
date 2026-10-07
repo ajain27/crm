@@ -15,10 +15,12 @@ import {
   NotesCell,
   PhoneCell,
   QualityCell,
+  CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
 } from "../components/LeadTableCells";
 import MarkBadLeadModal from "../components/MarkBadLeadModal";
+import LeadExportButton from "../components/LeadExportButton";
 import { leadMatchesSearch } from "../leadUtils";
 
 const SEARCH_FIELDS = ["address", "sellerName", "email", "phone"];
@@ -60,9 +62,10 @@ export default function CampaignLeadList({
     leadMatchesSearch(l, listState.search, SEARCH_FIELDS),
   );
 
+  const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
+
   async function handleBulkDelete() {
-    const selected = leads.filter((l) => selectedIds.has(l.id));
-    if (await onBulkDelete(selected)) listState.clearSelection();
+    if (await onBulkDelete(selectedLeads)) listState.clearSelection();
   }
 
   const filterBar = (
@@ -78,6 +81,9 @@ export default function CampaignLeadList({
           <Trash2 size={13} />
           Delete ({selectedIds.size})
         </button>
+      )}
+      {!readOnly && (
+        <LeadExportButton selectedLeads={selectedLeads} listTitle={title} />
       )}
     </>
   );
@@ -143,6 +149,14 @@ export default function CampaignLeadList({
                       </>
                     )}
                     <AccordionHeaderCell
+                      leading={
+                        !readOnly && (
+                          <CardSelectCheckbox
+                            checked={selectedIds.has(lead.id)}
+                            onToggle={() => listState.toggleSelected(lead.id)}
+                          />
+                        )
+                      }
                       id={lead.id}
                       label="Name"
                       value={

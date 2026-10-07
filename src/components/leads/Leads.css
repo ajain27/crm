@@ -709,6 +709,26 @@
     background: color-mix(in srgb, #dc2626 18%, var(--panel) 82%);
   }
 
+  .leads-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 2rem;
+    padding: 0 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--green) 50%, transparent 50%);
+    background: color-mix(in srgb, var(--green) 10%, var(--panel) 90%);
+    color: var(--green);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .leads-export-btn:hover {
+    background: color-mix(in srgb, var(--green) 18%, var(--panel) 82%);
+  }
+
   .leads-sync-btn {
     display: inline-flex;
     align-items: center;
@@ -1043,6 +1063,28 @@
 
     .acc-card-container .acc-card .acc-col-hide-mobile {
       display: none !important;
+    }
+
+    /* Same as accordionCard.css: AccordionHeaderCell's `leading` content (a row-select checkbox):
+       outside the card in a left gutter, centered on the header whatever
+       its height, visible whether the card is collapsed or expanded.
+       Cards with one are inset to make the gutter. */
+    .acc-card-container .acc-card tr:has(.acc-header-leading) {
+      width: calc(100% - 2rem);
+      margin-left: 2rem;
+    }
+
+    .acc-card-container .acc-card .acc-col-header:has(.acc-header-leading) {
+      position: relative;
+    }
+
+    .acc-card-container .acc-card .acc-header-leading {
+      display: flex;
+      align-items: center;
+      position: absolute;
+      top: 50%;
+      left: -2rem;
+      transform: translateY(-50%);
     }
 
     .acc-card-container .acc-card .acc-col-action-mobile {
