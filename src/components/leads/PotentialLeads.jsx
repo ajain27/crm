@@ -46,6 +46,7 @@ export default function PotentialLeads({
   saveLead,
   deleteLeadById,
   saveDeal,
+  deals,
   setDeals,
   setActiveView,
   ppcOnly = false,
@@ -335,7 +336,12 @@ export default function PotentialLeads({
       )}
 
       {activeTab === "county" && !ppcOnly && (
-        <CountyRecords currentUser={currentUser} />
+        <CountyRecords
+          currentUser={currentUser}
+          deals={deals}
+          saveDeal={saveDeal}
+          setDeals={setDeals}
+        />
       )}
 
       {!ppcOnly && (

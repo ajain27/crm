@@ -146,4 +146,136 @@ describe("CountyRecords", () => {
     // A number-shaped value outside a phone column stays plain text.
     expect(screen.getByText("2068228019").tagName).toBe("TD");
   });
+
+  it("opens a record with all its data and adds it to the CRM", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "lawrence.csv",
+        columns: [
+          "Owner Name",
+          "Situs Address",
+          "Situs City",
+          "Situs Zip",
+          "Acres",
+        ],
+        rowCount: 2,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Jane Doe", "164 Auburn St", "Russellville", "35654", "0.5"],
+      ["Bob Roe", "9 Elm St", "Austin", "78701", "1.2"],
+    ]);
+    const saveDeal = vi.fn().mockResolvedValue(undefined);
+    const setDeals = vi.fn();
+    render(
+      <CountyRecords
+        currentUser={user}
+        deals={[{ address: "9 Elm St", city: "Austin" }]}
+        saveDeal={saveDeal}
+        setDeals={setDeals}
+      />,
+    );
+
+    // The record already in the CRM is flagged in the table.
+    const bobRow = (await screen.findByText("Bob Roe")).closest("tr");
+    expect(bobRow).toHaveTextContent("In CRM");
+
+    fireEvent.click(screen.getByText("Jane Doe"));
+    expect(
+      screen.getByText("164 Auburn St, Russellville, 35654"),
+    ).toBeInTheDocument();
+    const fields = document.querySelector(".county-record-fields");
+    expect(fields).toHaveTextContent("Acres0.5");
+    expect(fields).toHaveTextContent("Owner NameJane Doe");
+
+    fireEvent.click(screen.getByText("Add to CRM"));
+    await waitFor(() => expect(saveDeal).toHaveBeenCalled());
+    expect(saveDeal.mock.calls[0][0]).toMatchObject({
+      userId: "u1",
+      address: "164 Auburn St",
+      city: "Russellville",
+      sellerFirstName: "Jane",
+      sellerLastName: "Doe",
+      source: "County Records",
+    });
+    expect(setDeals).toHaveBeenCalled();
+    expect(await screen.findByText("Added to CRM")).toBeInTheDocument();
+  });
+
+  it("won't add a record that's already in the CRM", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name", "Property Address"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Bob", "9 Elm St, Austin, TX 78701"],
+    ]);
+    render(
+      <CountyRecords
+        currentUser={user}
+        deals={[{ address: "9 Elm St", city: "Austin" }]}
+        saveDeal={vi.fn()}
+        setDeals={vi.fn()}
+      />,
+    );
+    fireEvent.click(await screen.findByText("Bob"));
+    expect(screen.getByText("Already in CRM").closest("button")).toBeDisabled();
+  });
+
+  it("filters by state, county and city (property columns, not mailing)", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner", "Mailing City", "Situs City", "County", "State"],
+        rowCount: 3,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann", "Nashville", "Memphis", "Shelby", "TN"],
+      ["Ben", "Memphis", "Bartlett", "Shelby", "TN"],
+      ["Cal", "Austin", "Austin", "Travis", "TX"],
+    ]);
+    render(<CountyRecords currentUser={user} />);
+    await screen.findByText("Ann");
+
+    const city = screen.getByLabelText("Filter by city");
+    expect([...city.options].map((o) => o.value)).toEqual([
+      "",
+      "Austin",
+      "Bartlett",
+      "Memphis",
+    ]);
+
+    fireEvent.change(screen.getByLabelText("Filter by state"), {
+      target: { value: "TX" },
+    });
+    expect(screen.getByText("Cal")).toBeInTheDocument();
+    expect(screen.queryByText("Ann")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Filter by state"), {
+      target: { value: "" },
+    });
+
+    fireEvent.change(screen.getByLabelText("Filter by county"), {
+      target: { value: "Shelby" },
+    });
+    expect(screen.getByText("Ann")).toBeInTheDocument();
+    expect(screen.getByText("Ben")).toBeInTheDocument();
+    expect(screen.queryByText("Cal")).toBeNull();
+
+    fireEvent.change(city, { target: { value: "Memphis" } });
+    expect(screen.getByText("Ann")).toBeInTheDocument();
+    expect(screen.queryByText("Ben")).toBeNull();
+
+    fireEvent.click(screen.getByText("Clear"));
+    expect(screen.getByText("Cal")).toBeInTheDocument();
+  });
 });

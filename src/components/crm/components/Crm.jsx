@@ -323,6 +323,7 @@ function Wholesale() {
             fetchLeadFile={fetchLeadFile}
             deleteLeadFileById={deleteLeadFileById}
             saveDeal={saveDeal}
+            deals={deals}
             setDeals={setDeals}
             setActiveView={setActiveView}
             ppcOnly={ppcOnly}
@@ -376,6 +377,7 @@ function Wholesale() {
             fetchLeadFile={fetchLeadFile}
             deleteLeadFileById={deleteLeadFileById}
             saveDeal={saveDeal}
+            deals={deals}
             setDeals={setDeals}
             setActiveView={setActiveView}
             ppcOnly={ppcOnly}

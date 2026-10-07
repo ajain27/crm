@@ -9,6 +9,13 @@ import {
   saveCountyRecordImport,
 } from "../../../firebase/firestoreService";
 import { chunkRows, parseCsv, toCountyRecords } from "./countyRecordsCsv";
+import {
+  buildDealFromCountyRecord,
+  countyRecordPropertyKey,
+  findFieldColumn,
+  propertyKey,
+} from "./countyRecordDeal";
+import CountyRecordModal from "./CountyRecordModal";
 
 const PAGE_SIZE = 25;
 const MAX_FILE_MB = 30;
@@ -28,6 +35,7 @@ function PhoneCellContent({ value }) {
         key={match.index}
         href={`tel:${match[0].replace(/[^\d+]/g, "")}`}
         className="leads-contact-link"
+        onClick={(e) => e.stopPropagation()}
       >
         {match[0]}
       </a>,
@@ -49,6 +57,25 @@ function readFileText(file) {
   });
 }
 
+// Distinct non-empty values of one column, sorted, for a filter dropdown.
+function columnValues(rows, columnIndex) {
+  if (columnIndex === -1) return [];
+  const values = new Set();
+  for (const row of rows) {
+    if (row[columnIndex]) values.add(row[columnIndex]);
+  }
+  return [...values].sort((a, b) => a.localeCompare(b));
+}
+
+// Column filters, in dropdown order. Each uses the property column for
+// that field (mailing columns are never matched).
+const COLUMN_FILTERS = [
+  { field: "state", allLabel: "All states", label: "Filter by state" },
+  { field: "county", allLabel: "All counties", label: "Filter by county" },
+  { field: "city", allLabel: "All cities", label: "Filter by city" },
+];
+const NO_FILTERS = { state: "", county: "", city: "" };
+
 function newestFirst(a, b) {
   return String(b.importedAt).localeCompare(String(a.importedAt));
 }
@@ -67,7 +94,12 @@ function formatImportedAt(iso) {
 // County Records tab: import a county's CSV export and browse it with the
 // file's own columns. Each import is saved to the user's account; pick one
 // from the list to view it, search across every column, or delete it.
-export default function CountyRecords({ currentUser }) {
+export default function CountyRecords({
+  currentUser,
+  deals = [],
+  saveDeal,
+  setDeals,
+}) {
   const [imports, setImports] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [rowsById, setRowsById] = useState({});
@@ -76,6 +108,9 @@ export default function CountyRecords({ currentUser }) {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [columnFilters, setColumnFilters] = useState(NO_FILTERS);
+  // The open record, as its index in the selected import's rows.
+  const [openRowIndex, setOpenRowIndex] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -102,7 +137,9 @@ export default function CountyRecords({ currentUser }) {
 
   function selectImport(id) {
     setSelectedId(id);
+    setOpenRowIndex(null);
     setSearch("");
+    setColumnFilters(NO_FILTERS);
     setPage(1);
   }
 
@@ -171,16 +208,50 @@ export default function CountyRecords({ currentUser }) {
   }
 
   const selected = imports.find((i) => i.id === selectedId);
-  const phoneColumns = (selected?.columns || []).map((c) =>
-    PHONE_COLUMN.test(c),
-  );
+  const columns = selected?.columns || [];
+  const phoneColumns = columns.map((c) => PHONE_COLUMN.test(c));
+  const crmKeys = new Set(deals.map(propertyKey).filter(Boolean));
+  const isInCrm = (row) => {
+    const key = countyRecordPropertyKey(columns, row);
+    return Boolean(key) && crmKeys.has(key);
+  };
+
+  function renderCell(cell, columnIndex) {
+    return phoneColumns[columnIndex] ? <PhoneCellContent value={cell} /> : cell;
+  }
+
+  async function handleAddToCrm(row) {
+    const deal = buildDealFromCountyRecord({
+      columns,
+      row,
+      fileName: selected.fileName,
+      userId: currentUser.id,
+    });
+    if (!deal) throw new Error("This record has no property address.");
+    await saveDeal(deal);
+    setDeals((prev) => [deal, ...prev]);
+  }
   const allRows = rowsById[selectedId] || [];
   const query = search.trim().toLowerCase();
-  const filtered = query
-    ? allRows.filter((row) =>
-        row.some((cell) => cell.toLowerCase().includes(query)),
-      )
-    : allRows;
+  // Each entry keeps its row's index in the import, so the open record
+  // survives searching and paging.
+  // Only fields the file actually has a column for get a dropdown.
+  const activeFilters = COLUMN_FILTERS.map((filter) => {
+    const column = findFieldColumn(columns, filter.field);
+    return { ...filter, column, options: columnValues(allRows, column) };
+  }).filter((filter) => filter.options.length > 0);
+
+  const indexed = allRows.map((row, index) => ({ row, index }));
+  const filtered = indexed.filter(
+    ({ row }) =>
+      activeFilters.every(
+        ({ field, column }) =>
+          !columnFilters[field] || row[column] === columnFilters[field],
+      ) &&
+      (!query || row.some((cell) => cell.toLowerCase().includes(query))),
+  );
+  const hasFilters =
+    Boolean(query) || Object.values(columnFilters).some(Boolean);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * PAGE_SIZE;
@@ -225,6 +296,41 @@ export default function CountyRecords({ currentUser }) {
               }}
               placeholder="Search all columns…"
             />
+          )}
+          {activeFilters.map(({ field, allLabel, label, options }) => (
+            <select
+              key={field}
+              className="leads-filter-select"
+              value={columnFilters[field]}
+              onChange={(e) => {
+                setColumnFilters((prev) => ({
+                  ...prev,
+                  [field]: e.target.value,
+                }));
+                setPage(1);
+              }}
+              aria-label={label}
+            >
+              <option value="">{allLabel}</option>
+              {options.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          ))}
+          {hasFilters && (
+            <button
+              type="button"
+              className="leads-clear-filters"
+              onClick={() => {
+                setSearch("");
+                setColumnFilters(NO_FILTERS);
+                setPage(1);
+              }}
+            >
+              Clear
+            </button>
           )}
           <input
             ref={fileInputRef}
@@ -274,7 +380,7 @@ export default function CountyRecords({ currentUser }) {
         </div>
       ) : filtered.length === 0 ? (
         <div className="leads-empty">
-          <p>No records match your search.</p>
+          <p>No records match your filters.</p>
         </div>
       ) : (
         <>
@@ -282,23 +388,27 @@ export default function CountyRecords({ currentUser }) {
             <table className="compact-table county-records-table">
               <thead>
                 <tr>
+                  <th className="county-crm-col">CRM</th>
                   {selected.columns.map((column) => (
                     <th key={column}>{column}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((row, rowIndex) => (
-                  <tr key={pageStart + rowIndex}>
+                {pageRows.map(({ row, index }) => (
+                  <tr
+                    key={index}
+                    className="clickable-row"
+                    onClick={() => setOpenRowIndex(index)}
+                  >
+                    <td className="county-crm-col">
+                      {isInCrm(row) && (
+                        <span className="county-in-crm">In CRM</span>
+                      )}
+                    </td>
                     {row.map((cell, i) => (
                       <td key={selected.columns[i]} title={cell}>
-                        {!cell ? (
-                          "—"
-                        ) : phoneColumns[i] ? (
-                          <PhoneCellContent value={cell} />
-                        ) : (
-                          cell
-                        )}
+                        {cell ? renderCell(cell, i) : "—"}
                       </td>
                     ))}
                   </tr>
@@ -318,6 +428,17 @@ export default function CountyRecords({ currentUser }) {
             </span>
           </Pagination>
         </>
+      )}
+      {openRowIndex !== null && allRows[openRowIndex] && (
+        <CountyRecordModal
+          key={`${selectedId}-${openRowIndex}`}
+          columns={columns}
+          row={allRows[openRowIndex]}
+          inCrm={isInCrm(allRows[openRowIndex])}
+          onAddToCrm={() => handleAddToCrm(allRows[openRowIndex])}
+          onClose={() => setOpenRowIndex(null)}
+          renderValue={renderCell}
+        />
       )}
     </section>
   );
