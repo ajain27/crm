@@ -9,6 +9,7 @@ import {
 import CountyRecords, { clearCountyRecordsCache } from "./CountyRecords";
 import {
   deleteCountyRecordImportById,
+  deleteCountyRecordRows,
   fetchCountyRecordImports,
   fetchCountyRecordRows,
   saveCountyRecordImport,
@@ -19,6 +20,7 @@ vi.mock("../../../firebase/firestoreService", () => ({
   fetchCountyRecordRows: vi.fn(),
   saveCountyRecordImport: vi.fn(),
   deleteCountyRecordImportById: vi.fn(),
+  deleteCountyRecordRows: vi.fn(),
 }));
 
 const user = { id: "u1" };
@@ -44,6 +46,7 @@ describe("CountyRecords", () => {
     fetchCountyRecordImports.mockResolvedValue([]);
     saveCountyRecordImport.mockResolvedValue(undefined);
     deleteCountyRecordImportById.mockResolvedValue(undefined);
+    deleteCountyRecordRows.mockResolvedValue(undefined);
   });
 
   it("imports a CSV, saves it, and shows the file's own columns", async () => {
@@ -124,7 +127,7 @@ describe("CountyRecords", () => {
     fetchCountyRecordRows.mockResolvedValue([["Jane"]]);
     render(<CountyRecords currentUser={user} />);
     await findInTable("Jane");
-    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getByText("Delete file"));
     await waitFor(() =>
       expect(deleteCountyRecordImportById).toHaveBeenCalledWith("i1"),
     );
@@ -377,5 +380,70 @@ describe("CountyRecords", () => {
     expect(inTable().getByText("Jane")).toBeInTheDocument();
     expect(screen.queryByText("Loading county records…")).toBeNull();
     expect(fetchCountyRecordRows).toHaveBeenCalledTimes(1);
+  });
+
+  describe("deleting single records", () => {
+    const threeRecords = {
+      id: "i1",
+      fileName: "c.csv",
+      columns: ["Owner Name", "Situs Address"],
+      rowCount: 2,
+      deletedRows: [1],
+      importedAt: "2026-10-06T00:00:00Z",
+    };
+
+    beforeEach(() => {
+      fetchCountyRecordImports.mockResolvedValue([threeRecords]);
+      fetchCountyRecordRows.mockResolvedValue([
+        ["Ann", "1 Main St"],
+        ["Ben", "2 Oak Ave"],
+        ["Cal", "3 Elm St"],
+      ]);
+    });
+
+    it("hides records already deleted", async () => {
+      render(<CountyRecords currentUser={user} />);
+      await findInTable("Ann");
+      expect(screen.queryByText("Ben")).toBeNull();
+      expect(screen.getByText("2 records · 2 columns")).toBeInTheDocument();
+    });
+
+    it("deletes a record from its row, keeping its position in the file", async () => {
+      render(<CountyRecords currentUser={user} />);
+      const calRow = (await findInTable("Cal")).closest("tr");
+      fireEvent.click(within(calRow).getByLabelText("Delete record"));
+
+      expect(window.confirm).toHaveBeenCalledWith(
+        "Delete this record (Cal, 3 Elm St)?",
+      );
+      await waitFor(() =>
+        expect(deleteCountyRecordRows).toHaveBeenCalledWith("i1", [2]),
+      );
+      await waitFor(() => expect(screen.queryByText("Cal")).toBeNull());
+      expect(inTable().getByText("Ann")).toBeInTheDocument();
+      expect(screen.getByText("1 record · 2 columns")).toBeInTheDocument();
+    });
+
+    it("deletes the open record from its window", async () => {
+      render(<CountyRecords currentUser={user} />);
+      fireEvent.click(await findInTable("Ann"));
+      fireEvent.click(screen.getByText("Delete record"));
+      await waitFor(() =>
+        expect(deleteCountyRecordRows).toHaveBeenCalledWith("i1", [0]),
+      );
+      await waitFor(() =>
+        expect(document.querySelector(".county-record-fields")).toBeNull(),
+      );
+      expect(screen.queryByText("Ann")).toBeNull();
+    });
+
+    it("keeps the record if the delete isn't confirmed", async () => {
+      window.confirm.mockReturnValue(false);
+      render(<CountyRecords currentUser={user} />);
+      const annRow = (await findInTable("Ann")).closest("tr");
+      fireEvent.click(within(annRow).getByLabelText("Delete record"));
+      expect(deleteCountyRecordRows).not.toHaveBeenCalled();
+      expect(inTable().getByText("Ann")).toBeInTheDocument();
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import {
+  arrayUnion,
   collection,
   getDoc,
   deleteDoc,
@@ -708,6 +709,16 @@ export async function fetchCountyRecordRows(importId) {
     .map((d) => d.data())
     .sort((a, b) => a.index - b.index)
     .flatMap((chunk) => JSON.parse(chunk.rows));
+}
+
+// Deleting single records doesn't rewrite the (large) row chunks: the
+// import lists the deleted rows' positions in the file, and they're
+// skipped when shown. One write per delete, whatever the file size.
+export async function deleteCountyRecordRows(importId, rowIndexes) {
+  await updateDoc(doc(countyRecordImportsCollection, importId), {
+    deletedRows: arrayUnion(...rowIndexes),
+    rowCount: increment(-rowIndexes.length),
+  });
 }
 
 export async function deleteCountyRecordImportById(importId) {

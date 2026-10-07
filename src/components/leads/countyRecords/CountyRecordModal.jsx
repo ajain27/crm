@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import { countyRecordFields } from "./countyRecordDeal";
 
@@ -11,6 +11,7 @@ export default function CountyRecordModal({
   inCrm,
   onAddToCrm,
   onClose,
+  onDelete,
   renderValue,
 }) {
   const [adding, setAdding] = useState(false);
@@ -48,6 +49,17 @@ export default function CountyRecordModal({
       }}
       actions={
         <>
+          {onDelete && (
+            <button
+              type="button"
+              className="danger-btn county-record-delete"
+              onClick={onDelete}
+              disabled={adding}
+            >
+              <Trash2 size={14} />
+              Delete record
+            </button>
+          )}
           {error && <span className="county-record-error">{error}</span>}
           {!address && !alreadyInCrm && (
             <span className="county-record-hint">

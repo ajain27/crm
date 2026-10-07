@@ -5,6 +5,7 @@ import LoadingScreen from "../../loader/LoadingScreen";
 import { LeadSearchInput } from "../components/LeadListPanel";
 import {
   deleteCountyRecordImportById,
+  deleteCountyRecordRows,
   fetchCountyRecordImports,
   fetchCountyRecordRows,
   saveCountyRecordImport,
@@ -225,6 +226,32 @@ export default function CountyRecords({
     }
   }
 
+  async function handleDeleteRecord(index) {
+    const row = rowsById[selectedId]?.[index];
+    if (!row) return;
+    const { ownerName, address } = countyRecordFields(columns, row);
+    const label = [ownerName, address].filter(Boolean).join(", ");
+    if (!window.confirm(`Delete this record${label ? ` (${label})` : ""}?`))
+      return;
+    try {
+      await deleteCountyRecordRows(selectedId, [index]);
+      setImports((prev) =>
+        prev.map((i) =>
+          i.id === selectedId
+            ? {
+                ...i,
+                deletedRows: [...(i.deletedRows || []), index],
+                rowCount: i.rowCount - 1,
+              }
+            : i,
+        ),
+      );
+      if (openRowIndex === index) setOpenRowIndex(null);
+    } catch {
+      setError("Couldn't delete this record. Check your connection.");
+    }
+  }
+
   const selected = imports.find((i) => i.id === selectedId);
   // Imports not fetched yet, or the selected file's rows still on the way
   // (unless that failed — the error shows instead).
@@ -263,7 +290,12 @@ export default function CountyRecords({
     return { ...filter, column, options: columnValues(allRows, column) };
   }).filter((filter) => filter.options.length > 0);
 
-  const indexed = allRows.map((row, index) => ({ row, index }));
+  // Rows keep their position in the file as their index; deleted ones are
+  // listed on the import and skipped.
+  const deletedRows = new Set(selected?.deletedRows || []);
+  const indexed = allRows
+    .map((row, index) => ({ row, index }))
+    .filter(({ index }) => !deletedRows.has(index));
   const filtered = indexed.filter(
     ({ row }) =>
       activeFilters.every(
@@ -381,7 +413,7 @@ export default function CountyRecords({
               disabled={importing}
             >
               <Trash2 size={13} />
-              Delete
+              Delete file
             </button>
           )}
         </div>
@@ -422,6 +454,7 @@ export default function CountyRecords({
                     {selected.columns.map((column) => (
                       <th key={column}>{column}</th>
                     ))}
+                    <th className="county-row-action" aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
@@ -443,6 +476,20 @@ export default function CountyRecords({
                           )}
                         </td>
                       ))}
+                      <td className="county-row-action">
+                        <button
+                          type="button"
+                          className="county-row-delete"
+                          title="Delete record"
+                          aria-label="Delete record"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteRecord(index);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -501,6 +548,7 @@ export default function CountyRecords({
           inCrm={isInCrm(allRows[openRowIndex])}
           onAddToCrm={() => handleAddToCrm(allRows[openRowIndex])}
           onClose={() => setOpenRowIndex(null)}
+          onDelete={() => handleDeleteRecord(openRowIndex)}
           renderValue={renderCell}
         />
       )}
