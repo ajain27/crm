@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Modal from "../modal/Modal";
 import { Badge } from "../elements/elements";
-import { formatPhone } from "../../utils/utils";
+import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
 import { ZillowLink } from "./components/LeadTableCells";
@@ -379,6 +379,18 @@ export default function LeadDetailModal({
                       placeholder="$0"
                     />
                   </Field>
+                  {isPpl && (
+                    <Field label="ARV">
+                      <input
+                        className="ldm-input"
+                        value={draft.arv || ""}
+                        onChange={(e) =>
+                          set("arv", fmtCurrencyInput(e.target.value))
+                        }
+                        placeholder="$0"
+                      />
+                    </Field>
+                  )}
                   <Field label="Who's Living in the Property">
                     <OptionSelect
                       value={draft.occupant}

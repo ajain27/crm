@@ -69,6 +69,22 @@ describe("leadUtils", () => {
     });
   });
 
+  it("carries a PPL lead's ARV onto the CRM deal as a number", () => {
+    const deal = buildDealFromLead(
+      {
+        address: "9 Elm St, Austin, TX 78701",
+        source: "PPL",
+        arv: "$135,000.50",
+      },
+      "u1",
+    );
+    expect(deal.arv).toBe(135001);
+    expect(deal.notes).toContain("ARV: $135,000.50");
+    expect(
+      buildDealFromLead({ address: "9 Elm St, Austin, TX 78701" }, "u1").arv,
+    ).toBe("");
+  });
+
   it("copies the seller's first and last name onto the CRM deal", () => {
     const deal = buildDealFromLead(
       {

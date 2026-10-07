@@ -13,6 +13,7 @@ import {
 } from "../components/LeadFormFields";
 import { ZillowLink } from "../components/LeadTableCells";
 import { todayStr } from "../leadUtils";
+import { fmtCurrencyInput } from "../../../utils/utils";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -228,6 +229,17 @@ export default function ResidentialLeadForm({ leadForm }) {
               onBlur={handleTrimBlur}
               placeholder="$0"
             />
+            {form.source === "PPL" && (
+              <TextField
+                label="ARV"
+                name="arv"
+                value={form.arv}
+                onChange={(e) =>
+                  setField("arv", fmtCurrencyInput(e.target.value))
+                }
+                placeholder="$0"
+              />
+            )}
             <LeadSelectField
               label="Who's Living in the Property"
               name="occupant"

@@ -139,6 +139,7 @@ export function createEmptyResidentialForm() {
     firstName: "",
     lastName: "",
     askingPrice: "",
+    arv: "",
     occupant: "",
     sellingUrgency: "",
     sellerMotivation: "",
@@ -297,6 +298,10 @@ export function buildDealFromLead(lead, userId) {
     sellerFirstName: firstName,
     sellerLastName: lastName,
     sellerPhone: lead.phone || "",
+    // PPL leads collect an ARV; carry it over so the deal's MAO calculates.
+    arv:
+      Math.round(parseFloat(String(lead.arv || "").replace(/[^0-9.]/g, ""))) ||
+      "",
     source: lead.source || "Website",
     notes: [
       lead.source ? `Source: ${lead.source}` : "Source: Website",
@@ -304,6 +309,7 @@ export function buildDealFromLead(lead, userId) {
       lead.email ? `Email: ${lead.email}` : "",
       lead.phone ? `Phone: ${lead.phone}` : "",
       lead.askingPrice ? `Asking Price: ${lead.askingPrice}` : "",
+      lead.arv ? `ARV: ${lead.arv}` : "",
       lead.occupant ? `Living in Property: ${lead.occupant}` : "",
       lead.sellingUrgency ? `Selling Urgency: ${lead.sellingUrgency}` : "",
       lead.sellerMotivation

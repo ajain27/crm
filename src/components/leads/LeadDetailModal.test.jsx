@@ -118,4 +118,37 @@ describe("LeadDetailModal", () => {
     expect(screen.getByDisplayValue("seller@example.com")).toBeInTheDocument();
     expect(screen.getByDisplayValue("555-9876")).toBeInTheDocument();
   });
+
+  it("asks for an ARV on PPL leads only and saves it formatted", async () => {
+    const onSave = vi.fn(async () => {});
+    const { unmount } = render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={{ ...lead, source: "PPL" }}
+        onSave={onSave}
+        isPpl={true}
+      />,
+    );
+    const arvInput = screen
+      .getByText("ARV")
+      .closest(".ldm-field")
+      .querySelector("input");
+    fireEvent.change(arvInput, { target: { value: "135000" } });
+    expect(arvInput).toHaveValue("$135,000");
+    fireEvent.click(screen.getByText("Save Changes"));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0].arv).toBe("$135,000");
+    unmount();
+
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={lead}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("ARV")).toBeNull();
+  });
 });
