@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, Plus, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
-import { countyRecordFields } from "./countyRecordDeal";
+import { countyRecordFields, isAmountDueColumn } from "./countyRecordDeal";
 
 // One county record: every column and value, with an Add to CRM action.
 // `renderValue` formats a cell (e.g. phone links) the same way as the table.
@@ -91,7 +91,13 @@ export default function CountyRecordModal({
       <dl className="county-record-fields">
         {columns.map((column, i) => (
           <div key={column} className="county-record-field">
-            <dt>{column}</dt>
+            <dt
+              className={
+                isAmountDueColumn(column) ? "county-amount-due" : undefined
+              }
+            >
+              {column}
+            </dt>
             <dd>{row[i] ? renderValue(row[i], i) : "—"}</dd>
           </div>
         ))}

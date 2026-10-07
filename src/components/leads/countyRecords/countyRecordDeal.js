@@ -65,6 +65,15 @@ function findColumn(columns, { patterns, exclude = MAILING }) {
   return -1;
 }
 
+// "Amount Due", "Total Due", "Balance Due", "Taxes Due", "Delinquent
+// Amount"… — shown in red.
+const AMOUNT_DUE_COLUMN =
+  /\b(amount|amt|total|balance|bal|tax(es)?)\s*(due|owed|owing)\b|\bdue\s*(amount|amt)\b|\bdelinquen\w*\s*(amount|amt|balance|total|tax(es)?)\b/i;
+
+export function isAmountDueColumn(column) {
+  return AMOUNT_DUE_COLUMN.test(column);
+}
+
 // Index of the column holding `field` (e.g. "city", "county"), or -1.
 export function findFieldColumn(columns, field) {
   return findColumn(columns, FIELDS[field]);

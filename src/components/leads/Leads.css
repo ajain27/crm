@@ -807,6 +807,17 @@
     font-weight: 600;
   }
 
+  /* Amount Due / Total Due / Balance Due… columns, header and values. */
+  .county-records-table th.county-amount-due,
+  .county-record-field dt.county-amount-due,
+  .county-amount-due {
+    color: var(--red);
+  }
+
+  span.county-amount-due {
+    font-weight: 600;
+  }
+
   .county-in-crm--inline {
     margin-left: 0.5rem;
     vertical-align: middle;

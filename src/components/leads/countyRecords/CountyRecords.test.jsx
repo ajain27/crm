@@ -446,4 +446,33 @@ describe("CountyRecords", () => {
       expect(inTable().getByText("Ann")).toBeInTheDocument();
     });
   });
+
+  it("shows the amount due column in red, in the table and the record", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name", "Amount Due", "Assessed Value"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([["Ann", "$4,210.55", "$300,000"]]);
+    render(<CountyRecords currentUser={user} />);
+
+    expect(await findInTable("$4,210.55")).toHaveClass("county-amount-due");
+    expect(inTable().getByText("Amount Due")).toHaveClass("county-amount-due");
+    expect(inTable().getByText("$300,000")).not.toHaveClass(
+      "county-amount-due",
+    );
+
+    fireEvent.click(inTable().getByText("Ann"));
+    const fields = document.querySelector(".county-record-fields");
+    expect(within(fields).getByText("Amount Due")).toHaveClass(
+      "county-amount-due",
+    );
+    expect(within(fields).getByText("$4,210.55")).toHaveClass(
+      "county-amount-due",
+    );
+  });
 });

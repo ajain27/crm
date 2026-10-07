@@ -3,6 +3,7 @@ import {
   buildDealFromCountyRecord,
   countyRecordFields,
   countyRecordPropertyKey,
+  isAmountDueColumn,
   propertyKey,
 } from "./countyRecordDeal";
 
@@ -93,6 +94,23 @@ describe("countyRecordDeal", () => {
   it("matches a record to an existing deal by street and city", () => {
     expect(countyRecordPropertyKey(columns, row)).toBe(
       propertyKey({ address: "164 AUBURN ST.", city: "russellville" }),
+    );
+  });
+
+  it("recognizes amount-due columns", () => {
+    [
+      "Amount Due",
+      "AMOUNT DUE",
+      "Total Due",
+      "Balance Due",
+      "Taxes Due",
+      "Tax Owed",
+      "Due Amount",
+      "Delinquent Amount",
+      "Delinquent Taxes",
+    ].forEach((c) => expect(isAmountDueColumn(c)).toBe(true));
+    ["Due Date", "Assessed Value", "Amount", "Tax Year"].forEach((c) =>
+      expect(isAmountDueColumn(c)).toBe(false),
     );
   });
 });

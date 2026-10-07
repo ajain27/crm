@@ -16,6 +16,7 @@ import {
   countyRecordFields,
   countyRecordPropertyKey,
   findFieldColumn,
+  isAmountDueColumn,
   propertyKey,
 } from "./countyRecordDeal";
 import CountyRecordModal from "./CountyRecordModal";
@@ -259,6 +260,7 @@ export default function CountyRecords({
     !importsLoaded || (Boolean(selected) && !rowsById[selectedId] && !error);
   const columns = selected?.columns || [];
   const phoneColumns = columns.map((c) => PHONE_COLUMN.test(c));
+  const amountDueColumns = columns.map(isAmountDueColumn);
   const crmKeys = new Set(deals.map(propertyKey).filter(Boolean));
   const isInCrm = (row) => {
     const key = countyRecordPropertyKey(columns, row);
@@ -266,7 +268,10 @@ export default function CountyRecords({
   };
 
   function renderCell(cell, columnIndex) {
-    return phoneColumns[columnIndex] ? <PhoneCellContent value={cell} /> : cell;
+    if (phoneColumns[columnIndex]) return <PhoneCellContent value={cell} />;
+    if (amountDueColumns[columnIndex])
+      return <span className="county-amount-due">{cell}</span>;
+    return cell;
   }
 
   async function handleAddToCrm(row) {
@@ -453,7 +458,16 @@ export default function CountyRecords({
                   <tr>
                     <th className="county-row-action" aria-label="Actions" />
                     {selected.columns.map((column) => (
-                      <th key={column}>{column}</th>
+                      <th
+                        key={column}
+                        className={
+                          isAmountDueColumn(column)
+                            ? "county-amount-due"
+                            : undefined
+                        }
+                      >
+                        {column}
+                      </th>
                     ))}
                   </tr>
                 </thead>
