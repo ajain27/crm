@@ -769,9 +769,9 @@
     cursor: pointer;
   }
 
-  .county-records-table .county-crm-col {
-    width: 1%;
-    max-width: none;
+  .county-in-crm--inline {
+    margin-left: 0.5rem;
+    vertical-align: middle;
   }
 
   .county-in-crm {

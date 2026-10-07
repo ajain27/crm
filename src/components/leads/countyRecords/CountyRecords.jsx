@@ -392,7 +392,6 @@ export default function CountyRecords({
               <table className="compact-table county-records-table">
                 <thead>
                   <tr>
-                    <th className="county-crm-col">CRM</th>
                     {selected.columns.map((column) => (
                       <th key={column}>{column}</th>
                     ))}
@@ -405,14 +404,16 @@ export default function CountyRecords({
                       className="clickable-row"
                       onClick={() => setOpenRowIndex(index)}
                     >
-                      <td className="county-crm-col">
-                        {isInCrm(row) && (
-                          <span className="county-in-crm">In CRM</span>
-                        )}
-                      </td>
                       {row.map((cell, i) => (
                         <td key={selected.columns[i]} title={cell}>
                           {cell ? renderCell(cell, i) : "—"}
+                          {/* Records already in the CRM are tagged in
+                              their first cell. */}
+                          {i === 0 && isInCrm(row) && (
+                            <span className="county-in-crm county-in-crm--inline">
+                              In CRM
+                            </span>
+                          )}
                         </td>
                       ))}
                     </tr>
