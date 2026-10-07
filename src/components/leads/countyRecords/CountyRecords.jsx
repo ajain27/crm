@@ -11,6 +11,7 @@ import {
 import { chunkRows, parseCsv, toCountyRecords } from "./countyRecordsCsv";
 import {
   buildDealFromCountyRecord,
+  countyRecordFields,
   countyRecordPropertyKey,
   findFieldColumn,
   propertyKey,
@@ -384,37 +385,72 @@ export default function CountyRecords({
         </div>
       ) : (
         <>
-          <div className="table-wrap county-records-table-wrap">
-            <table className="compact-table county-records-table">
-              <thead>
-                <tr>
-                  <th className="county-crm-col">CRM</th>
-                  {selected.columns.map((column) => (
-                    <th key={column}>{column}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map(({ row, index }) => (
-                  <tr
-                    key={index}
-                    className="clickable-row"
-                    onClick={() => setOpenRowIndex(index)}
-                  >
-                    <td className="county-crm-col">
-                      {isInCrm(row) && (
-                        <span className="county-in-crm">In CRM</span>
-                      )}
-                    </td>
-                    {row.map((cell, i) => (
-                      <td key={selected.columns[i]} title={cell}>
-                        {cell ? renderCell(cell, i) : "—"}
-                      </td>
+          {/* Wide screens get the full table; narrow ones get one card per
+              record (owner, address, phone). Either opens the record. */}
+          <div className="county-records-results">
+            <div className="table-wrap county-records-table-wrap">
+              <table className="compact-table county-records-table">
+                <thead>
+                  <tr>
+                    <th className="county-crm-col">CRM</th>
+                    {selected.columns.map((column) => (
+                      <th key={column}>{column}</th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pageRows.map(({ row, index }) => (
+                    <tr
+                      key={index}
+                      className="clickable-row"
+                      onClick={() => setOpenRowIndex(index)}
+                    >
+                      <td className="county-crm-col">
+                        {isInCrm(row) && (
+                          <span className="county-in-crm">In CRM</span>
+                        )}
+                      </td>
+                      {row.map((cell, i) => (
+                        <td key={selected.columns[i]} title={cell}>
+                          {cell ? renderCell(cell, i) : "—"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul className="county-records-cards">
+              {pageRows.map(({ row, index }) => {
+                const fields = countyRecordFields(columns, row);
+                return (
+                  <li key={index}>
+                    <button
+                      type="button"
+                      className="county-record-card"
+                      onClick={() => setOpenRowIndex(index)}
+                    >
+                      <span className="county-record-card-title">
+                        {fields.ownerName || row[0] || "Record"}
+                        {isInCrm(row) && (
+                          <span className="county-in-crm">In CRM</span>
+                        )}
+                      </span>
+                      {fields.address && (
+                        <span className="county-record-card-line">
+                          {fields.address}
+                        </span>
+                      )}
+                      {fields.phone && (
+                        <span className="county-record-card-line">
+                          <PhoneCellContent value={fields.phone} />
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
           <Pagination
             currentPage={currentPage}

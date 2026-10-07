@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import CountyRecords from "./CountyRecords";
 import {
   deleteCountyRecordImportById,
@@ -16,6 +22,12 @@ vi.mock("../../../firebase/firestoreService", () => ({
 }));
 
 const user = { id: "u1" };
+
+// The records render as a table and, for narrow screens, as cards (CSS
+// picks one); row checks look in the table.
+const inTable = () => within(screen.getByRole("table"));
+const findInTable = async (text) =>
+  within(await screen.findByRole("table")).findByText(text);
 
 function uploadCsv(text, name = "shelby.csv") {
   const file = new File([text], name, { type: "text/csv" });
@@ -43,7 +55,7 @@ describe("CountyRecords", () => {
     // "$90,000" isn't quoted, so it splits — padded under an extra column.
     expect(await screen.findByText("Owner Name")).toBeInTheDocument();
     expect(screen.getByText("Parcel ID")).toBeInTheDocument();
-    expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+    expect(inTable().getByText("Jane Doe")).toBeInTheDocument();
 
     const [summary, chunks] = saveCountyRecordImport.mock.calls[0];
     expect(summary).toMatchObject({
@@ -78,7 +90,7 @@ describe("CountyRecords", () => {
     );
     render(<CountyRecords currentUser={user} />);
 
-    expect(await screen.findByText("Owner 00")).toBeInTheDocument();
+    expect(await findInTable("Owner 00")).toBeInTheDocument();
     expect(fetchCountyRecordRows).toHaveBeenCalledWith("i1");
     expect(screen.queryByText("Owner 25")).toBeNull();
     expect(screen.getByText("Showing 1–25 of 30")).toBeInTheDocument();
@@ -86,7 +98,7 @@ describe("CountyRecords", () => {
     fireEvent.change(screen.getByPlaceholderText("Search all columns…"), {
       target: { value: "memphis" },
     });
-    expect(screen.getByText("Owner 29")).toBeInTheDocument();
+    expect(inTable().getByText("Owner 29")).toBeInTheDocument();
     expect(screen.getByText("Showing 1–1 of 1")).toBeInTheDocument();
   });
 
@@ -110,7 +122,7 @@ describe("CountyRecords", () => {
     ]);
     fetchCountyRecordRows.mockResolvedValue([["Jane"]]);
     render(<CountyRecords currentUser={user} />);
-    await screen.findByText("Jane");
+    await findInTable("Jane");
     fireEvent.click(screen.getByText("Delete"));
     await waitFor(() =>
       expect(deleteCountyRecordImportById).toHaveBeenCalledWith("i1"),
@@ -135,16 +147,16 @@ describe("CountyRecords", () => {
     ]);
     render(<CountyRecords currentUser={user} />);
 
-    expect(await screen.findByText("(206) 822-8019")).toHaveAttribute(
+    expect(await findInTable("(206) 822-8019")).toHaveAttribute(
       "href",
       "tel:2068228019",
     );
-    expect(screen.getByText("425-555-0100")).toHaveAttribute(
+    expect(inTable().getByText("425-555-0100")).toHaveAttribute(
       "href",
       "tel:4255550100",
     );
     // A number-shaped value outside a phone column stays plain text.
-    expect(screen.getByText("2068228019").tagName).toBe("TD");
+    expect(inTable().getByText("2068228019").tagName).toBe("TD");
   });
 
   it("opens a record with all its data and adds it to the CRM", async () => {
@@ -179,12 +191,14 @@ describe("CountyRecords", () => {
     );
 
     // The record already in the CRM is flagged in the table.
-    const bobRow = (await screen.findByText("Bob Roe")).closest("tr");
+    const bobRow = (await findInTable("Bob Roe")).closest("tr");
     expect(bobRow).toHaveTextContent("In CRM");
 
-    fireEvent.click(screen.getByText("Jane Doe"));
+    fireEvent.click(inTable().getByText("Jane Doe"));
     expect(
-      screen.getByText("164 Auburn St, Russellville, 35654"),
+      screen.getByRole("heading", {
+        name: "164 Auburn St, Russellville, 35654",
+      }),
     ).toBeInTheDocument();
     const fields = document.querySelector(".county-record-fields");
     expect(fields).toHaveTextContent("Acres0.5");
@@ -225,7 +239,7 @@ describe("CountyRecords", () => {
         setDeals={vi.fn()}
       />,
     );
-    fireEvent.click(await screen.findByText("Bob"));
+    fireEvent.click(await findInTable("Bob"));
     expect(screen.getByText("Already in CRM").closest("button")).toBeDisabled();
   });
 
@@ -245,7 +259,7 @@ describe("CountyRecords", () => {
       ["Cal", "Austin", "Austin", "Travis", "TX"],
     ]);
     render(<CountyRecords currentUser={user} />);
-    await screen.findByText("Ann");
+    await findInTable("Ann");
 
     const city = screen.getByLabelText("Filter by city");
     expect([...city.options].map((o) => o.value)).toEqual([
@@ -258,7 +272,7 @@ describe("CountyRecords", () => {
     fireEvent.change(screen.getByLabelText("Filter by state"), {
       target: { value: "TX" },
     });
-    expect(screen.getByText("Cal")).toBeInTheDocument();
+    expect(inTable().getByText("Cal")).toBeInTheDocument();
     expect(screen.queryByText("Ann")).toBeNull();
     fireEvent.change(screen.getByLabelText("Filter by state"), {
       target: { value: "" },
@@ -267,15 +281,44 @@ describe("CountyRecords", () => {
     fireEvent.change(screen.getByLabelText("Filter by county"), {
       target: { value: "Shelby" },
     });
-    expect(screen.getByText("Ann")).toBeInTheDocument();
-    expect(screen.getByText("Ben")).toBeInTheDocument();
+    expect(inTable().getByText("Ann")).toBeInTheDocument();
+    expect(inTable().getByText("Ben")).toBeInTheDocument();
     expect(screen.queryByText("Cal")).toBeNull();
 
     fireEvent.change(city, { target: { value: "Memphis" } });
-    expect(screen.getByText("Ann")).toBeInTheDocument();
+    expect(inTable().getByText("Ann")).toBeInTheDocument();
     expect(screen.queryByText("Ben")).toBeNull();
 
     fireEvent.click(screen.getByText("Clear"));
-    expect(screen.getByText("Cal")).toBeInTheDocument();
+    expect(inTable().getByText("Cal")).toBeInTheDocument();
+  });
+
+  it("also lists records as cards (owner, address, phone) for narrow screens", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name", "Situs Address", "Situs City", "Phone 1"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Gordon Brandhagen", "2619 156TH ST SW", "Lynnwood", "206-795-9395"],
+    ]);
+    render(<CountyRecords currentUser={user} />);
+    await findInTable("Gordon Brandhagen");
+
+    const card = document.querySelector(".county-record-card");
+    expect(card).toHaveTextContent("Gordon Brandhagen");
+    expect(card).toHaveTextContent("2619 156TH ST SW, Lynnwood");
+    expect(within(card).getByText("206-795-9395")).toHaveAttribute(
+      "href",
+      "tel:2067959395",
+    );
+    fireEvent.click(card);
+    expect(document.querySelector(".county-record-fields")).toHaveTextContent(
+      "Phone 1206-795-9395",
+    );
   });
 });

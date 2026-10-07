@@ -830,12 +830,63 @@
     color: var(--muted);
   }
 
-  /* County files have any number of columns, so the table scrolls
-     sideways instead of collapsing into cards. */
+  /* County files have any number of columns, so on wide screens the table
+     scrolls sideways inside the panel. Padding, not margin: .table-wrap is
+     width:100%, so side margins would push it past the panel's edge. */
+  .county-records-results {
+    container-type: inline-size;
+  }
+
   .county-records-table-wrap {
     overflow-x: auto;
-    margin: 0 1.5rem;
-    padding-bottom: 0.5rem;
+    padding: 0 1.5rem 0.5rem;
+  }
+
+  .county-records-cards {
+    display: none;
+    list-style: none;
+    margin: 0;
+    padding: 0 1rem;
+    gap: 0.6rem;
+  }
+
+  .county-record-card {
+    display: grid;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .county-record-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .county-record-card-line {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  /* Too narrow for a dozen columns: switch to cards. */
+  @container (max-width: 700px) {
+    .county-records-table-wrap {
+      display: none;
+    }
+
+    .county-records-cards {
+      display: grid;
+    }
   }
 
   .county-records-table th,
