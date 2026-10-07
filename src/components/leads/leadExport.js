@@ -4,8 +4,6 @@
 const COLUMNS = [
   // Commercial leads use `name`; everything else uses `sellerName`.
   ["Name", (l) => l.sellerName || l.name],
-  ["First Name", (l) => l.firstName],
-  ["Last Name", (l) => l.lastName],
   ["Email", (l) => l.email],
   ["Phone", (l) => l.phone],
   ["Address", (l) => l.address],
@@ -32,7 +30,11 @@ export function leadsToRows(leads) {
     ...leads.map((lead) =>
       COLUMNS.map(([, get]) => {
         const value = get(lead);
-        return value === undefined || value === null ? "" : String(value);
+        // Leading/trailing blank lines (common in imported notes) would
+        // otherwise show as empty lines in the cell.
+        return value === undefined || value === null
+          ? ""
+          : String(value).trim();
       }),
     ),
   ];

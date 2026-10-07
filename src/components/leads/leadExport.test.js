@@ -18,8 +18,17 @@ describe("leadExport", () => {
     expect(rows[1][col("Name")]).toBe("Jane Doe");
     expect(rows[1][col("ARV")]).toBe("$135,000");
     expect(rows[1][col("Phone")]).toBe("");
+    expect(header).not.toContain("First Name");
+    expect(header).not.toContain("Last Name");
     expect(rows[2][col("Name")]).toBe("Acme Plaza");
     expect(rows[2][col("Listing / Website URL")]).toBe("https://acme.com");
+  });
+
+  it("trims blank lines around values so notes don't get a formula guard", () => {
+    const rows = leadsToRows([{ notes: "\r\nMajor remodel\nZIP code\n" }]);
+    const notes = rows[1][rows[0].indexOf("Notes")];
+    expect(notes).toBe("Major remodel\nZIP code");
+    expect(rowsToCsv([[notes]])).toBe('"Major remodel\nZIP code"');
   });
 
   it("quotes commas, quotes and newlines, and neutralizes formulas", () => {
