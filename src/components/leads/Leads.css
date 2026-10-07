@@ -776,7 +776,8 @@
   .county-records-table .county-row-action {
     width: 1%;
     max-width: none;
-    text-align: right;
+    padding-right: 0;
+    text-align: center;
   }
 
   .county-row-delete {

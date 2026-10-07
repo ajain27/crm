@@ -451,10 +451,10 @@ export default function CountyRecords({
               <table className="compact-table county-records-table">
                 <thead>
                   <tr>
+                    <th className="county-row-action" aria-label="Actions" />
                     {selected.columns.map((column) => (
                       <th key={column}>{column}</th>
                     ))}
-                    <th className="county-row-action" aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
@@ -464,18 +464,6 @@ export default function CountyRecords({
                       className="clickable-row"
                       onClick={() => setOpenRowIndex(index)}
                     >
-                      {row.map((cell, i) => (
-                        <td key={selected.columns[i]} title={cell}>
-                          {cell ? renderCell(cell, i) : "—"}
-                          {/* Records already in the CRM are tagged in
-                              their first cell. */}
-                          {i === 0 && isInCrm(row) && (
-                            <span className="county-in-crm county-in-crm--inline">
-                              In CRM
-                            </span>
-                          )}
-                        </td>
-                      ))}
                       <td className="county-row-action">
                         <button
                           type="button"
@@ -490,6 +478,18 @@ export default function CountyRecords({
                           <Trash2 size={14} />
                         </button>
                       </td>
+                      {row.map((cell, i) => (
+                        <td key={selected.columns[i]} title={cell}>
+                          {cell ? renderCell(cell, i) : "—"}
+                          {/* Records already in the CRM are tagged in
+                              their first cell. */}
+                          {i === 0 && isInCrm(row) && (
+                            <span className="county-in-crm county-in-crm--inline">
+                              In CRM
+                            </span>
+                          )}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
