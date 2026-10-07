@@ -11,6 +11,7 @@ import {
   deleteCountyRecordImportById,
   deleteCountyRecordRows,
   fetchCountyRecordImports,
+  updateCountyRecordImport,
   fetchCountyRecordRows,
   saveCountyRecordImport,
 } from "../../../firebase/firestoreService";
@@ -21,6 +22,7 @@ vi.mock("../../../firebase/firestoreService", () => ({
   saveCountyRecordImport: vi.fn(),
   deleteCountyRecordImportById: vi.fn(),
   deleteCountyRecordRows: vi.fn(),
+  updateCountyRecordImport: vi.fn(),
 }));
 
 const user = { id: "u1" };
@@ -47,6 +49,7 @@ describe("CountyRecords", () => {
     saveCountyRecordImport.mockResolvedValue(undefined);
     deleteCountyRecordImportById.mockResolvedValue(undefined);
     deleteCountyRecordRows.mockResolvedValue(undefined);
+    updateCountyRecordImport.mockResolvedValue(undefined);
   });
 
   it("imports a CSV, saves it, and shows the file's own columns", async () => {
@@ -56,14 +59,25 @@ describe("CountyRecords", () => {
     ).toBeInTheDocument();
 
     uploadCsv("Owner Name,Parcel ID,Assessed Value\nJane Doe,123-45,$90,000\n");
+    // Named before it's saved; the file name is the starting point.
+    const nameInput = await screen.findByLabelText("List name");
+    expect(nameInput).toHaveValue("shelby");
+    expect(saveCountyRecordImport).not.toHaveBeenCalled();
+    fireEvent.change(nameInput, { target: { value: "2026 Delinquent" } });
+    fireEvent.click(screen.getByText("Save list"));
+
     // "$90,000" isn't quoted, so it splits — padded under an extra column.
     expect(await screen.findByText("Owner Name")).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /2026 Delinquent/ }),
+    ).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Parcel ID")).toBeInTheDocument();
     expect(inTable().getByText("Jane Doe")).toBeInTheDocument();
 
     const [summary, chunks] = saveCountyRecordImport.mock.calls[0];
     expect(summary).toMatchObject({
       userId: "u1",
+      name: "2026 Delinquent",
       fileName: "shelby.csv",
       rowCount: 1,
     });
@@ -127,7 +141,7 @@ describe("CountyRecords", () => {
     fetchCountyRecordRows.mockResolvedValue([["Jane"]]);
     render(<CountyRecords currentUser={user} />);
     await findInTable("Jane");
-    fireEvent.click(screen.getByText("Delete file"));
+    fireEvent.click(screen.getByText("Delete list"));
     await waitFor(() =>
       expect(deleteCountyRecordImportById).toHaveBeenCalledWith("i1"),
     );
@@ -351,7 +365,7 @@ describe("CountyRecords", () => {
     ]);
     // Still loading: the import is known but its rows aren't here yet.
     await waitFor(() =>
-      expect(screen.getByText("1 record · 1 column")).toBeInTheDocument(),
+      expect(screen.getByText(/1 record · 1 column/)).toBeInTheDocument(),
     );
     expect(screen.getByText("Loading county records…")).toBeInTheDocument();
 
@@ -405,7 +419,7 @@ describe("CountyRecords", () => {
       render(<CountyRecords currentUser={user} />);
       await findInTable("Ann");
       expect(screen.queryByText("Ben")).toBeNull();
-      expect(screen.getByText("2 records · 2 columns")).toBeInTheDocument();
+      expect(screen.getByText(/2 records · 2 columns/)).toBeInTheDocument();
     });
 
     it("deletes a record from its row, keeping its position in the file", async () => {
@@ -421,7 +435,7 @@ describe("CountyRecords", () => {
       );
       await waitFor(() => expect(screen.queryByText("Cal")).toBeNull());
       expect(inTable().getByText("Ann")).toBeInTheDocument();
-      expect(screen.getByText("1 record · 2 columns")).toBeInTheDocument();
+      expect(screen.getByText(/1 record · 2 columns/)).toBeInTheDocument();
     });
 
     it("deletes the open record from its window", async () => {
@@ -506,7 +520,7 @@ describe("CountyRecords", () => {
     await waitFor(() => expect(screen.queryByText("Ann")).toBeNull());
     expect(screen.queryByText("Cal")).toBeNull();
     expect(inTable().getByText("Ben")).toBeInTheDocument();
-    expect(screen.getByText("1 record · 1 column")).toBeInTheDocument();
+    expect(screen.getByText(/1 record · 1 column/)).toBeInTheDocument();
     expect(screen.queryByText(/Delete \(\d+\)/)).toBeNull();
   });
 
@@ -525,5 +539,147 @@ describe("CountyRecords", () => {
     await findInTable("Ann");
     fireEvent.click(screen.getByLabelText("Select all on this page"));
     expect(screen.getByText("Delete (2)")).toBeInTheDocument();
+  });
+
+  describe("lists as tabs", () => {
+    const list = (id, name, importedAt, extra = {}) => ({
+      id,
+      name,
+      fileName: `${id}.csv`,
+      columns: ["Owner Name"],
+      rowCount: 1,
+      importedAt,
+      ...extra,
+    });
+
+    it("shows each list as a tab, oldest first, opening the newest", async () => {
+      fetchCountyRecordImports.mockResolvedValue([
+        list("b", "2026", "2026-02-01T00:00:00Z"),
+        list("a", "2025", "2025-02-01T00:00:00Z"),
+      ]);
+      fetchCountyRecordRows.mockImplementation(async (id) =>
+        id === "a" ? [["From 2025"]] : [["From 2026"]],
+      );
+      render(<CountyRecords currentUser={user} />);
+
+      expect(await findInTable("From 2026")).toBeInTheDocument();
+      const tabs = screen.getAllByRole("tab");
+      expect(tabs.map((t) => t.textContent)).toEqual(["20251", "20261"]);
+      expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+
+      fireEvent.click(tabs[0]);
+      expect(await findInTable("From 2025")).toBeInTheDocument();
+      expect(screen.getByText(/^a\.csv · 1 record/)).toBeInTheDocument();
+    });
+
+    it("names older imports after their file", async () => {
+      fetchCountyRecordImports.mockResolvedValue([
+        list("a", undefined, "2025-02-01T00:00:00Z", {
+          fileName: "Snohomish_2025.csv",
+        }),
+      ]);
+      fetchCountyRecordRows.mockResolvedValue([["Ann"]]);
+      render(<CountyRecords currentUser={user} />);
+      expect(
+        await screen.findByRole("tab", { name: /Snohomish_2025/ }),
+      ).toBeInTheDocument();
+    });
+
+    it("renames the current list", async () => {
+      fetchCountyRecordImports.mockResolvedValue([
+        list("a", "2025", "2025-02-01T00:00:00Z"),
+        list("b", "2026", "2026-02-01T00:00:00Z"),
+      ]);
+      fetchCountyRecordRows.mockResolvedValue([["Ann"]]);
+      render(<CountyRecords currentUser={user} />);
+      await findInTable("Ann");
+
+      fireEvent.click(screen.getByLabelText("Rename 2026"));
+      const input = screen.getByLabelText("List name");
+      expect(input).toHaveValue("2026");
+      fireEvent.change(input, { target: { value: "2025" } });
+      expect(
+        screen.getByText("You already have a list with this name."),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Rename")).toBeDisabled();
+
+      fireEvent.change(input, { target: { value: "  2026  Delinquent " } });
+      fireEvent.click(screen.getByText("Rename"));
+      await waitFor(() =>
+        expect(updateCountyRecordImport).toHaveBeenCalledWith("b", {
+          name: "2026 Delinquent",
+        }),
+      );
+      expect(
+        await screen.findByRole("tab", { name: /2026 Delinquent/ }),
+      ).toBeInTheDocument();
+    });
+
+    it("doesn't save a file if naming is cancelled", async () => {
+      render(<CountyRecords currentUser={user} />);
+      await screen.findByText("No county records yet.");
+      uploadCsv("Owner\nAnn\n");
+      await screen.findByLabelText("List name");
+      fireEvent.click(screen.getByText("Cancel"));
+      expect(saveCountyRecordImport).not.toHaveBeenCalled();
+      expect(screen.queryByRole("tab")).toBeNull();
+    });
+
+    it("hides a tab without deleting the list, and shows it again", async () => {
+      fetchCountyRecordImports.mockResolvedValue([
+        list("a", "2025", "2025-02-01T00:00:00Z"),
+        list("b", "2026", "2026-02-01T00:00:00Z"),
+      ]);
+      fetchCountyRecordRows.mockImplementation(async (id) =>
+        id === "a" ? [["From 2025"]] : [["From 2026"]],
+      );
+      render(<CountyRecords currentUser={user} />);
+      await findInTable("From 2026");
+
+      fireEvent.click(screen.getByLabelText("Hide 2026"));
+      await waitFor(() =>
+        expect(updateCountyRecordImport).toHaveBeenCalledWith("b", {
+          hidden: true,
+        }),
+      );
+      expect(deleteCountyRecordImportById).not.toHaveBeenCalled();
+      // The open tab was hidden, so the newest remaining one opens.
+      expect(await findInTable("From 2025")).toBeInTheDocument();
+      expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
+        "20251",
+      ]);
+
+      const restore = screen.getByLabelText("Show a hidden list");
+      expect(restore).toHaveTextContent("Hidden lists (1)");
+      fireEvent.change(restore, { target: { value: "b" } });
+      await waitFor(() =>
+        expect(updateCountyRecordImport).toHaveBeenCalledWith("b", {
+          hidden: false,
+        }),
+      );
+      expect(await findInTable("From 2026")).toBeInTheDocument();
+      expect(screen.getAllByRole("tab")).toHaveLength(2);
+      expect(screen.queryByLabelText("Show a hidden list")).toBeNull();
+    });
+
+    it("opens the newest visible list and explains when all are hidden", async () => {
+      fetchCountyRecordImports.mockResolvedValue([
+        list("a", "2025", "2025-02-01T00:00:00Z"),
+        list("b", "2026", "2026-02-01T00:00:00Z", { hidden: true }),
+      ]);
+      fetchCountyRecordRows.mockResolvedValue([["From 2025"]]);
+      render(<CountyRecords currentUser={user} />);
+      expect(await findInTable("From 2025")).toBeInTheDocument();
+      expect(fetchCountyRecordRows).toHaveBeenCalledWith("a");
+
+      fireEvent.click(screen.getByLabelText("Hide 2025"));
+      expect(
+        await screen.findByText("All your lists are hidden."),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("tab")).toBeNull();
+      expect(screen.getByLabelText("Show a hidden list")).toHaveTextContent(
+        "Hidden lists (2)",
+      );
+    });
   });
 });

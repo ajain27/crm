@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileSpreadsheet, Trash2, Upload } from "lucide-react";
+import { FileSpreadsheet, Pencil, Trash2, Upload, X } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 import LoadingScreen from "../../loader/LoadingScreen";
 import { LeadSearchInput } from "../components/LeadListPanel";
@@ -9,6 +9,7 @@ import {
   fetchCountyRecordImports,
   fetchCountyRecordRows,
   saveCountyRecordImport,
+  updateCountyRecordImport,
 } from "../../../firebase/firestoreService";
 import { chunkRows, parseCsv, toCountyRecords } from "./countyRecordsCsv";
 import {
@@ -20,6 +21,7 @@ import {
   propertyKey,
 } from "./countyRecordDeal";
 import CountyRecordModal from "./CountyRecordModal";
+import ListNameModal from "./ListNameModal";
 
 const PAGE_SIZE = 25;
 const MAX_FILE_MB = 30;
@@ -80,19 +82,18 @@ const COLUMN_FILTERS = [
 ];
 const NO_FILTERS = { state: "", county: "", city: "" };
 
-function newestFirst(a, b) {
-  return String(b.importedAt).localeCompare(String(a.importedAt));
+// The list to open by default: the most recently added one still shown.
+function newestVisible(lists) {
+  return lists.filter((l) => !l.hidden).at(-1);
 }
 
-function formatImportedAt(iso) {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime())
-    ? ""
-    : date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
+function oldestFirst(a, b) {
+  return String(a.importedAt).localeCompare(String(b.importedAt));
+}
+
+// Lists imported before naming existed show their file name.
+export function listName(list) {
+  return list.name || String(list.fileName || "List").replace(/\.[^.]+$/, "");
 }
 
 // What the tab has loaded, per user, kept while the app is open so leaving
@@ -119,6 +120,10 @@ export default function CountyRecords({
   // Until the first list of imports arrives, "no imports" isn't known yet.
   const [importsLoaded, setImportsLoaded] = useState(Boolean(cached));
   const [importing, setImporting] = useState(false);
+  // A parsed file waiting for its list name, and the rename window.
+  const [pendingImport, setPendingImport] = useState(null);
+  const [renaming, setRenaming] = useState(false);
+  const [savingName, setSavingName] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -133,10 +138,12 @@ export default function CountyRecords({
     if (!currentUser?.id) return;
     fetchCountyRecordImports(currentUser.id)
       .then((list) => {
-        const sorted = [...list].sort(newestFirst);
+        const sorted = [...list].sort(oldestFirst);
         setImports(sorted);
         setSelectedId((current) =>
-          sorted.some((i) => i.id === current) ? current : sorted[0]?.id || "",
+          sorted.some((i) => i.id === current && !i.hidden)
+            ? current
+            : newestVisible(sorted)?.id || "",
         );
       })
       .catch(() => setError("Couldn't load your county record imports."))
@@ -190,23 +197,71 @@ export default function CountyRecords({
         );
         return;
       }
+      // Saved once the list is named.
+      setPendingImport({ fileName: file.name, columns, rows });
+    } catch (err) {
+      console.error("County records import failed", err);
+      setError("Couldn't read that file.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleCreateList(name) {
+    const { fileName, columns: fileColumns, rows } = pendingImport;
+    setSavingName(true);
+    try {
       const summary = {
         id: crypto.randomUUID(),
         userId: currentUser.id,
-        fileName: file.name,
-        columns,
+        name,
+        fileName,
+        columns: fileColumns,
         rowCount: rows.length,
         importedAt: new Date().toISOString(),
       };
       await saveCountyRecordImport(summary, chunkRows(rows));
-      setImports((prev) => [summary, ...prev]);
+      setImports((prev) => [...prev, summary]);
       setRowsById((prev) => ({ ...prev, [summary.id]: rows }));
       selectImport(summary.id);
+      setPendingImport(null);
     } catch (err) {
       console.error("County records import failed", err);
+      setPendingImport(null);
       setError("Import failed. Check your connection and try again.");
     } finally {
-      setImporting(false);
+      setSavingName(false);
+    }
+  }
+
+  // Hiding only takes the tab out of view; the list and its records stay
+  // saved and can be shown again from "Hidden lists".
+  async function setListHidden(id, hidden) {
+    try {
+      await updateCountyRecordImport(id, { hidden });
+      const next = imports.map((i) => (i.id === id ? { ...i, hidden } : i));
+      setImports(next);
+      if (!hidden) selectImport(id);
+      else if (id === selectedId) selectImport(newestVisible(next)?.id || "");
+    } catch {
+      setError(
+        `Couldn't ${hidden ? "hide" : "show"} this list. Check your connection.`,
+      );
+    }
+  }
+
+  async function handleRenameList(name) {
+    setSavingName(true);
+    try {
+      await updateCountyRecordImport(selectedId, { name });
+      setImports((prev) =>
+        prev.map((i) => (i.id === selectedId ? { ...i, name } : i)),
+      );
+      setRenaming(false);
+    } catch {
+      setError("Couldn't rename this list. Check your connection.");
+    } finally {
+      setSavingName(false);
     }
   }
 
@@ -215,7 +270,7 @@ export default function CountyRecords({
     if (!current) return;
     if (
       !window.confirm(
-        `Delete "${current.fileName}" and its ${current.rowCount.toLocaleString()} records?`,
+        `Delete the "${listName(current)}" list and its ${current.rowCount.toLocaleString()} records?`,
       )
     )
       return;
@@ -224,9 +279,9 @@ export default function CountyRecords({
       const remaining = imports.filter((i) => i.id !== current.id);
       setImports(remaining);
       setRowsById(({ [current.id]: _removed, ...rest }) => rest);
-      selectImport(remaining[0]?.id || "");
+      selectImport(newestVisible(remaining)?.id || "");
     } catch {
-      setError("Couldn't delete this import. Check your connection.");
+      setError("Couldn't delete this list. Check your connection.");
     }
   }
 
@@ -294,7 +349,9 @@ export default function CountyRecords({
     });
   }
 
-  const selected = imports.find((i) => i.id === selectedId);
+  const visibleImports = imports.filter((i) => !i.hidden);
+  const hiddenImports = imports.filter((i) => i.hidden);
+  const selected = visibleImports.find((i) => i.id === selectedId);
   // Imports not fetched yet, or the selected file's rows still on the way
   // (unless that failed — the error shows instead).
   const isLoading =
@@ -368,27 +425,13 @@ export default function CountyRecords({
           <h2>County Records</h2>
           <p>
             {selected
-              ? `${selected.rowCount.toLocaleString()} record${selected.rowCount === 1 ? "" : "s"} · ${selected.columns.length} column${selected.columns.length === 1 ? "" : "s"}`
+              ? `${selected.fileName} · ${selected.rowCount.toLocaleString()} record${selected.rowCount === 1 ? "" : "s"} · ${selected.columns.length} column${selected.columns.length === 1 ? "" : "s"}`
               : importsLoaded
-                ? "Import a county's CSV export to browse it here."
+                ? "Import a county's CSV export as a list to browse it here."
                 : "Loading…"}
           </p>
         </div>
         <div className="leads-filters">
-          {imports.length > 0 && (
-            <select
-              className="leads-filter-select county-import-select"
-              value={selectedId}
-              onChange={(e) => selectImport(e.target.value)}
-              aria-label="Imported file"
-            >
-              {imports.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.fileName} — {formatImportedAt(i.importedAt)}
-                </option>
-              ))}
-            </select>
-          )}
           {selected && (
             <LeadSearchInput
               value={search}
@@ -449,7 +492,7 @@ export default function CountyRecords({
             disabled={importing}
           >
             <Upload size={13} />
-            {importing ? "Importing…" : "Import CSV"}
+            {importing ? "Reading file…" : "Add list"}
           </button>
           {selectedRows.size > 0 && (
             <button
@@ -470,11 +513,75 @@ export default function CountyRecords({
               disabled={importing}
             >
               <Trash2 size={13} />
-              Delete file
+              Delete list
             </button>
           )}
         </div>
       </div>
+
+      {imports.length > 0 && (
+        <div className="county-list-tabs" role="tablist" aria-label="Lists">
+          {visibleImports.map((list) => {
+            const active = list.id === selectedId;
+            return (
+              <div
+                key={list.id}
+                className={`county-list-tab${active ? " county-list-tab--active" : ""}`}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className="county-list-tab-btn"
+                  onClick={() => !active && selectImport(list.id)}
+                >
+                  {listName(list)}
+                  <span className="county-list-tab-count">
+                    {list.rowCount.toLocaleString()}
+                  </span>
+                </button>
+                {active && (
+                  <button
+                    type="button"
+                    className="county-list-tab-rename"
+                    onClick={() => setRenaming(true)}
+                    aria-label={`Rename ${listName(list)}`}
+                    title="Rename list"
+                  >
+                    <Pencil size={12} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="county-list-tab-hide"
+                  onClick={() => setListHidden(list.id, true)}
+                  aria-label={`Hide ${listName(list)}`}
+                  title="Hide this tab (the list stays saved)"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            );
+          })}
+          {hiddenImports.length > 0 && (
+            <select
+              className="leads-filter-select county-hidden-lists"
+              value=""
+              onChange={(e) =>
+                e.target.value && setListHidden(e.target.value, false)
+              }
+              aria-label="Show a hidden list"
+            >
+              <option value="">Hidden lists ({hiddenImports.length})</option>
+              {hiddenImports.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {listName(list)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {error && <p className="county-records-error">{error}</p>}
 
@@ -486,13 +593,21 @@ export default function CountyRecords({
             loadingContent={<span>Loading county records…</span>}
           />
         </div>
+      ) : !selected && hiddenImports.length > 0 ? (
+        <div className="leads-empty county-records-empty">
+          <FileSpreadsheet size={28} />
+          <p>All your lists are hidden.</p>
+          <span>
+            Choose one from Hidden lists to show it again, or add a new list.
+          </span>
+        </div>
       ) : !selected ? (
         <div className="leads-empty county-records-empty">
           <FileSpreadsheet size={28} />
           <p>No county records yet.</p>
           <span>
-            Click Import CSV and choose a file exported from the county. The
-            first row should hold the column names.
+            Click Add list and choose a CSV exported from the county. The first
+            row should hold the column names.
           </span>
         </div>
       ) : filtered.length === 0 ? (
@@ -645,6 +760,34 @@ export default function CountyRecords({
           onClose={() => setOpenRowIndex(null)}
           onDelete={() => handleDeleteRecord(openRowIndex)}
           renderValue={renderCell}
+        />
+      )}
+      {pendingImport && (
+        <ListNameModal
+          title="Name this list"
+          initialName={
+            pendingImport ? listName({ fileName: pendingImport.fileName }) : ""
+          }
+          takenNames={imports.map(listName)}
+          submitLabel="Save list"
+          saving={savingName}
+          detail={
+            pendingImport &&
+            `${pendingImport.fileName} · ${pendingImport.rows.length.toLocaleString()} records · ${pendingImport.columns.length} columns`
+          }
+          onSubmit={handleCreateList}
+          onClose={() => setPendingImport(null)}
+        />
+      )}
+      {renaming && selected && (
+        <ListNameModal
+          title="Rename list"
+          initialName={selected ? listName(selected) : ""}
+          takenNames={imports.filter((i) => i.id !== selectedId).map(listName)}
+          submitLabel="Rename"
+          saving={savingName}
+          onSubmit={handleRenameList}
+          onClose={() => setRenaming(false)}
         />
       )}
     </section>

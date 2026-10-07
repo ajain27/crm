@@ -711,6 +711,11 @@ export async function fetchCountyRecordRows(importId) {
     .flatMap((chunk) => JSON.parse(chunk.rows));
 }
 
+// e.g. { name } when a list is renamed.
+export async function updateCountyRecordImport(importId, fields) {
+  await updateDoc(doc(countyRecordImportsCollection, importId), fields);
+}
+
 // Deleting single records doesn't rewrite the (large) row chunks: the
 // import lists the deleted rows' positions in the file, and they're
 // skipped when shown. One write per delete, whatever the file size.
