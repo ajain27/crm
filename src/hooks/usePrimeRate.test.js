@@ -21,7 +21,7 @@ describe("usePrimeRate", () => {
   it("returns the fallback rate when no cache and no API key", async () => {
     const usePrimeRate = await loadHook();
     const { result } = renderHook(() => usePrimeRate());
-    expect(result.current.rate).toBe(6.75);
+    expect(result.current.rate).toBe(7);
     expect(result.current.source).toBe("fallback");
     expect(result.current.error).toBeNull();
   });
@@ -52,7 +52,7 @@ describe("usePrimeRate", () => {
     );
     const usePrimeRate = await loadHook();
     const { result } = renderHook(() => usePrimeRate());
-    expect(result.current.rate).toBe(6.75); // falls back
+    expect(result.current.rate).toBe(7); // falls back
     expect(result.current.source).toBe("fallback");
   });
 
@@ -89,7 +89,7 @@ describe("usePrimeRate", () => {
     const usePrimeRate = await loadHook();
     const { result } = renderHook(() => usePrimeRate());
     await waitFor(() => expect(result.current.error).not.toBeNull());
-    expect(result.current.rate).toBe(6.75); // still the fallback
+    expect(result.current.rate).toBe(7); // still the fallback
   });
 
   it("falls back when FRED returns malformed JSON", async () => {
@@ -101,6 +101,6 @@ describe("usePrimeRate", () => {
     const usePrimeRate = await loadHook();
     const { result } = renderHook(() => usePrimeRate());
     await waitFor(() => expect(result.current.error).not.toBeNull());
-    expect(result.current.rate).toBe(6.75);
+    expect(result.current.rate).toBe(7);
   });
 });

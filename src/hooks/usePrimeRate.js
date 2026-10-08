@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 // Fallback used when no cached value and no FRED API key is configured.
 // Update when the Fed moves rates (Prime = upper bound of fed funds target + 3.00).
 // Set VITE_FRED_API_KEY in your env to fetch the live value from FRED (DPRIME).
-const FALLBACK_PRIME_RATE = 6.75;
+const FALLBACK_PRIME_RATE = 7;
 const FALLBACK_AS_OF = "2026-05-31";
 
 const CACHE_KEY = "primeRate_cache_v1";
