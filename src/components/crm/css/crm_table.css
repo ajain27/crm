@@ -870,6 +870,12 @@
     font-size: 0.95rem;
   }
 
+  .run-comps-method {
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
   .run-comps-list {
     display: grid;
     gap: 0.6rem;

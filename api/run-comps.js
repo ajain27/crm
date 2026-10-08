@@ -3,11 +3,13 @@
 //      Realtor.com pages — one batched call, falling back to one per site.
 //   2. Firecrawl scrapes each page into JSON: beds, baths, sq ft, year
 //      built, value and rent estimates, annual tax and comps.
-//   3. OpenAI reconciles the three JSONs into one set of property facts,
-//      an ARV and rent estimate, and the top 5 comps with links.
+//   3. The three JSONs are reconciled into one set of property facts, an
+//      ARV and rent estimate, and the top 5 comps with links — by OpenAI
+//      when it's set up and working, otherwise by the rules below
+//      (rankCompsByRules), so OpenAI billing never blocks comps.
 //
-// Env: SERPER_API_KEY, FIRECRAWL_API_KEY, OPENAI_API_KEY, and optionally
-// OPENAI_MODEL (default below).
+// Env: SERPER_API_KEY and FIRECRAWL_API_KEY (required); OPENAI_API_KEY and
+// OPENAI_MODEL (optional).
 
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 // Pages are scraped in parallel; this leaves time for OpenAI inside the
@@ -201,6 +203,28 @@ async function serperSearch(queries, apiKey) {
   return single.map((r) => r.organic || []);
 }
 
+// Scraped pages often fill unknown fields with "N/A", "—", "unknown" or
+// 0; treat those as missing so they don't show up as values.
+const PLACEHOLDER = /^(n\/?a|none|unknown|not available|-+|—|–)$/i;
+
+export function cleanScraped(value) {
+  if (Array.isArray(value)) return value.map(cleanScraped);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([k, v]) => [k, cleanScraped(v)])
+        .filter(([, v]) => v !== null),
+    );
+  }
+  if (typeof value === "string") {
+    const text = value.trim();
+    return text && !PLACEHOLDER.test(text) ? text : null;
+  }
+  if (typeof value === "number")
+    return Number.isFinite(value) && value !== 0 ? value : null;
+  return value ?? null;
+}
+
 async function firecrawlExtract(url, apiKey) {
   const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
@@ -227,7 +251,8 @@ async function firecrawlExtract(url, apiKey) {
   if (!res.ok || !data.success) {
     throw new Error(data.error || `Firecrawl failed (${res.status})`);
   }
-  return data.data?.json || null;
+  const extracted = data.data?.json;
+  return extracted ? cleanScraped(extracted) : null;
 }
 
 async function openAiReconcile(address, sources, apiKey, model) {
@@ -266,12 +291,179 @@ async function openAiReconcile(address, sources, apiKey, model) {
   return JSON.parse(content);
 }
 
+// ── Rules-based reconcile (no AI) ────────────────────────────────────────
+
+const SOURCE_LABELS = {
+  zillow: "Zillow",
+  redfin: "Redfin",
+  realtor: "Realtor.com",
+};
+const SOURCE_PRIORITY = ["zillow", "redfin", "realtor"];
+const PROPERTY_FIELDS = [
+  "beds",
+  "baths",
+  "sqft",
+  "yearBuilt",
+  "valueEstimate",
+  "rentEstimate",
+  "annualTax",
+];
+
+const isNum = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
+
+// "164 Auburn St., Russellville, AL" → "164 auburn st" — for spotting the
+// same house listed on two sites, or the subject itself among its comps.
+function addressKey(address) {
+  return String(address || "")
+    .split(",")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+// The value most sites agree on; when they all differ, Zillow's, then
+// Redfin's, then Realtor.com's.
+function agreedValue(values) {
+  const present = values.filter(isNum);
+  if (present.length === 0) return null;
+  const counts = new Map();
+  present.forEach((v) => counts.set(v, (counts.get(v) || 0) + 1));
+  const [top, count] = [...counts].sort((a, b) => b[1] - a[1])[0];
+  return count > 1 ? top : present[0];
+}
+
+function monthsAgo(dateText, now) {
+  const time = Date.parse(String(dateText || "").replace(/^sold\s*/i, ""));
+  if (Number.isNaN(time)) return null;
+  return Math.max(0, (now - time) / (1000 * 60 * 60 * 24 * 30.4));
+}
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+const fmtMoney = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
+
+function compReason(comp, subject, months) {
+  const parts = [];
+  if (isNum(comp.beds) && isNum(comp.baths)) {
+    parts.push(
+      comp.beds === subject.beds && comp.baths === subject.baths
+        ? "Same beds/baths"
+        : `${comp.beds} bd/${comp.baths} ba`,
+    );
+  }
+  if (isNum(comp.sqft) && isNum(subject.sqft)) {
+    const diff = Math.round(((comp.sqft - subject.sqft) / subject.sqft) * 100);
+    parts.push(
+      diff === 0
+        ? "same size"
+        : `${Math.abs(diff)}% ${diff > 0 ? "larger" : "smaller"}`,
+    );
+  }
+  if (months !== null) {
+    parts.push(
+      months < 1
+        ? "sold this month"
+        : `sold ${Math.round(months)} month${Math.round(months) === 1 ? "" : "s"} ago`,
+    );
+  }
+  return parts.length ? `${parts.join(", ")}.` : "Nearby sale.";
+}
+
+// Picks the top comps without AI: every comp from every site, duplicates
+// and the subject removed, scored by how closely beds, baths and size
+// match and how recently it sold. ARV = median price per sq ft of the top
+// comps × the subject's sq ft (or their median price if size is unknown).
+export function rankCompsByRules(address, sources, now = Date.now()) {
+  const property = Object.fromEntries(
+    PROPERTY_FIELDS.map((field) => [
+      field,
+      agreedValue(SOURCE_PRIORITY.map((key) => sources[key]?.data?.[field])),
+    ]),
+  );
+
+  const subjectKey = addressKey(address);
+  const byAddress = new Map();
+  SOURCE_PRIORITY.forEach((key) => {
+    (sources[key]?.data?.comps || []).forEach((comp) => {
+      const compKey = addressKey(comp?.address);
+      if (!compKey || compKey === subjectKey || !isNum(comp.price)) return;
+      const candidate = { ...comp, source: SOURCE_LABELS[key] };
+      const filled = (c) =>
+        ["beds", "baths", "sqft", "soldDate", "url"].filter((f) => c[f]).length;
+      const existing = byAddress.get(compKey);
+      if (!existing || filled(candidate) > filled(existing)) {
+        byAddress.set(compKey, candidate);
+      }
+    });
+  });
+
+  const scored = [...byAddress.values()].map((comp) => {
+    const months = monthsAgo(comp.soldDate, now);
+    let score = 0;
+    score +=
+      isNum(comp.beds) && isNum(property.beds)
+        ? Math.abs(comp.beds - property.beds)
+        : 1;
+    score +=
+      isNum(comp.baths) && isNum(property.baths)
+        ? Math.abs(comp.baths - property.baths) * 0.75
+        : 0.75;
+    score +=
+      isNum(comp.sqft) && isNum(property.sqft)
+        ? (Math.abs(comp.sqft - property.sqft) / property.sqft) * 5
+        : 1.5;
+    score += months === null ? 1 : Math.min(months, 24) * 0.15;
+    return { comp, months, score };
+  });
+  scored.sort((a, b) => a.score - b.score);
+  const top = scored.slice(0, 5);
+
+  const topComps = top.map(({ comp, months }) => ({
+    address: comp.address,
+    price: comp.price,
+    beds: isNum(comp.beds) ? comp.beds : null,
+    baths: isNum(comp.baths) ? comp.baths : null,
+    sqft: isNum(comp.sqft) ? comp.sqft : null,
+    soldDate: comp.soldDate || null,
+    url: comp.url || null,
+    source: comp.source,
+    reason: compReason(comp, property, months),
+  }));
+
+  const pricesPerSqft = topComps
+    .filter((c) => isNum(c.sqft))
+    .map((c) => c.price / c.sqft);
+  let arvEstimate = null;
+  let summary;
+  if (topComps.length === 0) {
+    summary = "No comparable sales were found on these pages.";
+  } else if (isNum(property.sqft) && pricesPerSqft.length > 0) {
+    const ppsf = median(pricesPerSqft);
+    arvEstimate = Math.round(ppsf * property.sqft);
+    summary = `ARV = median ${fmtMoney(ppsf)}/sq ft across ${pricesPerSqft.length} comp${pricesPerSqft.length === 1 ? "" : "s"} × ${property.sqft.toLocaleString("en-US")} sq ft.`;
+  } else {
+    arvEstimate = Math.round(median(topComps.map((c) => c.price)));
+    summary = `ARV = median sale price of ${topComps.length} comp${topComps.length === 1 ? "" : "s"} (the property's size wasn't available).`;
+  }
+
+  return {
+    property,
+    arvEstimate,
+    rentEstimate: property.rentEstimate,
+    topComps,
+    summary,
+  };
+}
+
 export async function runComps(address, env = process.env) {
-  const missing = [
-    "SERPER_API_KEY",
-    "FIRECRAWL_API_KEY",
-    "OPENAI_API_KEY",
-  ].filter((k) => !env[k]);
+  const missing = ["SERPER_API_KEY", "FIRECRAWL_API_KEY"].filter(
+    (k) => !env[k],
+  );
   if (missing.length) {
     const error = new Error(
       `Comps aren't set up yet: missing ${missing.join(", ")}.`,
@@ -316,17 +508,31 @@ export async function runComps(address, env = process.env) {
     throw error;
   }
 
-  const result = await openAiReconcile(
-    address,
-    Object.fromEntries(
-      Object.entries(sources).map(([key, s]) => [
-        key,
-        { url: s.url, data: s.data },
-      ]),
-    ),
-    env.OPENAI_API_KEY,
-    env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
-  );
+  // OpenAI when it's set up; if it isn't, or the call fails (e.g. no
+  // credit), the rules pick the comps instead.
+  let result = null;
+  let method = "rules";
+  let aiError = null;
+  if (env.OPENAI_API_KEY) {
+    try {
+      result = await openAiReconcile(
+        address,
+        Object.fromEntries(
+          Object.entries(sources).map(([key, s]) => [
+            key,
+            { url: s.url, data: s.data },
+          ]),
+        ),
+        env.OPENAI_API_KEY,
+        env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
+      );
+      method = "openai";
+    } catch (err) {
+      aiError = err.message;
+      console.warn("run-comps: OpenAI unavailable, using rules:", err.message);
+    }
+  }
+  if (!result) result = rankCompsByRules(address, sources);
 
   return {
     address,
@@ -338,6 +544,8 @@ export async function runComps(address, env = process.env) {
     ),
     ...result,
     topComps: (result.topComps || []).slice(0, 5),
+    method,
+    ...(aiError ? { aiError } : {}),
   };
 }
 

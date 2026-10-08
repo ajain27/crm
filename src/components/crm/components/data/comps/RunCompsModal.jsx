@@ -133,6 +133,11 @@ export default function RunCompsModal({
 
             <h3 className="run-comps-heading">
               Top {result.topComps.length} comps
+              <span className="run-comps-method">
+                {result.method === "openai"
+                  ? " · picked by AI"
+                  : " · picked by matching beds, baths, size and sale date"}
+              </span>
             </h3>
             {result.topComps.length === 0 ? (
               <p className="run-comps-muted">No comparable sales were found.</p>

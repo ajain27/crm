@@ -22,6 +22,7 @@ function slimResult(data) {
     rentEstimate: data.rentEstimate,
     valueEstimate: data.valueEstimate,
     summary: data.summary,
+    method: data.method,
     listingUrls: data.listingUrls,
     subjectProperty: sp
       ? {
@@ -56,6 +57,7 @@ export function toFindCompsResult(api, address) {
     rentEstimate: api.rentEstimate ?? p.rentEstimate,
     valueEstimate: p.valueEstimate,
     summary: api.summary,
+    method: api.method,
     listingUrls: api.listingUrls,
     subjectProperty: {
       formattedAddress: api.address || address,
@@ -508,7 +510,14 @@ function FindCompsTab({ tab }) {
             )}
 
             {result.summary && (
-              <p className="find-comps-summary">{result.summary}</p>
+              <p className="find-comps-summary">
+                {result.summary}{" "}
+                <span className="find-comps-muted">
+                  {result.method === "openai"
+                    ? "(Comps picked by AI.)"
+                    : "(Comps picked by matching beds, baths, size and sale date.)"}
+                </span>
+              </p>
             )}
 
             {result.listingUrls &&

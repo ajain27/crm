@@ -40,6 +40,7 @@ describe("formatCompsNote", () => {
       "Property: 3 bd · 2 ba · 1,400 sq ft · built 1978 · tax $900/yr",
       "1. 1 Oak St — $154,000 ($110/sq ft) · 3 bd/2 ba · 1,400 sq ft · sold 2026-08-01 · Zillow: https://www.zillow.com/homedetails/1",
       "Based on recent 3/2 sales.",
+      "Comps picked by matching beds, baths, size and sale date.",
       "Sources: https://www.zillow.com/homedetails/s",
     ]);
   });

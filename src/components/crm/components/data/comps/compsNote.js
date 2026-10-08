@@ -33,6 +33,11 @@ export function formatCompsNote(result, date = new Date()) {
     );
   });
   if (result.summary) lines.push(result.summary);
+  lines.push(
+    result.method === "openai"
+      ? "Comps picked by AI."
+      : "Comps picked by matching beds, baths, size and sale date.",
+  );
   const sourceLinks = Object.entries(result.listingUrls || {})
     .filter(([, url]) => url)
     .map(([, url]) => url);

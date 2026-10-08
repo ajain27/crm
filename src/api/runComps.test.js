@@ -1,7 +1,12 @@
 // Tests for api/run-comps.js (the serverless function). Serper, Firecrawl
 // and OpenAI are mocked at fetch.
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { pickListingUrls, runComps } from "../../api/run-comps.js";
+import {
+  cleanScraped,
+  pickListingUrls,
+  rankCompsByRules,
+  runComps,
+} from "../../api/run-comps.js";
 
 const ENV = {
   SERPER_API_KEY: "serper",
@@ -140,6 +145,7 @@ describe("run-comps", () => {
     expect(out.arvEstimate).toBe(160000);
     expect(out.topComps).toHaveLength(5);
     expect(out.sourceErrors).toEqual({});
+    expect(out.method).toBe("openai");
   });
 
   it("falls back to one search per site when batching isn't answered", async () => {
@@ -195,9 +201,147 @@ describe("run-comps", () => {
     );
   });
 
-  it("names the missing API keys", async () => {
-    await expect(
-      runComps("164 Auburn St", { SERPER_API_KEY: "x" }),
-    ).rejects.toThrow("missing FIRECRAWL_API_KEY, OPENAI_API_KEY");
+  it("names the missing API keys (OpenAI is optional)", async () => {
+    await expect(runComps("164 Auburn St", {})).rejects.toThrow(
+      "missing SERPER_API_KEY, FIRECRAWL_API_KEY",
+    );
+  });
+
+  it("uses the rules when OpenAI fails, e.g. no credit", async () => {
+    mockFetch({
+      serper: serperBatch,
+      firecrawl: firecrawlOk,
+      openai: () =>
+        json(429, { error: { message: "You have no credits remaining." } }),
+    });
+    const out = await runComps("164 Auburn St, Russellville, AL 35654", ENV);
+    expect(out.method).toBe("rules");
+    expect(out.aiError).toBe("You have no credits remaining.");
+    expect(out.listingUrls).toEqual(LISTINGS);
+  });
+
+  it("doesn't call OpenAI at all without a key", async () => {
+    const fetchMock = mockFetch({
+      serper: serperBatch,
+      firecrawl: firecrawlOk,
+      openai: openaiOk,
+    });
+    const { OPENAI_API_KEY, ...noOpenAi } = ENV;
+    const out = await runComps(
+      "164 Auburn St, Russellville, AL 35654",
+      noOpenAi,
+    );
+    expect(out.method).toBe("rules");
+    expect(fetchMock.mock.calls.some(([url]) => url.includes("openai"))).toBe(
+      false,
+    );
+  });
+});
+
+describe("rankCompsByRules", () => {
+  const NOW = Date.parse("2026-10-08");
+  const comp = (address, extra) => ({
+    address,
+    price: 150000,
+    beds: 3,
+    baths: 2,
+    sqft: 1400,
+    soldDate: "2026-09-01",
+    ...extra,
+  });
+
+  it("agrees on property facts, picks the closest recent comps and works out ARV", () => {
+    const sources = {
+      zillow: {
+        data: {
+          beds: 3,
+          baths: 2,
+          sqft: 1400,
+          valueEstimate: 150000,
+          rentEstimate: 1200,
+          comps: [
+            comp("1 Oak St, Russellville, AL", { price: 140000 }),
+            comp("2 Oak St", { price: 147000, sqft: 1470 }),
+            comp("9 Big Rd", { price: 400000, beds: 6, baths: 4, sqft: 4000 }),
+            comp("164 Auburn St", { price: 1 }), // the subject itself
+            comp("3 Oak St", { price: 0 }), // no price
+          ],
+        },
+      },
+      redfin: {
+        data: {
+          beds: 3,
+          baths: 2.5,
+          sqft: 1450,
+          comps: [
+            // Same house as Zillow's "1 Oak St", with more detail.
+            comp("1 Oak St.", { price: 140000, url: "https://redfin/1" }),
+            comp("4 Oak St", { price: 155000, soldDate: "2024-01-01" }),
+          ],
+        },
+      },
+      realtor: { data: { beds: 4, baths: 2, sqft: 1400 } },
+    };
+
+    const out = rankCompsByRules(
+      "164 Auburn St, Russellville, AL",
+      sources,
+      NOW,
+    );
+
+    // Two of three sites agree on 3 beds and 1,400 sq ft; baths all differ
+    // except Zillow/Realtor (2).
+    expect(out.property).toMatchObject({ beds: 3, baths: 2, sqft: 1400 });
+    expect(out.rentEstimate).toBe(1200);
+
+    const addresses = out.topComps.map((c) => c.address);
+    expect(addresses).not.toContain("164 Auburn St");
+    expect(addresses).not.toContain("3 Oak St");
+    expect(addresses.filter((a) => a.startsWith("1 Oak St"))).toHaveLength(1);
+    expect(out.topComps.find((c) => c.address.startsWith("1 Oak")).url).toBe(
+      "https://redfin/1",
+    );
+    // The 6-bed mansion ranks last.
+    expect(addresses.at(-1)).toBe("9 Big Rd");
+    expect(out.topComps[0].reason).toMatch(/Same beds\/baths/);
+
+    // Median $/sq ft of the 4 comps with size: 100, 100, 100, ~110.7 → 100.
+    expect(out.arvEstimate).toBe(140000);
+    expect(out.summary).toMatch(
+      /median \$100\/sq ft across 4 comps × 1,400 sq ft/,
+    );
+  });
+
+  it("reports no comps when the pages had none", () => {
+    const out = rankCompsByRules(
+      "164 Auburn St",
+      { zillow: { data: { beds: 3, comps: [] } } },
+      NOW,
+    );
+    expect(out.topComps).toEqual([]);
+    expect(out.arvEstimate).toBeNull();
+    expect(out.summary).toMatch(/No comparable sales/);
+  });
+});
+
+describe("cleanScraped", () => {
+  it("drops placeholder values like N/A, dashes and zeros", () => {
+    expect(
+      cleanScraped({
+        beds: 3,
+        sqft: 0,
+        lastSoldDate: "N/A",
+        comps: [
+          { address: "1 Oak St", soldDate: "n/a", price: 150000, url: " — " },
+          { address: "2 Oak St", soldDate: "2026-08-01", baths: "Unknown" },
+        ],
+      }),
+    ).toEqual({
+      beds: 3,
+      comps: [
+        { address: "1 Oak St", price: 150000 },
+        { address: "2 Oak St", soldDate: "2026-08-01" },
+      ],
+    });
   });
 });
