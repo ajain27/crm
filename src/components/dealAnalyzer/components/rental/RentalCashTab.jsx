@@ -11,6 +11,12 @@ import {
   SellerCreditCarrybackSummaryRow,
 } from "./SellerCreditCarryback";
 import RentalPieChart from "./RentalPieChart";
+import {
+  HOA_FORM_DEFAULTS,
+  HoaFields,
+  HoaSummaryRow,
+  monthlyHoaFrom,
+} from "./Hoa";
 
 const PROP_MGMT_PCT = 10;
 const INSPECTION_COST = 375;
@@ -23,6 +29,7 @@ const CURRENCY_FIELDS = new Set([
   "yearlyTaxes",
   "annualMiscExpense",
   "monthlyHomeWarranty",
+  "monthlyHoa",
 ]);
 
 const PERCENT_FIELDS = new Set(["agentCommission", "sellerCarryback"]);
@@ -37,6 +44,7 @@ const initialForm = {
   yearlyTaxes: "",
   annualMiscExpense: "",
   monthlyHomeWarranty: "",
+  ...HOA_FORM_DEFAULTS,
 };
 
 function RentalCashTab() {
@@ -79,6 +87,7 @@ function RentalCashTab() {
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
   const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
+  const monthlyHoa = monthlyHoaFrom(form);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
 
   const noi =
@@ -87,13 +96,15 @@ function RentalCashTab() {
     monthlyMiscExpense -
     monthlyInsurance -
     monthlyTaxes -
-    monthlyHomeWarranty;
+    monthlyHomeWarranty -
+    monthlyHoa;
   const totalMonthlyExpenses =
     propMgmtFee +
     monthlyMiscExpense +
     monthlyInsurance +
     monthlyTaxes +
-    monthlyHomeWarranty;
+    monthlyHomeWarranty +
+    monthlyHoa;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12;
   const totalFundsNeeded =
@@ -124,6 +135,7 @@ function RentalCashTab() {
       annualMiscExpense,
       monthlyMiscExpense,
       monthlyHomeWarranty,
+      monthlyHoa,
       noi,
       totalMonthlyExpenses,
       monthlyCashFlow,
@@ -256,6 +268,7 @@ function RentalCashTab() {
           onChange={handleChange}
           placeholder="e.g. $50"
         />
+        <HoaFields form={form} onChange={handleChange} />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
@@ -343,6 +356,7 @@ function RentalCashTab() {
                 </strong>
               </div>
             )}
+            <HoaSummaryRow summary={summary} fmt={fmt} />
             {summary.monthlyInsurance > 0 && (
               <div>
                 <span>Home Insurance (÷ 12 monthly)</span>

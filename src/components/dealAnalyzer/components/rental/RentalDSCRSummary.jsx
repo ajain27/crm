@@ -6,6 +6,7 @@ import RentalDSCRPdfTemplate from "./RentalDSCRPdfTemplate";
 import { useGenerateReport } from "../pdfExport/useGenerateReport";
 import GenerateReportButton from "../pdfExport/GenerateReportButton";
 import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
+import { HoaSummaryRow } from "./Hoa";
 
 function RentalDSCRSummary({ summary }) {
   const {
@@ -137,6 +138,7 @@ function RentalDSCRSummary({ summary }) {
             </strong>
           </div>
         )}
+        <HoaSummaryRow summary={summary} fmt={fmt} />
         <div>
           <span>Total Monthly Expenses</span>
           <strong className="deal-analyzer-return-negative">

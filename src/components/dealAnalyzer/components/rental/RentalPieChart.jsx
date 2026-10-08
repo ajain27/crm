@@ -38,6 +38,7 @@ const SLICE_CONFIG = [
   { key: "monthlyTaxes", label: "Property Taxes", color: "#06b6d4" },
   { key: "monthlyMiscExpense", label: "Misc Expense", color: "#f43f5e" },
   { key: "monthlyHomeWarranty", label: "Home Warranty", color: "#16a34a" },
+  { key: "monthlyHoa", label: "HOA", color: "#64748b" },
 ];
 
 function RentalPieChart({ summary }) {

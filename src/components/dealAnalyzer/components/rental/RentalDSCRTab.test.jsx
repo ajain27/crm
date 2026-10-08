@@ -137,4 +137,30 @@ describe("RentalDSCRTab (direct)", () => {
     ).textContent;
     expect(cashFlowWithHeloc).not.toBe(cashFlowWithoutHeloc);
   });
+
+  it("includes HOA dues in the monthly expenses", () => {
+    render(<RentalDSCRTab />);
+    fireEvent.change(screen.getByLabelText(/Purchase Price/i), {
+      target: { value: "200000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Interest Rate/i), {
+      target: { value: "8" },
+    });
+    fireEvent.change(screen.getByLabelText(/Loan Term/i), {
+      target: { value: "30" },
+    });
+    fireEvent.change(screen.getByLabelText(/Estimated Monthly Rent/i), {
+      target: { value: "2000" },
+    });
+    fireEvent.change(screen.getByLabelText("HOA?"), {
+      target: { value: "Yes" },
+    });
+    fireEvent.change(screen.getByLabelText(/Monthly HOA Dues/i), {
+      target: { value: "300" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    const hoaRow = screen.getByText("HOA Dues").parentElement;
+    expect(hoaRow).toHaveTextContent("$300.00");
+  });
 });

@@ -8,6 +8,7 @@ import {
   PROP_MGMT_PCT,
   DOWN_OPTIONS,
 } from "./useDSCRCalculations";
+import { HoaFields } from "./Hoa";
 
 function RentalDSCRTab() {
   const {
@@ -329,6 +330,7 @@ function RentalDSCRTab() {
           onChange={handleChange}
           placeholder="e.g. $50"
         />
+        <HoaFields form={form} onChange={handleChange} />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"

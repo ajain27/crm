@@ -11,6 +11,12 @@ import {
   SellerCreditCarrybackSummaryRow,
 } from "./SellerCreditCarryback";
 import RentalPieChart from "./RentalPieChart";
+import {
+  HOA_FORM_DEFAULTS,
+  HoaFields,
+  HoaSummaryRow,
+  monthlyHoaFrom,
+} from "./Hoa";
 
 const PROP_MGMT_PCT = 10;
 const FIRST_MONTH_PROP_MGMT_PCT = 50;
@@ -32,6 +38,7 @@ const CURRENCY_FIELDS = new Set([
   "yearlyTaxes",
   "annualMiscExpense",
   "monthlyHomeWarranty",
+  "monthlyHoa",
 ]);
 
 const PERCENT_FIELDS = new Set([
@@ -52,6 +59,7 @@ const initialForm = {
   annualMiscExpense: "",
   monthlyHomeWarranty: "",
   sellerCarryback: "",
+  ...HOA_FORM_DEFAULTS,
 };
 
 function RentalHELOCTab() {
@@ -98,6 +106,7 @@ function RentalHELOCTab() {
   const monthlyInsurance = yearlyInsurance / 12;
   const monthlyTaxes = yearlyTaxes / 12;
   const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
+  const monthlyHoa = monthlyHoaFrom(form);
   const sellerCarrybackPct = parsePercent(form.sellerCarryback);
   const sellerCarryback = purchasePrice * (sellerCarrybackPct / 100);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
@@ -115,14 +124,16 @@ function RentalHELOCTab() {
     monthlyMiscExpense -
     monthlyInsurance -
     monthlyTaxes -
-    monthlyHomeWarranty;
+    monthlyHomeWarranty -
+    monthlyHoa;
   const totalMonthlyExpenses =
     helocPayment +
     propMgmtFee +
     monthlyMiscExpense +
     monthlyInsurance +
     monthlyTaxes +
-    monthlyHomeWarranty;
+    monthlyHomeWarranty +
+    monthlyHoa;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12;
   // HELOC finances the full purchase price, so cash to close is the upfront
@@ -163,6 +174,7 @@ function RentalHELOCTab() {
       annualMiscExpense,
       monthlyMiscExpense,
       monthlyHomeWarranty,
+      monthlyHoa,
       sellerCarrybackPct,
       sellerCarryback,
       noi,
@@ -330,6 +342,7 @@ function RentalHELOCTab() {
           onChange={handleChange}
           placeholder="e.g. $50"
         />
+        <HoaFields form={form} onChange={handleChange} />
         <div style={{ gridColumn: "1 / -1" }}>
           <a
             href="https://www.huduser.gov/portal/datasets/fmr/fmrs/FY2026_code/select_Geography.odn"
@@ -449,6 +462,7 @@ function RentalHELOCTab() {
                 </strong>
               </div>
             )}
+            <HoaSummaryRow summary={summary} fmt={fmt} />
             <div>
               <span>Total Monthly Expenses</span>
               <strong className="deal-analyzer-return-negative">
@@ -586,6 +600,8 @@ function RentalHELOCTab() {
             {summary.monthlyInsurance > 0 ? " − Insurance" : ""}
             {summary.monthlyTaxes > 0 ? " − Taxes" : ""}
             {summary.monthlyMiscExpense > 0 ? " − Misc." : ""}
+            {summary.monthlyHomeWarranty > 0 ? " − Warranty" : ""}
+            {summary.monthlyHoa > 0 ? " − HOA" : ""}
             <span>
               {fmt(summary.monthlyRent)}
               {summary.helocPayment > 0
@@ -600,8 +616,12 @@ function RentalHELOCTab() {
                 : ""}
               {summary.monthlyMiscExpense > 0
                 ? ` − ${fmt(summary.monthlyMiscExpense)}`
-                : ""}{" "}
-              = {fmt(summary.monthlyCashFlow)}
+                : ""}
+              {summary.monthlyHomeWarranty > 0
+                ? ` − ${fmt(summary.monthlyHomeWarranty)}`
+                : ""}
+              {summary.monthlyHoa > 0 ? ` − ${fmt(summary.monthlyHoa)}` : ""} ={" "}
+              {fmt(summary.monthlyCashFlow)}
             </span>
           </div>
 

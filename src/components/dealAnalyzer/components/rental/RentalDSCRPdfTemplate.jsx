@@ -80,6 +80,9 @@ const RentalDSCRPdfTemplate = forwardRef(function RentalDSCRPdfTemplate(
           value={fmt(summary.monthlyHomeWarranty)}
         />
       )}
+      {summary.monthlyHoa > 0 && (
+        <PdfRow label="HOA Dues" value={fmt(summary.monthlyHoa)} />
+      )}
       <PdfRow
         label="Total Monthly Expenses"
         value={fmt(summary.totalMonthlyExpenses)}

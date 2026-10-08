@@ -8,6 +8,7 @@ import {
   calcLenderMonthlyPayment,
   calcLenderTotal,
 } from "../additionalLenders/AdditionalLenders";
+import { HOA_FORM_DEFAULTS, monthlyHoaFrom } from "./Hoa";
 
 export const PROP_MGMT_PCT = 10;
 export const INSPECTION_COST = 375;
@@ -30,6 +31,7 @@ const CURRENCY_FIELDS = new Set([
   "yearlyTaxes",
   "annualMiscExpense",
   "monthlyHomeWarranty",
+  "monthlyHoa",
   "legalFees",
   "appraisalFees",
   "closingCosts",
@@ -61,6 +63,7 @@ const initialForm = {
   monthlyHomeWarranty: "",
   cashHelocRate: "",
   rateBuyDown: "",
+  ...HOA_FORM_DEFAULTS,
 };
 
 export function useDSCRCalculations() {
@@ -120,6 +123,7 @@ export function useDSCRCalculations() {
   const annualMiscExpense = parseCurrency(form.annualMiscExpense);
   const monthlyMiscExpense = annualMiscExpense / 12;
   const monthlyHomeWarranty = parseCurrency(form.monthlyHomeWarranty);
+  const monthlyHoa = monthlyHoaFrom(form);
   const propMgmtFee = monthlyRent * (PROP_MGMT_PCT / 100);
 
   const lenderFunds = purchasePrice * lenderLtc;
@@ -170,7 +174,8 @@ export function useDSCRCalculations() {
     monthlyMiscExpense -
     monthlyInsurance -
     monthlyTaxes -
-    monthlyHomeWarranty;
+    monthlyHomeWarranty -
+    monthlyHoa;
   const totalMonthlyExpenses =
     loanMortgage +
     lenderMonthlyPayment +
@@ -179,7 +184,8 @@ export function useDSCRCalculations() {
     monthlyMiscExpense +
     monthlyInsurance +
     monthlyTaxes +
-    monthlyHomeWarranty;
+    monthlyHomeWarranty +
+    monthlyHoa;
   const monthlyCashFlow = monthlyRent - totalMonthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12;
   const cashOnCash =
@@ -211,6 +217,7 @@ export function useDSCRCalculations() {
       annualMiscExpense,
       monthlyMiscExpense,
       monthlyHomeWarranty,
+      monthlyHoa,
       downPct,
       lenderFunds,
       downPayment,

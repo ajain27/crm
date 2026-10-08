@@ -182,4 +182,21 @@ describe("RentalHELOCTab", () => {
     });
     expect(screen.queryByText("Monthly Cash Flow")).not.toBeInTheDocument();
   });
+
+  it("includes HOA dues in the monthly cash flow", () => {
+    render(<RentalHELOCTab />);
+    fill();
+    fireEvent.change(screen.getByLabelText("HOA?"), {
+      target: { value: "Yes" },
+    });
+    fireEvent.change(screen.getByLabelText(/Monthly HOA Dues/i), {
+      target: { value: "150" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Calculate/i }));
+
+    expect(screen.getByText("HOA Dues")).toBeInTheDocument();
+    const formula = screen.getByText(/Monthly Cash Flow = Rent/);
+    expect(formula).toHaveTextContent("− HOA");
+    expect(formula).toHaveTextContent("− $150.00");
+  });
 });
