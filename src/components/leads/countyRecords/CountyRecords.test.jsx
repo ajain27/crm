@@ -475,7 +475,9 @@ describe("CountyRecords", () => {
     render(<CountyRecords currentUser={user} />);
 
     expect(await findInTable("$4,210.55")).toHaveClass("county-amount-due");
-    expect(inTable().getByText("Amount Due")).toHaveClass("county-amount-due");
+    expect(inTable().getByText("Amount Due").closest("th")).toHaveClass(
+      "county-amount-due",
+    );
     expect(inTable().getByText("$300,000")).not.toHaveClass(
       "county-amount-due",
     );
@@ -681,5 +683,65 @@ describe("CountyRecords", () => {
         "Hidden lists (2)",
       );
     });
+  });
+
+  it("sorts by the amount due column, ascending then descending then off", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name", "Amount Due"],
+        rowCount: 4,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann", "$980.00"],
+      ["Ben", ""],
+      ["Cal", "$4,210.55"],
+      ["Dee", "$12.50"],
+    ]);
+    render(<CountyRecords currentUser={user} />);
+    await findInTable("Ann");
+
+    const owners = () =>
+      [...document.querySelectorAll(".county-records-table tbody tr")].map(
+        (tr) => tr.querySelectorAll("td")[2].textContent.replace("In CRM", ""),
+      );
+    const header = screen.getByRole("button", { name: /^Amount Due/ });
+    expect(owners()).toEqual(["Ann", "Ben", "Cal", "Dee"]);
+
+    fireEvent.click(header);
+    expect(owners()).toEqual(["Dee", "Ann", "Cal", "Ben"]);
+    expect(header.closest("th")).toHaveAttribute("aria-sort", "ascending");
+
+    fireEvent.click(header);
+    expect(owners()).toEqual(["Cal", "Ann", "Dee", "Ben"]);
+    expect(header.closest("th")).toHaveAttribute("aria-sort", "descending");
+
+    fireEvent.click(header);
+    expect(owners()).toEqual(["Ann", "Ben", "Cal", "Dee"]);
+    expect(header.closest("th")).toHaveAttribute("aria-sort", "none");
+  });
+
+  it("links the open record's property to Zillow", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name", "Situs Address", "Situs City", "Situs State"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann", "2619 156TH ST SW", "Lynnwood", "WA"],
+    ]);
+    render(<CountyRecords currentUser={user} />);
+    fireEvent.click(await findInTable("Ann"));
+    expect(screen.getByRole("link", { name: /Zillow/ })).toHaveAttribute(
+      "href",
+      "https://www.zillow.com/homes/2619-156TH-ST-SW-Lynnwood-WA_rb/",
+    );
   });
 });

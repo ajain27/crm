@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, Plus, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import { countyRecordFields, isAmountDueColumn } from "./countyRecordDeal";
+import { ZillowLink } from "../components/LeadTableCells";
 
 // One county record: every column and value, with an Add to CRM action.
 // `renderValue` formats a cell (e.g. phone links) the same way as the table.
@@ -40,6 +41,7 @@ export default function CountyRecordModal({
       isOpen
       onClose={onClose}
       title={address || ownerName || "County Record"}
+      headerActions={address ? <ZillowLink address={address} /> : null}
       className="county-record-modal"
       style={{
         width: "min(720px, 95vw)",

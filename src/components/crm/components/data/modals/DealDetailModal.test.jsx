@@ -268,4 +268,27 @@ describe("DealDetailModal", () => {
     expect(screen.getByPlaceholderText("First name")).toHaveValue("Sam");
     expect(screen.getByPlaceholderText("Last name")).toHaveValue("Q Seller");
   });
+
+  it("links the property to Zillow next to the address, using unsaved edits", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    const link = screen.getByRole("link", { name: /Zillow/ });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://www.zillow.com/homes/1-Main-St-Austin-TX-78701_rb/",
+    );
+    fireEvent.change(screen.getByPlaceholderText("Street address"), {
+      target: { value: "9 Elm St" },
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://www.zillow.com/homes/9-Elm-St-Austin-TX-78701_rb/",
+    );
+  });
 });

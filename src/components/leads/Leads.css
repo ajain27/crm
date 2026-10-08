@@ -934,6 +934,14 @@
     color: var(--red);
   }
 
+  .county-records-table th.county-amount-due .sort-header {
+    color: inherit;
+  }
+
+  .county-records-table .sort-indicator {
+    font-size: 0.6rem;
+  }
+
   span.county-amount-due {
     font-weight: 600;
   }

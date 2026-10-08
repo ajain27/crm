@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { chunkRows, parseCsv, toCountyRecords } from "./countyRecordsCsv";
+import {
+  chunkRows,
+  compareCells,
+  parseCsv,
+  toCountyRecords,
+} from "./countyRecordsCsv";
 
 describe("parseCsv", () => {
   it("handles quotes, embedded commas/newlines, CRLF and a BOM", () => {
@@ -55,5 +60,36 @@ describe("chunkRows", () => {
       expect(new TextEncoder().encode(c).length).toBeLessThanOrEqual(500),
     );
     expect(chunks.flatMap((c) => JSON.parse(c))).toEqual(rows);
+  });
+});
+
+describe("compareCells", () => {
+  const sortValues = (values, direction) =>
+    [...values].sort((a, b) => compareCells(a, b, direction));
+
+  it("sorts money by value, blanks last in both directions", () => {
+    const values = ["$980.00", "", "$4,210.55", "$12.50", "(1,200)"];
+    expect(sortValues(values, "asc")).toEqual([
+      "(1,200)",
+      "$12.50",
+      "$980.00",
+      "$4,210.55",
+      "",
+    ]);
+    expect(sortValues(values, "desc")).toEqual([
+      "$4,210.55",
+      "$980.00",
+      "$12.50",
+      "(1,200)",
+      "",
+    ]);
+  });
+
+  it("sorts text alphabetically with numbers in it compared as numbers", () => {
+    expect(sortValues(["unit 10", "Unit 2", "apt 1"], "asc")).toEqual([
+      "apt 1",
+      "Unit 2",
+      "unit 10",
+    ]);
   });
 });

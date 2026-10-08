@@ -11,7 +11,12 @@ import {
   saveCountyRecordImport,
   updateCountyRecordImport,
 } from "../../../firebase/firestoreService";
-import { chunkRows, parseCsv, toCountyRecords } from "./countyRecordsCsv";
+import {
+  chunkRows,
+  compareCells,
+  parseCsv,
+  toCountyRecords,
+} from "./countyRecordsCsv";
 import {
   buildDealFromCountyRecord,
   countyRecordFields,
@@ -128,6 +133,8 @@ export default function CountyRecords({
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [columnFilters, setColumnFilters] = useState(NO_FILTERS);
+  // { column: index, direction: "asc" | "desc" }, or null for file order.
+  const [sort, setSort] = useState(null);
   // Ticked records (row indexes in the selected import), for bulk delete.
   const [selectedRows, setSelectedRows] = useState(() => new Set());
   // The open record, as its index in the selected import's rows.
@@ -170,6 +177,19 @@ export default function CountyRecords({
     setSelectedRows(new Set());
     setSearch("");
     setColumnFilters(NO_FILTERS);
+    setSort(null);
+    setPage(1);
+  }
+
+  // Click a header: ascending, then descending, then back to file order.
+  function toggleSort(column) {
+    setSort((prev) =>
+      prev?.column !== column
+        ? { column, direction: "asc" }
+        : prev.direction === "asc"
+          ? { column, direction: "desc" }
+          : null,
+    );
     setPage(1);
   }
 
@@ -407,6 +427,13 @@ export default function CountyRecords({
       ) &&
       (!query || row.some((cell) => cell.toLowerCase().includes(query))),
   );
+  if (sort) {
+    filtered.sort(
+      (a, b) =>
+        compareCells(a.row[sort.column], b.row[sort.column], sort.direction) ||
+        a.index - b.index,
+    );
+  }
   const hasFilters =
     Boolean(query) || Object.values(columnFilters).some(Boolean);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -641,18 +668,43 @@ export default function CountyRecords({
                       />
                     </th>
                     <th className="county-row-action" aria-label="Actions" />
-                    {selected.columns.map((column) => (
-                      <th
-                        key={column}
-                        className={
-                          isAmountDueColumn(column)
-                            ? "county-amount-due"
-                            : undefined
-                        }
-                      >
-                        {column}
-                      </th>
-                    ))}
+                    {selected.columns.map((column, i) => {
+                      const direction =
+                        sort?.column === i ? sort.direction : null;
+                      return (
+                        <th
+                          key={column}
+                          className={
+                            isAmountDueColumn(column)
+                              ? "county-amount-due"
+                              : undefined
+                          }
+                          aria-sort={
+                            direction === "asc"
+                              ? "ascending"
+                              : direction === "desc"
+                                ? "descending"
+                                : "none"
+                          }
+                        >
+                          <button
+                            type="button"
+                            className={`sort-header${direction ? " active" : ""}`}
+                            onClick={() => toggleSort(i)}
+                            title={`Sort by ${column}`}
+                          >
+                            {column}
+                            <span className="sort-indicator" aria-hidden="true">
+                              {direction === "asc"
+                                ? "▲"
+                                : direction === "desc"
+                                  ? "▼"
+                                  : ""}
+                            </span>
+                          </button>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>

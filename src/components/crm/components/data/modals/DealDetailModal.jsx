@@ -10,6 +10,7 @@ import WholesaleOfferPdfTemplate, {
   DEFAULT_OFFER_OPTIONS,
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
+import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import {
   getSuggestedWholesaleMao,
   getContractVersions,
@@ -78,7 +79,7 @@ function Section({ title, children }) {
   );
 }
 
-function Field({ label, children, wide, span2 }) {
+function Field({ label, action, children, wide, span2 }) {
   const widthClass = wide
     ? " ddm-edit-field-wide"
     : span2
@@ -86,7 +87,10 @@ function Field({ label, children, wide, span2 }) {
       : "";
   return (
     <div className={`ddm-edit-field${widthClass}`}>
-      <span className="ddm-edit-label">{label}</span>
+      <span className="ddm-edit-label">
+        {label}
+        {action && <span className="leads-field-action">{action}</span>}
+      </span>
       {children}
     </div>
   );
@@ -346,7 +350,11 @@ function DealDetailModal({
                 ))}
               </select>
             </Field>
-            <Field label="Address" span2>
+            <Field
+              label="Address"
+              span2
+              action={<ZillowLink address={formatFullAddress(draft)} />}
+            >
               <input
                 disabled={locked}
                 value={draft.address || ""}

@@ -106,3 +106,31 @@ export function chunkRows(rows, maxBytes = MAX_CHUNK_BYTES) {
   if (current.length > 0) chunks.push(JSON.stringify(current));
   return chunks;
 }
+
+// "$4,210.55" → 4210.55, "(1,200)" → -1200; null for non-numbers.
+function cellNumber(value) {
+  const text = String(value).trim();
+  if (!/^\(?-?\$?\s*[\d,]*\.?\d+\s*\)?%?$/.test(text)) return null;
+  const n = parseFloat(text.replace(/[$,%()\s]/g, ""));
+  if (Number.isNaN(n)) return null;
+  return /^\(.*\)$/.test(text) ? -Math.abs(n) : n;
+}
+
+// Sort order for two cells of one column: numbers (money included) by
+// value, other text alphabetically with digits compared as numbers ("Unit
+// 2" before "Unit 10"). Blank cells always sort last, whichever direction.
+export function compareCells(a, b, direction = "asc") {
+  const aBlank = !String(a ?? "").trim();
+  const bBlank = !String(b ?? "").trim();
+  if (aBlank || bBlank) return aBlank === bBlank ? 0 : aBlank ? 1 : -1;
+  const aNum = cellNumber(a);
+  const bNum = cellNumber(b);
+  const order =
+    aNum !== null && bNum !== null
+      ? aNum - bNum
+      : String(a).localeCompare(String(b), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+  return direction === "desc" ? -order : order;
+}

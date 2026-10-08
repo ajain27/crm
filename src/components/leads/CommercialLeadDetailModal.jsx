@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
 import Modal from "../modal/Modal";
+import { ZillowLink } from "./components/LeadTableCells";
 import { formatPhone } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { COMMERCIAL_PROPERTY_TYPES } from "./leadsConfig";
 import { SOURCES } from "./leadUtils";
 import "./Leads.css";
 
-function Field({ label, children }) {
+function Field({ label, action, children }) {
   return (
     <div className="ldm-field">
-      <span className="ldm-label">{label}</span>
+      <span className="ldm-label">
+        {label}
+        {action && <span className="leads-field-action">{action}</span>}
+      </span>
       {children}
     </div>
   );
@@ -96,7 +100,10 @@ export default function CommercialLeadDetailModal({
                 placeholder="e.g. Office Building, Retail Strip…"
               />
             </Field>
-            <Field label="Address">
+            <Field
+              label="Address"
+              action={<ZillowLink address={draft.address} />}
+            >
               <input
                 className="ldm-input ldm-wide"
                 value={draft.address || ""}
