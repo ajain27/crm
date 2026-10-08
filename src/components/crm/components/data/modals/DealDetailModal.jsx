@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload, Loader2, Trash2, FileText } from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
@@ -10,6 +10,7 @@ import WholesaleOfferPdfTemplate, {
   DEFAULT_OFFER_OPTIONS,
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
+import RunCompsModal from "../comps/RunCompsModal";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import {
   getSuggestedWholesaleMao,
@@ -120,7 +121,25 @@ function DealDetailModal({
     downloadReport: downloadOffer,
   } = useGenerateReport("purchase-and-sale-agreement");
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
+  const [compsOpen, setCompsOpen] = useState(false);
+  // The notes Run comps is saving: when the deal comes back with exactly
+  // these notes, only the notes are taken in, so unsaved edits survive.
+  const pendingCompsNotes = useRef(null);
   const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
+
+  // Run comps adds its note to the deal straight away (keeping any notes
+  // typed but not yet saved).
+  async function handleSaveCompsNote(note) {
+    const notes = [draft.notes, note].filter(Boolean).join("\n\n");
+    pendingCompsNotes.current = notes;
+    await updateDealPatch(deal.id, { notes });
+    setDraft((prev) => ({ ...prev, notes }));
+  }
+
+  function handleApplyComps({ arv, squareFootage }) {
+    if (arv > 0) set("arv", String(Math.round(arv)));
+    if (squareFootage > 0) set("squareFootage", String(squareFootage));
+  }
 
   // The options are committed together with the print template's mount, so
   // the template renders with what was just chosen.
@@ -139,7 +158,16 @@ function DealDetailModal({
   }
 
   useEffect(() => {
-    if (deal) setDraft(initDraft(deal));
+    if (!deal) return;
+    const isCompsNoteUpdate =
+      pendingCompsNotes.current !== null &&
+      deal.notes === pendingCompsNotes.current;
+    pendingCompsNotes.current = null;
+    if (isCompsNoteUpdate) {
+      setDraft((prev) => ({ ...prev, notes: deal.notes }));
+      return;
+    }
+    setDraft(initDraft(deal));
   }, [deal]);
 
   // Auto-calculate MAO when inputs change (mirrors the add-form formula)
@@ -300,6 +328,16 @@ function DealDetailModal({
             >
               Cancel
             </button>
+            {!isRental && (
+              <button
+                className="secondary-btn"
+                onClick={() => setCompsOpen(true)}
+                disabled={saving || !formatFullAddress(draft)}
+                title="Pull comps from Zillow, Redfin and Realtor.com"
+              >
+                Run comps
+              </button>
+            )}
             {!isRental && (
               <button
                 className="secondary-btn ddm-offer-btn"
@@ -885,6 +923,14 @@ function DealDetailModal({
         initialOptions={offerOptions}
         sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
       />
+      {compsOpen && (
+        <RunCompsModal
+          address={formatFullAddress(draft)}
+          onSaveNote={handleSaveCompsNote}
+          onApply={handleApplyComps}
+          onClose={() => setCompsOpen(false)}
+        />
+      )}
       <PdfReportPreviewModal
         previewImage={offerPreviewImage}
         onClose={closeOfferPreview}

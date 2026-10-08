@@ -1078,6 +1078,29 @@
   }
 
   /* Subject property */
+  .find-comps-summary {
+    margin: 0 0 1rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  .find-comps-listing-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .find-comps-address-cell a {
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .find-comps-address-cell a:hover {
+    text-decoration: underline;
+  }
+
   .find-comps-subject {
     @apply mb-5;
   }
@@ -1124,11 +1147,6 @@
 
   .find-comps-status-badge {
     @apply text-xs font-semibold;
-  }
-
-  .find-comps-correlation {
-    @apply text-xs font-semibold;
-    color: var(--blue);
   }
 
   /* External links section */

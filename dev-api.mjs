@@ -36,12 +36,18 @@ app.get("/api/send-scheduled-invoices", async (req, res) => {
 });
 
 app.get("/api/send-scheduled-lead-emails", async (req, res) => {
-  const { default: handler } = await import("./api/send-scheduled-lead-emails.js");
+  const { default: handler } =
+    await import("./api/send-scheduled-lead-emails.js");
   await handler(req, res);
 });
 
 app.post("/api/lead-webhook", async (req, res) => {
   const { default: handler } = await import("./api/lead-webhook.js");
+  await handler(req, res);
+});
+
+app.post("/api/run-comps", async (req, res) => {
+  const { default: handler } = await import("./api/run-comps.js");
   await handler(req, res);
 });
 

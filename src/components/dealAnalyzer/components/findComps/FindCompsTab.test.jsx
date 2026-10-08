@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import FindCompsTab from "./FindCompsTab";
+import FindCompsTab, { toFindCompsResult } from "./FindCompsTab";
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -12,59 +12,67 @@ const tab = {
 };
 
 const MOCK_ADDRESS = "5500 Grand Lake Dr, San Antonio, TX 78244";
-const CACHE_KEY = "findComps_cache";
+const CACHE_KEY = "findComps_cache_v2";
 
-const mockResult = {
-  price: 250000,
-  priceRangeLow: 195000,
-  priceRangeHigh: 304000,
-  subjectProperty: {
-    formattedAddress: MOCK_ADDRESS,
-    propertyType: "Single Family",
-    bedrooms: 3,
-    bathrooms: 2,
-    squareFootage: 1878,
-    yearBuilt: 1973,
-    lastSalePrice: 270000,
+// What /api/run-comps returns (Serper → Firecrawl → OpenAI).
+const mockApiResponse = {
+  address: MOCK_ADDRESS,
+  listingUrls: {
+    zillow: "https://www.zillow.com/homedetails/5500-Grand-Lake-Dr/1_zpid/",
+    redfin: null,
+    realtor:
+      "https://www.realtor.com/realestateandhomes-detail/5500-Grand-Lake-Dr",
   },
-  comparables: [
+  sourceErrors: { redfin: "No page found" },
+  property: {
+    beds: 3,
+    baths: 2,
+    sqft: 1878,
+    yearBuilt: 1973,
+    valueEstimate: 247500,
+    rentEstimate: 1850,
+    annualTax: 3200,
+  },
+  arvEstimate: 250000,
+  rentEstimate: 1850,
+  topComps: [
     {
-      id: "comp-1",
-      formattedAddress: "5207 Pine Lake Dr, San Antonio, TX 78244",
-      status: "Active",
+      address: "5207 Pine Lake Dr, San Antonio, TX 78244",
       price: 289444,
-      bedrooms: 3,
-      bathrooms: 2,
-      squareFootage: 1895,
-      distance: 0.384,
-      correlation: 0.9916,
+      beds: 3,
+      baths: 2,
+      sqft: 1895,
+      soldDate: "2026-07-14",
+      url: "https://www.zillow.com/homedetails/5207-Pine-Lake-Dr/2_zpid/",
+      source: "Zillow",
+      reason: "Nearly identical size, sold this summer",
     },
     {
-      id: "comp-2",
-      formattedAddress: "6707 Lake Cliff St, San Antonio, TX 78244",
-      status: "Sold",
+      address: "6707 Lake Cliff St, San Antonio, TX 78244",
       price: 245000,
-      bedrooms: 3,
-      bathrooms: 2,
-      squareFootage: 1820,
-      distance: 0.72,
-      correlation: 0.9721,
+      beds: 3,
+      baths: 2,
+      sqft: 1820,
+      soldDate: "2026-05-02",
+      url: null,
+      source: "Realtor.com",
+      reason: "Same bed/bath, slightly smaller",
     },
   ],
+  summary: "ARV based on two recent 3/2 sales within half a mile.",
 };
 
-// ─── Setup ────────────────────────────────────────────────────────────────────
+// The result as the tab saves it in localStorage.
+const mockResult = toFindCompsResult(mockApiResponse, MOCK_ADDRESS);
 
-beforeAll(() => {
-  vi.stubEnv("VITE_RENTCAST_API_KEY", "test-rentcast-key");
-});
+// ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   localStorage.clear();
   globalThis.fetch = vi.fn();
 });
 
-function mockFetchSuccess(data = mockResult) {
+function mockFetchSuccess(data = mockApiResponse) {
   globalThis.fetch.mockResolvedValueOnce({
     ok: true,
     json: async () => data,
@@ -74,7 +82,8 @@ function mockFetchSuccess(data = mockResult) {
 function mockFetchError(message = "Address not found") {
   globalThis.fetch.mockResolvedValueOnce({
     ok: false,
-    json: async () => ({ message }),
+    status: 404,
+    json: async () => ({ error: message }),
   });
 }
 
@@ -176,7 +185,7 @@ describe("loading state", () => {
     fireEvent.click(screen.getByRole("button", { name: /Find Comps/i }));
     await waitFor(() => {
       expect(
-        screen.getByText(/Fetching value estimate and comparables/i),
+        screen.getByText(/Searching Zillow, Redfin and Realtor\.com/i),
       ).toBeInTheDocument();
     });
   });
@@ -194,7 +203,7 @@ describe("loading state", () => {
 // ─── Successful fetch ─────────────────────────────────────────────────────────
 
 describe("successful fetch", () => {
-  it("calls the RentCast API with the entered address and API key", async () => {
+  it("runs comps through /api/run-comps with the entered address", async () => {
     mockFetchSuccess();
     render(<FindCompsTab tab={tab} />);
     fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
@@ -207,14 +216,12 @@ describe("successful fetch", () => {
     );
 
     const [url, options] = globalThis.fetch.mock.calls[0];
-    // URLSearchParams encodes spaces as "+" so check the base URL and key fields separately
-    expect(url).toContain("https://api.rentcast.io/v1/avm/value");
-    expect(url).toContain("address=");
-    expect(url).toContain("San+Antonio");
-    expect(options.headers["X-Api-Key"]).toBe("test-rentcast-key");
+    expect(url).toBe("/api/run-comps");
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toEqual({ address: MOCK_ADDRESS });
   });
 
-  it("displays the estimated ARV, low, and high estimates", async () => {
+  it("displays the estimated ARV, rent estimate and online value estimate", async () => {
     mockFetchSuccess();
     render(<FindCompsTab tab={tab} />);
     fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
@@ -226,8 +233,12 @@ describe("successful fetch", () => {
       expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
     );
     expect(screen.getByText("$250,000")).toBeInTheDocument();
-    expect(screen.getByText("$195,000")).toBeInTheDocument();
-    expect(screen.getByText("$304,000")).toBeInTheDocument();
+    expect(screen.getByText("$1,850/mo")).toBeInTheDocument();
+    expect(screen.getByText("$247,500")).toBeInTheDocument();
+    expect(screen.queryByText("Low Estimate")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/ARV based on two recent 3\/2 sales/),
+    ).toBeInTheDocument();
   });
 
   it("displays subject property details", async () => {
@@ -241,9 +252,18 @@ describe("successful fetch", () => {
     await waitFor(() =>
       expect(screen.getByText("Subject Property")).toBeInTheDocument(),
     );
-    expect(screen.getByText("Single Family")).toBeInTheDocument();
     expect(screen.getByText("1973")).toBeInTheDocument();
-    expect(screen.getByText("$270,000")).toBeInTheDocument();
+    expect(screen.getByText("1,878")).toBeInTheDocument();
+    expect(screen.getByText("$3,200")).toBeInTheDocument();
+    // The property's own pages; Redfin wasn't found.
+    expect(screen.getByRole("link", { name: /^Zillow$/ })).toHaveAttribute(
+      "href",
+      mockApiResponse.listingUrls.zillow,
+    );
+    expect(
+      screen.getByRole("link", { name: /^Realtor\.com$/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^Redfin$/ })).toBeNull();
   });
 
   it("renders a row in the comparables table for each comparable", async () => {
@@ -265,7 +285,7 @@ describe("successful fetch", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows correct comparable price, distance, and match %", async () => {
+  it("shows each comp's price, sale date and listing link", async () => {
     mockFetchSuccess();
     render(<FindCompsTab tab={tab} />);
     fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
@@ -276,8 +296,16 @@ describe("successful fetch", () => {
     await waitFor(() =>
       expect(screen.getByText("$289,444")).toBeInTheDocument(),
     );
-    expect(screen.getByText("0.38 mi")).toBeInTheDocument();
-    expect(screen.getByText("99%")).toBeInTheDocument();
+    expect(screen.getByText("Sold 2026-07-14")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "5207 Pine Lake Dr, San Antonio, TX 78244",
+      }),
+    ).toHaveAttribute("href", mockApiResponse.topComps[0].url);
+    // No listing link → plain text.
+    expect(
+      screen.getByText("6707 Lake Cliff St, San Antonio, TX 78244").tagName,
+    ).toBe("TD");
   });
 
   it("shows the Propwire external link before any search is run", () => {

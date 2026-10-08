@@ -2,9 +2,18 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/send-invoice.js": { "maxDuration": 30 },
-    "api/send-scheduled-invoices.js": { "maxDuration": 60 },
-    "api/send-scheduled-lead-emails.js": { "maxDuration": 60 }
+    "api/send-invoice.js": {
+      "maxDuration": 30
+    },
+    "api/send-scheduled-invoices.js": {
+      "maxDuration": 60
+    },
+    "api/send-scheduled-lead-emails.js": {
+      "maxDuration": 60
+    },
+    "api/run-comps.js": {
+      "maxDuration": 60
+    }
   },
   "crons": [
     {

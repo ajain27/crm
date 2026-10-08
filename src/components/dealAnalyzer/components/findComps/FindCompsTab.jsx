@@ -2,8 +2,11 @@ import { useRef, useState } from "react";
 import { ExternalLink, Search, MapPin, Trash2 } from "lucide-react";
 import Pagination from "../../../pagination/Pagination";
 import { useAddressAutocomplete } from "../../../../hooks/useAddressAutocomplete";
+import { requestComps } from "../../../../services/compsService";
 
-const CACHE_KEY = "findComps_cache";
+// v2: comps from /api/run-comps. Searches saved under the old key used a
+// different data source and are no longer read.
+const CACHE_KEY = "findComps_cache_v2";
 const MAX_CACHE = 100;
 const COMPS_PER_PAGE = 5;
 const MAX_SUGGESTIONS = 8;
@@ -16,17 +19,18 @@ function slimResult(data) {
   const sp = data.subjectProperty;
   return {
     price: data.price,
-    priceRangeLow: data.priceRangeLow,
-    priceRangeHigh: data.priceRangeHigh,
+    rentEstimate: data.rentEstimate,
+    valueEstimate: data.valueEstimate,
+    summary: data.summary,
+    listingUrls: data.listingUrls,
     subjectProperty: sp
       ? {
           formattedAddress: sp.formattedAddress,
-          propertyType: sp.propertyType,
           bedrooms: sp.bedrooms,
           bathrooms: sp.bathrooms,
           squareFootage: sp.squareFootage,
           yearBuilt: sp.yearBuilt,
-          lastSalePrice: sp.lastSalePrice,
+          annualTax: sp.annualTax,
         }
       : undefined,
     comparables: (data.comparables ?? []).map((c) => ({
@@ -37,11 +41,50 @@ function slimResult(data) {
       bedrooms: c.bedrooms,
       bathrooms: c.bathrooms,
       squareFootage: c.squareFootage,
-      distance: c.distance,
-      correlation: c.correlation,
+      soldDate: c.soldDate,
+      url: c.url,
+      source: c.source,
     })),
   };
 }
+
+// /api/run-comps result → the shape this tab shows (and caches).
+export function toFindCompsResult(api, address) {
+  const p = api.property || {};
+  return {
+    price: api.arvEstimate,
+    rentEstimate: api.rentEstimate ?? p.rentEstimate,
+    valueEstimate: p.valueEstimate,
+    summary: api.summary,
+    listingUrls: api.listingUrls,
+    subjectProperty: {
+      formattedAddress: api.address || address,
+      bedrooms: p.beds,
+      bathrooms: p.baths,
+      squareFootage: p.sqft,
+      yearBuilt: p.yearBuilt,
+      annualTax: p.annualTax,
+    },
+    comparables: (api.topComps || []).map((c, i) => ({
+      id: `${i}-${c.address}`,
+      formattedAddress: c.address,
+      status: "Sold",
+      price: c.price,
+      bedrooms: c.beds,
+      bathrooms: c.baths,
+      squareFootage: c.sqft,
+      soldDate: c.soldDate,
+      url: c.url,
+      source: c.source,
+    })),
+  };
+}
+
+const LISTING_SITES = [
+  ["zillow", "Zillow"],
+  ["redfin", "Redfin"],
+  ["realtor", "Realtor.com"],
+];
 
 function loadCache() {
   try {
@@ -207,23 +250,13 @@ function FindCompsTab({ tab }) {
     setErrorMsg("");
 
     try {
-      const apiKey = import.meta.env.VITE_RENTCAST_API_KEY;
-      const params = new URLSearchParams({ address: trimmed, compCount: 20 });
-      const res = await fetch(
-        `https://api.rentcast.io/v1/avm/value?${params}`,
-        { headers: { "X-Api-Key": apiKey } },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Error ${res.status}`);
-      }
-      const data = await res.json();
+      const data = toFindCompsResult(await requestComps(trimmed), trimmed);
       saveToCache(trimmed, data);
       setResult(data);
       setStatus("done");
       setCompsPage(1);
     } catch (err) {
-      setErrorMsg(err.message || "Failed to fetch comps. Check your API key.");
+      setErrorMsg(err.message || "Failed to fetch comps.");
       setStatus("error");
     }
   }
@@ -278,8 +311,8 @@ function FindCompsTab({ tab }) {
           <div>
             <h2>Find Comparable Properties</h2>
             <p>
-              Enter the full property address to get an ARV estimate and
-              comparable sales from RentCast.
+              Enter the full property address to get an ARV estimate and the
+              best comparable sales from Zillow, Redfin and Realtor.com.
             </p>
           </div>
         </div>
@@ -389,7 +422,8 @@ function FindCompsTab({ tab }) {
           <div className="find-comps-loader">
             <div className="find-comps-spinner" />
             <p className="find-comps-loader-msg">
-              Fetching value estimate and comparables…
+              Searching Zillow, Redfin and Realtor.com and picking the best
+              comps… this can take up to a minute.
             </p>
           </div>
         )}
@@ -418,15 +452,17 @@ function FindCompsTab({ tab }) {
                 <strong>{fmt(result.price)}</strong>
               </div>
               <div className="find-comps-arv-card">
-                <span>Low Estimate</span>
+                <span>Rent Estimate</span>
                 <strong className="find-comps-muted">
-                  {fmt(result.priceRangeLow)}
+                  {result.rentEstimate != null
+                    ? `${fmt(result.rentEstimate)}/mo`
+                    : "—"}
                 </strong>
               </div>
               <div className="find-comps-arv-card">
-                <span>High Estimate</span>
+                <span>Online Value Estimate</span>
                 <strong className="find-comps-muted">
-                  {fmt(result.priceRangeHigh)}
+                  {fmt(result.valueEstimate)}
                 </strong>
               </div>
             </div>
@@ -437,12 +473,6 @@ function FindCompsTab({ tab }) {
                   Subject Property
                 </span>
                 <div className="find-comps-subject-grid">
-                  {sp.propertyType && (
-                    <div>
-                      <span>Type</span>
-                      <strong>{sp.propertyType}</strong>
-                    </div>
-                  )}
                   {sp.bedrooms != null && (
                     <div>
                       <span>Beds</span>
@@ -467,15 +497,42 @@ function FindCompsTab({ tab }) {
                       <strong>{sp.yearBuilt}</strong>
                     </div>
                   )}
-                  {sp.lastSalePrice != null && (
+                  {sp.annualTax != null && (
                     <div>
-                      <span>Last Sale</span>
-                      <strong>{fmt(sp.lastSalePrice)}</strong>
+                      <span>Annual Tax</span>
+                      <strong>{fmt(sp.annualTax)}</strong>
                     </div>
                   )}
                 </div>
               </div>
             )}
+
+            {result.summary && (
+              <p className="find-comps-summary">{result.summary}</p>
+            )}
+
+            {result.listingUrls &&
+              LISTING_SITES.some(([key]) => result.listingUrls[key]) && (
+                <div className="find-comps-listing-links">
+                  <span className="find-comps-section-label">
+                    This property on
+                  </span>
+                  {LISTING_SITES.filter(([key]) => result.listingUrls[key]).map(
+                    ([key, label]) => (
+                      <a
+                        key={key}
+                        href={result.listingUrls[key]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="leads-mls-link"
+                      >
+                        <ExternalLink size={12} />
+                        {label}
+                      </a>
+                    ),
+                  )}
+                </div>
+              )}
 
             {comparables.length > 0 && (
               <div className="find-comps-table-wrap">
@@ -492,15 +549,26 @@ function FindCompsTab({ tab }) {
                         <th>Beds</th>
                         <th>Baths</th>
                         <th>Sq Ft</th>
-                        <th>Distance</th>
-                        <th>Match</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pagedComps.map((c) => (
                         <tr key={c.id}>
                           <td className="find-comps-address-cell">
-                            {c.formattedAddress}
+                            {c.url ? (
+                              <a
+                                href={c.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={
+                                  c.source ? `View on ${c.source}` : undefined
+                                }
+                              >
+                                {c.formattedAddress}
+                              </a>
+                            ) : (
+                              c.formattedAddress
+                            )}
                           </td>
                           <td>
                             <span
@@ -508,6 +576,7 @@ function FindCompsTab({ tab }) {
                               style={{ color: statusColor(c.status) }}
                             >
                               {c.status || "—"}
+                              {c.soldDate ? ` ${c.soldDate}` : ""}
                             </span>
                           </td>
                           <td>
@@ -519,18 +588,6 @@ function FindCompsTab({ tab }) {
                             {c.squareFootage
                               ? c.squareFootage.toLocaleString()
                               : "—"}
-                          </td>
-                          <td>
-                            {c.distance != null
-                              ? `${c.distance.toFixed(2)} mi`
-                              : "—"}
-                          </td>
-                          <td>
-                            <span className="find-comps-correlation">
-                              {c.correlation != null
-                                ? `${Math.round(c.correlation * 100)}%`
-                                : "—"}
-                            </span>
                           </td>
                         </tr>
                       ))}

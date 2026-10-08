@@ -2,6 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import DealDetailModal from "./DealDetailModal";
 import { renderElementToPdfAssets } from "../../../../../utils/pdfExport";
+import { requestComps } from "../comps/compsNote";
+
+vi.mock("../comps/compsNote", async (importOriginal) => ({
+  ...(await importOriginal()),
+  requestComps: vi.fn(),
+}));
 
 vi.mock("../../../../../utils/pdfExport", () => ({
   renderElementToPdfAssets: vi.fn(async () => ({
@@ -290,5 +296,90 @@ describe("DealDetailModal", () => {
       "href",
       "https://www.zillow.com/homes/9-Elm-St-Austin-TX-78701_rb/",
     );
+  });
+
+  it("runs comps, saves the note to the deal and keeps unsaved edits", async () => {
+    requestComps.mockResolvedValue({
+      property: { beds: 3, baths: 2, sqft: 1400, yearBuilt: 1978 },
+      arvEstimate: 160000,
+      rentEstimate: 1250,
+      topComps: [
+        {
+          address: "9 Oak St",
+          price: 154000,
+          beds: 3,
+          baths: 2,
+          sqft: 1400,
+          soldDate: "2026-08-01",
+          url: "https://www.zillow.com/homedetails/9",
+          source: "Zillow",
+          reason: "Same size",
+        },
+      ],
+      summary: "Based on recent sales.",
+      listingUrls: {},
+      sourceErrors: {},
+    });
+    const updateDealPatch = vi.fn(async () => {});
+    const baseDeal = { ...deal, notes: "Called seller." };
+    const { rerender } = render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={baseDeal}
+        updateDealPatch={updateDealPatch}
+      />,
+    );
+    // An unsaved edit made before running comps.
+    fireEvent.change(screen.getByPlaceholderText("Street address"), {
+      target: { value: "2 Main St" },
+    });
+
+    fireEvent.click(screen.getByText("Run comps"));
+    expect(requestComps).toHaveBeenCalledWith("2 Main St, Austin, TX 78701");
+    expect(await screen.findByText("9 Oak St")).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Saved to the deal's notes/),
+    ).toBeInTheDocument();
+
+    const [, patch] = updateDealPatch.mock.calls[0];
+    expect(patch.notes).toMatch(/^Called seller\.\n\nComps \(/);
+    expect(patch.notes).toContain("9 Oak St — $154,000");
+
+    // The parent passes the saved deal back; the unsaved address stays.
+    rerender(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...baseDeal, notes: patch.notes }}
+        updateDealPatch={updateDealPatch}
+      />,
+    );
+    expect(screen.getByPlaceholderText("Street address")).toHaveValue(
+      "2 Main St",
+    );
+
+    fireEvent.click(screen.getByText("Use ARV & Sq Ft"));
+    fireEvent.click(screen.getByText("Close"));
+    expect(screen.getByDisplayValue("$160,000")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1400")).toBeInTheDocument();
+  });
+
+  it("shows the error when comps can't run", async () => {
+    requestComps.mockRejectedValue(
+      new Error("Comps aren't set up yet: missing SERPER_API_KEY."),
+    );
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Run comps"));
+    expect(
+      await screen.findByText(/missing SERPER_API_KEY/),
+    ).toBeInTheDocument();
   });
 });

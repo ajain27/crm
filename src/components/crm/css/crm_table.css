@@ -819,6 +819,102 @@
     color: var(--text);
   }
 
+  /* ── Run comps ───────────────────────────────────────────── */
+  .run-comps-body {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    padding: 0.25rem 0 1rem;
+  }
+
+  .run-comps-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+    color: var(--muted);
+  }
+
+  .run-comps-error {
+    margin: 0;
+    color: var(--red);
+  }
+
+  .run-comps-estimates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .run-comps-estimates > div {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+  }
+
+  .run-comps-estimates span,
+  .run-comps-muted {
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .run-comps-summary {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .run-comps-heading {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
+  }
+
+  .run-comps-list {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .run-comps-comp {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .run-comps-comp-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .run-comps-reason {
+    font-size: 0.8125rem;
+    font-style: italic;
+  }
+
+  .run-comps-sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .run-comps-modal .modal-actions {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .run-comps-saved {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-right: auto;
+    color: var(--green);
+    font-size: 0.875rem;
+  }
+
   .offer-options-body {
     display: grid;
     align-content: start;
