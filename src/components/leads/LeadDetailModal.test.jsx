@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LeadDetailModal from "./LeadDetailModal";
+import { requestComps } from "../crm/components/data/comps/compsNote";
+
+vi.mock("../crm/components/data/comps/compsNote", async (importOriginal) => ({
+  ...(await importOriginal()),
+  requestComps: vi.fn(),
+}));
 
 const lead = {
   id: "l1",
@@ -150,5 +156,60 @@ describe("LeadDetailModal", () => {
       />,
     );
     expect(screen.queryByText("ARV")).toBeNull();
+  });
+
+  it("runs comps on a PPL lead and keeps the note and ARV on save", async () => {
+    requestComps.mockResolvedValue({
+      property: { beds: 3, baths: 2, sqft: 1400 },
+      arvEstimate: 160000,
+      topComps: [
+        {
+          address: "9 Oak St",
+          price: 154000,
+          sqft: 1400,
+          soldDate: "2026-08-01",
+          source: "Zillow",
+        },
+      ],
+      listingUrls: {},
+      sourceErrors: {},
+    });
+    const onSave = vi.fn(async () => {});
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={{ ...lead, notes: "Called seller." }}
+        onSave={onSave}
+        isPpl={true}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Run comps"));
+    expect(requestComps).toHaveBeenCalledWith("1 Main St");
+    expect(
+      await screen.findByText(/Added to the lead's notes/),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Use ARV"));
+    fireEvent.click(screen.getByText("Close"));
+
+    fireEvent.click(screen.getByText("Save Changes"));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    const saved = onSave.mock.calls[0][0];
+    expect(saved.arv).toBe("$160,000");
+    expect(saved.notes).toMatch(/^Called seller\.\n\nComps \(/);
+    expect(saved.notes).toContain("9 Oak St");
+  });
+
+  it("only offers Run comps on PPL leads", () => {
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={lead}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Run comps")).toBeNull();
   });
 });
