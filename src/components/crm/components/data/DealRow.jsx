@@ -4,7 +4,7 @@ import {
   Badge,
 } from "../../../elements/elements";
 import { currency } from "../../../../utils/utils";
-import { zillowUrl } from "../../../leads/leadUtils";
+import { PhoneLink } from "../../../leads/components/LeadTableCells";
 
 function formatFullAddress(deal) {
   const stateZip = [deal.state, deal.zipCode].filter(Boolean).join(" ");
@@ -29,7 +29,9 @@ function DealRow({ deal, index, onRowDetailClick }) {
           ? "withdrawn"
           : undefined;
 
-  const zillowLink = zillowUrl(formatFullAddress(deal));
+  const sellerName = [deal.sellerFirstName, deal.sellerLastName]
+    .filter(Boolean)
+    .join(" ");
 
   function handleTrClick(e) {
     const tag = e.target.tagName.toLowerCase();
@@ -62,50 +64,13 @@ function DealRow({ deal, index, onRowDetailClick }) {
       <td data-label="Offer Sent">
         <Badge value={deal.offerStatus || "Not Sent"} />
       </td>
+      <ReadOnlyCell value={sellerName || "—"} label="Seller" />
       <td
-        data-label="Listing"
+        data-label="Phone"
         className="dt-col-action"
         onClick={(e) => e.stopPropagation()}
       >
-        {deal.listingUrl || zillowLink ? (
-          <span className="dt-listing-links">
-            {deal.listingUrl && (
-              <a
-                href={deal.listingUrl}
-                className="details-link"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                MLS
-              </a>
-            )}
-            {zillowLink && (
-              <a
-                href={zillowLink}
-                className="details-link"
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`View ${formatFullAddress(deal)} on Zillow`}
-              >
-                Zillow
-              </a>
-            )}
-          </span>
-        ) : (
-          <span style={{ color: "var(--text-muted, #aaa)" }}>—</span>
-        )}
-      </td>
-      <td className="dt-col-action" onClick={(e) => e.stopPropagation()}>
-        <a
-          href="#"
-          className="details-link"
-          onClick={(e) => {
-            e.preventDefault();
-            onRowDetailClick(deal);
-          }}
-        >
-          Details
-        </a>
+        <PhoneLink phone={deal.sellerPhone || deal.agentPhone} />
       </td>
     </tr>
   );

@@ -61,7 +61,9 @@ describe("Wholesale_data", () => {
     expect(screen.getByText("$275,000")).toBeInTheDocument();
     expect(screen.getByText("$45,000")).toBeInTheDocument();
     expect(screen.getByText("Not Sent")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Details" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Phone" }),
+    ).toBeInTheDocument();
   });
 
   it("opens the details modal by clicking the address cell", () => {
@@ -94,7 +96,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    fireEvent.click(screen.getAllByRole("row")[1]);
 
     const select = screen.getByDisplayValue("Not Sent");
     fireEvent.change(select, { target: { value: "Offer Sent" } });
@@ -122,7 +124,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    fireEvent.click(screen.getAllByRole("row")[1]);
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(deleteDeal).toHaveBeenCalledWith("d1");
@@ -269,7 +271,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    fireEvent.click(screen.getAllByRole("row")[1]);
     fireEvent.click(screen.getByText("purchase-contract.pdf"));
 
     expect(screen.getByText("Contract for 123 Main St")).toBeInTheDocument();
@@ -328,7 +330,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    fireEvent.click(screen.getAllByRole("row")[1]);
 
     const uploadInput = document.getElementById("contract-upload-modal-d1");
     const contractFile = new File(["contract"], "contract.odt", {
@@ -411,7 +413,7 @@ describe("Wholesale_data", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Details" }));
+    fireEvent.click(screen.getAllByRole("row")[1]);
     fireEvent.click(
       screen.getByRole("button", { name: /Delete purchase-contract\.pdf/i }),
     );
