@@ -1,6 +1,30 @@
 // Tests for api/run-comps.js (the serverless function). Serper,
-// Firecrawl, the Census geocoder, Redfin and OpenAI are mocked at fetch.
-import { describe, it, expect, vi, afterEach } from "vitest";
+// Firecrawl, the Census geocoder and Redfin are mocked at fetch; Claude is
+// mocked at the Anthropic SDK.
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+
+const claudeCreate = vi.hoisted(() => vi.fn());
+vi.mock("@anthropic-ai/sdk", () => ({
+  default: vi.fn(function () {
+    this.beta = { messages: { create: claudeCreate } };
+  }),
+}));
+
+const CLAUDE_REVIEW = {
+  stop_reason: "end_turn",
+  content: [
+    {
+      type: "text",
+      text: JSON.stringify({
+        selected: [
+          { id: "1", reason: "Recent, same layout" },
+          { id: "0", reason: "Closest" },
+        ],
+        removed: [{ id: "2", reason: "Price outlier" }],
+      }),
+    },
+  ],
+};
 import {
   rankComps,
   cleanScraped,
@@ -156,22 +180,6 @@ function mockFetch(overrides = {}) {
       }),
     redfin: () => text(200, REDFIN_CSV),
     osm: () => json(200, []),
-    openai: () =>
-      json(200, {
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
-                selected: [
-                  { id: "1", reason: "Recent, same layout" },
-                  { id: "0", reason: "Closest" },
-                ],
-                removed: [{ id: "2", reason: "Price outlier" }],
-              }),
-            },
-          },
-        ],
-      }),
     ...overrides,
   };
   const fn = vi.fn(async (url, init = {}) => {
@@ -181,7 +189,6 @@ function mockFetch(overrides = {}) {
     if (url.includes("geocoding.geo.census.gov")) return handlers.census(url);
     if (url.includes("nominatim.openstreetmap.org")) return handlers.osm(url);
     if (url.includes("redfin.com/stingray")) return handlers.redfin(url);
-    if (url.includes("openai")) return handlers.openai(body);
     throw new Error(`unexpected ${url}`);
   });
   vi.stubGlobal("fetch", fn);
@@ -191,6 +198,7 @@ function mockFetch(overrides = {}) {
 const ADDRESS = "5055 Belfast Dr, Memphis, TN 38127";
 
 describe("run-comps", () => {
+  beforeEach(() => claudeCreate.mockReset());
   afterEach(() => vi.unstubAllGlobals());
 
   it("only uses each site's page for this exact address, never a neighbor's", () => {
@@ -309,11 +317,16 @@ describe("run-comps", () => {
     );
   });
 
-  it("lets OpenAI drop bad comps and pick from the ranked candidates, never adding homes", async () => {
-    const fetchMock = mockFetch();
-    const out = await runComps(ADDRESS, { ...ENV, OPENAI_API_KEY: "k" }, NOW);
+  it("lets Claude drop bad comps and pick from the ranked candidates, never adding homes", async () => {
+    mockFetch();
+    claudeCreate.mockResolvedValue(CLAUDE_REVIEW);
+    const out = await runComps(
+      ADDRESS,
+      { ...ENV, ANTHROPIC_API_KEY: "k" },
+      NOW,
+    );
 
-    expect(out.method).toBe("openai");
+    expect(out.method).toBe("claude");
     expect(out.topComps.map((c) => c.address.split(",")[0])).toEqual([
       "5258 Beaverton Dr",
       "794 Margie Dr",
@@ -326,28 +339,44 @@ describe("run-comps", () => {
       },
     ]);
 
-    // OpenAI sees the ranked candidates with how each misses the rules,
-    // and isn't asked for a value.
-    const sent = JSON.parse(
-      JSON.parse(
-        fetchMock.mock.calls.find(([url]) => url.includes("openai"))[1].body,
-      ).messages[1].content,
-    );
+    // Claude gets the ranked candidates with how each misses the rules,
+    // must answer in the review schema, and isn't asked for a value.
+    const request = claudeCreate.mock.calls[0][0];
+    expect(request).toMatchObject({
+      model: "claude-opus-5-5",
+      fallbacks: "default",
+      betas: ["server-side-fallback-2026-07-01"],
+      output_config: { format: { type: "json_schema" } },
+    });
+    expect(request.system).toMatch(/Do NOT estimate the subject's value/);
+    const sent = JSON.parse(request.messages[0].content);
     expect(sent.candidates).toHaveLength(7);
     expect(sent.candidates[0].misses).toEqual([]);
     expect(sent.candidates[3].misses).toEqual(["+1 bath"]);
     expect(out.arvEstimate).toBe(94700); // median of the 2 picked, in code
   });
 
-  it("uses the ranking when OpenAI fails, e.g. no credit", async () => {
-    mockFetch({
-      openai: () =>
-        json(429, { error: { message: "You have no credits remaining." } }),
-    });
-    const out = await runComps(ADDRESS, { ...ENV, OPENAI_API_KEY: "k" }, NOW);
+  it("uses the ranking when Claude fails or declines", async () => {
+    mockFetch();
+    claudeCreate.mockRejectedValueOnce(
+      new Error("Your credit balance is too low."),
+    );
+    let out = await runComps(ADDRESS, { ...ENV, ANTHROPIC_API_KEY: "k" }, NOW);
     expect(out.method).toBe("rules");
-    expect(out.aiError).toBe("You have no credits remaining.");
+    expect(out.aiError).toBe("Your credit balance is too low.");
     expect(out.topComps).toHaveLength(5);
+
+    claudeCreate.mockResolvedValueOnce({ stop_reason: "refusal", content: [] });
+    out = await runComps(ADDRESS, { ...ENV, ANTHROPIC_API_KEY: "k" }, NOW);
+    expect(out.method).toBe("rules");
+    expect(out.aiError).toMatch(/declined/);
+  });
+
+  it("doesn't call Claude without an API key", async () => {
+    mockFetch();
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.method).toBe("rules");
+    expect(claudeCreate).not.toHaveBeenCalled();
   });
 
   it("still returns the 5 closest when none meet every rule", async () => {
@@ -495,7 +524,7 @@ describe("run-comps", () => {
     );
   });
 
-  it("names the missing API keys (OpenAI is optional)", async () => {
+  it("names the missing API keys (Claude is optional)", async () => {
     await expect(runComps(ADDRESS, {})).rejects.toThrow(
       "missing SERPER_API_KEY, FIRECRAWL_API_KEY",
     );

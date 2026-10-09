@@ -12,15 +12,20 @@
 //      the rules above first (closest, then most recent), then the rest by
 //      how closely they match. The top 5 are shown; any outside the rules
 //      are labeled with exactly how they differ.
-//   4. OpenAI (optional) reviews the top candidates, drops bad or
+//   4. Claude (optional) reviews the top candidates, drops bad or
 //      irrelevant comps and picks the 5 closest. It never estimates value.
-//      Without OpenAI, or if it fails, the ranking's top 5 are used.
+//      Without Claude, or if it fails, the ranking's top 5 are used.
 //   5. ARV is worked out in code from the final comps.
 //
-// Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); OPENAI_API_KEY,
-// OPENAI_MODEL (optional).
+// Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); ANTHROPIC_API_KEY
+// (optional — Claude's review of the candidates).
 
-const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+import Anthropic from "@anthropic-ai/sdk";
+
+const CLAUDE_MODEL = "claude-opus-5-5";
+// Claude's review must finish inside the function's 60s limit
+// (vercel.json); on timeout the ranking's top 5 are used.
+const CLAUDE_TIMEOUT_MS = 25000;
 // Pages are scraped in parallel; this leaves time for the rest inside the
 // function's 60s limit (vercel.json).
 const FIRECRAWL_TIMEOUT_MS = 30000;
@@ -747,7 +752,7 @@ export function rankComps({
   return { ranked, strictCount, excluded, unknown };
 }
 
-// ── Step 4: OpenAI review (optional) ─────────────────────────────────────
+// ── Step 4: Claude review (optional) ─────────────────────────────────────
 
 const ID_REASON_LIST = {
   type: "array",
@@ -773,56 +778,56 @@ Remove bad or irrelevant comps: price outliers versus the others, likely distres
 Then select the 5 closest matches to the subject (fewer only if there aren't 5 reasonable ones). Prefer sales that meet every rule, then those missing the fewest and smallest rules.
 Do NOT estimate the subject's value. Only use ids from the list. Give a short reason for each selected and removed id.`;
 
-async function openAiReview(subject, candidates, apiKey, model) {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.1,
-      messages: [
-        { role: "system", content: REVIEW_PROMPT },
-        {
-          role: "user",
-          content: JSON.stringify({
-            subject,
-            candidates: candidates.map((m, i) => ({
-              id: String(i),
-              address: m.address,
-              soldDate: m.soldDate,
-              price: m.price,
-              beds: m.beds,
-              baths: m.baths,
-              sqft: m.sqft,
-              yearBuilt: m.yearBuilt,
-              propertyType: m.propertyType,
-              distanceMiles: m.distance,
-              misses: m.misses.map(([, label]) => label),
-            })),
-          }),
-        },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "comp_review",
-          strict: true,
-          schema: REVIEW_SCHEMA,
-        },
-      },
-    }),
+async function claudeReview(subject, candidates, apiKey) {
+  const client = new Anthropic({
+    apiKey,
+    timeout: CLAUDE_TIMEOUT_MS,
+    maxRetries: 1,
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.error?.message || `OpenAI failed (${res.status})`);
+  const response = await client.beta.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 16000,
+    // If Claude's safety checks decline the request, Anthropic re-runs it
+    // on its recommended fallback model.
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: {
+      effort: "medium",
+      // Guarantees the reply is JSON matching REVIEW_SCHEMA.
+      format: { type: "json_schema", schema: REVIEW_SCHEMA },
+    },
+    system: REVIEW_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: JSON.stringify({
+          subject,
+          candidates: candidates.map((m, i) => ({
+            id: String(i),
+            address: m.address,
+            soldDate: m.soldDate,
+            price: m.price,
+            beds: m.beds,
+            baths: m.baths,
+            sqft: m.sqft,
+            yearBuilt: m.yearBuilt,
+            propertyType: m.propertyType,
+            distanceMiles: m.distance,
+            misses: m.misses.map(([, label]) => label),
+          })),
+        }),
+      },
+    ],
+  });
+  if (response.stop_reason === "refusal") {
+    throw new Error("Claude declined to review these comps.");
   }
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenAI returned no result.");
-  const review = JSON.parse(content);
-  // Keep only ids that exist; OpenAI can't add homes.
+  const text = response.content.find((block) => block.type === "text")?.text;
+  if (!text || response.stop_reason === "max_tokens") {
+    throw new Error("Claude returned no result.");
+  }
+  const review = JSON.parse(text);
+  // Keep only ids that exist; Claude can't add homes.
   const valid = (list) =>
     (list || []).filter((x) => /^\d+$/.test(x.id) && candidates[Number(x.id)]);
   return { selected: valid(review.selected), removed: valid(review.removed) };
@@ -1023,7 +1028,7 @@ export async function runComps(
     now,
   });
 
-  // The 5 best-ranked; OpenAI, when available, reviews the top candidates,
+  // The 5 best-ranked; Claude, when available, reviews the top candidates,
   // drops bad ones and picks the 5 closest (it never sets the value).
   const candidates = ranked.slice(0, 15);
   let method = "rules";
@@ -1032,13 +1037,12 @@ export async function runComps(
   let picked = ranked
     .slice(0, COMP_RULES.maxComps)
     .map((m) => ({ ...m, reason: ruleReason(m) }));
-  if (env.OPENAI_API_KEY && candidates.length > 0) {
+  if (env.ANTHROPIC_API_KEY && candidates.length > 0) {
     try {
-      const review = await openAiReview(
+      const review = await claudeReview(
         property,
         candidates,
-        env.OPENAI_API_KEY,
-        env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
+        env.ANTHROPIC_API_KEY,
       );
       picked = review.selected
         .slice(0, COMP_RULES.maxComps)
@@ -1047,10 +1051,10 @@ export async function runComps(
         address: candidates[Number(id)].address,
         reason,
       }));
-      method = "openai";
+      method = "claude";
     } catch (err) {
       aiError = err.message;
-      console.warn("run-comps: OpenAI unavailable, using rules:", err.message);
+      console.warn("run-comps: Claude unavailable, using rules:", err.message);
     }
   }
 

@@ -1,5 +1,5 @@
 // Runs comps for an address through /api/run-comps (Serper → Firecrawl,
-// with OpenAI when available). Shared by the Deal Analyzer's Find Comps
+// with Claude when available). Shared by the Deal Analyzer's Find Comps
 // tab and the deal window's Run comps button.
 //
 // `adjust` ({ subject, location }) re-runs the comp rules with corrected

@@ -145,8 +145,8 @@ export default function RunCompsModal({
                 : `Top ${result.topComps.length} comp${result.topComps.length === 1 ? "" : "s"}`}
               {result.topComps.length > 0 && (
                 <span className="run-comps-method">
-                  {result.method === "openai"
-                    ? " · reviewed and picked by AI"
+                  {result.method === "claude"
+                    ? " · reviewed and picked by Claude"
                     : " · closest first"}
                 </span>
               )}

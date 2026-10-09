@@ -558,8 +558,8 @@ function FindCompsTab({ tab }) {
                 {result.summary}{" "}
                 {comparables.length > 0 && (
                   <span className="find-comps-muted">
-                    {result.method === "openai"
-                      ? "(Comps reviewed and picked by AI.)"
+                    {result.method === "claude"
+                      ? "(Comps reviewed and picked by Claude.)"
                       : "(Closest comps first.)"}
                   </span>
                 )}

@@ -14,7 +14,7 @@ const tab = {
 const MOCK_ADDRESS = "5500 Grand Lake Dr, San Antonio, TX 78244";
 const CACHE_KEY = "findComps_cache_v3";
 
-// What /api/run-comps returns (Serper → Firecrawl → OpenAI).
+// What /api/run-comps returns (Serper → Firecrawl → Redfin, Claude optional).
 const mockApiResponse = {
   address: MOCK_ADDRESS,
   listingUrls: {

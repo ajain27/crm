@@ -108,8 +108,8 @@ export function formatCompsNote(result, date = new Date()) {
   });
   if (result.summary) lines.push(result.summary);
   lines.push(
-    result.method === "openai"
-      ? "Comps reviewed and picked by AI."
+    result.method === "claude"
+      ? "Comps reviewed and picked by Claude."
       : "Comps ordered by distance, then most recent sale.",
   );
   const sourceLinks = Object.entries(result.listingUrls || {})
