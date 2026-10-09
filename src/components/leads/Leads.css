@@ -1150,22 +1150,18 @@
     padding: 0;
   }
 
-  .ppc-quality-good:hover:not(:disabled),
+  .ppc-quality-good:hover,
   .ppc-quality-good.ppc-quality-active {
     background: color-mix(in srgb, #16a34a 15%, var(--panel) 85%);
     color: #16a34a;
     border-color: color-mix(in srgb, #16a34a 40%, transparent 60%);
   }
 
-  .ppc-quality-bad:hover:not(:disabled),
+  .ppc-quality-bad:hover,
   .ppc-quality-bad.ppc-quality-active {
     background: color-mix(in srgb, #dc2626 15%, var(--panel) 85%);
     color: #dc2626;
     border-color: color-mix(in srgb, #dc2626 40%, transparent 60%);
-  }
-
-  .ppc-quality-btn:disabled {
-    cursor: default;
   }
 
   /* Bad lead popup */

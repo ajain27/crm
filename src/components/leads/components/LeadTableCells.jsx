@@ -185,23 +185,26 @@ export function AutomationCell({
   );
 }
 
-export function QualityCell({ quality, onMarkGood, onMarkBad }) {
+// Clicking the thumb that's already selected clears the rating.
+export function QualityCell({ quality, onMarkGood, onMarkBad, onClear }) {
+  const isGood = quality === "good";
+  const isBad = quality === "bad";
   return (
     <ActionCell className="ppc-quality-cell acc-col-action-mobile">
       <div className="ppc-quality-btns">
         <button
-          className={`ppc-quality-btn ppc-quality-good${quality === "good" ? " ppc-quality-active" : ""}`}
-          title="Mark as good lead"
-          disabled={quality === "good"}
-          onClick={onMarkGood}
+          className={`ppc-quality-btn ppc-quality-good${isGood ? " ppc-quality-active" : ""}`}
+          title={isGood ? "Clear good rating" : "Mark as good lead"}
+          aria-pressed={isGood}
+          onClick={isGood ? onClear : onMarkGood}
         >
           <ThumbsUp size={13} />
         </button>
         <button
-          className={`ppc-quality-btn ppc-quality-bad${quality === "bad" ? " ppc-quality-active" : ""}`}
-          title="Mark as bad lead"
-          disabled={quality === "bad"}
-          onClick={onMarkBad}
+          className={`ppc-quality-btn ppc-quality-bad${isBad ? " ppc-quality-active" : ""}`}
+          title={isBad ? "Clear bad rating" : "Mark as bad lead"}
+          aria-pressed={isBad}
+          onClick={isBad ? onClear : onMarkBad}
         >
           <ThumbsDown size={13} />
         </button>

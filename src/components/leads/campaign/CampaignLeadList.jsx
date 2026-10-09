@@ -182,6 +182,7 @@ export default function CampaignLeadList({
                           quality={lead.ppcQuality}
                           onMarkGood={() => onSetQuality(lead, "good")}
                           onMarkBad={() => setBadModalLead(lead)}
+                          onClear={() => onSetQuality(lead, "")}
                         />
                         <CrmCell
                           isBad={isBad}

@@ -260,6 +260,29 @@ describe("PotentialLeads", () => {
     expect(screen.queryByText(/Mark Lead as Bad/i)).toBeNull();
   });
 
+  it("clicking the selected thumb again clears the rating", async () => {
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    const lead = {
+      id: "l1",
+      source: "Google Ads",
+      sellerName: "Jane PPC",
+      email: "jane@example.com",
+      ppcQuality: "bad",
+      ppcBadReason: "Unreachable",
+    };
+    render(<PotentialLeads {...baseProps({ leads: [lead], saveLead })} />);
+    fireEvent.click(screen.getByRole("button", { name: /PPC Leads/i }));
+
+    fireEvent.click(screen.getByTitle(/Clear bad rating/i));
+
+    await waitFor(() => {
+      expect(saveLead).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "l1", ppcQuality: "", ppcBadReason: "" }),
+      );
+    });
+    expect(screen.queryByText(/Mark Lead as Bad/i)).toBeNull();
+  });
+
   it("bulk-deletes selected PPL leads", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteLeadById = vi.fn().mockResolvedValue(undefined);
