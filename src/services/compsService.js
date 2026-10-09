@@ -1,11 +1,14 @@
 // Runs comps for an address through /api/run-comps (Serper → Firecrawl,
 // with OpenAI when available). Shared by the Deal Analyzer's Find Comps
 // tab and the deal window's Run comps button.
-export async function requestComps(address) {
+//
+// `adjust` ({ subject, location }) re-runs the comp rules with corrected
+// subject facts at a known location — no searching or scraping.
+export async function requestComps(address, adjust = null) {
   const res = await fetch("/api/run-comps", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ address }),
+    body: JSON.stringify(adjust ? { address, ...adjust } : { address }),
   });
   const data = await res.json().catch(() => null);
   if (res.ok && data) return data;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Modal from "../modal/Modal";
 import { ZillowLink } from "./components/LeadTableCells";
+import { StreetViewButton } from "../elements/StreetView";
 import { formatPhone } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { COMMERCIAL_PROPERTY_TYPES } from "./leadsConfig";
@@ -102,7 +103,12 @@ export default function CommercialLeadDetailModal({
             </Field>
             <Field
               label="Address"
-              action={<ZillowLink address={draft.address} />}
+              action={
+                <>
+                  <ZillowLink address={draft.address} />
+                  <StreetViewButton address={draft.address} />
+                </>
+              }
             >
               <input
                 className="ldm-input ldm-wide"

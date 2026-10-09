@@ -5,6 +5,7 @@ import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
 import { ZillowLink } from "./components/LeadTableCells";
+import { StreetViewButton } from "../elements/StreetView";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -158,7 +159,12 @@ export default function LeadDetailModal({
             </Field>
             <Field
               label="Address"
-              action={<ZillowLink address={draft.address} />}
+              action={
+                <>
+                  <ZillowLink address={draft.address} />
+                  <StreetViewButton address={draft.address} />
+                </>
+              }
             >
               <input
                 className="ldm-input ldm-wide"

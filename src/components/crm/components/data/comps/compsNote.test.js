@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { formatCompsNote } from "./compsNote";
+import {
+  compDetailsText,
+  compsCriteriaText,
+  formatCompsNote,
+} from "./compsNote";
 
 describe("formatCompsNote", () => {
   it("lists the estimates, property facts and each comp with its link", () => {
@@ -38,10 +42,39 @@ describe("formatCompsNote", () => {
       "Comps (10/8/2026):",
       "ARV estimate: $160,000 · Rent estimate: $1,250/mo",
       "Property: 3 bd · 2 ba · 1,400 sq ft · built 1978 · tax $900/yr",
-      "1. 1 Oak St — $154,000 ($110/sq ft) · 3 bd/2 ba · 1,400 sq ft · sold 2026-08-01 · Zillow: https://www.zillow.com/homedetails/1",
+      "1. 1 Oak St — $154,000 ($110/sq ft) · 3 bd/2 ba · 1,400 sq ft · sold 2026-08-01 · https://www.zillow.com/homedetails/1",
       "Based on recent 3/2 sales.",
-      "Comps picked by matching beds, baths, size and sale date.",
+      "Comps ordered by distance, then most recent sale.",
       "Sources: https://www.zillow.com/homedetails/s",
     ]);
+  });
+
+  it("says when beds/baths were widened and labels how a comp differs", () => {
+    expect(
+      compsCriteriaText({
+        criteria: {
+          radiusMiles: 0.5,
+          soldWithinDays: 90,
+          beds: 3,
+          baths: 1.5,
+          bedsTolerance: 0,
+          bathsTolerance: 0.5,
+          relaxed: true,
+          yearBuiltFrom: 1967,
+          yearBuiltTo: 1977,
+          unknown: [],
+        },
+      }),
+    ).toBe(
+      "Sold within 0.5 mi in the last 90 days · 3 bd · 1.5 ba (±0.5) · built 1967–1977 — no exact bed/bath matches, so widened",
+    );
+    expect(
+      compDetailsText({
+        beds: 3,
+        baths: 1,
+        differs: "−0.5 bath",
+        distance: 0.29,
+      }),
+    ).toBe("3 bd/1 ba (−0.5 bath) · 0.29 mi away");
   });
 });

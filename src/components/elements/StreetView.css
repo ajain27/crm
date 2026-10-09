@@ -1,0 +1,60 @@
+@layer components {
+  .street-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .street-view-btn:hover {
+    text-decoration: underline;
+  }
+
+  .street-view-btn--compact {
+    padding: 0.2rem;
+    border-radius: 0.375rem;
+  }
+
+  .street-view-btn--compact:hover {
+    background: var(--badge-bg);
+    text-decoration: none;
+  }
+
+  .street-view-body {
+    position: relative;
+    padding-bottom: 1rem;
+  }
+
+  .street-view-canvas {
+    width: 100%;
+    height: min(560px, 65vh);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: var(--badge-bg);
+  }
+
+  .street-view-overlay {
+    position: absolute;
+    inset: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    color: var(--muted);
+  }
+
+  .street-view-error {
+    margin: 0;
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--muted);
+  }
+}

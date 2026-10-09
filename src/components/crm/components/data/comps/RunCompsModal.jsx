@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ExternalLink, Loader } from "lucide-react";
 import Modal from "../../../../modal/Modal";
-import { formatCompsNote, pricePerSqft, requestComps } from "./compsNote";
+import { StreetViewButton } from "../../../../elements/StreetView";
+import {
+  compDetailsText,
+  compsCriteriaText,
+  compsStatsText,
+  formatCompsNote,
+  pricePerSqft,
+  requestComps,
+} from "./compsNote";
 
 const money = (n) =>
   typeof n === "number" && Number.isFinite(n)
@@ -132,15 +140,28 @@ export default function RunCompsModal({
             )}
 
             <h3 className="run-comps-heading">
-              Top {result.topComps.length} comps
-              <span className="run-comps-method">
-                {result.method === "openai"
-                  ? " · picked by AI"
-                  : " · picked by matching beds, baths, size and sale date"}
-              </span>
+              {result.topComps.length === 0
+                ? "No comps"
+                : `Top ${result.topComps.length} comp${result.topComps.length === 1 ? "" : "s"}`}
+              {result.topComps.length > 0 && (
+                <span className="run-comps-method">
+                  {result.method === "openai"
+                    ? " · reviewed and picked by AI"
+                    : " · closest first"}
+                </span>
+              )}
             </h3>
+            {result.criteria && (
+              <p className="run-comps-muted run-comps-rules">
+                <strong>Rules:</strong> {compsCriteriaText(result)}
+                <br />
+                {compsStatsText(result)}
+              </p>
+            )}
             {result.topComps.length === 0 ? (
-              <p className="run-comps-muted">No comparable sales were found.</p>
+              <p className="run-comps-muted">
+                No sold homes met every rule, so there's no ARV from comps.
+              </p>
             ) : (
               <ol className="run-comps-list">
                 {result.topComps.map((comp, i) => {
@@ -152,25 +173,33 @@ export default function RunCompsModal({
                         <span>{money(comp.price)}</span>
                       </div>
                       <div className="run-comps-muted">
-                        {num(comp.beds)} bd · {num(comp.baths)} ba ·{" "}
-                        {num(comp.sqft)} sq ft
+                        {compDetailsText(comp)}
                         {ppsf ? ` · ${money(ppsf)}/sq ft` : ""}
-                        {comp.soldDate ? ` · sold ${comp.soldDate}` : ""}
                       </div>
                       {comp.reason && (
                         <div className="run-comps-reason">{comp.reason}</div>
                       )}
-                      {comp.url && (
-                        <a
-                          href={comp.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="leads-mls-link"
-                        >
-                          <ExternalLink size={12} />
-                          View on {comp.source}
-                        </a>
-                      )}
+                      <div className="run-comps-links">
+                        {comp.url && (
+                          <a
+                            href={comp.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="leads-mls-link"
+                          >
+                            <ExternalLink size={12} />
+                            View on {comp.source}
+                          </a>
+                        )}
+                        <StreetViewButton
+                          address={comp.address}
+                          location={
+                            comp.lat != null && comp.lng != null
+                              ? { lat: comp.lat, lng: comp.lng }
+                              : undefined
+                          }
+                        />
+                      </div>
                     </li>
                   );
                 })}

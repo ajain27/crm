@@ -876,6 +876,11 @@
     color: var(--muted);
   }
 
+  .run-comps-rules {
+    margin: 0;
+    line-height: 1.5;
+  }
+
   .run-comps-list {
     display: grid;
     gap: 0.6rem;
@@ -891,6 +896,12 @@
   .run-comps-comp-head {
     display: flex;
     justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .run-comps-links {
+    display: flex;
+    align-items: center;
     gap: 1rem;
   }
 

@@ -1,5 +1,5 @@
-// The note Run comps adds to a deal: property facts, ARV / rent estimate
-// and the top comps with links, as plain text for the deal's notes.
+// Formatting shared by the comps window, the deal note and the Find Comps
+// tab: the comp rules applied, what they excluded, and the note itself.
 
 const money = (n) =>
   typeof n === "number" && Number.isFinite(n)
@@ -15,6 +15,73 @@ export function pricePerSqft(comp) {
   return comp.price > 0 && comp.sqft > 0 ? comp.price / comp.sqft : null;
 }
 
+const UNKNOWN_LABELS = {
+  beds: "beds",
+  baths: "baths",
+  yearBuilt: "year built",
+};
+
+// "Sold within 0.5 mi in the last 90 days · 3 bd · 1 ba · built 1967–1977"
+export function compsCriteriaText(result) {
+  const c = result.criteria;
+  if (!c) return "";
+  const plusMinus = (tol) => (tol > 0 ? ` (±${tol})` : "");
+  const parts = [
+    `Sold within ${c.radiusMiles} mi in the last ${c.soldWithinDays} days`,
+    c.beds ? `${c.beds} bd${plusMinus(c.bedsTolerance)}` : null,
+    c.baths ? `${c.baths} ba${plusMinus(c.bathsTolerance)}` : null,
+    c.yearBuiltFrom ? `built ${c.yearBuiltFrom}–${c.yearBuiltTo}` : null,
+  ].filter(Boolean);
+  const unknown = (c.unknown || []).map((f) => UNKNOWN_LABELS[f] || f);
+  return (
+    parts.join(" · ") +
+    (c.relaxed ? " — no exact bed/bath matches, so widened" : "") +
+    (unknown.length
+      ? ` (the property's ${unknown.join(", ")} couldn't be found, so not applied)`
+      : "")
+  );
+}
+
+const EXCLUDED_LABELS = {
+  distance: "too far",
+  soldDate: "sold too long ago",
+  beds: "different beds",
+  baths: "different baths",
+  yearBuilt: "built outside the range",
+  propertyType: "different property type",
+};
+
+// "11 homes sold nearby; 3 met every rule (excluded: 4 too far, 4 different beds)."
+export function compsStatsText(result) {
+  const s = result.stats;
+  if (!s) return "";
+  const excluded = Object.entries(s.excluded || {})
+    .filter(([, count]) => count > 0)
+    .map(([rule, count]) => `${count} ${EXCLUDED_LABELS[rule] || rule}`);
+  const removed = s.removedByAi?.length
+    ? ` AI removed ${s.removedByAi.length} as poor comps.`
+    : "";
+  return (
+    `${s.nearbySales} home${s.nearbySales === 1 ? "" : "s"} sold nearby; ` +
+    `${s.matched} met every rule` +
+    (excluded.length ? ` (excluded: ${excluded.join(", ")})` : "") +
+    `.${removed}`
+  );
+}
+
+export function compDetailsText(comp) {
+  return [
+    `${num(comp.beds)} bd/${num(comp.baths)} ba` +
+      (comp.differs ? ` (${comp.differs})` : ""),
+    comp.sqft ? num(comp.sqft, " sq ft") : null,
+    comp.yearBuilt ? `built ${comp.yearBuilt}` : null,
+    comp.soldDate ? `sold ${comp.soldDate}` : null,
+    typeof comp.distance === "number" ? `${comp.distance} mi away` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function formatCompsNote(result, date = new Date()) {
   const p = result.property || {};
   const lines = [
@@ -22,21 +89,22 @@ export function formatCompsNote(result, date = new Date()) {
     `ARV estimate: ${money(result.arvEstimate)} · Rent estimate: ${money(result.rentEstimate)}/mo`,
     `Property: ${num(p.beds)} bd · ${num(p.baths)} ba · ${num(p.sqft, " sq ft")} · built ${p.yearBuilt ?? "—"} · tax ${money(p.annualTax)}/yr`,
   ];
+  if (result.criteria) lines.push(`Rules: ${compsCriteriaText(result)}`);
+  if (result.stats) lines.push(compsStatsText(result));
   (result.topComps || []).forEach((comp, i) => {
     const ppsf = pricePerSqft(comp);
     lines.push(
       `${i + 1}. ${comp.address} — ${money(comp.price)}` +
         `${ppsf ? ` (${money(ppsf)}/sq ft)` : ""}` +
-        ` · ${num(comp.beds)} bd/${num(comp.baths)} ba · ${num(comp.sqft, " sq ft")}` +
-        `${comp.soldDate ? ` · sold ${comp.soldDate}` : ""}` +
-        ` · ${comp.source}${comp.url ? `: ${comp.url}` : ""}`,
+        ` · ${compDetailsText(comp)}` +
+        `${comp.url ? ` · ${comp.url}` : ""}`,
     );
   });
   if (result.summary) lines.push(result.summary);
   lines.push(
     result.method === "openai"
-      ? "Comps picked by AI."
-      : "Comps picked by matching beds, baths, size and sale date.",
+      ? "Comps reviewed and picked by AI."
+      : "Comps ordered by distance, then most recent sale.",
   );
   const sourceLinks = Object.entries(result.listingUrls || {})
     .filter(([, url]) => url)

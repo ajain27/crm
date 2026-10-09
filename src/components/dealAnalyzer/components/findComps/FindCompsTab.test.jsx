@@ -12,7 +12,7 @@ const tab = {
 };
 
 const MOCK_ADDRESS = "5500 Grand Lake Dr, San Antonio, TX 78244";
-const CACHE_KEY = "findComps_cache_v2";
+const CACHE_KEY = "findComps_cache_v3";
 
 // What /api/run-comps returns (Serper → Firecrawl → OpenAI).
 const mockApiResponse = {
@@ -24,7 +24,25 @@ const mockApiResponse = {
       "https://www.realtor.com/realestateandhomes-detail/5500-Grand-Lake-Dr",
   },
   sourceErrors: { redfin: "No page found" },
+  location: { lat: 29.5, lng: -98.4, matchedAddress: "5500 GRAND LAKE DR" },
+  subjectSources: {
+    zillow: {
+      propertyType: "Single Family",
+      beds: 3,
+      baths: 2.5,
+      sqft: 1878,
+      yearBuilt: 1973,
+    },
+    realtor: {
+      propertyType: "Single Family",
+      beds: 3,
+      baths: 2,
+      sqft: 1878,
+      yearBuilt: 1973,
+    },
+  },
   property: {
+    propertyType: "Single Family",
     beds: 3,
     baths: 2,
     sqft: 1878,
@@ -35,6 +53,28 @@ const mockApiResponse = {
   },
   arvEstimate: 250000,
   rentEstimate: 1850,
+  criteria: {
+    radiusMiles: 0.5,
+    soldWithinDays: 90,
+    beds: 3,
+    baths: 2,
+    yearBuiltFrom: 1968,
+    yearBuiltTo: 1978,
+    unknown: [],
+  },
+  stats: {
+    nearbySales: 9,
+    matched: 2,
+    excluded: {
+      distance: 3,
+      soldDate: 0,
+      beds: 2,
+      baths: 1,
+      yearBuilt: 1,
+      propertyType: 0,
+    },
+    removedByAi: [],
+  },
   topComps: [
     {
       address: "5207 Pine Lake Dr, San Antonio, TX 78244",
@@ -43,6 +83,8 @@ const mockApiResponse = {
       baths: 2,
       sqft: 1895,
       soldDate: "2026-07-14",
+      distance: 0.21,
+      yearBuilt: 1975,
       url: "https://www.zillow.com/homedetails/5207-Pine-Lake-Dr/2_zpid/",
       source: "Zillow",
       reason: "Nearly identical size, sold this summer",
@@ -53,7 +95,9 @@ const mockApiResponse = {
       beds: 3,
       baths: 2,
       sqft: 1820,
-      soldDate: "2026-05-02",
+      soldDate: "2026-08-02",
+      distance: 0.44,
+      yearBuilt: 1970,
       url: null,
       source: "Realtor.com",
       reason: "Same bed/bath, slightly smaller",
@@ -252,18 +296,23 @@ describe("successful fetch", () => {
     await waitFor(() =>
       expect(screen.getByText("Subject Property")).toBeInTheDocument(),
     );
-    expect(screen.getByText("1973")).toBeInTheDocument();
-    expect(screen.getByText("1,878")).toBeInTheDocument();
+    expect(screen.getByLabelText("Year Built")).toHaveValue(1973);
+    expect(screen.getByLabelText("Sq Ft")).toHaveValue(1878);
+    expect(screen.getByLabelText("Property type")).toHaveValue("Single Family");
     expect(screen.getByText("$3,200")).toBeInTheDocument();
-    // The property's own pages; Redfin wasn't found.
-    expect(screen.getByRole("link", { name: /^Zillow$/ })).toHaveAttribute(
-      "href",
-      mockApiResponse.listingUrls.zillow,
-    );
+    // The property's own pages join the View property row; Redfin wasn't found.
+    expect(
+      screen.getByRole("link", { name: "Open this property in Zillow" }),
+    ).toHaveAttribute("href", mockApiResponse.listingUrls.zillow);
     expect(
       screen.getByRole("link", { name: /^Realtor\.com$/ }),
-    ).toBeInTheDocument();
+    ).toHaveAttribute("href", mockApiResponse.listingUrls.realtor);
     expect(screen.queryByRole("link", { name: /^Redfin$/ })).toBeNull();
+    expect(screen.queryByText(/This property on/i)).not.toBeInTheDocument();
+    // One Street View button for the property.
+    expect(
+      screen.getAllByRole("button", { name: /^Street View$/ }),
+    ).toHaveLength(1);
   });
 
   it("renders a row in the comparables table for each comparable", async () => {
@@ -297,6 +346,8 @@ describe("successful fetch", () => {
       expect(screen.getByText("$289,444")).toBeInTheDocument(),
     );
     expect(screen.getByText("Sold 2026-07-14")).toBeInTheDocument();
+    expect(screen.getByText("0.21 mi")).toBeInTheDocument();
+    expect(screen.getByText("1975")).toBeInTheDocument();
     expect(
       screen.getByRole("link", {
         name: "5207 Pine Lake Dr, San Antonio, TX 78244",
@@ -308,16 +359,28 @@ describe("successful fetch", () => {
     ).toBe("TD");
   });
 
-  it("shows the Propwire external link before any search is run", () => {
+  it("shows View property links only once an address is entered", () => {
     render(<FindCompsTab tab={tab} />);
-    expect(screen.getByText("Open in Propwire")).toBeInTheDocument();
-    expect(screen.getByText("Open in Propwire").closest("a")).toHaveAttribute(
+    expect(screen.queryByText(/Propwire/)).not.toBeInTheDocument();
+    expect(screen.queryByText("View property:")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open this property in Zillow" }),
+    ).toBeNull();
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS },
+    });
+    expect(
+      screen.getByRole("link", { name: "Open this property in Zillow" }),
+    ).toHaveAttribute(
       "href",
-      "https://propwire.com",
+      "https://www.zillow.com/homes/5500-Grand-Lake-Dr-San-Antonio-TX-78244_rb/",
     );
+    expect(
+      screen.getByRole("button", { name: /Street View/ }),
+    ).toBeInTheDocument();
   });
 
-  it("shows the Propwire external link after results load", async () => {
+  it("links straight to the property's Zillow page after results load", async () => {
     mockFetchSuccess();
     render(<FindCompsTab tab={tab} />);
     fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
@@ -326,8 +389,11 @@ describe("successful fetch", () => {
     fireEvent.click(screen.getByRole("button", { name: /Find Comps/i }));
 
     await waitFor(() =>
-      expect(screen.getByText("Open in Propwire")).toBeInTheDocument(),
+      expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
     );
+    expect(
+      screen.getByRole("link", { name: "Open this property in Zillow" }),
+    ).toHaveAttribute("href", mockApiResponse.listingUrls.zillow);
   });
 
   it("hides the loader once results are shown", async () => {
@@ -671,5 +737,115 @@ describe("auto-search from cache on typing", () => {
       target: { value: "" },
     });
     expect(screen.queryByText("Estimated ARV")).not.toBeInTheDocument();
+  });
+});
+
+describe("comp rules", () => {
+  it("shows the rules applied and how many nearby sales each excluded", async () => {
+    mockFetchSuccess();
+    render(<FindCompsTab tab={tab} />);
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Find Comps/i }));
+    await waitFor(() =>
+      expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
+    );
+    const rules = screen.getByText(/^Rules:/).closest("p");
+    expect(rules).toHaveTextContent(
+      "Sold within 0.5 mi in the last 90 days · 3 bd · 2 ba · built 1968–1978",
+    );
+    expect(rules).toHaveTextContent(
+      "9 homes sold nearby; 2 met every rule (excluded: 3 too far, 2 different beds, 1 different baths, 1 built outside the range).",
+    );
+  });
+});
+
+describe("adjusting the subject property", () => {
+  async function search() {
+    mockFetchSuccess();
+    render(<FindCompsTab tab={tab} />);
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Find Comps/i }));
+    await waitFor(() =>
+      expect(screen.getByText("Estimated ARV")).toBeInTheDocument(),
+    );
+  }
+
+  it("shows what each site said and flags where they disagree", async () => {
+    await search();
+    const baths = screen.getByLabelText("Baths").closest("label");
+    expect(baths).toHaveTextContent("Zillow 2.5 · Realtor.com 2");
+    expect(baths).toHaveClass("find-comps-adjust-field--conflict");
+    const beds = screen.getByLabelText("Beds").closest("label");
+    expect(beds).not.toHaveClass("find-comps-adjust-field--conflict");
+    expect(screen.getByText(/don't agree on everything/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Re-run comps/ })).toBeDisabled();
+  });
+
+  it("re-runs comps with corrected values at the same location", async () => {
+    await search();
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...mockApiResponse,
+        listingUrls: null,
+        subjectSources: {},
+        property: { ...mockApiResponse.property, baths: 2.5 },
+        topComps: [mockApiResponse.topComps[1]],
+        arvEstimate: 245000,
+        adjusted: true,
+      }),
+    });
+
+    fireEvent.change(screen.getByLabelText("Baths"), {
+      target: { value: "2.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Re-run comps/ }));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
+    const body = JSON.parse(globalThis.fetch.mock.calls[1][1].body);
+    expect(body).toMatchObject({
+      address: MOCK_ADDRESS,
+      location: mockApiResponse.location,
+      subject: {
+        beds: 3,
+        baths: 2.5,
+        sqft: 1878,
+        yearBuilt: 1973,
+        propertyType: "Single Family",
+      },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Comparable Sales \(1\)/)).toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText("Baths")).toHaveValue(2.5);
+    // The sites' pages and their values carry over from the search.
+    expect(
+      screen.getByRole("link", { name: "Open this property in Zillow" }),
+    ).toHaveAttribute("href", mockApiResponse.listingUrls.zillow);
+    expect(screen.getByLabelText("Baths").closest("label")).toHaveTextContent(
+      "Zillow 2.5 · Realtor.com 2",
+    );
+  });
+
+  it("shows the error if the re-run fails, keeping the results", async () => {
+    await search();
+    globalThis.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      json: async () => ({
+        error: "Couldn't load recent sales from Redfin (403).",
+      }),
+    });
+    fireEvent.change(screen.getByLabelText("Beds"), { target: { value: "4" } });
+    fireEvent.click(screen.getByRole("button", { name: /Re-run comps/ }));
+    expect(
+      await screen.findByText(/Couldn't load recent sales from Redfin/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Estimated ARV")).toBeInTheDocument();
   });
 });

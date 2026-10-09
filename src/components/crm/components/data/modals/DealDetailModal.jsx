@@ -12,6 +12,7 @@ import WholesaleOfferPdfTemplate, {
 import OfferOptionsModal from "./OfferOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
+import { StreetViewButton } from "../../../../elements/StreetView";
 import {
   getSuggestedWholesaleMao,
   getContractVersions,
@@ -391,7 +392,12 @@ function DealDetailModal({
             <Field
               label="Address"
               span2
-              action={<ZillowLink address={formatFullAddress(draft)} />}
+              action={
+                <>
+                  <ZillowLink address={formatFullAddress(draft)} />
+                  <StreetViewButton address={formatFullAddress(draft)} />
+                </>
+              }
             >
               <input
                 disabled={locked}

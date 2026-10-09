@@ -3,10 +3,18 @@ import { ExternalLink, Search, MapPin, Trash2 } from "lucide-react";
 import Pagination from "../../../pagination/Pagination";
 import { useAddressAutocomplete } from "../../../../hooks/useAddressAutocomplete";
 import { requestComps } from "../../../../services/compsService";
+import { zillowUrl } from "../../../leads/leadUtils";
+import { StreetViewButton } from "../../../elements/StreetView";
+import SubjectAdjuster from "./SubjectAdjuster";
+import {
+  compsCriteriaText,
+  compsStatsText,
+} from "../../../crm/components/data/comps/compsNote";
 
-// v2: comps from /api/run-comps. Searches saved under the old key used a
-// different data source and are no longer read.
-const CACHE_KEY = "findComps_cache_v2";
+// v3: comps that follow the comp rules (sold, 0.5 mi, 90 days, same
+// beds/baths, built ±5 years). Searches saved under older keys used looser
+// comps and are no longer read.
+const CACHE_KEY = "findComps_cache_v3";
 const MAX_CACHE = 100;
 const COMPS_PER_PAGE = 5;
 const MAX_SUGGESTIONS = 8;
@@ -22,11 +30,17 @@ function slimResult(data) {
     rentEstimate: data.rentEstimate,
     valueEstimate: data.valueEstimate,
     summary: data.summary,
+    criteria: data.criteria,
+    location: data.location,
+    subjectSources: data.subjectSources,
+    adjusted: data.adjusted,
+    stats: data.stats,
     method: data.method,
     listingUrls: data.listingUrls,
     subjectProperty: sp
       ? {
           formattedAddress: sp.formattedAddress,
+          propertyType: sp.propertyType,
           bedrooms: sp.bedrooms,
           bathrooms: sp.bathrooms,
           squareFootage: sp.squareFootage,
@@ -43,6 +57,11 @@ function slimResult(data) {
       bathrooms: c.bathrooms,
       squareFootage: c.squareFootage,
       soldDate: c.soldDate,
+      distance: c.distance,
+      yearBuilt: c.yearBuilt,
+      differs: c.differs,
+      lat: c.lat,
+      lng: c.lng,
       url: c.url,
       source: c.source,
     })),
@@ -57,10 +76,16 @@ export function toFindCompsResult(api, address) {
     rentEstimate: api.rentEstimate ?? p.rentEstimate,
     valueEstimate: p.valueEstimate,
     summary: api.summary,
+    criteria: api.criteria,
+    location: api.location,
+    subjectSources: api.subjectSources,
+    adjusted: api.adjusted,
+    stats: api.stats,
     method: api.method,
     listingUrls: api.listingUrls,
     subjectProperty: {
       formattedAddress: api.address || address,
+      propertyType: p.propertyType,
       bedrooms: p.beds,
       bathrooms: p.baths,
       squareFootage: p.sqft,
@@ -76,6 +101,11 @@ export function toFindCompsResult(api, address) {
       bathrooms: c.baths,
       squareFootage: c.sqft,
       soldDate: c.soldDate,
+      distance: c.distance,
+      yearBuilt: c.yearBuilt,
+      differs: c.differs,
+      lat: c.lat,
+      lng: c.lng,
       url: c.url,
       source: c.source,
     })),
@@ -147,16 +177,15 @@ const statusColor = (s) => {
   return "var(--muted)";
 };
 
-function getCompLinks(encoded) {
-  return [
-    {
-      name: "Propwire",
-      badge: "Full History",
-      url: encoded
-        ? `https://propwire.com/search?q=${encoded}`
-        : "https://propwire.com",
-    },
-  ];
+// The property on Zillow: its Zillow page once comps have found it,
+// otherwise a Zillow search for the typed address (which lands on the
+// property page when the address is a single home).
+function propertyZillowUrl(address, result) {
+  return (
+    result?.listingUrls?.zillow ||
+    zillowUrl(address) ||
+    "https://www.zillow.com"
+  );
 }
 
 function FindCompsTab({ tab }) {
@@ -166,6 +195,8 @@ function FindCompsTab({ tab }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [compsPage, setCompsPage] = useState(1);
+  const [rerunning, setRerunning] = useState(false);
+  const [rerunError, setRerunError] = useState("");
 
   const addressInputRef = useRef(null);
   useAddressAutocomplete(addressInputRef, ({ formatted }) => {
@@ -263,6 +294,38 @@ function FindCompsTab({ tab }) {
     }
   }
 
+  // Re-applies the comp rules with corrected subject facts. The location,
+  // the sites' pages and what each site said carry over from the search.
+  async function handleAdjust(facts) {
+    setRerunning(true);
+    setRerunError("");
+    try {
+      const sp = result.subjectProperty || {};
+      const api = await requestComps(address.trim(), {
+        location: result.location,
+        subject: {
+          ...facts,
+          valueEstimate: result.valueEstimate,
+          rentEstimate: result.rentEstimate,
+          annualTax: sp.annualTax,
+        },
+      });
+      const next = {
+        ...toFindCompsResult(api, address.trim()),
+        listingUrls: result.listingUrls,
+        subjectSources: result.subjectSources,
+      };
+      next.subjectProperty.formattedAddress = sp.formattedAddress;
+      saveToCache(address.trim(), next);
+      setResult(next);
+      setCompsPage(1);
+    } catch (err) {
+      setRerunError(err.message || "Couldn't re-run comps.");
+    } finally {
+      setRerunning(false);
+    }
+  }
+
   function handleReset() {
     setStatus("idle");
     setResult(null);
@@ -272,8 +335,7 @@ function FindCompsTab({ tab }) {
     setSuggestions([]);
   }
 
-  const encoded = encodeURIComponent(address.trim());
-  const compLinks = getCompLinks(encoded);
+  const zillowLink = propertyZillowUrl(address.trim(), result);
   const sp = result?.subjectProperty;
 
   const comparables = result?.comparables ?? [];
@@ -394,31 +456,42 @@ function FindCompsTab({ tab }) {
           </div>
         </div>
 
-        <div className="find-comps-external">
-          <span className="find-comps-section-label">
-            Verify on External Sources
-          </span>
-          <div className="find-comps-sources-grid">
-            {compLinks.map((src) => (
+        {/* Only once there's an address to look up. */}
+        {address.trim() && (
+          <div className="find-comps-external">
+            <span className="find-comps-external-label">View property:</span>
+            <a
+              href={zillowLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="find-comps-external-link"
+              aria-label="Open this property in Zillow"
+            >
+              <ExternalLink size={13} />
+              Zillow
+            </a>
+            {/* The property's other pages, once a search has found them. */}
+            {LISTING_SITES.filter(
+              ([key]) => key !== "zillow" && result?.listingUrls?.[key],
+            ).map(([key, label]) => (
               <a
-                key={src.name}
-                href={src.url}
+                key={key}
+                href={result.listingUrls[key]}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="find-comps-source-card"
+                className="find-comps-external-link"
               >
-                <div className="find-comps-source-top">
-                  <span className="find-comps-source-name">{src.name}</span>
-                  <span className="find-comps-source-badge">{src.badge}</span>
-                </div>
-                <div className="find-comps-source-action">
-                  <span>Open in {src.name}</span>
-                  <ExternalLink size={14} />
-                </div>
+                <ExternalLink size={13} />
+                {label}
               </a>
             ))}
+            <StreetViewButton
+              address={address.trim()}
+              location={result?.location}
+              className="find-comps-external-link"
+            />
           </div>
-        </div>
+        )}
 
         {status === "loading" && (
           <div className="find-comps-loader">
@@ -443,6 +516,7 @@ function FindCompsTab({ tab }) {
               <strong className="find-comps-results-address">
                 {sp?.formattedAddress || address}
               </strong>
+
               <button className="find-comps-new-search" onClick={handleReset}>
                 ← New search
               </button>
@@ -470,78 +544,35 @@ function FindCompsTab({ tab }) {
             </div>
 
             {sp && (
-              <div className="find-comps-subject">
-                <span className="find-comps-section-label">
-                  Subject Property
-                </span>
-                <div className="find-comps-subject-grid">
-                  {sp.bedrooms != null && (
-                    <div>
-                      <span>Beds</span>
-                      <strong>{sp.bedrooms}</strong>
-                    </div>
-                  )}
-                  {sp.bathrooms != null && (
-                    <div>
-                      <span>Baths</span>
-                      <strong>{sp.bathrooms}</strong>
-                    </div>
-                  )}
-                  {sp.squareFootage != null && (
-                    <div>
-                      <span>Sq Ft</span>
-                      <strong>{sp.squareFootage?.toLocaleString()}</strong>
-                    </div>
-                  )}
-                  {sp.yearBuilt != null && (
-                    <div>
-                      <span>Year Built</span>
-                      <strong>{sp.yearBuilt}</strong>
-                    </div>
-                  )}
-                  {sp.annualTax != null && (
-                    <div>
-                      <span>Annual Tax</span>
-                      <strong>{fmt(sp.annualTax)}</strong>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <SubjectAdjuster
+                subject={sp}
+                sources={result.subjectSources}
+                busy={rerunning}
+                error={rerunError}
+                onRerun={handleAdjust}
+              />
             )}
 
             {result.summary && (
               <p className="find-comps-summary">
                 {result.summary}{" "}
-                <span className="find-comps-muted">
-                  {result.method === "openai"
-                    ? "(Comps picked by AI.)"
-                    : "(Comps picked by matching beds, baths, size and sale date.)"}
-                </span>
+                {comparables.length > 0 && (
+                  <span className="find-comps-muted">
+                    {result.method === "openai"
+                      ? "(Comps reviewed and picked by AI.)"
+                      : "(Closest comps first.)"}
+                  </span>
+                )}
               </p>
             )}
 
-            {result.listingUrls &&
-              LISTING_SITES.some(([key]) => result.listingUrls[key]) && (
-                <div className="find-comps-listing-links">
-                  <span className="find-comps-section-label">
-                    This property on
-                  </span>
-                  {LISTING_SITES.filter(([key]) => result.listingUrls[key]).map(
-                    ([key, label]) => (
-                      <a
-                        key={key}
-                        href={result.listingUrls[key]}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="leads-mls-link"
-                      >
-                        <ExternalLink size={12} />
-                        {label}
-                      </a>
-                    ),
-                  )}
-                </div>
-              )}
+            {result.criteria && (
+              <p className="find-comps-rules find-comps-muted">
+                <strong>Rules:</strong> {compsCriteriaText(result)}
+                <br />
+                {compsStatsText(result)}
+              </p>
+            )}
 
             {comparables.length > 0 && (
               <div className="find-comps-table-wrap">
@@ -558,6 +589,8 @@ function FindCompsTab({ tab }) {
                         <th>Beds</th>
                         <th>Baths</th>
                         <th>Sq Ft</th>
+                        <th>Built</th>
+                        <th>Distance</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -578,6 +611,20 @@ function FindCompsTab({ tab }) {
                             ) : (
                               c.formattedAddress
                             )}
+                            {c.differs && (
+                              <span className="find-comps-differs">
+                                {c.differs}
+                              </span>
+                            )}
+                            <StreetViewButton
+                              compact
+                              address={c.formattedAddress}
+                              location={
+                                c.lat != null && c.lng != null
+                                  ? { lat: c.lat, lng: c.lng }
+                                  : undefined
+                              }
+                            />
                           </td>
                           <td>
                             <span
@@ -596,6 +643,12 @@ function FindCompsTab({ tab }) {
                           <td>
                             {c.squareFootage
                               ? c.squareFootage.toLocaleString()
+                              : "—"}
+                          </td>
+                          <td>{c.yearBuilt ?? "—"}</td>
+                          <td>
+                            {typeof c.distance === "number"
+                              ? `${c.distance} mi`
                               : "—"}
                           </td>
                         </tr>
