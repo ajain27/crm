@@ -201,7 +201,38 @@ describe("LeadDetailModal", () => {
     expect(saved.notes).toContain("9 Oak St");
   });
 
-  it("only offers Run comps on PPL leads", () => {
+  it("runs comps on a PPC lead without offering Use ARV", async () => {
+    requestComps.mockResolvedValue({
+      property: { sqft: 1400 },
+      arvEstimate: 160000,
+      topComps: [],
+      listingUrls: {},
+      sourceErrors: {},
+    });
+    const onSave = vi.fn(async () => {});
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={lead}
+        onSave={onSave}
+        isPpc={true}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Run comps"));
+    expect(
+      await screen.findByText(/Added to the lead's notes/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Use ARV")).toBeNull();
+    fireEvent.click(screen.getByText("Close"));
+
+    fireEvent.click(screen.getByText("Save Changes"));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0].notes).toMatch(/^Comps \(/);
+  });
+
+  it("only offers Run comps on PPL and PPC leads", () => {
     render(
       <LeadDetailModal
         isOpen={true}

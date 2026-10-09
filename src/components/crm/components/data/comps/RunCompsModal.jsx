@@ -26,7 +26,7 @@ const SOURCE_LABELS = {
 
 // Runs comps for `address` as soon as it opens, shows the result, and
 // hands the formatted note to `onSaveNote` (which adds it to the deal).
-// `onApply` fills the deal's ARV and Sq Ft from the result. Leads pass their
+// `onApply` fills the deal's ARV and Sq Ft from the result (optional). Leads pass their
 // own wording, since their note and ARV only stick after Save Changes.
 export default function RunCompsModal({
   address,
@@ -81,7 +81,7 @@ export default function RunCompsModal({
               <Check size={14} /> {noteSavedLabel}
             </span>
           )}
-          {result && (result.arvEstimate || p.sqft) && (
+          {onApply && result && (result.arvEstimate || p.sqft) && (
             <button
               type="button"
               className="secondary-btn"

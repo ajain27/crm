@@ -149,7 +149,7 @@ export default function LeadDetailModal({
             >
               Cancel
             </button>
-            {isPpl && !isRental && (
+            {(isPpl || isPpc) && !isRental && (
               <button
                 className="secondary-btn"
                 onClick={() => setCompsOpen(true)}
@@ -488,7 +488,8 @@ export default function LeadDetailModal({
         <RunCompsModal
           address={draft.address.trim()}
           onSaveNote={handleSaveCompsNote}
-          onApply={handleApplyComps}
+          // PPC leads have no ARV field to fill.
+          onApply={isPpl ? handleApplyComps : undefined}
           onClose={() => setCompsOpen(false)}
           noteSavedLabel="Added to the lead's notes — Save Changes to keep"
           applyLabel="Use ARV"
