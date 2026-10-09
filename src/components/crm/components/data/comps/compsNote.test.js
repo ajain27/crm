@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   compDetailsText,
   compsCriteriaText,
+  compsStatsText,
   formatCompsNote,
 } from "./compsNote";
 
@@ -49,32 +50,47 @@ describe("formatCompsNote", () => {
     ]);
   });
 
-  it("says when beds/baths were widened and labels how a comp differs", () => {
-    expect(
-      compsCriteriaText({
-        criteria: {
-          radiusMiles: 0.5,
-          soldWithinDays: 90,
-          beds: 3,
-          baths: 1.5,
-          bedsTolerance: 0,
-          bathsTolerance: 0.5,
-          relaxed: true,
-          yearBuiltFrom: 1967,
-          yearBuiltTo: 1977,
-          unknown: [],
+  it("describes the rules, the search area, and how a comp differs", () => {
+    const result = {
+      criteria: {
+        radiusMiles: 0.5,
+        soldWithinDays: 90,
+        beds: 3,
+        baths: 1.5,
+        yearBuiltFrom: 1967,
+        yearBuiltTo: 1977,
+        searchRadiusMiles: 1,
+        searchDays: 180,
+        unknown: [],
+      },
+      stats: {
+        nearbySales: 30,
+        matched: 3,
+        outsideRules: 2,
+        excluded: {
+          distance: 12,
+          soldDate: 5,
+          beds: 6,
+          baths: 4,
+          yearBuilt: 0,
+          propertyType: 0,
         },
-      }),
-    ).toBe(
-      "Sold within 0.5 mi in the last 90 days · 3 bd · 1.5 ba (±0.5) · built 1967–1977 — no exact bed/bath matches, so widened",
+        removedByAi: [],
+      },
+    };
+    expect(compsCriteriaText(result)).toBe(
+      "Sold within 0.5 mi in the last 90 days · 3 bd · 1.5 ba · built 1967–1977",
+    );
+    expect(compsStatsText(result)).toBe(
+      "30 homes sold within 1 mi in the last 6 months; 3 meet every rule (others: 12 too far, 5 sold too long ago, 6 different beds, 4 different baths). 2 of the comps shown fall outside the rules.",
     );
     expect(
       compDetailsText({
         beds: 3,
         baths: 1,
-        differs: "−0.5 bath",
-        distance: 0.29,
+        differs: "0.52 mi away · +0.5 bath",
+        distance: 0.52,
       }),
-    ).toBe("3 bd/1 ba (−0.5 bath) · 0.29 mi away");
+    ).toBe("3 bd/1 ba (0.52 mi away · +0.5 bath) · 0.52 mi away");
   });
 });

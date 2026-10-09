@@ -8,12 +8,13 @@
 //      from each; the US Census geocoder gives its coordinates.
 //   2. Candidates: Redfin's sold-homes data for the last 90 days around
 //      those coordinates (sold date, beds, baths, year built, location).
-//   3. The rules above are applied in code. Only true matches are kept —
-//      if fewer than 5 qualify, fewer are shown, with a count of the
-//      nearby sales each rule excluded.
-//   4. OpenAI (optional) reviews the matches, drops bad or irrelevant ones
-//      and picks the 5 closest. It never estimates value. Without OpenAI,
-//      or if it fails, matches are ordered by distance, then recency.
+//   3. Every sale within 1 mile over 180 days is ranked: those meeting all
+//      the rules above first (closest, then most recent), then the rest by
+//      how closely they match. The top 5 are shown; any outside the rules
+//      are labeled with exactly how they differ.
+//   4. OpenAI (optional) reviews the top candidates, drops bad or
+//      irrelevant comps and picks the 5 closest. It never estimates value.
+//      Without OpenAI, or if it fails, the ranking's top 5 are used.
 //   5. ARV is worked out in code from the final comps.
 //
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); OPENAI_API_KEY,
@@ -29,17 +30,11 @@ export const COMP_RULES = {
   soldWithinDays: 90,
   yearBuiltTolerance: 5,
   maxComps: 5,
+  // Sales are gathered this far out so there are always enough to fill 5
+  // comps; ones outside the rules are labeled with how they differ.
+  searchRadiusMiles: 1,
+  searchDays: 180,
 };
-
-// When no sale matches the subject's beds and baths exactly, these steps
-// are tried in order and the first that finds any comps is used. Distance,
-// sale date and year built are never relaxed.
-export const BED_BATH_STEPS = [
-  { beds: 0, baths: 0 },
-  { beds: 0, baths: 0.5 },
-  { beds: 0, baths: 1 },
-  { beds: 1, baths: 1 },
-];
 
 export const SITES = [
   {
@@ -413,10 +408,16 @@ export function distanceMiles(a, b) {
   return 3958.8 * 2 * Math.asin(Math.sqrt(h));
 }
 
-export function redfinSoldUrl({ lat, lng }) {
+export function redfinSoldUrl(
+  { lat, lng },
+  {
+    miles: radius = COMP_RULES.searchRadiusMiles,
+    days = COMP_RULES.searchDays,
+  } = {},
+) {
   // A box a little bigger than the radius; distance is checked exactly
   // afterwards.
-  const miles = COMP_RULES.radiusMiles * 1.2;
+  const miles = radius * 1.2;
   const dLat = miles / 69;
   const dLng = miles / (69 * Math.cos((lat * Math.PI) / 180));
   const box = [
@@ -431,7 +432,7 @@ export function redfinSoldUrl({ lat, lng }) {
     num_homes: "350",
     page_number: "1",
     poly: box.map(([x, y]) => `${x.toFixed(6)} ${y.toFixed(6)}`).join(","),
-    sold_within_days: String(COMP_RULES.soldWithinDays),
+    sold_within_days: String(days),
     status: "9", // sold
     uipt: "1,2,3,4", // house, condo, townhouse, multi-family
     v: "8",
@@ -537,10 +538,8 @@ export function parseRedfinSoldCsv(text) {
     .filter((s) => s.lat !== null && s.lng !== null);
 }
 
-async function fetchRedfinSold(location) {
-  const res = await fetch(redfinSoldUrl(location), {
-    headers: BROWSER_HEADERS,
-  });
+async function fetchRedfinCsv(url) {
+  const res = await fetch(url, { headers: BROWSER_HEADERS });
   const text = await res.text().catch(() => "");
   if (!res.ok || !/LATITUDE/.test(text)) {
     const error = new Error(
@@ -550,6 +549,27 @@ async function fetchRedfinSold(location) {
     throw error;
   }
   return parseRedfinSoldCsv(text);
+}
+
+// Sales within the search radius over the last 180 days. Sales Redfin
+// returns for the last 90 days are marked `recent` — some regions leave
+// sale dates blank, so this is how they're known to meet the 90-day rule.
+async function fetchRedfinSold(location) {
+  const [recent, older] = await Promise.all([
+    fetchRedfinCsv(
+      redfinSoldUrl(location, { days: COMP_RULES.soldWithinDays }),
+    ),
+    fetchRedfinCsv(redfinSoldUrl(location, { days: COMP_RULES.searchDays })),
+  ]);
+  const key = (sale) => sale.url || `${sale.street}|${sale.price}`;
+  const recentKeys = new Set(recent.map(key));
+  const byKey = new Map();
+  [...recent, ...older].forEach((sale) => {
+    if (!byKey.has(key(sale))) {
+      byKey.set(key(sale), { ...sale, recent: recentKeys.has(key(sale)) });
+    }
+  });
+  return [...byKey.values()];
 }
 
 // ── Step 3: the comp rules ───────────────────────────────────────────────
@@ -572,23 +592,120 @@ const streetKey = (s) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-const within = (value, target, tolerance) =>
-  isNum(value) && Math.abs(value - target) <= tolerance + 1e-9;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Applies the comp rules to every nearby sale. `tolerance` allows beds and
-// baths to differ by up to that much (0 = exact). Returns the matches
-// (with distance) and how many sales each rule excluded. A rule whose
-// subject value is unknown can't be applied; it's listed in `unknown`.
-export function applyCompRules({
+function daysAgo(dateText, now) {
+  const time = Date.parse(dateText || "");
+  return Number.isNaN(time) ? null : Math.max(0, (now - time) / DAY_MS);
+}
+
+const TYPE_LABELS = {
+  single: "single family",
+  condo: "condo",
+  townhouse: "townhouse",
+  multi: "multi-family",
+};
+
+const signed = (n) => `${n > 0 ? "+" : "−"}${Math.abs(n)}`;
+
+// How a sale differs from the comp rules, as [rule, label] pairs; none
+// means it meets every rule. Rules whose subject value is unknown aren't
+// checked.
+function ruleMisses(sale, subject, distance, now) {
+  const misses = [];
+  if (distance > COMP_RULES.radiusMiles) {
+    misses.push(["distance", `${distance.toFixed(2)} mi away`]);
+  }
+  const age = daysAgo(sale.soldDate, now);
+  if (!sale.recent && (age === null || age > COMP_RULES.soldWithinDays)) {
+    misses.push([
+      "soldDate",
+      age === null
+        ? "sold 3–6 months ago"
+        : `sold ${Math.round(age / 30.4)} months ago`,
+    ]);
+  }
+  if (isNum(subject.beds) && sale.beds !== subject.beds) {
+    misses.push([
+      "beds",
+      isNum(sale.beds)
+        ? `${signed(sale.beds - subject.beds)} bed`
+        : "beds unknown",
+    ]);
+  }
+  if (isNum(subject.baths) && sale.baths !== subject.baths) {
+    misses.push([
+      "baths",
+      isNum(sale.baths)
+        ? `${signed(sale.baths - subject.baths)} bath`
+        : "baths unknown",
+    ]);
+  }
+  if (
+    isNum(subject.yearBuilt) &&
+    !(
+      isNum(sale.yearBuilt) &&
+      Math.abs(sale.yearBuilt - subject.yearBuilt) <=
+        COMP_RULES.yearBuiltTolerance
+    )
+  ) {
+    misses.push([
+      "yearBuilt",
+      isNum(sale.yearBuilt) ? `built ${sale.yearBuilt}` : "year built unknown",
+    ]);
+  }
+  const subjectType = typeBucket(subject.propertyType);
+  const saleType = typeBucket(sale.propertyType);
+  if (subjectType && saleType && saleType !== subjectType) {
+    misses.push(["propertyType", TYPE_LABELS[saleType] || sale.propertyType]);
+  }
+  return misses;
+}
+
+// Lower = closer match: how far each fact is from the subject.
+function matchScore(sale, subject, distance, now) {
+  const age = daysAgo(sale.soldDate, now) ?? (sale.recent ? 45 : 135);
+  let score = distance * 2 + Math.max(0, distance - COMP_RULES.radiusMiles) * 6;
+  score += Math.max(0, age - COMP_RULES.soldWithinDays) / 30;
+  if (isNum(subject.beds)) {
+    score += isNum(sale.beds) ? Math.abs(sale.beds - subject.beds) * 2 : 2;
+  }
+  if (isNum(subject.baths)) {
+    score += isNum(sale.baths)
+      ? Math.abs(sale.baths - subject.baths) * 1.5
+      : 1.5;
+  }
+  if (isNum(subject.yearBuilt)) {
+    score += isNum(sale.yearBuilt)
+      ? Math.max(
+          0,
+          Math.abs(sale.yearBuilt - subject.yearBuilt) -
+            COMP_RULES.yearBuiltTolerance,
+        ) * 0.15
+      : 1;
+  }
+  if (isNum(subject.sqft) && isNum(sale.sqft)) {
+    score += (Math.abs(sale.sqft - subject.sqft) / subject.sqft) * 3;
+  }
+  const subjectType = typeBucket(subject.propertyType);
+  const saleType = typeBucket(sale.propertyType);
+  if (subjectType && saleType && saleType !== subjectType) score += 4;
+  return score;
+}
+
+// Ranks every nearby sale (within the search radius) by how well it
+// matches: sales meeting every comp rule first (closest, then most
+// recent), then the rest by match score. Each carries `misses`, the rules
+// it doesn't meet. `excluded` counts the sales failing each rule (by the
+// first rule they fail), for explaining how many strictly qualify.
+export function rankComps({
   subject,
   location,
   sales,
   subjectAddress,
-  tolerance = { beds: 0, baths: 0 },
   now = Date.now(),
 }) {
-  const cutoff = now - COMP_RULES.soldWithinDays * 24 * 60 * 60 * 1000;
-  const subjectBucket = typeBucket(subject.propertyType);
+  const subjectStreet = streetKey(subjectAddress);
   const unknown = ["beds", "baths", "yearBuilt"].filter(
     (f) => !isNum(subject[f]),
   );
@@ -600,54 +717,34 @@ export function applyCompRules({
     yearBuilt: 0,
     propertyType: 0,
   };
-  const subjectStreet = streetKey(subjectAddress);
-  const matches = [];
-
+  const ranked = [];
   for (const sale of sales) {
     if (streetKey(sale.street || sale.address) === subjectStreet) continue;
     const distance = distanceMiles(location, sale);
-    // Each sale is counted under the first rule it fails.
-    if (distance > COMP_RULES.radiusMiles) {
-      excluded.distance += 1;
-    } else if (sale.soldDate && Date.parse(sale.soldDate) < cutoff) {
-      excluded.soldDate += 1;
-    } else if (
-      isNum(subject.beds) &&
-      !within(sale.beds, subject.beds, tolerance.beds)
-    ) {
-      excluded.beds += 1;
-    } else if (
-      isNum(subject.baths) &&
-      !within(sale.baths, subject.baths, tolerance.baths)
-    ) {
-      excluded.baths += 1;
-    } else if (
-      isNum(subject.yearBuilt) &&
-      !(
-        isNum(sale.yearBuilt) &&
-        Math.abs(sale.yearBuilt - subject.yearBuilt) <=
-          COMP_RULES.yearBuiltTolerance
-      )
-    ) {
-      excluded.yearBuilt += 1;
-    } else if (
-      subjectBucket &&
-      typeBucket(sale.propertyType) &&
-      typeBucket(sale.propertyType) !== subjectBucket
-    ) {
-      excluded.propertyType += 1;
-    } else {
-      matches.push({ ...sale, distance: Math.round(distance * 100) / 100 });
-    }
+    if (distance > COMP_RULES.searchRadiusMiles) continue;
+    const misses = ruleMisses(sale, subject, distance, now);
+    if (misses.length > 0) excluded[misses[0][0]] += 1;
+    ranked.push({
+      ...sale,
+      distance: Math.round(distance * 100) / 100,
+      misses,
+      score: matchScore(sale, subject, distance, now),
+    });
   }
-
-  // Closest first, then most recent.
-  matches.sort(
-    (a, b) =>
-      a.distance - b.distance ||
-      String(b.soldDate || "").localeCompare(String(a.soldDate || "")),
-  );
-  return { matches, excluded, unknown };
+  ranked.sort((a, b) => {
+    const aStrict = a.misses.length === 0;
+    const bStrict = b.misses.length === 0;
+    if (aStrict !== bStrict) return aStrict ? -1 : 1;
+    if (aStrict) {
+      return (
+        a.distance - b.distance ||
+        String(b.soldDate || "").localeCompare(String(a.soldDate || ""))
+      );
+    }
+    return a.score - b.score;
+  });
+  const strictCount = ranked.filter((r) => r.misses.length === 0).length;
+  return { ranked, strictCount, excluded, unknown };
 }
 
 // ── Step 4: OpenAI review (optional) ─────────────────────────────────────
@@ -669,13 +766,14 @@ const REVIEW_SCHEMA = {
   properties: { selected: ID_REASON_LIST, removed: ID_REASON_LIST },
 };
 
-const REVIEW_PROMPT = `You are helping a real estate wholesaler pick comps.
-You get the subject property, the rules used, and a list of homes that already pass them (sold within 0.5 miles in the last 90 days, built within 5 years, and the same beds and baths — or, when no home matched exactly, beds/baths within the stated tolerance).
-Remove any that are bad or irrelevant comps: price outliers versus the others, likely distressed or non-arm's-length sales, a clearly different kind of property, or duplicates.
-Then select up to 5 of the rest that are the closest matches to the subject (prefer closer, more recent, and more similar in size).
+const REVIEW_PROMPT = `You are helping a real estate wholesaler pick comps for a subject property.
+The comp rules: sold within 0.5 miles in the last 90 days, same beds and baths, built within 5 years, same property type.
+You get the subject and nearby sales ranked by how well they match. Each lists "misses": the rules it doesn't meet (empty = meets every rule).
+Remove bad or irrelevant comps: price outliers versus the others, likely distressed or non-arm's-length sales, a clearly different kind of property, or duplicates.
+Then select the 5 closest matches to the subject (fewer only if there aren't 5 reasonable ones). Prefer sales that meet every rule, then those missing the fewest and smallest rules.
 Do NOT estimate the subject's value. Only use ids from the list. Give a short reason for each selected and removed id.`;
 
-async function openAiReview(subject, matches, tolerance, apiKey, model) {
+async function openAiReview(subject, candidates, apiKey, model) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -691,8 +789,7 @@ async function openAiReview(subject, matches, tolerance, apiKey, model) {
           role: "user",
           content: JSON.stringify({
             subject,
-            bedBathTolerance: tolerance,
-            candidates: matches.map((m, i) => ({
+            candidates: candidates.map((m, i) => ({
               id: String(i),
               address: m.address,
               soldDate: m.soldDate,
@@ -703,6 +800,7 @@ async function openAiReview(subject, matches, tolerance, apiKey, model) {
               yearBuilt: m.yearBuilt,
               propertyType: m.propertyType,
               distanceMiles: m.distance,
+              misses: m.misses.map(([, label]) => label),
             })),
           }),
         },
@@ -726,7 +824,7 @@ async function openAiReview(subject, matches, tolerance, apiKey, model) {
   const review = JSON.parse(content);
   // Keep only ids that exist; OpenAI can't add homes.
   const valid = (list) =>
-    (list || []).filter((x) => /^\d+$/.test(x.id) && matches[Number(x.id)]);
+    (list || []).filter((x) => /^\d+$/.test(x.id) && candidates[Number(x.id)]);
   return { selected: valid(review.selected), removed: valid(review.removed) };
 }
 
@@ -917,56 +1015,36 @@ export async function runComps(
     ));
   }
 
-  // Exact beds/baths first; relax step by step only if nothing matches.
-  let ruleResult;
-  let tolerance;
-  for (tolerance of BED_BATH_STEPS) {
-    ruleResult = applyCompRules({
-      subject: property,
-      location,
-      sales,
-      subjectAddress: address,
-      tolerance,
-      now,
-    });
-    if (ruleResult.matches.length > 0) break;
-  }
-  const relaxed = tolerance.beds > 0 || tolerance.baths > 0;
-  // With nothing found at any step, report the exact rules' exclusions.
-  if (ruleResult.matches.length === 0) {
-    tolerance = BED_BATH_STEPS[0];
-    ruleResult = applyCompRules({
-      subject: property,
-      location,
-      sales,
-      subjectAddress: address,
-      tolerance,
-      now,
-    });
-  }
-  const { matches, excluded, unknown } = ruleResult;
+  const { ranked, strictCount, excluded, unknown } = rankComps({
+    subject: property,
+    location,
+    sales,
+    subjectAddress: address,
+    now,
+  });
 
-  // OpenAI weeds out bad comps and picks the closest 5, when available.
+  // The 5 best-ranked; OpenAI, when available, reviews the top candidates,
+  // drops bad ones and picks the 5 closest (it never sets the value).
+  const candidates = ranked.slice(0, 15);
   let method = "rules";
   let aiError = null;
   let removedByAi = [];
-  let picked = matches
+  let picked = ranked
     .slice(0, COMP_RULES.maxComps)
     .map((m) => ({ ...m, reason: ruleReason(m) }));
-  if (env.OPENAI_API_KEY && matches.length > 0) {
+  if (env.OPENAI_API_KEY && candidates.length > 0) {
     try {
       const review = await openAiReview(
         property,
-        matches,
-        tolerance,
+        candidates,
         env.OPENAI_API_KEY,
         env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
       );
       picked = review.selected
         .slice(0, COMP_RULES.maxComps)
-        .map(({ id, reason }) => ({ ...matches[Number(id)], reason }));
+        .map(({ id, reason }) => ({ ...candidates[Number(id)], reason }));
       removedByAi = review.removed.map(({ id, reason }) => ({
-        address: matches[Number(id)].address,
+        address: candidates[Number(id)].address,
         reason,
       }));
       method = "openai";
@@ -976,19 +1054,12 @@ export async function runComps(
     }
   }
 
-  const diffLabel = (c) =>
-    [
-      ["bed", c.beds - property.beds],
-      ["bath", c.baths - property.baths],
-    ]
-      .filter(([, d]) => isNum(Math.abs(d)) && Math.abs(d) > 1e-9)
-      .map(([word, d]) => `${d > 0 ? "+" : "−"}${Math.abs(d)} ${word}`)
-      .join(", ") || null;
-
   const topComps = picked.map((c) => ({
     address: c.address,
-    differs:
-      isNum(property.beds) && isNum(property.baths) ? diffLabel(c) : null,
+    meetsRules: c.misses.length === 0,
+    differs: c.misses.length
+      ? c.misses.map(([, label]) => label).join(" · ")
+      : null,
     price: c.price,
     beds: c.beds,
     baths: c.baths,
@@ -1002,6 +1073,7 @@ export async function runComps(
     source: "Redfin",
     reason: c.reason,
   }));
+  const outsideRules = topComps.filter((c) => !c.meetsRules).length;
   const { arvEstimate, arvBasis } = estimateArv(topComps, property.sqft);
 
   return {
@@ -1036,9 +1108,8 @@ export async function runComps(
       soldWithinDays: COMP_RULES.soldWithinDays,
       beds: property.beds,
       baths: property.baths,
-      bedsTolerance: tolerance.beds,
-      bathsTolerance: tolerance.baths,
-      relaxed: relaxed && matches.length > 0,
+      searchRadiusMiles: COMP_RULES.searchRadiusMiles,
+      searchDays: COMP_RULES.searchDays,
       yearBuiltFrom: isNum(property.yearBuilt)
         ? property.yearBuilt - COMP_RULES.yearBuiltTolerance
         : null,
@@ -1048,8 +1119,9 @@ export async function runComps(
       unknown,
     },
     stats: {
-      nearbySales: sales.length,
-      matched: matches.length,
+      nearbySales: ranked.length,
+      matched: strictCount,
+      outsideRules,
       excluded,
       removedByAi,
     },
@@ -1058,8 +1130,15 @@ export async function runComps(
     rentEstimate: property.rentEstimate,
     summary:
       topComps.length === 0
-        ? "No sold homes met all the comp rules."
-        : arvBasis,
+        ? "No homes sold nearby in the last 6 months."
+        : [
+            arvBasis,
+            outsideRules > 0
+              ? `${plural(outsideRules, "comp")} ${outsideRules === 1 ? "falls" : "fall"} outside the comp rules — see how each differs.`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" "),
     method,
     ...(aiError ? { aiError } : {}),
   };

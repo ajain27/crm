@@ -25,17 +25,15 @@ const UNKNOWN_LABELS = {
 export function compsCriteriaText(result) {
   const c = result.criteria;
   if (!c) return "";
-  const plusMinus = (tol) => (tol > 0 ? ` (±${tol})` : "");
   const parts = [
     `Sold within ${c.radiusMiles} mi in the last ${c.soldWithinDays} days`,
-    c.beds ? `${c.beds} bd${plusMinus(c.bedsTolerance)}` : null,
-    c.baths ? `${c.baths} ba${plusMinus(c.bathsTolerance)}` : null,
+    c.beds ? `${c.beds} bd` : null,
+    c.baths ? `${c.baths} ba` : null,
     c.yearBuiltFrom ? `built ${c.yearBuiltFrom}–${c.yearBuiltTo}` : null,
   ].filter(Boolean);
   const unknown = (c.unknown || []).map((f) => UNKNOWN_LABELS[f] || f);
   return (
     parts.join(" · ") +
-    (c.relaxed ? " — no exact bed/bath matches, so widened" : "") +
     (unknown.length
       ? ` (the property's ${unknown.join(", ")} couldn't be found, so not applied)`
       : "")
@@ -51,21 +49,29 @@ const EXCLUDED_LABELS = {
   propertyType: "different property type",
 };
 
-// "11 homes sold nearby; 3 met every rule (excluded: 4 too far, 4 different beds)."
+// "30 homes sold within 1 mi in the last 6 months; 3 meet every rule
+// (others: 4 too far, …). 2 of the comps shown fall outside the rules."
 export function compsStatsText(result) {
   const s = result.stats;
+  const c = result.criteria || {};
   if (!s) return "";
+  const area = c.searchRadiusMiles
+    ? ` within ${c.searchRadiusMiles} mi in the last ${Math.round(c.searchDays / 30)} months`
+    : " nearby";
   const excluded = Object.entries(s.excluded || {})
     .filter(([, count]) => count > 0)
     .map(([rule, count]) => `${count} ${EXCLUDED_LABELS[rule] || rule}`);
   const removed = s.removedByAi?.length
     ? ` AI removed ${s.removedByAi.length} as poor comps.`
     : "";
+  const outside = s.outsideRules
+    ? ` ${s.outsideRules} of the comps shown ${s.outsideRules === 1 ? "falls" : "fall"} outside the rules.`
+    : "";
   return (
-    `${s.nearbySales} home${s.nearbySales === 1 ? "" : "s"} sold nearby; ` +
-    `${s.matched} met every rule` +
-    (excluded.length ? ` (excluded: ${excluded.join(", ")})` : "") +
-    `.${removed}`
+    `${s.nearbySales} home${s.nearbySales === 1 ? "" : "s"} sold${area}; ` +
+    `${s.matched} ${s.matched === 1 ? "meets" : "meet"} every rule` +
+    (excluded.length ? ` (others: ${excluded.join(", ")})` : "") +
+    `.${outside}${removed}`
   );
 }
 

@@ -756,7 +756,7 @@ describe("comp rules", () => {
       "Sold within 0.5 mi in the last 90 days · 3 bd · 2 ba · built 1968–1978",
     );
     expect(rules).toHaveTextContent(
-      "9 homes sold nearby; 2 met every rule (excluded: 3 too far, 2 different beds, 1 different baths, 1 built outside the range).",
+      "9 homes sold nearby; 2 meet every rule (others: 3 too far, 2 different beds, 1 different baths, 1 built outside the range).",
     );
   });
 });

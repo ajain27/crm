@@ -2,7 +2,7 @@
 // Firecrawl, the Census geocoder, Redfin and OpenAI are mocked at fetch.
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
-  applyCompRules,
+  rankComps,
   cleanScraped,
   distanceMiles,
   estimateArv,
@@ -247,7 +247,7 @@ describe("run-comps", () => {
     });
   });
 
-  it("keeps only sold homes that meet every comp rule, closest first", async () => {
+  it("returns the 5 best matches: those meeting every rule first, then the closest others, labeled", async () => {
     const fetchMock = mockFetch();
     const out = await runComps(ADDRESS, ENV, NOW);
 
@@ -259,47 +259,64 @@ describe("run-comps", () => {
       baths: 1,
       yearBuiltFrom: 1967,
       yearBuiltTo: 1977,
+      searchRadiusMiles: 1,
+      searchDays: 180,
     });
-    expect(out.topComps.map((c) => c.address)).toEqual([
-      "794 Margie Dr, Memphis, TN 38127",
-      "5258 Beaverton Dr, Memphis, TN 38127",
-      "608 Northaven Dr, Memphis, TN 38127",
+    expect(out.topComps.map((c) => c.address.split(",")[0])).toEqual([
+      "794 Margie Dr",
+      "5258 Beaverton Dr",
+      "608 Northaven Dr",
+      "13 Two Bath Rd",
+      "11 Far Rd",
     ]);
     expect(out.topComps[0]).toMatchObject({
       price: 69900,
-      beds: 3,
-      baths: 1,
-      yearBuilt: 1972,
       soldDate: "2026-09-18",
       distance: 0.29,
+      meetsRules: true,
+      differs: null,
       source: "Redfin",
     });
-    // 8 sales (the subject itself is skipped, not counted as excluded).
+    expect(out.topComps[3]).toMatchObject({
+      meetsRules: false,
+      differs: "+1 bath",
+    });
+    expect(out.topComps[4]).toMatchObject({
+      meetsRules: false,
+      differs: "0.70 mi away",
+    });
+    // 7 nearby sales (the subject itself is skipped); 3 meet every rule.
     expect(out.stats).toMatchObject({
-      nearbySales: 8,
+      nearbySales: 7,
       matched: 3,
+      outsideRules: 2,
       excluded: { distance: 1, beds: 1, baths: 1, yearBuilt: 1 },
     });
-    // Only one comp has a size, so ARV is the median sale price.
-    expect(out.arvEstimate).toBe(74900);
+    expect(out.summary).toMatch(/2 comps fall outside the comp rules/);
     expect(out.method).toBe("rules");
 
-    // Redfin was asked for sold homes in the last 90 days.
-    const redfinUrl = fetchMock.mock.calls
+    // Redfin was asked for sold homes over 90 and 180 days.
+    const redfinUrls = fetchMock.mock.calls
       .map(([url]) => url)
-      .find((url) => url.includes("redfin.com/stingray"));
-    expect(redfinUrl).toContain("status=9");
-    expect(redfinUrl).toContain("sold_within_days=90");
+      .filter((url) => url.includes("redfin.com/stingray"));
+    expect(redfinUrls).toHaveLength(2);
+    expect(redfinUrls.every((u) => u.includes("status=9"))).toBe(true);
+    expect(redfinUrls.some((u) => u.includes("sold_within_days=90"))).toBe(
+      true,
+    );
+    expect(redfinUrls.some((u) => u.includes("sold_within_days=180"))).toBe(
+      true,
+    );
   });
 
-  it("lets OpenAI drop bad comps and pick from the matches, never adding homes", async () => {
+  it("lets OpenAI drop bad comps and pick from the ranked candidates, never adding homes", async () => {
     const fetchMock = mockFetch();
     const out = await runComps(ADDRESS, { ...ENV, OPENAI_API_KEY: "k" }, NOW);
 
     expect(out.method).toBe("openai");
-    expect(out.topComps.map((c) => c.address)).toEqual([
-      "5258 Beaverton Dr, Memphis, TN 38127",
-      "794 Margie Dr, Memphis, TN 38127",
+    expect(out.topComps.map((c) => c.address.split(",")[0])).toEqual([
+      "5258 Beaverton Dr",
+      "794 Margie Dr",
     ]);
     expect(out.topComps[0].reason).toBe("Recent, same layout");
     expect(out.stats.removedByAi).toEqual([
@@ -309,17 +326,20 @@ describe("run-comps", () => {
       },
     ]);
 
-    // OpenAI only sees the matches, and isn't asked for a value.
+    // OpenAI sees the ranked candidates with how each misses the rules,
+    // and isn't asked for a value.
     const sent = JSON.parse(
       JSON.parse(
         fetchMock.mock.calls.find(([url]) => url.includes("openai"))[1].body,
       ).messages[1].content,
     );
-    expect(sent.candidates).toHaveLength(3);
+    expect(sent.candidates).toHaveLength(7);
+    expect(sent.candidates[0].misses).toEqual([]);
+    expect(sent.candidates[3].misses).toEqual(["+1 bath"]);
     expect(out.arvEstimate).toBe(94700); // median of the 2 picked, in code
   });
 
-  it("uses the rules when OpenAI fails, e.g. no credit", async () => {
+  it("uses the ranking when OpenAI fails, e.g. no credit", async () => {
     mockFetch({
       openai: () =>
         json(429, { error: { message: "You have no credits remaining." } }),
@@ -327,10 +347,10 @@ describe("run-comps", () => {
     const out = await runComps(ADDRESS, { ...ENV, OPENAI_API_KEY: "k" }, NOW);
     expect(out.method).toBe("rules");
     expect(out.aiError).toBe("You have no credits remaining.");
-    expect(out.topComps).toHaveLength(3);
+    expect(out.topComps).toHaveLength(5);
   });
 
-  it("shows no comps, with the reasons, when nothing qualifies", async () => {
+  it("still returns the 5 closest when none meet every rule", async () => {
     mockFetch({
       firecrawl: () =>
         json(200, {
@@ -339,62 +359,19 @@ describe("run-comps", () => {
         }),
     });
     const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.stats.matched).toBe(0);
+    expect(out.topComps).toHaveLength(5);
+    expect(out.topComps.every((c) => !c.meetsRules)).toBe(true);
+    expect(out.topComps[0].differs).toMatch(/−[34] bed/);
+    expect(out.summary).toMatch(/5 comps fall outside the comp rules/);
+  });
+
+  it("says when no homes sold nearby at all", async () => {
+    mockFetch({ redfin: () => text(200, HEADER) });
+    const out = await runComps(ADDRESS, ENV, NOW);
     expect(out.topComps).toEqual([]);
     expect(out.arvEstimate).toBeNull();
-    expect(out.summary).toBe("No sold homes met all the comp rules.");
-    expect(out.stats.matched).toBe(0);
-  });
-
-  it("widens baths by 0.5 when nothing matches exactly, labeling each comp", async () => {
-    mockFetch({
-      firecrawl: () =>
-        json(200, {
-          success: true,
-          data: { json: { ...SUBJECT_PAGE, baths: 1.5 } },
-        }),
-    });
-    const out = await runComps(ADDRESS, ENV, NOW);
-    expect(out.criteria).toMatchObject({
-      bedsTolerance: 0,
-      bathsTolerance: 0.5,
-      relaxed: true,
-    });
-    const byAddress = Object.fromEntries(
-      out.topComps.map((c) => [c.address.split(",")[0], c.differs]),
-    );
-    expect(byAddress).toEqual({
-      "794 Margie Dr": "−0.5 bath",
-      "13 Two Bath Rd": "+0.5 bath",
-      "5258 Beaverton Dr": "−0.5 bath",
-      "608 Northaven Dr": "−0.5 bath",
-    });
-  });
-
-  it("widens to ±1 bed (with ±1 bath) as the last step", async () => {
-    mockFetch({
-      firecrawl: () =>
-        json(200, {
-          success: true,
-          data: { json: { ...SUBJECT_PAGE, beds: 4, baths: 3 } },
-        }),
-    });
-    const out = await runComps(ADDRESS, ENV, NOW);
-    expect(out.criteria).toMatchObject({ bedsTolerance: 1, bathsTolerance: 1 });
-    expect(out.topComps.map((c) => c.address.split(",")[0])).toEqual([
-      "13 Two Bath Rd",
-    ]);
-    expect(out.topComps[0].differs).toBe("−1 bed, −1 bath");
-  });
-
-  it("uses only exact matches when there are any", async () => {
-    mockFetch();
-    const out = await runComps(ADDRESS, ENV, NOW);
-    expect(out.criteria).toMatchObject({
-      bedsTolerance: 0,
-      bathsTolerance: 0,
-      relaxed: false,
-    });
-    expect(out.topComps.every((c) => c.differs === null)).toBe(true);
+    expect(out.summary).toBe("No homes sold nearby in the last 6 months.");
   });
 
   it("retries the Census geocoder, then falls back to OpenStreetMap", async () => {
@@ -428,7 +405,7 @@ describe("run-comps", () => {
       fetchMock.mock.calls.some(([url]) => url.includes("nominatim")),
     ).toBe(true);
     expect(out.location.lat).toBeCloseTo(SUBJECT.lat, 4);
-    expect(out.topComps).toHaveLength(3);
+    expect(out.topComps).toHaveLength(5);
   });
 
   it("uses the listing pages' own map coordinates when geocoding fails", async () => {
@@ -448,7 +425,7 @@ describe("run-comps", () => {
     });
     const out = await runComps(ADDRESS, ENV, NOW);
     expect(out.location).toMatchObject({ lat: SUBJECT.lat, lng: SUBJECT.lng });
-    expect(out.topComps).toHaveLength(3);
+    expect(out.topComps).toHaveLength(5);
     expect(
       fetchMock.mock.calls.some(([url]) => url.includes("nominatim")),
     ).toBe(false);
@@ -487,13 +464,13 @@ describe("run-comps", () => {
       },
     });
     const hosts = fetchMock.mock.calls.map(([url]) => new URL(url).hostname);
-    expect(hosts).toEqual(["www.redfin.com"]);
+    expect(hosts).toEqual(["www.redfin.com", "www.redfin.com"]);
     expect(out.adjusted).toBe(true);
     expect(out.property).toMatchObject({ beds: 3, baths: 2 });
-    // 3 bd / 2 ba exactly: only 13 Two Bath Rd.
-    expect(out.topComps.map((c) => c.address.split(",")[0])).toEqual([
-      "13 Two Bath Rd",
-    ]);
+    // 3 bd / 2 ba: 13 Two Bath Rd meets every rule and ranks first.
+    expect(out.topComps[0]).toMatchObject({ meetsRules: true });
+    expect(out.topComps[0].address).toMatch(/^13 Two Bath Rd/);
+    expect(out.stats.matched).toBe(1);
     expect(out.listingUrls).toBeNull();
   });
 
@@ -545,8 +522,8 @@ describe("comp rules", () => {
     ).toBeCloseTo(0.5, 2);
   });
 
-  it("excludes sales sold too long ago, and doesn't apply rules it can't check", () => {
-    const { matches, excluded, unknown } = applyCompRules({
+  it("labels old sales, and doesn't apply rules it can't check", () => {
+    const { ranked, unknown } = rankComps({
       subject: { beds: 3, baths: null, yearBuilt: null },
       location: SUBJECT,
       sales: [
@@ -566,12 +543,24 @@ describe("comp rules", () => {
           lat: SUBJECT.lat,
           lng: SUBJECT.lng,
         },
+        // Redfin's 90-day results, with no date: counts as recent.
+        {
+          street: "3 C St",
+          soldDate: null,
+          recent: true,
+          beds: 3,
+          lat: SUBJECT.lat,
+          lng: SUBJECT.lng,
+        },
       ],
       subjectAddress: "9 Z St",
       now: NOW,
     });
-    expect(excluded.soldDate).toBe(1);
-    expect(matches.map((m) => m.street)).toEqual(["2 B St"]);
+    expect(ranked.map((r) => [r.street, r.misses.map(([, l]) => l)])).toEqual([
+      ["2 B St", []],
+      ["3 C St", []],
+      ["1 A St", ["sold 6 months ago"]],
+    ]);
     expect(unknown).toEqual(["baths", "yearBuilt"]);
   });
 
