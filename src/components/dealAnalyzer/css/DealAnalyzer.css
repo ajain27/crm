@@ -1307,6 +1307,7 @@
     max-width: 720px;
     height: auto;
     max-height: 96vh;
+    max-height: 96dvh;
   }
 
   .pdf-report-preview-body {

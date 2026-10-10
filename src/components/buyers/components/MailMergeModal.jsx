@@ -8,6 +8,7 @@ import {
   Pencil,
 } from "lucide-react";
 import Modal from "../../modal/Modal";
+import { useAddressAutocomplete } from "../../../hooks/useAddressAutocomplete";
 
 async function sendViaBrevo({
   apiKey,
@@ -110,6 +111,14 @@ function buildDealBody(template, buyerFullName) {
     "You Win Estates",
     "(206) 822-8019",
   ].join("\n");
+}
+
+// Its own component so Places attaches when the input mounts (the modal,
+// and the Deal tab, render it only after the modal itself has mounted).
+function AddressAutocompleteInput({ onSelect, ...props }) {
+  const inputRef = useRef(null);
+  useAddressAutocomplete(inputRef, ({ formatted }) => onSelect(formatted));
+  return <input ref={inputRef} autoComplete="off" {...props} />;
 }
 
 function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
@@ -440,10 +449,13 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
             <div className="mail-merge-grid">
               <label className="field mail-merge-full">
                 <span>Property Address *</span>
-                <input
+                <AddressAutocompleteInput
                   name="address"
                   value={dealTemplate.address}
                   onChange={handleDealChange}
+                  onSelect={(address) =>
+                    setDealTemplate((prev) => ({ ...prev, address }))
+                  }
                   placeholder="e.g. 123 Main St, Atlanta, GA 30301"
                   disabled={sendStatus === "sending"}
                 />

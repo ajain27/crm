@@ -494,6 +494,7 @@
     flex-direction: column;
     height: auto;
     max-height: calc(100vh - 6rem);
+    max-height: calc(100dvh - 6rem);
   }
 
   .ldm-body {

@@ -164,6 +164,7 @@
     display: flex;
     gap: 0.75rem;
     max-height: 96vh;
+    max-height: 96dvh;
     overflow: hidden;
   }
 
@@ -171,6 +172,7 @@
     width: min(96vw, 1400px);
     max-width: 1400px;
     max-height: 96vh;
+    max-height: 96dvh;
   }
 
   .contract-preview-sidebar {
@@ -601,6 +603,7 @@
     flex-direction: column;
     height: auto;
     max-height: 85vh;
+    max-height: 85dvh;
   }
 
   .ddm-body {

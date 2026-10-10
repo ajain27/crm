@@ -9,12 +9,22 @@
     overflow: hidden;
   }
 
+  /* Google Places suggestions are appended to <body> at z-index 1000;
+     lift them above the modal overlay (z-9999) so they show in modals. */
+  .pac-container {
+    z-index: 10000;
+  }
+
   .modal {
     @apply w-[90%] rounded-2xl bg-app-panel shadow-app-panel;
     padding: 1rem;
     margin: 0;
+    /* dvh is the visible viewport on phones; plain vh reaches behind the
+       browser toolbars and hides the action buttons. vh stays as fallback. */
     height: 96vh;
+    height: 96dvh;
     max-height: 96vh;
+    max-height: 96dvh;
     display: flex;
     flex-direction: column;
   }
@@ -49,6 +59,8 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .modal textarea {
@@ -81,6 +93,13 @@
     flex-direction: column;
     gap: 0.5rem;
     margin-bottom: 1.25rem;
+  }
+
+  /* This column is also the modal's scroll area, so on a short (phone)
+     screen its items would shrink to fit instead of scrolling — the
+     preview box (overflow: hidden) collapsed to nothing. */
+  .mail-merge-modal > * {
+    flex-shrink: 0;
   }
 
   .mail-merge-mode-toggle {

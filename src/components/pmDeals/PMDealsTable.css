@@ -53,6 +53,7 @@
     flex-direction: column;
     height: auto;
     max-height: 85vh;
+    max-height: 85dvh;
   }
 
   .add-form.pm-deal-edit-form {

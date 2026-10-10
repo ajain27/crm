@@ -1,11 +1,23 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 
 // Set env var before module import so NOT_CONFIGURED is false
 beforeAll(() => {
   vi.stubEnv("VITE_BREVO_API_KEY", "test-brevo-key");
 });
 
+vi.mock("../../../hooks/useAddressAutocomplete", () => ({
+  useAddressAutocomplete: vi.fn(),
+}));
+
+const { useAddressAutocomplete } =
+  await import("../../../hooks/useAddressAutocomplete");
 const { default: MailMergeModal } = await import("./MailMergeModal");
 
 const BUYERS_WITH_EMAIL = [
@@ -379,5 +391,15 @@ describe("MailMergeModal", () => {
       expect(onClose).not.toHaveBeenCalled();
       expect(addressInput.value).toBe("Some Address");
     });
+  });
+
+  it("fills the property address from a Places suggestion", async () => {
+    renderModal();
+    const input = screen.getByPlaceholderText(/123 Main St, Atlanta/);
+    const [ref, onSelect] = useAddressAutocomplete.mock.calls.at(-1);
+    expect(ref.current).toBe(input);
+
+    act(() => onSelect({ formatted: "5 Elm St, Atlanta, GA 30301, USA" }));
+    expect(input).toHaveValue("5 Elm St, Atlanta, GA 30301, USA");
   });
 });
