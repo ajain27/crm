@@ -11,6 +11,9 @@ import {
   saveContractVersion,
   fetchContractVersion,
   deleteContractById,
+  saveDealPhoto,
+  fetchDealPhoto,
+  deleteDealPhotoById,
   subscribeToLeads,
   saveLead,
   deleteLeadById,
@@ -60,6 +63,13 @@ import { useDealsData } from "./hooks/useDealsData";
 import { useDealsFilter } from "./hooks/useDealsFilter";
 import { useDealForm } from "./hooks/useDealForm";
 import { useProfileManager } from "./hooks/useProfileManager";
+
+// Module-level so the object is stable across renders.
+const DEAL_PHOTO_STORE = {
+  save: saveDealPhoto,
+  fetch: fetchDealPhoto,
+  remove: deleteDealPhotoById,
+};
 
 function Wholesale() {
   const { theme, toggleTheme } = useTheme();
@@ -305,6 +315,7 @@ function Wholesale() {
                 saveContractVersion={saveContractVersion}
                 fetchContractVersion={fetchContractVersion}
                 deleteContractById={deleteContractById}
+                photoStore={DEAL_PHOTO_STORE}
                 currentUserId={currentUser.id}
                 convertDealToRental={convertDealToRental}
               />

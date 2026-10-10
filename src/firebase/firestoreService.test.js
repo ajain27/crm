@@ -118,16 +118,31 @@ describe("firestoreService", () => {
     expect(savedArg.contractVersions[0]).not.toHaveProperty("data");
   });
 
-  it("deletes contract subcollection documents before deleting the property", async () => {
+  it("deletes contract and photo subcollection documents before deleting the property", async () => {
     const mockContractDoc = { ref: { contractDocRef: true } };
-    getDocs.mockResolvedValue({ docs: [mockContractDoc] });
+    const mockPhotoDoc = { ref: { photoDocRef: true } };
+    getDocs
+      .mockResolvedValueOnce({ docs: [mockContractDoc] })
+      .mockResolvedValueOnce({ docs: [mockPhotoDoc] });
 
     await deleteDealById("1");
 
-    expect(getDocs).toHaveBeenCalledTimes(1);
+    expect(getDocs).toHaveBeenCalledTimes(2);
     expect(deleteDoc).toHaveBeenCalledWith(mockContractDoc.ref);
+    expect(deleteDoc).toHaveBeenCalledWith(mockPhotoDoc.ref);
     expect(doc).toHaveBeenCalledWith(expect.anything(), "1");
-    expect(deleteDoc).toHaveBeenCalledTimes(2);
+    expect(deleteDoc).toHaveBeenCalledTimes(3);
+  });
+
+  it("saves deal photo metadata without image data on the deal", async () => {
+    await saveDeal({
+      id: "1",
+      photos: [{ id: "p1", uploadedAt: "t", data: "data:x" }],
+    });
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ photos: [{ id: "p1", uploadedAt: "t" }] }),
+    );
   });
 
   it("fetches buyers from the buyers collection", async () => {

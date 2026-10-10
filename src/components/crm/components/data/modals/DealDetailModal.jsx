@@ -11,6 +11,7 @@ import WholesaleOfferPdfTemplate, {
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
+import DealPhotos from "./DealPhotos";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import { StreetViewButton } from "../../../../elements/StreetView";
 import {
@@ -110,6 +111,8 @@ function DealDetailModal({
   handleDeleteContractVersion,
   uploadingDealId,
   onReactivate,
+  photoStore,
+  currentUserId,
 }) {
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
@@ -126,6 +129,7 @@ function DealDetailModal({
   // The notes Run comps is saving: when the deal comes back with exactly
   // these notes, only the notes are taken in, so unsaved edits survive.
   const pendingCompsNotes = useRef(null);
+  const prevDeal = useRef(null);
   const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
 
   // Run comps adds its note to the deal straight away (keeping any notes
@@ -160,6 +164,16 @@ function DealDetailModal({
 
   useEffect(() => {
     if (!deal) return;
+    // Photos save on their own and aren't part of the form, so a deal update
+    // that only changes them leaves unsaved edits alone.
+    const previous = prevDeal.current;
+    prevDeal.current = deal;
+    const onlyPhotosChanged =
+      previous?.id === deal.id &&
+      Object.keys({ ...previous, ...deal }).every(
+        (key) => key === "photos" || previous[key] === deal[key],
+      );
+    if (onlyPhotosChanged) return;
     const isCompsNoteUpdate =
       pendingCompsNotes.current !== null &&
       deal.notes === pendingCompsNotes.current;
@@ -276,7 +290,8 @@ function DealDetailModal({
         return;
       }
 
-      const { id, ...rest } = draft;
+      // Photos are saved as they're added; the draft's copy may be stale.
+      const { id, photos, ...rest } = draft;
       await updateDealPatch(deal.id, {
         ...rest,
         ...numeric,
@@ -758,6 +773,17 @@ function DealDetailModal({
                   </div>
                 )}
               </div>
+            </Section>
+          )}
+
+          {photoStore && (
+            <Section title="Photos">
+              <DealPhotos
+                deal={deal}
+                photoStore={photoStore}
+                currentUserId={currentUserId}
+                updateDealPatch={updateDealPatch}
+              />
             </Section>
           )}
 

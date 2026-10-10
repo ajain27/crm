@@ -382,4 +382,47 @@ describe("DealDetailModal", () => {
       await screen.findByText(/missing SERPER_API_KEY/),
     ).toBeInTheDocument();
   });
+
+  it("keeps unsaved edits when only the deal's photos change, and doesn't save a stale photo list", async () => {
+    const photoStore = {
+      save: vi.fn(),
+      fetch: vi.fn(async (dealId, id) => ({ id, data: "data:x" })),
+      remove: vi.fn(),
+    };
+    const updateDealPatch = vi.fn(async () => {});
+    const { rerender } = render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={updateDealPatch}
+        photoStore={photoStore}
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("Street address"), {
+      target: { value: "2 Main St" },
+    });
+
+    // A photo was added and the parent passes the updated deal back.
+    const withPhoto = { ...deal, photos: [{ id: "p1", uploadedAt: "x" }] };
+    rerender(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={withPhoto}
+        updateDealPatch={updateDealPatch}
+        photoStore={photoStore}
+      />,
+    );
+    expect(screen.getByPlaceholderText("Street address")).toHaveValue(
+      "2 Main St",
+    );
+    expect(await screen.findByAltText("Deal photo 1")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Save Changes"));
+    await waitFor(() => expect(updateDealPatch).toHaveBeenCalled());
+    const [, patch] = updateDealPatch.mock.calls[0];
+    expect(patch.address).toBe("2 Main St");
+    expect(patch).not.toHaveProperty("photos");
+  });
 });

@@ -32,6 +32,9 @@ vi.mock("../../../firebase/firestoreService", () => ({
   saveContractVersion: vi.fn().mockResolvedValue(undefined),
   fetchContractVersion: vi.fn().mockResolvedValue(null),
   deleteContractById: vi.fn().mockResolvedValue(undefined),
+  saveDealPhoto: vi.fn().mockResolvedValue(undefined),
+  fetchDealPhoto: vi.fn().mockResolvedValue(null),
+  deleteDealPhotoById: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./filters/crm_filters", () => ({

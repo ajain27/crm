@@ -24,6 +24,7 @@ function Wholesale_data({
   fetchContractVersion,
   deleteContractById,
   currentUserId,
+  photoStore,
   convertDealToRental,
 }) {
   const [tab, setTab] = useState("active");
@@ -240,6 +241,8 @@ function Wholesale_data({
         handleContractUpload={handleContractUpload}
         handleDeleteContractVersion={handleDeleteContractVersion}
         uploadingDealId={uploadingDealId}
+        photoStore={photoStore}
+        currentUserId={currentUserId}
         onReactivate={
           detailDeal && isInactive(detailDeal)
             ? () => {

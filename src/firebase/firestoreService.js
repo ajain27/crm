@@ -50,6 +50,10 @@ function contractsSubcollection(dealId) {
   return collection(db, "properties", dealId, "contracts");
 }
 
+function dealPhotosSubcollection(dealId) {
+  return collection(db, "properties", dealId, "photos");
+}
+
 function pmDealFilesSubcollection(pmDealId) {
   return collection(db, "pmDeals", pmDealId, "files");
 }
@@ -365,14 +369,25 @@ export async function saveDeal(property) {
     ...property,
     contractVersions: stripContractData(property.contractVersions),
     contractFileData: "",
+    // Photo data lives in the photos subcollection; the deal keeps the list.
+    ...(Array.isArray(property.photos) && {
+      photos: property.photos.map(({ data, ...rest }) => rest),
+    }),
   };
   await setDoc(propertyRef, normalized);
   return normalized;
 }
 
 export async function deleteDealById(id) {
-  const contractsSnapshot = await getDocs(contractsSubcollection(id));
-  await Promise.all(contractsSnapshot.docs.map((d) => deleteDoc(d.ref)));
+  const [contractsSnapshot, photosSnapshot] = await Promise.all([
+    getDocs(contractsSubcollection(id)),
+    getDocs(dealPhotosSubcollection(id)),
+  ]);
+  await Promise.all(
+    [...contractsSnapshot.docs, ...photosSnapshot.docs].map((d) =>
+      deleteDoc(d.ref),
+    ),
+  );
   await deleteDoc(doc(propertiesCollection, id));
 }
 
@@ -404,6 +419,27 @@ export async function fetchContractVersion(dealId, id) {
 
 export async function deleteContractById(dealId, id) {
   await deleteDoc(doc(contractsSubcollection(dealId), id));
+}
+
+// Deal photos: one compressed JPEG data URL per document, like contracts.
+export async function saveDealPhoto({ id, dealId, userId, data, uploadedAt }) {
+  await setDoc(doc(dealPhotosSubcollection(dealId), id), {
+    id,
+    dealId,
+    userId,
+    data,
+    uploadedAt,
+  });
+}
+
+export async function fetchDealPhoto(dealId, id) {
+  const snapshot = await getDoc(doc(dealPhotosSubcollection(dealId), id));
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() };
+}
+
+export async function deleteDealPhotoById(dealId, id) {
+  await deleteDoc(doc(dealPhotosSubcollection(dealId), id));
 }
 
 export async function fetchBuyers(userId) {
