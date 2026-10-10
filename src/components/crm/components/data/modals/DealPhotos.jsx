@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ImagePlus, Loader2, X } from "lucide-react";
 import Modal from "../../../../modal/Modal";
-import { compressImage } from "../../../../../utils/compressImage";
+import { compressImage, isHeicFile } from "../../../../../utils/compressImage";
 
 export const MAX_DEAL_PHOTOS = 5;
 
@@ -48,7 +48,8 @@ export default function DealPhotos({
     const files = Array.from(event.target.files || []);
     event.target.value = "";
     if (files.length === 0) return;
-    if (files.some((f) => !f.type.startsWith("image/"))) {
+    // Some browsers report HEIC files with no type, so allow them by name.
+    if (files.some((f) => !f.type.startsWith("image/") && !isHeicFile(f))) {
       alert("Please choose image files.");
       return;
     }
@@ -143,7 +144,7 @@ export default function DealPhotos({
             <span>{uploading ? "Uploading…" : "Add photo"}</span>
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               multiple
               disabled={uploading}
               onChange={handleFiles}

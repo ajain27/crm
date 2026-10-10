@@ -30,6 +30,7 @@
     "express": "^5.2.1",
     "firebase": "^12.12.1",
     "firebase-admin": "^14.1.0",
+    "heic-to": "1.5.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.11.0",

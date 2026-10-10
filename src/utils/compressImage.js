@@ -2,6 +2,22 @@
 // URLs kept under this size (the same budget contracts use).
 export const MAX_PHOTO_DATA_URL_LENGTH = 700 * 1024;
 
+const HEIC_NAME = /\.(heic|heif)$/i;
+
+export function isHeicFile(file) {
+  return /^image\/hei[cf]/i.test(file.type) || HEIC_NAME.test(file.name);
+}
+
+// iPhone photos are HEIC, which only Safari can decode. Elsewhere, convert
+// to JPEG with heic-to (loaded only when a HEIC file is picked — it's large).
+async function heicToJpeg(file) {
+  const { heicTo } = await import("heic-to");
+  const blob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.92 });
+  return new File([blob], file.name.replace(HEIC_NAME, ".jpg"), {
+    type: "image/jpeg",
+  });
+}
+
 function loadImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -25,7 +41,17 @@ export async function compressImage(
   file,
   { maxDimension = 1600, maxLength = MAX_PHOTO_DATA_URL_LENGTH } = {},
 ) {
-  const img = await loadImage(file);
+  let img;
+  try {
+    img = await loadImage(file);
+  } catch (error) {
+    if (!isHeicFile(file)) throw error;
+    try {
+      img = await loadImage(await heicToJpeg(file));
+    } catch {
+      throw new Error(`"${file.name}" couldn't be converted from HEIC.`);
+    }
+  }
   let dimension = maxDimension;
 
   for (let attempt = 0; attempt < 6; attempt++) {
