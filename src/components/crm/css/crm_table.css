@@ -1036,6 +1036,29 @@
     }
   }
 
+  /* Up to six actions don't fit one row on a phone: wrap them two per
+     row, with Save Changes on its own full-width row at the bottom. */
+  @media (max-width: 600px) {
+    .deal-detail-modal .modal-actions {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .deal-detail-modal .modal-actions > button {
+      flex: 1 1 calc(50% - 0.25rem);
+      white-space: nowrap;
+      padding: 0.7rem 0.75rem;
+    }
+
+    .deal-detail-modal .modal-actions .ddm-delete-btn {
+      margin-right: 0;
+    }
+
+    .deal-detail-modal .modal-actions > .primary-btn {
+      flex-basis: 100%;
+    }
+  }
+
   @media (max-width: 480px) {
     /* Active/Inactive/Closed tabs at 3x their padded width can run a few
        pixels past a narrow phone screen — let them wrap instead. */
