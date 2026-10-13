@@ -23,6 +23,7 @@ const PPC_SOURCE_TERMS = [
   "meta ads",
 ];
 
+// "leadzolo" keeps leads from the old Leadzolo webhook in the PPL tab.
 const PPL_SOURCE_TERMS = ["ppl", "pay per lead", "leadzolo"];
 
 export function isPpcLead(lead) {

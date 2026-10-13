@@ -175,8 +175,8 @@ export default function PotentialLeads({
     return true;
   }
 
-  // PPL leads come in straight from the Leadzolo webhook, not WordPress —
-  // no WP sync-delete step or deleted-count stat to keep in sync.
+  // PPL leads aren't synced from WordPress — no WP sync-delete step or
+  // deleted-count stat to keep in sync.
   async function handlePplBulkDelete(selected) {
     if (selected.length === 0) return false;
     if (!confirmBulkDelete(selected.length)) return false;
@@ -341,7 +341,7 @@ export default function PotentialLeads({
           leads={pplLeads}
           listState={pplList}
           noLeadsSubtitle="No PPL leads yet."
-          noLeadsMessage="Leads from Leadzolo will appear here."
+          noLeadsMessage="PPL leads will appear here."
           onBulkDelete={handlePplBulkDelete}
           onSetQuality={handleSetQuality}
           {...leadActions}
