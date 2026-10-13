@@ -20,6 +20,7 @@ import {
 } from "../components/LeadTableCells";
 import MarkBadLeadModal from "../components/MarkBadLeadModal";
 import LeadExportButton from "../components/LeadExportButton";
+import LeadImportButton from "../components/LeadImportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { leadMatchesSearch } from "../leadUtils";
 
@@ -54,6 +55,7 @@ export default function CampaignLeadList({
   onAddToCrm,
   onRunAutomation,
   onStopAutomation,
+  onImport,
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
   const { selectedIds } = listState;
@@ -79,6 +81,7 @@ export default function CampaignLeadList({
           onDelete={onBulkDelete}
         />
       )}
+      {!readOnly && onImport && <LeadImportButton onImport={onImport} />}
       {!readOnly && (
         <LeadExportButton
           selectedLeads={selectedLeads}

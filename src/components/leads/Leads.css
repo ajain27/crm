@@ -745,6 +745,15 @@
     cursor: not-allowed;
   }
 
+  .leads-import-btn input {
+    display: none;
+  }
+
+  .leads-import-btn.is-importing {
+    opacity: 0.55;
+    cursor: progress;
+  }
+
   /* ── County Records ─────────────────────────────────────────── */
   /* County Records lists, one tab each; scrolls sideways when there are
      more than fit. */

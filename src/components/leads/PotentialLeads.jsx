@@ -11,6 +11,7 @@ import CommercialLeadForm from "./commercial/CommercialLeadForm";
 import CommercialLeadList from "./commercial/CommercialLeadList";
 import CampaignLeadList from "./campaign/CampaignLeadList";
 import CountyRecords from "./countyRecords/CountyRecords";
+import { csvToPplLeads } from "./leadImport";
 import { useLeadForm } from "./hooks/useLeadForm";
 import { useLeadListState } from "./hooks/useLeadListState";
 import { useWordPressLeadSync } from "./hooks/useWordPressLeadSync";
@@ -177,6 +178,44 @@ export default function PotentialLeads({
 
   // PPL leads aren't synced from WordPress — no WP sync-delete step or
   // deleted-count stat to keep in sync.
+  async function handlePplImport(text) {
+    const result = csvToPplLeads(text, {
+      existingLeads: leads,
+      userId: currentUser.id,
+    });
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+    const { leads: imported, skippedEmpty, skippedDuplicates } = result;
+    const saved = [];
+    // Saved a few at a time so a large file doesn't flood Firestore.
+    for (let i = 0; i < imported.length; i += 20) {
+      const batch = imported.slice(i, i + 20);
+      const results = await Promise.allSettled(
+        batch.map((lead) => saveLead(lead)),
+      );
+      batch.forEach((lead, j) => {
+        if (results[j].status === "fulfilled") saved.push(lead);
+      });
+    }
+    if (saved.length) setLeads((prev) => [...saved, ...prev]);
+
+    const failed = imported.length - saved.length;
+    alert(
+      [
+        `Imported ${saved.length} ${pluralizeLeads(saved.length)}.`,
+        skippedDuplicates &&
+          `Skipped ${skippedDuplicates} already in your leads (same phone, email or address).`,
+        skippedEmpty &&
+          `Skipped ${skippedEmpty} ${skippedEmpty === 1 ? "row" : "rows"} with no name, email, phone or address.`,
+        failed && `${failed} couldn't be saved — try importing again.`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+
   async function handlePplBulkDelete(selected) {
     if (selected.length === 0) return false;
     if (!confirmBulkDelete(selected.length)) return false;
@@ -343,6 +382,7 @@ export default function PotentialLeads({
           noLeadsSubtitle="No PPL leads yet."
           noLeadsMessage="PPL leads will appear here."
           onBulkDelete={handlePplBulkDelete}
+          onImport={handlePplImport}
           onSetQuality={handleSetQuality}
           {...leadActions}
         />

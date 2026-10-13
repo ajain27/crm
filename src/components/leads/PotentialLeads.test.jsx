@@ -283,6 +283,46 @@ describe("PotentialLeads", () => {
     expect(screen.queryByText(/Mark Lead as Bad/i)).toBeNull();
   });
 
+  it("imports PPL leads from a CSV, skipping ones already there", async () => {
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    const setLeads = vi.fn();
+    const leads = [
+      { id: "p1", source: "PPL", sellerName: "Pat", phone: "206-555-0100" },
+    ];
+    render(<PotentialLeads {...baseProps({ leads, saveLead, setLeads })} />);
+    fireEvent.click(screen.getByRole("button", { name: /PPL Leads/i }));
+
+    const csv = [
+      "Name,Phone,Address",
+      "Pat Again,(206) 555-0100,1 Main St",
+      "New Seller,512-555-0199,9 Elm St",
+    ].join("\n");
+    fireEvent.change(screen.getByLabelText("Import CSV"), {
+      target: { files: [new File([csv], "leads.csv", { type: "text/csv" })] },
+    });
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalled());
+    expect(saveLead).toHaveBeenCalledTimes(1);
+    expect(saveLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sellerName: "New Seller",
+        source: "PPL",
+        userId: "u1",
+      }),
+    );
+    expect(setLeads).toHaveBeenCalled();
+    expect(window.alert.mock.calls[0][0]).toMatch(
+      /Imported 1 lead\.\nSkipped 1 already in your leads/,
+    );
+  });
+
+  it("doesn't offer CSV import on the PPC tab", () => {
+    render(<PotentialLeads {...baseProps()} />);
+    fireEvent.click(screen.getByRole("button", { name: /PPC Leads/i }));
+    expect(screen.queryByLabelText("Import CSV")).toBeNull();
+  });
+
   it("bulk-deletes selected PPL leads", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteLeadById = vi.fn().mockResolvedValue(undefined);
