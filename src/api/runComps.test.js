@@ -25,15 +25,12 @@ const CLAUDE_REVIEW = {
     },
   ],
 };
-import {
-  rankComps,
-  cleanScraped,
-  distanceMiles,
-  estimateArv,
-  parseRedfinSoldCsv,
-  pickListingUrls,
-  runComps,
-} from "../../api/run-comps.js";
+import { rankComps } from "../../api/_lib/comps/rank.js";
+import { cleanScraped, pickListingUrls } from "../../api/_lib/comps/subject.js";
+import { distanceMiles } from "../../api/_lib/comps/rules.js";
+import { estimateArv } from "../../api/_lib/comps/arv.js";
+import { parseRedfinSoldCsv } from "../../api/_lib/comps/sales.js";
+import { runComps } from "../../api/_lib/comps/runComps.js";
 
 const NOW = Date.parse("2026-10-08T12:00:00");
 const ENV = { SERPER_API_KEY: "serper", FIRECRAWL_API_KEY: "firecrawl" };
