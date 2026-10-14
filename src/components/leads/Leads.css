@@ -633,6 +633,51 @@
     border-color: var(--text);
   }
 
+  .ldm-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .ldm-title-links {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+
+  .ldm-notes-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .ldm-notes-toggle {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--blue);
+    cursor: pointer;
+  }
+
+  .ldm-notes-toggle:hover {
+    text-decoration: underline;
+  }
+
+  .ldm-notes-view {
+    padding: 0.9rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+
   /* Follow-up notification banner */
   .followup-banner {
     display: flex;

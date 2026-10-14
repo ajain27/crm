@@ -7,6 +7,8 @@ import { joinName, splitName } from "./leadUtils";
 import { ZillowLink } from "./components/LeadTableCells";
 import { StreetViewButton } from "../elements/StreetView";
 import RunCompsModal from "../crm/components/data/comps/RunCompsModal";
+import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
+import { splitCompsNotes } from "../crm/components/data/comps/compsNote";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -67,6 +69,7 @@ export default function LeadDetailModal({
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
   const [compsOpen, setCompsOpen] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
 
   useEffect(() => {
     if (lead)
@@ -76,6 +79,7 @@ export default function LeadDetailModal({
         ...lead,
         source: isPpc ? "PPC" : isPpl ? "PPL" : lead.source,
       });
+    setEditingNotes(false);
   }, [lead, isPpc, isPpl]);
 
   if (!lead) return null;
@@ -83,6 +87,12 @@ export default function LeadDetailModal({
   function set(field, value) {
     setDraft((prev) => ({ ...prev, [field]: value }));
   }
+
+  // Notes with a comps note in them show laid out until "Edit notes".
+  const hasCompsNote = splitCompsNotes(draft.notes).some(
+    (seg) => seg.type === "comps",
+  );
+  const showNotesView = hasCompsNote && !editingNotes;
 
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
   // PPL leads are entered with full seller details, so they get the same
@@ -133,9 +143,19 @@ export default function LeadDetailModal({
         isOpen={isOpen}
         onClose={onClose}
         title={
-          <span className="ddm-title-row">
-            <span>{draft.address || "Lead Details"}</span>
-            <Badge value={draft.dealType || "Wholesale"} />
+          <span className="ldm-title">
+            <span className="ddm-title-row">
+              <span>{draft.address || "Lead Details"}</span>
+              <Badge value={draft.dealType || "Wholesale"} />
+            </span>
+            {/* Here rather than above the Address input, so that field's
+                label lines up with the rest of its row. */}
+            {draft.address?.trim() && (
+              <span className="ldm-title-links">
+                <ZillowLink address={draft.address} />
+                <StreetViewButton address={draft.address} />
+              </span>
+            )}
           </span>
         }
         className="lead-detail-modal"
@@ -186,15 +206,7 @@ export default function LeadDetailModal({
                   ))}
                 </select>
               </Field>
-              <Field
-                label="Address"
-                action={
-                  <>
-                    <ZillowLink address={draft.address} />
-                    <StreetViewButton address={draft.address} />
-                  </>
-                }
-              >
+              <Field label="Address">
                 <input
                   className="ldm-input ldm-wide"
                   value={draft.address || ""}
@@ -309,17 +321,6 @@ export default function LeadDetailModal({
                   maxLength={12}
                 />
               </Field>
-              {!isPpc && (
-                <Field label="Listing URL">
-                  <input
-                    className="ldm-input ldm-wide"
-                    type="url"
-                    value={draft.url || ""}
-                    onChange={(e) => set("url", e.target.value)}
-                    placeholder="https://…"
-                  />
-                </Field>
-              )}
             </div>
           </div>
 
@@ -473,14 +474,29 @@ export default function LeadDetailModal({
           )}
 
           <div className="ldm-section">
-            <div className="ldm-section-label">Notes</div>
-            <textarea
-              className="ldm-notes"
-              value={draft.notes || ""}
-              onChange={(e) => set("notes", e.target.value)}
-              placeholder="Add notes about this lead…"
-              rows={5}
-            />
+            <div className="ldm-section-label ldm-notes-label">
+              Notes
+              {hasCompsNote && (
+                <button
+                  type="button"
+                  className="ldm-notes-toggle"
+                  onClick={() => setEditingNotes((v) => !v)}
+                >
+                  {editingNotes ? "Show formatted" : "Edit notes"}
+                </button>
+              )}
+            </div>
+            {showNotesView ? (
+              <CompsNoteView notes={draft.notes} className="ldm-notes-view" />
+            ) : (
+              <textarea
+                className="ldm-notes"
+                value={draft.notes || ""}
+                onChange={(e) => set("notes", e.target.value)}
+                placeholder="Add notes about this lead…"
+                rows={hasCompsNote ? 12 : 5}
+              />
+            )}
           </div>
         </div>
       </Modal>
