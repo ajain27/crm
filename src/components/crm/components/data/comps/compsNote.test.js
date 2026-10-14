@@ -4,6 +4,7 @@ import {
   compsCriteriaText,
   compsStatsText,
   formatCompsNote,
+  splitCompsNotes,
 } from "./compsNote";
 
 describe("formatCompsNote", () => {
@@ -92,5 +93,63 @@ describe("formatCompsNote", () => {
         distance: 0.52,
       }),
     ).toBe("3 bd/1 ba (0.52 mi away · +0.5 bath) · 0.52 mi away");
+  });
+});
+
+describe("splitCompsNotes", () => {
+  const compsNote = [
+    "Comps (10/13/2026):",
+    "ARV estimate: $376,182 · Rent estimate: $2,514/mo",
+    "Property: 3 bd · 2 ba · 1,174 sq ft · built 1976 · tax $4,123/yr",
+    "Rules: Sold within 0.5 mi in the last 90 days · 3 bd · 2 ba",
+    "128 homes sold within 1 mi in the last 6 months; 1 meets every rule.",
+    "1. 5712 NE 62nd Ave, Vancouver, WA 98661 — $450,000 ($357/sq ft) · 3 bd/2 ba (0.53 mi away · +0.5 bath) · 1,261 sq ft · https://www.redfin.com/home/1",
+    "2. 9 Elm St — $330,000 · 3 bd/1 ba · 1,040 sq ft",
+    "ARV = median $320/sq ft across 5 comps.",
+    "Comps ordered by distance, then most recent sale.",
+    "Sources: https://www.zillow.com/a · https://www.redfin.com/b",
+  ].join("\n");
+
+  it("lays out a comps note between plain notes", () => {
+    const segments = splitCompsNotes(
+      `Called, no answer.\n\n${compsNote}\n\nCall back Friday.`,
+    );
+    expect(segments.map((s) => s.type)).toEqual(["text", "comps", "text"]);
+    expect(segments[0].text).toBe("Called, no answer.");
+    expect(segments[1].comps).toEqual({
+      date: "10/13/2026",
+      arv: "$376,182",
+      rent: "$2,514",
+      property: "3 bd · 2 ba · 1,174 sq ft · built 1976 · tax $4,123/yr",
+      rules: "Sold within 0.5 mi in the last 90 days · 3 bd · 2 ba",
+      stats:
+        "128 homes sold within 1 mi in the last 6 months; 1 meets every rule.",
+      comps: [
+        {
+          address: "5712 NE 62nd Ave, Vancouver, WA 98661",
+          price: "$450,000",
+          ppsf: "$357",
+          details: "3 bd/2 ba (0.53 mi away · +0.5 bath) · 1,261 sq ft",
+          url: "https://www.redfin.com/home/1",
+        },
+        {
+          address: "9 Elm St",
+          price: "$330,000",
+          ppsf: "",
+          details: "3 bd/1 ba · 1,040 sq ft",
+          url: "",
+        },
+      ],
+      summary: "ARV = median $320/sq ft across 5 comps.",
+      method: "Comps ordered by distance, then most recent sale.",
+      sources: ["https://www.zillow.com/a", "https://www.redfin.com/b"],
+    });
+  });
+
+  it("keeps notes without a comps note as plain text", () => {
+    expect(splitCompsNotes("Motivated seller.\n\nComps: none yet")).toEqual([
+      { type: "text", text: "Motivated seller.\n\nComps: none yet" },
+    ]);
+    expect(splitCompsNotes("")).toEqual([]);
   });
 });

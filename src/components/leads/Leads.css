@@ -101,6 +101,43 @@
     max-width: 200px;
   }
 
+  .leads-notes-full {
+    display: none;
+  }
+
+  .comps-note,
+  .comps-note-view {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .comps-note + .comps-note,
+  .comps-note-text + .comps-note,
+  .comps-note + .comps-note-text {
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .comps-note-text {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+  }
+
+  .comps-note .run-comps-estimates {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .comps-note .run-comps-comp-head {
+    flex-wrap: wrap;
+  }
+
+  .comps-note .run-comps-links,
+  .comps-note .run-comps-sources {
+    flex-wrap: wrap;
+  }
+
   .leads-notes-preview {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -108,7 +145,9 @@
     overflow: hidden;
     font-size: 0.8125rem;
     color: var(--muted);
-    white-space: normal;
+    /* Keep the line breaks in multi-line notes (e.g. a comps note). */
+    white-space: pre-line;
+    overflow-wrap: anywhere;
     cursor: default;
   }
 
@@ -1482,10 +1521,24 @@
       max-width: none;
     }
 
+    /* Full notes in a box under the label; comps notes laid out like the
+       comps window (see CompsNoteView). */
     .leads-notes-preview {
-      -webkit-line-clamp: unset;
-      overflow: visible;
-      text-align: right;
+      display: none;
+    }
+
+    .leads-notes-full {
+      display: grid;
+      gap: 1rem;
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.9rem;
+      border-radius: 0.75rem;
+      background: color-mix(in srgb, var(--panel) 60%, var(--blue-light) 6%);
+      border: 1px solid color-mix(in srgb, var(--line) 60%, transparent 40%);
+      color: var(--text);
+      font-size: 0.875rem;
+      text-align: left;
     }
 
     .leads-accordion-name-stack {

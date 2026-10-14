@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { formatDate } from "../../../utils/utils";
 import { zillowUrl } from "../leadUtils";
+import CompsNoteView from "../../crm/components/data/comps/CompsNoteView";
 
 const EMPTY = "—";
 
@@ -87,11 +88,15 @@ export function SourceCell({ source }) {
 
 export function NotesCell({ notes }) {
   return (
-    <td className="leads-notes-cell" data-label="Notes">
+    <td className="leads-notes-cell acc-col-block" data-label="Notes">
       {notes ? (
-        <span className="leads-notes-preview" title={notes}>
-          {notes}
-        </span>
+        <>
+          <span className="leads-notes-preview" title={notes}>
+            {notes}
+          </span>
+          {/* Shown instead of the preview in the expanded card */}
+          <CompsNoteView notes={notes} className="leads-notes-full" />
+        </>
       ) : (
         EMPTY
       )}
