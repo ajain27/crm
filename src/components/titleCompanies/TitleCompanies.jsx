@@ -99,6 +99,9 @@ export default function TitleCompanies({
     if (name === "state") {
       const dup = findDuplicateCompany(companies, form.name, value);
       if (dup) setNameError(duplicateMessage(dup));
+      // Show the companies already in that state below.
+      setFilterState(value || "All");
+      setPage(1);
     }
   }
 
@@ -245,12 +248,13 @@ export default function TitleCompanies({
     }
   }
 
+  // Includes the picked state even with no companies in it yet (it can be
+  // set from the add form), so the filter shows what's applied.
   const stateOptions = [
     "All",
     ...new Set(
-      companies
-        .map((c) => c.state)
-        .filter(Boolean)
+      [...companies.map((c) => c.state), filterState]
+        .filter((s) => s && s !== "All")
         .sort(),
     ),
   ];

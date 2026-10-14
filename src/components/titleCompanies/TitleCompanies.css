@@ -1,6 +1,7 @@
 @layer components {
   /* ── Add form — 2-row grid ──────────────────────────── */
   .tc-add-form {
+    container: tc-add-form / inline-size;
     padding: var(--panel-pad, 1.25rem);
     display: flex;
     flex-direction: column;
@@ -13,7 +14,11 @@
    */
   .tc-inline-row {
     display: grid;
-    grid-template-columns: 1.3fr 1.1fr 1fr 190px 1.5fr;
+    /* minmax(0, …) so a wide field can't push the row (and the email Add
+       button) past the card's edge. */
+    grid-template-columns:
+      minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 190px)
+      minmax(0, 1.5fr);
     column-gap: 0.75rem;
     row-gap: 0.75rem;
     align-items: end;
@@ -274,23 +279,27 @@
   }
 
   /* ── Responsive ──────────────────────────────────────── */
-  @media (max-width: 1200px) {
+  /* Measured on the form, not the window — the sidebar takes a varying
+     share of the screen, so the card can be narrow on a wide window. */
+  @container tc-add-form (max-width: 1050px) {
     .tc-inline-row {
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
-  @media (max-width: 860px) {
+  @container tc-add-form (max-width: 640px) {
     .tc-inline-row {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container tc-add-form (max-width: 420px) {
+    .tc-inline-row {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
   @media (max-width: 480px) {
-    .tc-inline-row {
-      grid-template-columns: 1fr;
-    }
-
     .tc-search {
       min-width: 0;
       width: 100%;
