@@ -26,9 +26,10 @@ import { leadMatchesSearch } from "../leadUtils";
 
 const SEARCH_FIELDS = ["address", "sellerName", "email", "phone"];
 
-function rowClassName(lead, clickable) {
-  const quality =
-    lead.ppcQuality === "bad"
+function rowClassName(lead, clickable, showQuality) {
+  const quality = !showQuality
+    ? ""
+    : lead.ppcQuality === "bad"
       ? " ppc-row-bad"
       : lead.ppcQuality === "good"
         ? " ppc-row-good"
@@ -39,7 +40,7 @@ function rowClassName(lead, clickable) {
 // Paid-campaign lead list, shared by the PPC and PPL tabs. `readOnly` (for
 // PPC-only users) hides selection, quality, delete, CRM and automation, and
 // stops rows from opening the detail modal. Leads marked bad don't open
-// either.
+// either. The quality column only shows when `onSetQuality` is passed.
 export default function CampaignLeadList({
   title,
   leads,
@@ -59,6 +60,7 @@ export default function CampaignLeadList({
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
   const { selectedIds } = listState;
+  const showQuality = !readOnly && Boolean(onSetQuality);
 
   const filtered = leads.filter((l) =>
     leadMatchesSearch(l, listState.search, SEARCH_FIELDS),
@@ -126,7 +128,7 @@ export default function CampaignLeadList({
                 <th>Added</th>
                 {!readOnly && (
                   <>
-                    <th>Quality</th>
+                    {showQuality && <th>Quality</th>}
                     <th></th>
                     <th></th>
                   </>
@@ -135,13 +137,13 @@ export default function CampaignLeadList({
             </thead>
             <tbody>
               {pageLeads.map((lead) => {
-                const isBad = lead.ppcQuality === "bad";
+                const isBad = showQuality && lead.ppcQuality === "bad";
                 const clickable = !readOnly && !isBad;
                 return (
                   <tr
                     key={lead.id}
                     onClick={clickable ? () => onOpen(lead) : undefined}
-                    className={rowClassName(lead, clickable)}
+                    className={rowClassName(lead, clickable, showQuality)}
                   >
                     {!readOnly && (
                       <>
@@ -181,12 +183,14 @@ export default function CampaignLeadList({
                     <DateAddedCell date={lead.dateAdded} />
                     {!readOnly && (
                       <>
-                        <QualityCell
-                          quality={lead.ppcQuality}
-                          onMarkGood={() => onSetQuality(lead, "good")}
-                          onMarkBad={() => setBadModalLead(lead)}
-                          onClear={() => onSetQuality(lead, "")}
-                        />
+                        {showQuality && (
+                          <QualityCell
+                            quality={lead.ppcQuality}
+                            onMarkGood={() => onSetQuality(lead, "good")}
+                            onMarkBad={() => setBadModalLead(lead)}
+                            onClear={() => onSetQuality(lead, "")}
+                          />
+                        )}
                         <CrmCell
                           isBad={isBad}
                           onAdd={() => onAddToCrm(lead.id)}

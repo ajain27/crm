@@ -383,7 +383,6 @@ export default function PotentialLeads({
           noLeadsMessage="PPL leads will appear here."
           onBulkDelete={handlePplBulkDelete}
           onImport={handlePplImport}
-          onSetQuality={handleSetQuality}
           {...leadActions}
         />
       )}
