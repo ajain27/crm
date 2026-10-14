@@ -831,7 +831,7 @@ nav a.active {
 :root:not(.dark) .field select,
 :root:not(.dark) .auth-field input,
 :root:not(.dark) .search-input-expanded {
-  background: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
   transition:
     border-color 0.2s ease,
@@ -919,4 +919,24 @@ nav a.active {
   :root:not(.dark) .primary-btn:hover {
     transform: none;
   }
+}
+
+/* ── Select dropdowns — one custom chevron everywhere ───────── */
+/* The native arrow hugs the right edge; draw our own with breathing room.
+   Badge selects and the compact down-payment-% select keep their styling. */
+
+select:not([multiple]):not([size]):not(.badge):not(.dscr-down-pct-select) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25L7 9.25L11 5.25' stroke='%2364748b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 14px 14px;
+}
+
+:root.dark
+  select:not([multiple]):not([size]):not(.badge):not(.dscr-down-pct-select) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25L7 9.25L11 5.25' stroke='%2394a3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
