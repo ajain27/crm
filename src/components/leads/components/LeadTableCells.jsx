@@ -1,6 +1,7 @@
 import {
   CheckCheck,
   ExternalLink,
+  MessageSquare,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -52,11 +53,40 @@ export function EmailLink({ email }) {
   );
 }
 
+// "sms:+12146630735" — US numbers without a country code get +1, so the
+// Messages app matches them to the same contact as the tel: link.
+export function smsHref(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 10) return `sms:+1${digits}`;
+  return `sms:+${digits}`;
+}
+
+// Opens the device's Messages app, so the text goes out from the same
+// number that tel: links call from.
+export function TextLink({ phone }) {
+  const href = smsHref(phone);
+  return href ? (
+    <a
+      href={href}
+      className="leads-text-link"
+      title={`Text ${phone}`}
+      aria-label={`Text ${phone}`}
+      onClick={stopPropagation}
+    >
+      <MessageSquare size={14} />
+    </a>
+  ) : null;
+}
+
 export function PhoneLink({ phone }) {
   return phone ? (
-    <a href={`tel:${phone}`} className="leads-contact-link">
-      {phone}
-    </a>
+    <span className="leads-phone">
+      <a href={`tel:${phone}`} className="leads-contact-link">
+        {phone}
+      </a>
+      <TextLink phone={phone} />
+    </span>
   ) : (
     EMPTY
   );

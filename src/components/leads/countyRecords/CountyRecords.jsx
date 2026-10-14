@@ -3,6 +3,7 @@ import { FileSpreadsheet, Pencil, Trash2, Upload, X } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 import LoadingScreen from "../../loader/LoadingScreen";
 import { LeadSearchInput } from "../components/LeadListPanel";
+import { TextLink } from "../components/LeadTableCells";
 import {
   deleteCountyRecordImportById,
   deleteCountyRecordRows,
@@ -34,7 +35,7 @@ const MAX_FILE_MB = 30;
 const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone|fax/i;
 const PHONE_NUMBER = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g;
 
-// Phone cells as tap-to-call links. Every number in the cell is linked
+// Phone cells as tap-to-call links, each with a text link. Every number in the cell is linked
 // (some exports put two in one cell); other text stays as is.
 function PhoneCellContent({ value }) {
   const parts = [];
@@ -42,14 +43,16 @@ function PhoneCellContent({ value }) {
   for (const match of value.matchAll(PHONE_NUMBER)) {
     if (match.index > last) parts.push(value.slice(last, match.index));
     parts.push(
-      <a
-        key={match.index}
-        href={`tel:${match[0].replace(/[^\d+]/g, "")}`}
-        className="leads-contact-link"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {match[0]}
-      </a>,
+      <span key={match.index} className="leads-phone">
+        <a
+          href={`tel:${match[0].replace(/[^\d+]/g, "")}`}
+          className="leads-contact-link"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[0]}
+        </a>
+        <TextLink phone={match[0]} />
+      </span>,
     );
     last = match.index + match[0].length;
   }

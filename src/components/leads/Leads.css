@@ -403,6 +403,26 @@
     text-decoration: underline;
   }
 
+  .leads-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .leads-text-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+    border-radius: 0.375rem;
+    color: var(--blue);
+  }
+
+  .leads-text-link:hover {
+    background: var(--blue-light);
+  }
+
   .leads-url-btn {
     display: inline-flex;
     align-items: center;
