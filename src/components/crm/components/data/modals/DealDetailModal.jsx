@@ -12,7 +12,7 @@ import WholesaleOfferPdfTemplate, {
 import OfferOptionsModal from "./OfferOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
 import CompsNoteView from "../comps/CompsNoteView";
-import { splitCompsNotes } from "../comps/compsNote";
+import { splitCompsNotes, withCompsNote } from "../comps/compsNote";
 import DealPhotos from "./DealPhotos";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import { StreetViewButton } from "../../../../elements/StreetView";
@@ -135,10 +135,10 @@ function DealDetailModal({
   const prevDeal = useRef(null);
   const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
 
-  // Run comps adds its note to the deal straight away (keeping any notes
-  // typed but not yet saved).
+  // Run comps saves its note to the deal straight away, in place of any
+  // earlier comps note (keeping any notes typed but not yet saved).
   async function handleSaveCompsNote(note) {
-    const notes = [draft.notes, note].filter(Boolean).join("\n\n");
+    const notes = withCompsNote(draft.notes, note);
     pendingCompsNotes.current = notes;
     await updateDealPatch(deal.id, { notes });
     setDraft((prev) => ({ ...prev, notes }));

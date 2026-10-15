@@ -25,7 +25,8 @@ const SOURCE_LABELS = {
 };
 
 // Runs comps for `address` as soon as it opens, shows the result, and
-// hands the formatted note to `onSaveNote` (which adds it to the deal).
+// hands the formatted note to `onSaveNote` (which puts it in the deal's
+// notes in place of any earlier comps note).
 // `onApply` fills the deal's ARV and Sq Ft from the result (optional). Leads pass their
 // own wording, since their note and ARV only stick after Save Changes.
 export default function RunCompsModal({

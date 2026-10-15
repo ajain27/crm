@@ -203,4 +203,20 @@ export function splitCompsNotes(notes) {
   return segments;
 }
 
+// The notes with a new comps note in place of any earlier one; other
+// notes are kept as they are.
+export function withCompsNote(notes, note) {
+  const kept = (notes || "").split(/\n\s*\n/).filter(
+    (block) =>
+      block.trim() &&
+      !parseCompsBlock(
+        block
+          .trim()
+          .split("\n")
+          .map((l) => l.trim()),
+      ),
+  );
+  return [...kept, note].join("\n\n");
+}
+
 export { requestComps } from "../../../../../services/compsService";

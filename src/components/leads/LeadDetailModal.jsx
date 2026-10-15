@@ -8,7 +8,10 @@ import { ZillowLink } from "./components/LeadTableCells";
 import { StreetViewButton } from "../elements/StreetView";
 import RunCompsModal from "../crm/components/data/comps/RunCompsModal";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
-import { splitCompsNotes } from "../crm/components/data/comps/compsNote";
+import {
+  splitCompsNotes,
+  withCompsNote,
+} from "../crm/components/data/comps/compsNote";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -125,7 +128,7 @@ export default function LeadDetailModal({
   function handleSaveCompsNote(note) {
     setDraft((prev) => ({
       ...prev,
-      notes: [prev.notes, note].filter(Boolean).join("\n\n"),
+      notes: withCompsNote(prev.notes, note),
     }));
   }
 

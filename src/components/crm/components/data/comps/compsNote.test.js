@@ -5,6 +5,7 @@ import {
   compsStatsText,
   formatCompsNote,
   splitCompsNotes,
+  withCompsNote,
 } from "./compsNote";
 
 describe("formatCompsNote", () => {
@@ -151,5 +152,35 @@ describe("splitCompsNotes", () => {
       { type: "text", text: "Motivated seller.\n\nComps: none yet" },
     ]);
     expect(splitCompsNotes("")).toEqual([]);
+  });
+});
+
+describe("withCompsNote", () => {
+  const note = (date) =>
+    `Comps (${date}):\nARV estimate: $100,000 · Rent estimate: $900/mo`;
+
+  it("replaces an earlier comps note, keeping the other notes", () => {
+    const notes = [
+      "Called seller.",
+      note("10/13/2026"),
+      "Wants to close fast.",
+    ].join("\n\n");
+    expect(withCompsNote(notes, note("10/15/2026"))).toBe(
+      ["Called seller.", "Wants to close fast.", note("10/15/2026")].join(
+        "\n\n",
+      ),
+    );
+  });
+
+  it("removes every earlier comps note", () => {
+    const notes = [note("10/1/2026"), note("10/13/2026")].join("\n\n");
+    expect(withCompsNote(notes, note("10/15/2026"))).toBe(note("10/15/2026"));
+  });
+
+  it("works with no notes yet", () => {
+    expect(withCompsNote("", note("10/15/2026"))).toBe(note("10/15/2026"));
+    expect(withCompsNote(undefined, note("10/15/2026"))).toBe(
+      note("10/15/2026"),
+    );
   });
 });
