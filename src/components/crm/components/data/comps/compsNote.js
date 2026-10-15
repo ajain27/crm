@@ -55,6 +55,7 @@ const EXCLUDED_LABELS = {
 
 // "30 homes sold within 1 mi in the last 6 months; 3 meet every rule
 // (others: 4 too far, …). 2 of the comps shown fall outside the rules."
+// When none sold that close, the wider search is said to be widened.
 export function compsStatsText(result) {
   const s = result.stats;
   const c = result.criteria || {};
@@ -74,7 +75,11 @@ export function compsStatsText(result) {
   const outside = s.outsideRules
     ? ` ${s.outsideRules} of the comps shown ${s.outsideRules === 1 ? "falls" : "fall"} outside the rules.`
     : "";
+  const widened = c.widened
+    ? "None sold within 1 mi in the last 6 months, so the search widened: "
+    : "";
   return (
+    widened +
     `${s.nearbySales} home${s.nearbySales === 1 ? "" : "s"} sold${area}; ` +
     `${s.matched} ${s.matched === 1 ? "meets" : "meet"} every rule` +
     (excluded.length ? ` (others: ${excluded.join(", ")})` : "") +

@@ -164,8 +164,7 @@ export default function RunCompsModal({
             )}
             {result.topComps.length === 0 ? (
               <p className="run-comps-muted">
-                No homes sold nearby in the last 6 months, so there's no ARV
-                from comps.
+                No homes sold nearby, so there's no ARV from comps.
               </p>
             ) : (
               <ol className="run-comps-list">

@@ -1,6 +1,6 @@
 // Step 3: every nearby sale ranked against the comp rules.
 
-import { COMP_RULES, distanceMiles, isNum } from "./rules.js";
+import { COMP_RULES, SEARCH, distanceMiles, isNum } from "./rules.js";
 import { highwayBetween } from "./highways.js";
 
 // Broad type buckets so "Single Family Residential" matches "Single Family".
@@ -40,7 +40,7 @@ const signed = (n) => `${n > 0 ? "+" : "−"}${Math.abs(n)}`;
 // How a sale differs from the comp rules, as [rule, label] pairs; none
 // means it meets every rule. Rules whose subject value is unknown aren't
 // checked.
-function ruleMisses(sale, subject, distance, now) {
+function ruleMisses(sale, subject, distance, now, search) {
   const misses = [];
   if (distance > COMP_RULES.radiusMiles) {
     misses.push(["distance", `${distance.toFixed(2)} mi away`]);
@@ -50,7 +50,7 @@ function ruleMisses(sale, subject, distance, now) {
     misses.push([
       "soldDate",
       age === null
-        ? "sold 3–6 months ago"
+        ? `sold 3–${Math.round(search.days / 30.4)} months ago`
         : `sold ${Math.round(age / 30.4)} months ago`,
     ]);
   }
@@ -134,6 +134,7 @@ export function rankComps({
   location,
   sales,
   highways = null,
+  search = SEARCH,
   subjectAddress,
   now = Date.now(),
 }) {
@@ -154,12 +155,12 @@ export function rankComps({
   for (const sale of sales) {
     if (streetKey(sale.street || sale.address) === subjectStreet) continue;
     const distance = distanceMiles(location, sale);
-    if (distance > COMP_RULES.searchRadiusMiles) continue;
+    if (distance > search.miles) continue;
     if (highwayBetween(location, sale, highways)) {
       acrossHighway += 1;
       continue;
     }
-    const misses = ruleMisses(sale, subject, distance, now);
+    const misses = ruleMisses(sale, subject, distance, now, search);
     if (misses.length > 0) excluded[misses[0][0]] += 1;
     ranked.push({
       ...sale,

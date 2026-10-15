@@ -13,7 +13,8 @@
 //      within 1 mile over 180 days is ranked: those meeting all
 //      the rules above first (closest, then most recent), then the rest by
 //      how closely they match. The top 5 are shown; any outside the rules
-//      are labeled with exactly how they differ.
+//      are labeled with exactly how they differ. When there are no sales
+//      at all, the search widens to 2 miles over 12 months.
 //   4. Claude (optional) reviews the top candidates, drops bad or
 //      irrelevant comps and picks the 5 closest. It never estimates value.
 //      Without Claude, or if it fails, the ranking's top 5 are used.
@@ -22,7 +23,13 @@
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); ANTHROPIC_API_KEY
 // (optional — Claude's review of the candidates).
 
-import { COMP_RULES, errorWithStatus, isNum } from "./rules.js";
+import {
+  COMP_RULES,
+  SEARCH,
+  WIDE_SEARCH,
+  errorWithStatus,
+  isNum,
+} from "./rules.js";
 import {
   SITES,
   firecrawlExtract,
@@ -40,10 +47,10 @@ import { claudeReview } from "./review.js";
 import { estimateArv, plural, ruleReason } from "./arv.js";
 
 // The sales and major highways around a location, loaded together.
-async function loadArea(location) {
+async function loadArea(location, search = SEARCH) {
   const [sales, highways] = await Promise.all([
-    fetchRedfinSold(location),
-    fetchMajorHighways(location),
+    fetchRedfinSold(location, search),
+    fetchMajorHighways(location, search.miles),
   ]);
   return { sales, highways };
 }
@@ -181,14 +188,26 @@ export async function runComps(
       await gatherSubject(address, env));
   }
 
-  const { ranked, strictCount, excluded, acrossHighway, unknown } = rankComps({
-    subject: property,
-    location,
-    sales,
-    highways,
-    subjectAddress: address,
-    now,
-  });
+  const rank = (search) =>
+    rankComps({
+      subject: property,
+      location,
+      sales,
+      highways,
+      search,
+      subjectAddress: address,
+      now,
+    });
+  let search = SEARCH;
+  let ranking = rank(search);
+  // No sales at all nearby: look a mile further out and 6 months further
+  // back.
+  if (ranking.ranked.length === 0) {
+    search = WIDE_SEARCH;
+    ({ sales, highways } = await loadArea(location, search));
+    ranking = rank(search);
+  }
+  const { ranked, strictCount, excluded, acrossHighway, unknown } = ranking;
 
   // The 5 best-ranked; Claude, when available, reviews the top candidates,
   // drops bad ones and picks the 5 closest (it never sets the value).
@@ -274,8 +293,9 @@ export async function runComps(
       soldWithinDays: COMP_RULES.soldWithinDays,
       beds: property.beds,
       baths: property.baths,
-      searchRadiusMiles: COMP_RULES.searchRadiusMiles,
-      searchDays: COMP_RULES.searchDays,
+      searchRadiusMiles: search.miles,
+      searchDays: search.days,
+      widened: search === WIDE_SEARCH,
       yearBuiltFrom: isNum(property.yearBuilt)
         ? property.yearBuilt - COMP_RULES.yearBuiltTolerance
         : null,
@@ -300,7 +320,7 @@ export async function runComps(
     rentEstimate: property.rentEstimate,
     summary:
       topComps.length === 0
-        ? "No homes sold nearby in the last 6 months."
+        ? `No homes sold within ${search.miles} mi in the last ${Math.round(search.days / 30.4)} months.`
         : [
             arvBasis,
             outsideRules > 0

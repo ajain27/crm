@@ -431,12 +431,45 @@ describe("run-comps", () => {
     expect(out.summary).toMatch(/5 comps fall outside the comp rules/);
   });
 
-  it("says when no homes sold nearby at all", async () => {
+  it("widens to 2 mi over 12 months when nothing sold within 1 mi in 6 months", async () => {
+    // Redfin's first two calls (1 mi, 90 and 180 days) find nothing.
+    let redfinCalls = 0;
+    const fetchMock = mockFetch({
+      redfin: () => text(200, (redfinCalls += 1) <= 2 ? HEADER : REDFIN_CSV),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.criteria).toMatchObject({
+      searchRadiusMiles: 2,
+      searchDays: 365,
+      widened: true,
+    });
+    expect(out.topComps).toHaveLength(5);
+    const redfinUrls = fetchMock.mock.calls
+      .map(([url]) => url)
+      .filter((url) => url.includes("redfin.com/stingray"));
+    expect(redfinUrls).toHaveLength(4);
+    expect(redfinUrls.some((u) => u.includes("sold_within_days=365"))).toBe(
+      true,
+    );
+  });
+
+  it("doesn't widen when sales were found within 1 mi", async () => {
+    mockFetch();
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.criteria).toMatchObject({
+      searchRadiusMiles: 1,
+      widened: false,
+    });
+  });
+
+  it("says when no homes sold nearby at all, even after widening", async () => {
     mockFetch({ redfin: () => text(200, HEADER) });
     const out = await runComps(ADDRESS, ENV, NOW);
     expect(out.topComps).toEqual([]);
     expect(out.arvEstimate).toBeNull();
-    expect(out.summary).toBe("No homes sold nearby in the last 6 months.");
+    expect(out.summary).toBe(
+      "No homes sold within 2 mi in the last 12 months.",
+    );
   });
 
   it("retries the Census geocoder, then falls back to OpenStreetMap", async () => {

@@ -30,8 +30,8 @@ export function overpassQuery(
 // The major highways near the location, each as { name, points }; [] when
 // there are none, null when OpenStreetMap couldn't be reached (the check
 // is then skipped rather than failing the comps).
-export async function fetchMajorHighways(location) {
-  const query = overpassQuery(location);
+export async function fetchMajorHighways(location, miles) {
+  const query = overpassQuery(location, miles);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
   try {

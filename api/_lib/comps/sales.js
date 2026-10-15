@@ -1,6 +1,6 @@
 // Step 2: candidates — Redfin's sold homes around the subject.
 
-import { COMP_RULES } from "./rules.js";
+import { COMP_RULES, SEARCH } from "./rules.js";
 
 const BROWSER_HEADERS = {
   "User-Agent":
@@ -151,15 +151,19 @@ async function fetchRedfinCsv(url) {
   return parseRedfinSoldCsv(text);
 }
 
-// Sales within the search radius over the last 180 days. Sales Redfin
-// returns for the last 90 days are marked `recent` — some regions leave
-// sale dates blank, so this is how they're known to meet the 90-day rule.
-export async function fetchRedfinSold(location) {
+// Sales within the search radius over the search's days (by default 1 mi
+// and 180 days). Sales Redfin returns for the last 90 days are marked
+// `recent` — some regions leave sale dates blank, so this is how they're
+// known to meet the 90-day rule.
+export async function fetchRedfinSold(location, search = SEARCH) {
   const [recent, older] = await Promise.all([
     fetchRedfinCsv(
-      redfinSoldUrl(location, { days: COMP_RULES.soldWithinDays }),
+      redfinSoldUrl(location, {
+        miles: search.miles,
+        days: COMP_RULES.soldWithinDays,
+      }),
     ),
-    fetchRedfinCsv(redfinSoldUrl(location, { days: COMP_RULES.searchDays })),
+    fetchRedfinCsv(redfinSoldUrl(location, search)),
   ]);
   const key = (sale) => sale.url || `${sale.street}|${sale.price}`;
   const recentKeys = new Set(recent.map(key));

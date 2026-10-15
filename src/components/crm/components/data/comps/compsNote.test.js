@@ -95,6 +95,17 @@ describe("formatCompsNote", () => {
       }),
     ).toBe("3 bd/1 ba (0.52 mi away · +0.5 bath) · 0.52 mi away");
   });
+
+  it("says when the search was widened", () => {
+    expect(
+      compsStatsText({
+        criteria: { searchRadiusMiles: 2, searchDays: 365, widened: true },
+        stats: { nearbySales: 3, matched: 0, outsideRules: 3, excluded: {} },
+      }),
+    ).toBe(
+      "None sold within 1 mi in the last 6 months, so the search widened: 3 homes sold within 2 mi in the last 12 months; 0 meet every rule. 3 of the comps shown fall outside the rules.",
+    );
+  });
 });
 
 describe("splitCompsNotes", () => {

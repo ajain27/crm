@@ -9,6 +9,20 @@ export const COMP_RULES = {
   // comps; ones outside the rules are labeled with how they differ.
   searchRadiusMiles: 1,
   searchDays: 180,
+  // When that finds no sales at all, one more mile and 6 more months.
+  wideSearchRadiusMiles: 2,
+  wideSearchDays: 365,
+};
+
+// The area sales are gathered from: the usual one, and the wider one used
+// when the usual one has no sales.
+export const SEARCH = {
+  miles: COMP_RULES.searchRadiusMiles,
+  days: COMP_RULES.searchDays,
+};
+export const WIDE_SEARCH = {
+  miles: COMP_RULES.wideSearchRadiusMiles,
+  days: COMP_RULES.wideSearchDays,
 };
 
 export const isNum = (v) =>
