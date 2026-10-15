@@ -30,12 +30,16 @@ export function compsCriteriaText(result) {
     c.beds ? `${c.beds} bd` : null,
     c.baths ? `${c.baths} ba` : null,
     c.yearBuiltFrom ? `built ${c.yearBuiltFrom}–${c.yearBuiltTo}` : null,
+    c.highwayCheck ? "same side of major highways" : null,
   ].filter(Boolean);
   const unknown = (c.unknown || []).map((f) => UNKNOWN_LABELS[f] || f);
   return (
     parts.join(" · ") +
     (unknown.length
       ? ` (the property's ${unknown.join(", ")} couldn't be found, so not applied)`
+      : "") +
+    (c.highwayCheck === false
+      ? " (major highways couldn't be checked this time)"
       : "")
   );
 }
@@ -61,6 +65,9 @@ export function compsStatsText(result) {
   const excluded = Object.entries(s.excluded || {})
     .filter(([, count]) => count > 0)
     .map(([rule, count]) => `${count} ${EXCLUDED_LABELS[rule] || rule}`);
+  const across = s.acrossHighway
+    ? ` ${s.acrossHighway} across a major highway ${s.acrossHighway === 1 ? "was" : "were"} left out.`
+    : "";
   const removed = s.removedByAi?.length
     ? ` AI removed ${s.removedByAi.length} as poor comps.`
     : "";
@@ -71,7 +78,7 @@ export function compsStatsText(result) {
     `${s.nearbySales} home${s.nearbySales === 1 ? "" : "s"} sold${area}; ` +
     `${s.matched} ${s.matched === 1 ? "meets" : "meet"} every rule` +
     (excluded.length ? ` (others: ${excluded.join(", ")})` : "") +
-    `.${outside}${removed}`
+    `.${across}${outside}${removed}`
   );
 }
 

@@ -8,7 +8,9 @@
 //      from each; the US Census geocoder gives its coordinates.
 //   2. Candidates: Redfin's sold-homes data for the last 90 days around
 //      those coordinates (sold date, beds, baths, year built, location).
-//   3. Every sale within 1 mile over 180 days is ranked: those meeting all
+//   3. Sales across a major highway (interstate/expressway, from
+//      OpenStreetMap) from the subject are dropped. Every other sale
+//      within 1 mile over 180 days is ranked: those meeting all
 //      the rules above first (closest, then most recent), then the rest by
 //      how closely they match. The top 5 are shown; any outside the rules
 //      are labeled with exactly how they differ.
@@ -32,9 +34,19 @@ import {
 } from "./subject.js";
 import { geocodeAddress, geocodeWithOpenStreetMap } from "./geocode.js";
 import { fetchRedfinSold } from "./sales.js";
+import { fetchMajorHighways } from "./highways.js";
 import { rankComps } from "./rank.js";
 import { claudeReview } from "./review.js";
 import { estimateArv, plural, ruleReason } from "./arv.js";
+
+// The sales and major highways around a location, loaded together.
+async function loadArea(location) {
+  const [sales, highways] = await Promise.all([
+    fetchRedfinSold(location),
+    fetchMajorHighways(location),
+  ]);
+  return { sales, highways };
+}
 
 // Finds the subject's pages, reads its facts from each, locates it and
 // loads the sales around it.
@@ -75,9 +87,9 @@ async function gatherSubject(address, env) {
       }
     }),
   );
-  const [scraped, salesNearGeocode] = await Promise.all([
+  const [scraped, areaNearGeocode] = await Promise.all([
     scrapeAll,
-    geocoded ? fetchRedfinSold(geocoded) : null,
+    geocoded ? loadArea(geocoded) : null,
   ]);
   const sources = Object.fromEntries(scraped);
 
@@ -93,10 +105,11 @@ async function gatherSubject(address, env) {
       404,
     );
   }
-  const sales = salesNearGeocode || (await fetchRedfinSold(location));
+  const { sales, highways } = areaNearGeocode || (await loadArea(location));
   return {
     location,
     sales,
+    highways,
     sources,
     listingUrls,
     property: reconcileSubject(sources, address),
@@ -144,6 +157,7 @@ export async function runComps(
 ) {
   let location;
   let sales;
+  let highways;
   let sources = {};
   let listingUrls = null;
   let property;
@@ -160,19 +174,18 @@ export async function runComps(
       lng,
       matchedAddress: adjust.location.matchedAddress ?? null,
     };
-    sales = await fetchRedfinSold(location);
+    ({ sales, highways } = await loadArea(location));
     property = sanitizeSubject(adjust.subject);
   } else {
-    ({ location, sales, sources, listingUrls, property } = await gatherSubject(
-      address,
-      env,
-    ));
+    ({ location, sales, highways, sources, listingUrls, property } =
+      await gatherSubject(address, env));
   }
 
-  const { ranked, strictCount, excluded, unknown } = rankComps({
+  const { ranked, strictCount, excluded, acrossHighway, unknown } = rankComps({
     subject: property,
     location,
     sales,
+    highways,
     subjectAddress: address,
     now,
   });
@@ -269,6 +282,9 @@ export async function runComps(
       yearBuiltTo: isNum(property.yearBuilt)
         ? property.yearBuilt + COMP_RULES.yearBuiltTolerance
         : null,
+      // False when OpenStreetMap couldn't be reached, so sales across a
+      // highway weren't screened out.
+      highwayCheck: highways !== null,
       unknown,
     },
     stats: {
@@ -276,6 +292,7 @@ export async function runComps(
       matched: strictCount,
       outsideRules,
       excluded,
+      acrossHighway,
       removedByAi,
     },
     topComps,

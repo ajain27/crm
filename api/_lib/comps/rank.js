@@ -1,6 +1,7 @@
 // Step 3: every nearby sale ranked against the comp rules.
 
 import { COMP_RULES, distanceMiles, isNum } from "./rules.js";
+import { highwayBetween } from "./highways.js";
 
 // Broad type buckets so "Single Family Residential" matches "Single Family".
 function typeBucket(type) {
@@ -125,11 +126,14 @@ function matchScore(sale, subject, distance, now) {
 // matches: sales meeting every comp rule first (closest, then most
 // recent), then the rest by match score. Each carries `misses`, the rules
 // it doesn't meet. `excluded` counts the sales failing each rule (by the
-// first rule they fail), for explaining how many strictly qualify.
+// first rule they fail), for explaining how many strictly qualify. Sales
+// across a major highway from the subject are dropped entirely (counted
+// in `acrossHighway`).
 export function rankComps({
   subject,
   location,
   sales,
+  highways = null,
   subjectAddress,
   now = Date.now(),
 }) {
@@ -146,10 +150,15 @@ export function rankComps({
     propertyType: 0,
   };
   const ranked = [];
+  let acrossHighway = 0;
   for (const sale of sales) {
     if (streetKey(sale.street || sale.address) === subjectStreet) continue;
     const distance = distanceMiles(location, sale);
     if (distance > COMP_RULES.searchRadiusMiles) continue;
+    if (highwayBetween(location, sale, highways)) {
+      acrossHighway += 1;
+      continue;
+    }
     const misses = ruleMisses(sale, subject, distance, now);
     if (misses.length > 0) excluded[misses[0][0]] += 1;
     ranked.push({
@@ -172,5 +181,5 @@ export function rankComps({
     return a.score - b.score;
   });
   const strictCount = ranked.filter((r) => r.misses.length === 0).length;
-  return { ranked, strictCount, excluded, unknown };
+  return { ranked, strictCount, excluded, acrossHighway, unknown };
 }

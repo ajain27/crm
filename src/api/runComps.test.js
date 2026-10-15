@@ -29,6 +29,7 @@ import { rankComps } from "../../api/_lib/comps/rank.js";
 import { cleanScraped, pickListingUrls } from "../../api/_lib/comps/subject.js";
 import { distanceMiles } from "../../api/_lib/comps/rules.js";
 import { estimateArv } from "../../api/_lib/comps/arv.js";
+import { highwayBetween } from "../../api/_lib/comps/highways.js";
 import { parseRedfinSoldCsv } from "../../api/_lib/comps/sales.js";
 import { runComps } from "../../api/_lib/comps/runComps.js";
 
@@ -177,6 +178,7 @@ function mockFetch(overrides = {}) {
       }),
     redfin: () => text(200, REDFIN_CSV),
     osm: () => json(200, []),
+    overpass: () => json(200, { elements: [] }),
     ...overrides,
   };
   const fn = vi.fn(async (url, init = {}) => {
@@ -186,6 +188,7 @@ function mockFetch(overrides = {}) {
     if (url.includes("geocoding.geo.census.gov")) return handlers.census(url);
     if (url.includes("nominatim.openstreetmap.org")) return handlers.osm(url);
     if (url.includes("redfin.com/stingray")) return handlers.redfin(url);
+    if (url.includes("/api/interpreter")) return handlers.overpass(url);
     throw new Error(`unexpected ${url}`);
   });
   vi.stubGlobal("fetch", fn);
@@ -312,6 +315,42 @@ describe("run-comps", () => {
     expect(redfinUrls.some((u) => u.includes("sold_within_days=180"))).toBe(
       true,
     );
+  });
+
+  it("leaves out sales across a major highway from the subject", async () => {
+    // An interstate running east–west 0.25 mi north of the subject.
+    const lat = SUBJECT.lat + 0.25 / 69;
+    mockFetch({
+      overpass: () =>
+        json(200, {
+          elements: [
+            {
+              type: "way",
+              tags: { highway: "motorway", ref: "I 40" },
+              geometry: [
+                { lat, lon: SUBJECT.lng - 0.05 },
+                { lat, lon: SUBJECT.lng + 0.05 },
+              ],
+            },
+          ],
+        }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.criteria.highwayCheck).toBe(true);
+    expect(out.stats.acrossHighway).toBeGreaterThan(0);
+    expect(out.topComps.length).toBeGreaterThan(0);
+    expect(out.topComps.every((c) => c.distance < 0.25)).toBe(true);
+    expect(out.topComps.map((c) => c.address)).not.toContain(
+      expect.stringContaining("794 Margie Dr"),
+    );
+  });
+
+  it("still runs comps when the highway check can't be reached", async () => {
+    mockFetch({ overpass: () => json(504, {}) });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.criteria.highwayCheck).toBe(false);
+    expect(out.stats.acrossHighway).toBe(0);
+    expect(out.topComps).toHaveLength(5);
   });
 
   it("lets Claude drop bad comps and pick from the ranked candidates, never adding homes", async () => {
@@ -490,7 +529,12 @@ describe("run-comps", () => {
       },
     });
     const hosts = fetchMock.mock.calls.map(([url]) => new URL(url).hostname);
-    expect(hosts).toEqual(["www.redfin.com", "www.redfin.com"]);
+    // Only Redfin's sales and OpenStreetMap's highways: no searching or
+    // scraping.
+    expect(
+      hosts.every((h) => h === "www.redfin.com" || h.startsWith("overpass")),
+    ).toBe(true);
+    expect(hosts.filter((h) => h === "www.redfin.com")).toHaveLength(2);
     expect(out.adjusted).toBe(true);
     expect(out.property).toMatchObject({ beds: 3, baths: 2 });
     // 3 bd / 2 ba: 13 Two Bath Rd meets every rule and ranks first.
@@ -540,6 +584,26 @@ describe("comp rules", () => {
       baths: 1,
       yearBuilt: 1972,
     });
+  });
+
+  it("finds the highway between two points, ignoring ones off to the side", () => {
+    const i40 = {
+      name: "I 40",
+      points: [
+        { lat: 35.27, lng: -90.1 },
+        { lat: 35.27, lng: -90.0 },
+      ],
+    };
+    const from = { lat: 35.26, lng: -90.05 };
+    expect(highwayBetween(from, { lat: 35.28, lng: -90.05 }, [i40])).toBe(
+      "I 40",
+    );
+    expect(highwayBetween(from, { lat: 35.265, lng: -90.04 }, [i40])).toBe(
+      null,
+    );
+    // Past the highway's end: not crossed.
+    expect(highwayBetween(from, { lat: 35.28, lng: -89.95 }, [i40])).toBe(null);
+    expect(highwayBetween(from, { lat: 35.28, lng: -90.05 }, null)).toBe(null);
   });
 
   it("measures distance in miles", () => {
