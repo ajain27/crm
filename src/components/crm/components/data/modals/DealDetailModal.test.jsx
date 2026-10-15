@@ -337,7 +337,8 @@ describe("DealDetailModal", () => {
 
     fireEvent.click(screen.getByText("Run comps"));
     expect(requestComps).toHaveBeenCalledWith("2 Main St, Austin, TX 78701");
-    expect(await screen.findByText("9 Oak St")).toBeInTheDocument();
+    // In the comps window, and in the deal's notes once saved.
+    expect((await screen.findAllByText("9 Oak St")).length).toBeGreaterThan(0);
     expect(
       await screen.findByText(/Saved to the deal's notes/),
     ).toBeInTheDocument();
@@ -363,6 +364,18 @@ describe("DealDetailModal", () => {
     fireEvent.click(screen.getByText("Close"));
     expect(screen.getByDisplayValue("$160,000")).toBeInTheDocument();
     expect(screen.getByDisplayValue("1400")).toBeInTheDocument();
+
+    // The notes show laid out, with the comp, until "Edit notes".
+    expect(screen.getByText("9 Oak St")).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText("Add notes about this deal…"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Edit notes"));
+    expect(
+      screen.getByPlaceholderText("Add notes about this deal…"),
+    ).toHaveValue(patch.notes);
+    fireEvent.click(screen.getByText("Show formatted"));
+    expect(screen.getByText("9 Oak St")).toBeInTheDocument();
   });
 
   it("shows the error when comps can't run", async () => {

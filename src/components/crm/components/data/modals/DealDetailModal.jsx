@@ -11,6 +11,8 @@ import WholesaleOfferPdfTemplate, {
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
+import CompsNoteView from "../comps/CompsNoteView";
+import { splitCompsNotes } from "../comps/compsNote";
 import DealPhotos from "./DealPhotos";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import { StreetViewButton } from "../../../../elements/StreetView";
@@ -126,6 +128,7 @@ function DealDetailModal({
   } = useGenerateReport("purchase-and-sale-agreement");
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
   const [compsOpen, setCompsOpen] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
   // The notes Run comps is saving: when the deal comes back with exactly
   // these notes, only the notes are taken in, so unsaved edits survive.
   const pendingCompsNotes = useRef(null);
@@ -183,6 +186,7 @@ function DealDetailModal({
       return;
     }
     setDraft(initDraft(deal));
+    if (previous?.id !== deal.id) setEditingNotes(false);
   }, [deal]);
 
   // Auto-calculate MAO when inputs change (mirrors the add-form formula)
@@ -206,6 +210,12 @@ function DealDetailModal({
 
   const offerSent = (draft.offerStatus || "Not Sent") === "Offer Sent";
   const locked = offerSent && (draft.sellerAccepted || "No") === "No";
+  // Notes with a comps note in them show laid out until "Edit notes"
+  // (always laid out while the deal is locked).
+  const hasCompsNote = splitCompsNotes(draft.notes).some(
+    (seg) => seg.type === "comps",
+  );
+  const showNotesView = hasCompsNote && (locked || !editingNotes);
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
@@ -926,15 +936,30 @@ function DealDetailModal({
           )}
 
           <div className="ddm-section">
-            <div className="ddm-section-label">Notes</div>
-            <textarea
-              className="ddm-notes-input"
-              disabled={locked}
-              value={draft.notes || ""}
-              onChange={(e) => set("notes", e.target.value)}
-              placeholder="Add notes about this deal…"
-              rows={5}
-            />
+            <div className="ddm-section-label ldm-notes-label">
+              Notes
+              {hasCompsNote && !locked && (
+                <button
+                  type="button"
+                  className="ldm-notes-toggle"
+                  onClick={() => setEditingNotes((v) => !v)}
+                >
+                  {editingNotes ? "Show formatted" : "Edit notes"}
+                </button>
+              )}
+            </div>
+            {showNotesView ? (
+              <CompsNoteView notes={draft.notes} className="ldm-notes-view" />
+            ) : (
+              <textarea
+                className="ddm-notes-input"
+                disabled={locked}
+                value={draft.notes || ""}
+                onChange={(e) => set("notes", e.target.value)}
+                placeholder="Add notes about this deal…"
+                rows={hasCompsNote ? 12 : 5}
+              />
+            )}
           </div>
         </div>
       </Modal>
