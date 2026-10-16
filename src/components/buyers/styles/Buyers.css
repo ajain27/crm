@@ -25,6 +25,21 @@
     gap: 1rem;
   }
 
+  /* Buyer details modal: as tall as its fields (modals are full height
+     otherwise), with the rows packed at the top rather than stretched. */
+  .modal.buyer-detail-modal {
+    height: auto;
+  }
+
+  .buyer-detail-modal .buyer-add-form {
+    align-content: start;
+    padding: 0.25rem 0.25rem 1rem;
+  }
+
+  .buyer-detail-modal .buyer-form-actions {
+    justify-content: flex-end;
+  }
+
   /* ── Pill-style property type toggles ───────────────── */
   .buyer-type-checkboxes {
     display: flex;
