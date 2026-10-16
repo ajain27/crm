@@ -10,6 +10,7 @@ import BuyerForm from "./BuyerForm";
 import BuyerFilters from "./BuyerFilters";
 import BuyerData from "./BuyerData";
 import MailMergeModal from "./MailMergeModal";
+import BuyerDetailModal from "./BuyerDetailModal";
 import { GaugeStat, SimpleStat } from "../../elements/elements";
 
 export const PROPERTY_TYPES = ["Single Family", "Multi Family", "Vacant Lot"];
@@ -34,6 +35,8 @@ function Buyers({ currentUser = { id: "" } }) {
   });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isMailMergeOpen, setIsMailMergeOpen] = useState(false);
+  const [openBuyerId, setOpenBuyerId] = useState(null);
+  const openBuyer = buyers.find((b) => b.id === openBuyerId) || null;
 
   useEffect(() => {
     async function loadBuyers() {
@@ -91,6 +94,50 @@ function Buyers({ currentUser = { id: "" } }) {
     } catch (error) {
       console.error("Failed to update buyer", error);
       alert("Unable to update buyer. Check your database connection.");
+    }
+  }
+
+  // Saves every field from the buyer's detail modal; true when saved.
+  async function saveBuyerDetails(draft) {
+    const text = (v) => (typeof v === "string" ? v.trim() : "");
+    const updated = {
+      ...draft,
+      fullName: text(draft.fullName),
+      email: text(draft.email).toLowerCase(),
+      phone: draft.phone ? formatPhone(text(draft.phone)) : "",
+      city: text(draft.city),
+      state: text(draft.state).toUpperCase(),
+      notes: text(draft.notes),
+    };
+
+    const duplicateErrors = [];
+    buyers.forEach((buyer) => {
+      if (buyer.id === updated.id) return;
+      if (buyer.fullName?.trim() === updated.fullName) {
+        duplicateErrors.push("A buyer with this name already exists.");
+      }
+      if (updated.email && buyer.email?.toLowerCase() === updated.email) {
+        duplicateErrors.push("A buyer with this email already exists.");
+      }
+      if (updated.phone && buyer.phone === updated.phone) {
+        duplicateErrors.push("A buyer with this phone number already exists.");
+      }
+    });
+    if (duplicateErrors.length > 0) {
+      alert(duplicateErrors.join("\n"));
+      return false;
+    }
+
+    try {
+      await saveBuyer(updated);
+      setBuyers((prev) =>
+        prev.map((buyer) => (buyer.id === updated.id ? updated : buyer)),
+      );
+      return true;
+    } catch (error) {
+      console.error("Failed to update buyer", error);
+      alert("Unable to update buyer. Check your database connection.");
+      return false;
     }
   }
 
@@ -337,6 +384,14 @@ function Buyers({ currentUser = { id: "" } }) {
         onToggleSelect={handleToggleSelect}
         onSelectAll={handleSelectAll}
         onSelectAllFiltered={handleSelectAllFiltered}
+        onOpenBuyer={setOpenBuyerId}
+        propertyTypes={PROPERTY_TYPES}
+      />
+
+      <BuyerDetailModal
+        buyer={openBuyer}
+        onClose={() => setOpenBuyerId(null)}
+        onSave={saveBuyerDetails}
         propertyTypes={PROPERTY_TYPES}
       />
 

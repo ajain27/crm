@@ -14,7 +14,8 @@ vi.mock("../../../firebase/firestoreService", () => ({
   deleteBuyerById: vi.fn().mockResolvedValue(undefined),
 }));
 
-const { fetchBuyers } = await import("../../../firebase/firestoreService");
+const { fetchBuyers, saveBuyer } =
+  await import("../../../firebase/firestoreService");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -221,5 +222,91 @@ describe("Buyers component", () => {
 
     expect(screen.getByText("John Smith")).toBeInTheDocument();
     expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
+  });
+
+  describe("buyer details modal", () => {
+    const BUYERS = [
+      {
+        id: "b1",
+        fullName: "Jane Doe",
+        email: "jane@example.com",
+        state: "TX",
+        realEstateType: ["Single Family"],
+      },
+      {
+        id: "b2",
+        fullName: "Sam Lee",
+        email: "sam@example.com",
+        state: "GA",
+      },
+    ];
+
+    async function openJane() {
+      fetchBuyers.mockResolvedValue(BUYERS);
+      render(<Buyers theme="light" setTheme={vi.fn()} />);
+      fireEvent.click(await screen.findByText("Jane Doe"));
+      return within(document.querySelector(".buyer-detail-modal"));
+    }
+
+    it("opens on a buyer's row and saves edited and added details", async () => {
+      const modal = await openJane();
+      expect(modal.getByLabelText(/Full Name/i)).toHaveValue("Jane Doe");
+
+      fireEvent.change(modal.getByLabelText(/Phone Number/i), {
+        target: { value: "5128675309" },
+      });
+      fireEvent.change(modal.getByLabelText(/City/i), {
+        target: { value: "  Austin " },
+      });
+      fireEvent.click(modal.getByLabelText("Multi Family"));
+      fireEvent.change(modal.getByLabelText(/Notes/i), {
+        target: { value: "Pays cash, closes in 10 days" },
+      });
+      fireEvent.click(modal.getByText("Save Changes"));
+
+      await waitFor(() =>
+        expect(saveBuyer).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: "b1",
+            fullName: "Jane Doe",
+            phone: "512-867-5309",
+            city: "Austin",
+            realEstateType: ["Single Family", "Multi Family"],
+            notes: "Pays cash, closes in 10 days",
+          }),
+        ),
+      );
+      await waitFor(() =>
+        expect(
+          document.querySelector(".buyer-detail-modal"),
+        ).not.toBeInTheDocument(),
+      );
+      expect(screen.getByText("Austin")).toBeInTheDocument();
+    });
+
+    it("keeps the modal open when the email belongs to another buyer", async () => {
+      const modal = await openJane();
+      const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+      fireEvent.change(modal.getByLabelText(/Email/i), {
+        target: { value: "SAM@example.com" },
+      });
+      fireEvent.click(modal.getByText("Save Changes"));
+      await waitFor(() =>
+        expect(alertSpy).toHaveBeenCalledWith(
+          "A buyer with this email already exists.",
+        ),
+      );
+      expect(saveBuyer).not.toHaveBeenCalled();
+      expect(document.querySelector(".buyer-detail-modal")).toBeInTheDocument();
+      alertSpy.mockRestore();
+    });
+
+    it("doesn't open from the row's checkbox", async () => {
+      fetchBuyers.mockResolvedValue(BUYERS);
+      render(<Buyers theme="light" setTheme={vi.fn()} />);
+      const row = (await screen.findByText("Jane Doe")).closest("tr");
+      fireEvent.click(within(row).getByRole("checkbox"));
+      expect(document.querySelector(".buyer-detail-modal")).toBeNull();
+    });
   });
 });

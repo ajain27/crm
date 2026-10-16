@@ -14,8 +14,9 @@
     grid-column: 1 / -1;
   }
 
-  /* Buys row spans both columns */
-  .buyer-buys-field {
+  /* Buys and Notes rows span both columns */
+  .buyer-buys-field,
+  .buyer-notes-field {
     grid-column: 1 / -1;
   }
 
@@ -110,7 +111,8 @@
     }
 
     .buyer-add-form .field:first-of-type,
-    .buyer-buys-field {
+    .buyer-buys-field,
+    .buyer-notes-field {
       grid-column: 1;
     }
 

@@ -14,6 +14,7 @@ function BuyerData({
   onToggleSelect = () => {},
   onSelectAll = () => {},
   onSelectAllFiltered = () => {},
+  onOpenBuyer = () => {},
   propertyTypes = [],
 }) {
   const [editingBuyerId, setEditingBuyerId] = useState(null);
@@ -131,6 +132,18 @@ function BuyerData({
             {paginatedBuyers.map((buyer, index) => (
               <tr
                 key={buyer.id}
+                className="clickable-row"
+                onClick={(e) => {
+                  // The checkbox and inline edits keep their own clicks.
+                  if (
+                    e.target.closest(
+                      "button, input, textarea, label, .buyer-checkbox-cell",
+                    )
+                  ) {
+                    return;
+                  }
+                  onOpenBuyer(buyer.id);
+                }}
                 data-reveal
                 data-selected={selectedIds.has(buyer.id) ? "true" : undefined}
                 style={{ "--reveal-delay": `${index * 35}ms` }}
