@@ -544,6 +544,7 @@ describe("DealDetailModal", () => {
       target: { value: "Pat Buyer LLC" },
     });
     fireEvent.click(screen.getByText("Create assignment"));
+    fireEvent.click(screen.getByText("Generate"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
     const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
@@ -563,6 +564,10 @@ describe("DealDetailModal", () => {
     expect(text.split(`${today}Date`)).toHaveLength(3);
     expect(text).toContain("Pat Buyer LLCPrinted Name / Company");
     expect(text).not.toContain("Old Buyer");
+    // No inspection period unless asked for.
+    expect(text).not.toContain("INSPECTION PERIOD");
+    expect(text).toContain("5. CLOSING");
+    expect(text).toContain("has had the opportunity to inspect the");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
 
@@ -643,5 +648,39 @@ describe("DealDetailModal", () => {
 
     fireEvent.change(input, { target: { value: "300001" } });
     expect(screen.queryByText(error)).not.toBeInTheDocument();
+  });
+
+  it("adds a seven-day inspection period to the assignment when switched on", async () => {
+    renderElementToPdfAssets.mockClear();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          assigned: "Yes",
+          assignedPrice: 220000,
+          buyerName: "Pat Buyer LLC",
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Create assignment"));
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Buyer needs an inspection period" }),
+    );
+    fireEvent.click(screen.getByText("Generate"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
+    expect(text).toContain("5. INSPECTION PERIOD");
+    expect(text).toContain("seven (7) calendar days from the Effective");
+    expect(text).toContain("6. CLOSING");
+    expect(text).toContain("7. REPRESENTATIONS & CONDITION OF PROPERTY");
+    expect(text).toContain("under Section 5 (Inspection Period)");
+    expect(text).not.toContain("has had the opportunity to inspect");
+    expect(text).toContain("8. DEFAULT & REMEDIES");
+    expect(text).toContain("9. ENTIRE AGREEMENT");
   });
 });

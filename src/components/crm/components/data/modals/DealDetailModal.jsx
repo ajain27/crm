@@ -12,6 +12,7 @@ import WholesaleOfferPdfTemplate, {
 import OfferOptionsModal from "./OfferOptionsModal";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
+import AssignmentOptionsModal from "./AssignmentOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
 import CompsNoteView from "../comps/CompsNoteView";
 import { splitCompsNotes, withCompsNote } from "../comps/compsNote";
@@ -162,6 +163,8 @@ function DealDetailModal({
     downloadReport: downloadAssignment,
   } = useGenerateReport("assignment-of-contract");
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
+  const [assignmentOptionsOpen, setAssignmentOptionsOpen] = useState(false);
+  const [assignmentInspection, setAssignmentInspection] = useState(false);
   const [compsOpen, setCompsOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   // The notes Run comps is saving: when the deal comes back with exactly
@@ -198,6 +201,14 @@ function DealDetailModal({
     setOfferOptions(options);
     setOfferOptionsOpen(false);
     handleGenerateOffer();
+  }
+
+  // Like the offer options: the choice is committed together with the
+  // print template's mount.
+  function handleAssignmentOptionsSubmit({ inspectionPeriod }) {
+    setAssignmentInspection(inspectionPeriod);
+    setAssignmentOptionsOpen(false);
+    handleGenerateAssignment();
   }
 
   useEffect(() => {
@@ -876,7 +887,7 @@ function DealDetailModal({
                 action={
                   draft.assigned === "Yes" && (
                     <DocLink
-                      onClick={handleGenerateAssignment}
+                      onClick={() => setAssignmentOptionsOpen(true)}
                       busy={exportingAssignment}
                     >
                       Create assignment
@@ -1062,8 +1073,15 @@ function DealDetailModal({
           propertyAddress={formatFullAddress(draft)}
           assignedPrice={parseCurrency(draft.assignedPrice)}
           originalAgreementDate={draft.offerDate}
+          inspectionPeriod={assignmentInspection}
         />
       )}
+      <AssignmentOptionsModal
+        isOpen={assignmentOptionsOpen}
+        onClose={() => setAssignmentOptionsOpen(false)}
+        onGenerate={handleAssignmentOptionsSubmit}
+        initialInspectionPeriod={assignmentInspection}
+      />
       <OfferOptionsModal
         isOpen={offerOptionsOpen}
         onClose={() => setOfferOptionsOpen(false)}
