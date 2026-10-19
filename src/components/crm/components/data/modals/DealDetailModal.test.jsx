@@ -438,4 +438,57 @@ describe("DealDetailModal", () => {
     expect(patch.address).toBe("2 Main St");
     expect(patch).not.toHaveProperty("photos");
   });
+
+  it("only offers a JV agreement on JV deals", () => {
+    const { rerender } = render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Create JV Agreement")).not.toBeInTheDocument();
+    rerender(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, jvDeal: "Yes" }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Create JV Agreement")).toBeInTheDocument();
+  });
+
+  it("creates a JV agreement splitting the assignment fee with the partner", async () => {
+    renderElementToPdfAssets.mockClear();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          jvDeal: "Yes",
+          jvPartnerName: "Acme Wholesale LLC",
+          jvSplit: 5000,
+          contractPrice: 200000,
+          assigned: "Yes",
+          assignedPrice: 220000,
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Create JV Agreement"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
+    expect(text).toContain("JOINT VENTURE AGREEMENT");
+    expect(text).toContain("Party B Name(s):Acme Wholesale LLC");
+    expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
+    expect(text).toContain("Party AYou Win Estates LLC$15,000");
+    expect(text).toContain("Party BAcme Wholesale LLC$5,000");
+    expect(text).toContain("Total JV Proceeds$20,000");
+    expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
+  });
 });

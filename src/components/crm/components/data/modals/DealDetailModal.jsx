@@ -10,6 +10,7 @@ import WholesaleOfferPdfTemplate, {
   DEFAULT_OFFER_OPTIONS,
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
+import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import RunCompsModal from "../comps/RunCompsModal";
 import CompsNoteView from "../comps/CompsNoteView";
 import { splitCompsNotes, withCompsNote } from "../comps/compsNote";
@@ -126,6 +127,14 @@ function DealDetailModal({
     closePreview: closeOfferPreview,
     downloadReport: downloadOffer,
   } = useGenerateReport("purchase-and-sale-agreement");
+  const {
+    printRef: jvRef,
+    exporting: exportingJv,
+    handleGenerateReport: handleGenerateJv,
+    previewImage: jvPreviewImage,
+    closePreview: closeJvPreview,
+    downloadReport: downloadJv,
+  } = useGenerateReport("jv-agreement");
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
   const [compsOpen, setCompsOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -371,6 +380,15 @@ function DealDetailModal({
                 disabled={saving || exportingOffer}
               >
                 {exportingOffer ? "Generating…" : "Generate Offer"}
+              </button>
+            )}
+            {draft.jvDeal === "Yes" && (
+              <button
+                className="secondary-btn"
+                onClick={handleGenerateJv}
+                disabled={saving || exportingJv}
+              >
+                {exportingJv ? "Generating…" : "Create JV Agreement"}
               </button>
             )}
             {onReactivate && (
@@ -973,6 +991,16 @@ function DealDetailModal({
           {...offerOptions}
         />
       )}
+      {exportingJv && (
+        <JvAgreementPdfTemplate
+          ref={jvRef}
+          partnerName={draft.jvPartnerName?.trim() || ""}
+          propertyAddress={formatFullAddress(draft)}
+          contractPrice={parseCurrency(draft.contractPrice)}
+          assignedPrice={parseCurrency(draft.assignedPrice)}
+          jvSplit={parseCurrency(draft.jvSplit)}
+        />
+      )}
       <OfferOptionsModal
         isOpen={offerOptionsOpen}
         onClose={() => setOfferOptionsOpen(false)}
@@ -992,6 +1020,11 @@ function DealDetailModal({
         previewImage={offerPreviewImage}
         onClose={closeOfferPreview}
         onDownload={downloadOffer}
+      />
+      <PdfReportPreviewModal
+        previewImage={jvPreviewImage}
+        onClose={closeJvPreview}
+        onDownload={downloadJv}
       />
     </>
   );
