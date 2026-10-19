@@ -493,6 +493,7 @@ describe("DealDetailModal", () => {
     });
     expect(text).toContain(`Effective Date:${today}`);
     expect(text).not.toContain("Escrow / File No.");
+    expect(text).not.toContain("Title / Escrow Company:");
     // Party A's and Party B's signature dates.
     expect(text.split(`${today}Date`)).toHaveLength(3);
     expect(text).toContain("Party AYou Win Estates LLC$15,000");

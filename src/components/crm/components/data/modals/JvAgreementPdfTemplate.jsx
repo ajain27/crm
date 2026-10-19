@@ -51,8 +51,7 @@ function Amount({ value }) {
 // Joint Venture Agreement generated from a JV deal. Reproduces the uploaded
 // You Win Estates JV agreement clause for clause; Party B and the Property
 // Address come from the deal, and the disbursement table splits the
-// assignment fee. The Effective Date and both signature dates are today;
-// Title / Escrow stays blank, as in the source.
+// assignment fee. The Effective Date and both signature dates are today.
 const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
   { partnerName, propertyAddress, contractPrice, assignedPrice, jvSplit },
   ref,
@@ -108,7 +107,6 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
           <Field label="Party A Name:" value={PARTY_A_NAME} />
           <Field label="Party B Name(s):" value={partnerName} />
           <Field label="Property Address:" value={propertyAddress} />
-          <Field label="Title / Escrow Company:" value="" />
           <Field label="Effective Date:" value={today} />
         </div>
 
