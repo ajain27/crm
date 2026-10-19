@@ -1,0 +1,10 @@
+@layer components {
+  /* A dotted line to fill in by hand, mid-sentence, in the Assignment of
+     Contract (e.g. the Original Agreement's date). */
+  .asg-pdf-blank {
+    display: inline-block;
+    width: 200px;
+    border-bottom: 1px dotted #9aa5bd;
+    vertical-align: baseline;
+  }
+}

@@ -51,13 +51,14 @@ function Amount({ value }) {
 // Joint Venture Agreement generated from a JV deal. Reproduces the uploaded
 // You Win Estates JV agreement clause for clause; Party B and the Property
 // Address come from the deal, and the disbursement table splits the
-// assignment fee. The Effective Date is today; Title / Escrow and the
-// signature dates stay blank, as in the source.
+// assignment fee. The Effective Date and both signature dates are today;
+// Title / Escrow stays blank, as in the source.
 const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
   { partnerName, propertyAddress, contractPrice, assignedPrice, jvSplit },
   ref,
 ) {
   const amounts = getJvAmounts({ contractPrice, assignedPrice, jvSplit });
+  const today = todayFormatted();
 
   if (typeof document === "undefined") return null;
 
@@ -108,7 +109,7 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
           <Field label="Party B Name(s):" value={partnerName} />
           <Field label="Property Address:" value={propertyAddress} />
           <Field label="Title / Escrow Company:" value="" />
-          <Field label="Effective Date:" value={todayFormatted()} />
+          <Field label="Effective Date:" value={today} />
         </div>
 
         <Section number={1} title="PURPOSE & SCOPE OF JOINT VENTURE">
@@ -277,14 +278,14 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
             <SigLine label="Company" value={PARTY_A_NAME} />
             <SigLine label="Authorized Representative" value={PARTY_A_REP} />
             <SigLine label="Signature" />
-            <SigLine label="Date" />
+            <SigLine label="Date" value={today} />
           </div>
           <div className="oa-pdf-sig-box">
             <h3>PARTY B</h3>
             <SigLine label="Company" value={partnerName} />
             <SigLine label="Authorized Representative" />
             <SigLine label="Signature" />
-            <SigLine label="Date" />
+            <SigLine label="Date" value={today} />
           </div>
         </div>
       </div>

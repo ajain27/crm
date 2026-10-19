@@ -11,6 +11,7 @@ import WholesaleOfferPdfTemplate, {
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
+import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import RunCompsModal from "../comps/RunCompsModal";
 import CompsNoteView from "../comps/CompsNoteView";
 import { splitCompsNotes, withCompsNote } from "../comps/compsNote";
@@ -102,6 +103,21 @@ function Field({ label, action, children, wide, span2 }) {
   );
 }
 
+// A small link beside a field's label that generates a document.
+function DocLink({ onClick, busy, children }) {
+  return (
+    <button
+      type="button"
+      className="leads-mls-link ddm-doc-link"
+      onClick={onClick}
+      disabled={busy}
+    >
+      <FileText size={12} />
+      {busy ? "Generating…" : children}
+    </button>
+  );
+}
+
 function DealDetailModal({
   isOpen,
   onClose,
@@ -135,6 +151,14 @@ function DealDetailModal({
     closePreview: closeJvPreview,
     downloadReport: downloadJv,
   } = useGenerateReport("jv-agreement");
+  const {
+    printRef: assignmentRef,
+    exporting: exportingAssignment,
+    handleGenerateReport: handleGenerateAssignment,
+    previewImage: assignmentPreviewImage,
+    closePreview: closeAssignmentPreview,
+    downloadReport: downloadAssignment,
+  } = useGenerateReport("assignment-of-contract");
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
   const [compsOpen, setCompsOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -276,6 +300,15 @@ function DealDetailModal({
       numeric[f] = parseCurrency(draft[f]);
     });
 
+    if (
+      numeric.contractPrice > 0 &&
+      numeric.assignedPrice > 0 &&
+      numeric.assignedPrice < numeric.contractPrice
+    ) {
+      alert("Assigned price needs to be more than or equal to contract price.");
+      return;
+    }
+
     let closedDate = draft.closedDate || "";
     let closedInMonth = draft.closedInMonth || "";
     if (closing && !closedDate) {
@@ -380,15 +413,6 @@ function DealDetailModal({
                 disabled={saving || exportingOffer}
               >
                 {exportingOffer ? "Generating…" : "Generate Offer"}
-              </button>
-            )}
-            {draft.jvDeal === "Yes" && (
-              <button
-                className="secondary-btn"
-                onClick={handleGenerateJv}
-                disabled={saving || exportingJv}
-              >
-                {exportingJv ? "Generating…" : "Create JV Agreement"}
               </button>
             )}
             {onReactivate && (
@@ -689,14 +713,16 @@ function DealDetailModal({
                 </select>
               </Field>
             )}
-            <Field label={isRental ? "Offer Price" : "Contract Price"}>
-              <input
-                disabled={locked}
-                value={draft.contractPrice || ""}
-                onChange={(e) => set("contractPrice", e.target.value)}
-                placeholder="$0"
-              />
-            </Field>
+            {offerSent && (
+              <Field label={isRental ? "Offer Price" : "Contract Price"}>
+                <input
+                  disabled={locked}
+                  value={draft.contractPrice || ""}
+                  onChange={(e) => set("contractPrice", e.target.value)}
+                  placeholder="$0"
+                />
+              </Field>
+            )}
             {openContract && handleContractUpload && (
               <Field label="Contract File">
                 <div className="contract-actions">
@@ -843,7 +869,19 @@ function DealDetailModal({
 
           {!isRental && (
             <Section title="Assignment & Closing">
-              <Field label="Assigned">
+              <Field
+                label="Assigned"
+                action={
+                  draft.assigned === "Yes" && (
+                    <DocLink
+                      onClick={handleGenerateAssignment}
+                      busy={exportingAssignment}
+                    >
+                      Create assignment
+                    </DocLink>
+                  )
+                }
+              >
                 <select
                   disabled={locked}
                   value={draft.assigned || "No"}
@@ -856,7 +894,16 @@ function DealDetailModal({
                   ))}
                 </select>
               </Field>
-              <Field label="JV Deal?">
+              <Field
+                label="JV Deal?"
+                action={
+                  draft.jvDeal === "Yes" && (
+                    <DocLink onClick={handleGenerateJv} busy={exportingJv}>
+                      Create JV agreement
+                    </DocLink>
+                  )
+                }
+              >
                 <select
                   disabled={locked}
                   value={draft.jvDeal || "No"}
@@ -1001,6 +1048,14 @@ function DealDetailModal({
           jvSplit={parseCurrency(draft.jvSplit)}
         />
       )}
+      {exportingAssignment && (
+        <AssignmentPdfTemplate
+          ref={assignmentRef}
+          assigneeName={draft.buyerName?.trim() || ""}
+          propertyAddress={formatFullAddress(draft)}
+          assignedPrice={parseCurrency(draft.assignedPrice)}
+        />
+      )}
       <OfferOptionsModal
         isOpen={offerOptionsOpen}
         onClose={() => setOfferOptionsOpen(false)}
@@ -1025,6 +1080,11 @@ function DealDetailModal({
         previewImage={jvPreviewImage}
         onClose={closeJvPreview}
         onDownload={downloadJv}
+      />
+      <PdfReportPreviewModal
+        previewImage={assignmentPreviewImage}
+        onClose={closeAssignmentPreview}
+        onDownload={downloadAssignment}
       />
     </>
   );

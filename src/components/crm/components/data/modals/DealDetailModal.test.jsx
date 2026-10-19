@@ -448,7 +448,7 @@ describe("DealDetailModal", () => {
         updateDealPatch={vi.fn()}
       />,
     );
-    expect(screen.queryByText("Create JV Agreement")).not.toBeInTheDocument();
+    expect(screen.queryByText("Create JV agreement")).not.toBeInTheDocument();
     rerender(
       <DealDetailModal
         isOpen={true}
@@ -457,7 +457,7 @@ describe("DealDetailModal", () => {
         updateDealPatch={vi.fn()}
       />,
     );
-    expect(screen.getByText("Create JV Agreement")).toBeInTheDocument();
+    expect(screen.getByText("Create JV agreement")).toBeInTheDocument();
   });
 
   it("creates a JV agreement splitting the assignment fee with the partner", async () => {
@@ -479,7 +479,7 @@ describe("DealDetailModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Create JV Agreement"));
+    fireEvent.click(screen.getByText("Create JV agreement"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
     const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
@@ -493,9 +493,122 @@ describe("DealDetailModal", () => {
     });
     expect(text).toContain(`Effective Date:${today}`);
     expect(text).not.toContain("Escrow / File No.");
+    // Party A's and Party B's signature dates.
+    expect(text.split(`${today}Date`)).toHaveLength(3);
     expect(text).toContain("Party AYou Win Estates LLC$15,000");
     expect(text).toContain("Party BAcme Wholesale LLC$5,000");
     expect(text).toContain("Total JV Proceeds$20,000");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
+  });
+
+  it("only offers an assignment once the deal is assigned", () => {
+    const { rerender } = render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Create assignment")).not.toBeInTheDocument();
+    rerender(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, assigned: "Yes" }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Create assignment")).toBeInTheDocument();
+  });
+
+  it("creates an assignment of contract to the buyer typed in the form", async () => {
+    renderElementToPdfAssets.mockClear();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          assigned: "Yes",
+          assignedPrice: 220000,
+          buyerName: "Old Buyer",
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Buyer name"), {
+      target: { value: "Pat Buyer LLC" },
+    });
+    fireEvent.click(screen.getByText("Create assignment"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
+    expect(text).toContain("ASSIGNMENT OF CONTRACT");
+    expect(text).toContain("Assignor Name:You Win Estates LLC");
+    expect(text).toContain("Assignee Name(s):Pat Buyer LLC");
+    expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
+    expect(text).toContain("Assignment Price: $220,000");
+    expect(text).toContain("Assignee Deposit: $22,000");
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    // The assignor's and assignee's signature dates.
+    expect(text.split(`${today}Date`)).toHaveLength(3);
+    expect(text).toContain("Pat Buyer LLCPrinted Name / Company");
+    expect(text).not.toContain("Old Buyer");
+    expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
+  });
+
+  it("only shows the contract price once the offer is sent", () => {
+    const { rerender } = render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Contract Price")).not.toBeInTheDocument();
+    rerender(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, offerStatus: "Offer Sent", sellerAccepted: "Yes" }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Contract Price")).toBeInTheDocument();
+  });
+
+  it("won't save an assigned price below the contract price", () => {
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const updateDealPatch = vi.fn();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          offerStatus: "Offer Sent",
+          sellerAccepted: "Yes",
+          contractPrice: 200000,
+          assigned: "Yes",
+          assignedPrice: 190000,
+        }}
+        updateDealPatch={updateDealPatch}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      "Assigned price needs to be more than or equal to contract price.",
+    );
+    expect(updateDealPatch).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
   });
 });

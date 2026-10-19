@@ -1168,3 +1168,17 @@
 .deal-detail-modal .modal-actions .secondary-btn.ddm-offer-btn:hover {
   background: color-mix(in srgb, var(--green) 88%, #000000 12%);
 }
+
+/* Small "Create …" links beside a field's label, styled like the Zillow
+   link next to Address. */
+.deal-detail-modal .ddm-doc-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.deal-detail-modal .ddm-doc-link:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
