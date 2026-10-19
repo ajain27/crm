@@ -22,8 +22,14 @@ import {
 
 const YES_NO = ["No", "Yes"];
 
-// `leadForm` is the useLeadForm() state for residential leads.
-export default function ResidentialLeadForm({ leadForm }) {
+// `leadForm` is the useLeadForm() state for residential leads. The PPC and
+// PPL tabs reuse it with a `fixedSource`, which hides the Source picker so
+// the lead always lands in that tab.
+export default function ResidentialLeadForm({
+  leadForm,
+  title = "Add Residential Lead",
+  fixedSource,
+}) {
   const {
     form,
     saving,
@@ -84,7 +90,7 @@ export default function ResidentialLeadForm({ leadForm }) {
       placeholder="https://zillow.com/…"
     />
   );
-  const sourceField = (
+  const sourceField = fixedSource ? null : (
     <SourceSelectField value={form.source} onChange={handleChange} />
   );
 
@@ -96,7 +102,7 @@ export default function ResidentialLeadForm({ leadForm }) {
     >
       <div className="panel-header">
         <div>
-          <h2>Add Residential Lead</h2>
+          <h2>{title}</h2>
           <p>Log a property you want to follow up on.</p>
         </div>
       </div>

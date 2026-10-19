@@ -230,6 +230,53 @@ describe("PotentialLeads", () => {
     expect(setLeads).toHaveBeenCalled();
   });
 
+  it.each([
+    ["PPC Leads", "Add PPC Lead", "PPC"],
+    ["PPL Leads", "Add PPL Lead", "PPL"],
+  ])(
+    "adds a lead from the %s tab with that source",
+    async (tab, heading, source) => {
+      const saveLead = vi.fn().mockResolvedValue(undefined);
+      const setLeads = vi.fn();
+      const { container } = render(
+        <PotentialLeads {...baseProps({ saveLead, setLeads })} />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(tab) }));
+
+      expect(screen.getByText(heading)).toBeInTheDocument();
+      // The source is fixed by the tab, so there's no picker.
+      expect(screen.queryByText("Select source…")).toBeNull();
+
+      fireEvent.change(
+        screen.getByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
+        { target: { value: "9 Elm St" } },
+      );
+      fireEvent.change(container.querySelector('input[name="followUpDate"]'), {
+        target: { value: "2099-01-01" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add Lead/i }));
+
+      await waitFor(() => {
+        expect(saveLead).toHaveBeenCalledWith(
+          expect.objectContaining({
+            leadType: "residential",
+            source,
+            address: "9 Elm St",
+            userId: "u1",
+          }),
+        );
+      });
+      expect(setLeads).toHaveBeenCalled();
+    },
+  );
+
+  it("doesn't offer an Add Lead form to PPC-only users", () => {
+    render(<PotentialLeads {...baseProps({ ppcOnly: true })} />);
+    expect(screen.queryByText("Add PPC Lead")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /PPL Leads/ }));
+    expect(screen.queryByText("Add PPL Lead")).toBeNull();
+  });
+
   it("saves the reason when a PPC lead is marked bad", async () => {
     const saveLead = vi.fn().mockResolvedValue(undefined);
     const lead = {

@@ -108,6 +108,26 @@ export default function PotentialLeads({
     saveLead,
     setLeads,
   });
+  // Added by hand on the PPC / PPL tabs: a residential lead with the source
+  // fixed, which is what files it under that tab.
+  const ppcForm = useLeadForm({
+    createEmpty: () => ({ ...createEmptyResidentialForm(), source: "PPC" }),
+    leadType: "residential",
+    existingLeads: ppcLeads,
+    duplicateMessage: (address) => `"${address}" is already in your PPC leads.`,
+    currentUser,
+    saveLead,
+    setLeads,
+  });
+  const pplForm = useLeadForm({
+    createEmpty: () => ({ ...createEmptyResidentialForm(), source: "PPL" }),
+    leadType: "residential",
+    existingLeads: pplLeads,
+    duplicateMessage: (address) => `"${address}" is already in your PPL leads.`,
+    currentUser,
+    saveLead,
+    setLeads,
+  });
   const commercialForm = useLeadForm({
     createEmpty: createEmptyCommercialForm,
     leadType: "commercial",
@@ -359,6 +379,14 @@ export default function PotentialLeads({
         </>
       )}
 
+      {activeTab === "ppc" && !ppcOnly && (
+        <ResidentialLeadForm
+          leadForm={ppcForm}
+          title="Add PPC Lead"
+          fixedSource
+        />
+      )}
+
       {activeTab === "ppc" && (
         <CampaignLeadList
           title="PPC Leads"
@@ -371,6 +399,14 @@ export default function PotentialLeads({
           onBulkDelete={handlePpcBulkDelete}
           onSetQuality={handleSetQuality}
           {...leadActions}
+        />
+      )}
+
+      {activeTab === "ppl" && !ppcOnly && (
+        <ResidentialLeadForm
+          leadForm={pplForm}
+          title="Add PPL Lead"
+          fixedSource
         />
       )}
 
