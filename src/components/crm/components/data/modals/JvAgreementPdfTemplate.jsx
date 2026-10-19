@@ -35,6 +35,15 @@ export function getJvAmounts({ contractPrice, assignedPrice, jvSplit }) {
   return { total, partyA, partyB };
 }
 
+// The agreement's generation date, e.g. "October 18, 2026".
+function todayFormatted() {
+  return new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 function Amount({ value }) {
   return value != null ? fmt(value) : "$";
 }
@@ -42,8 +51,8 @@ function Amount({ value }) {
 // Joint Venture Agreement generated from a JV deal. Reproduces the uploaded
 // You Win Estates JV agreement clause for clause; Party B and the Property
 // Address come from the deal, and the disbursement table splits the
-// assignment fee. Title / Escrow and the signature dates stay blank, as in
-// the source.
+// assignment fee. The Effective Date is today; Title / Escrow and the
+// signature dates stay blank, as in the source.
 const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
   { partnerName, propertyAddress, contractPrice, assignedPrice, jvSplit },
   ref,
@@ -99,7 +108,7 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
           <Field label="Party B Name(s):" value={partnerName} />
           <Field label="Property Address:" value={propertyAddress} />
           <Field label="Title / Escrow Company:" value="" />
-          <Field label="Escrow / File No.:" value="" />
+          <Field label="Effective Date:" value={todayFormatted()} />
         </div>
 
         <Section number={1} title="PURPOSE & SCOPE OF JOINT VENTURE">
@@ -135,38 +144,36 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
             Venture (including any assignment fee or resale profit) shall be
             divided and disbursed at closing as follows:
           </p>
-          <table className="jv-pdf-payees">
-            <thead>
-              <tr>
-                <th>Payee</th>
-                <th>Payee Name</th>
-                <th>Amount to be Disbursed</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Party A</td>
-                <td>{PARTY_A_NAME}</td>
-                <td>
-                  <Amount value={amounts.partyA} />
-                </td>
-              </tr>
-              <tr>
-                <td>Party B</td>
-                <td>{partnerName}</td>
-                <td>
-                  <Amount value={amounts.partyB} />
-                </td>
-              </tr>
-              <tr>
-                <td>Total JV Proceeds</td>
-                <td />
-                <td>
-                  <Amount value={amounts.total} />
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Divs, not a <table>: the app's global table styles use
+              color-mix(), which html2canvas can't render. */}
+          <div className="jv-pdf-payees">
+            <div className="jv-pdf-payees-row jv-pdf-payees-head">
+              <span>Payee</span>
+              <span>Payee Name</span>
+              <span>Amount to be Disbursed</span>
+            </div>
+            <div className="jv-pdf-payees-row">
+              <span>Party A</span>
+              <span>{PARTY_A_NAME}</span>
+              <span>
+                <Amount value={amounts.partyA} />
+              </span>
+            </div>
+            <div className="jv-pdf-payees-row">
+              <span>Party B</span>
+              <span>{partnerName}</span>
+              <span>
+                <Amount value={amounts.partyB} />
+              </span>
+            </div>
+            <div className="jv-pdf-payees-row">
+              <span>Total JV Proceeds</span>
+              <span />
+              <span>
+                <Amount value={amounts.total} />
+              </span>
+            </div>
+          </div>
           <p>
             The Parties hereby jointly authorize and irrevocably instruct the
             Title / Escrow Company named above to disburse the amounts set forth

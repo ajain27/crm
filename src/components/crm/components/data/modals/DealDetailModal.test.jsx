@@ -486,6 +486,13 @@ describe("DealDetailModal", () => {
     expect(text).toContain("JOINT VENTURE AGREEMENT");
     expect(text).toContain("Party B Name(s):Acme Wholesale LLC");
     expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    expect(text).toContain(`Effective Date:${today}`);
+    expect(text).not.toContain("Escrow / File No.");
     expect(text).toContain("Party AYou Win Estates LLC$15,000");
     expect(text).toContain("Party BAcme Wholesale LLC$5,000");
     expect(text).toContain("Total JV Proceeds$20,000");

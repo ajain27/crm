@@ -2,36 +2,42 @@
   /* Section 3's disbursement table in the JV agreement, styled after the
      agreement's header bar and field boxes. */
   .jv-pdf-payees {
-    width: 100%;
-    border-collapse: collapse;
     margin: 8px 0 10px;
+    border: 1px solid #dfe4ee;
+    border-radius: 8px;
+    overflow: hidden;
     font-size: 12.5px;
   }
 
-  .jv-pdf-payees th {
-    background: #1a3560;
-    color: #fff;
-    text-align: left;
-    font-weight: 700;
-    padding: 9px 12px;
+  .jv-pdf-payees-row {
+    display: grid;
+    grid-template-columns: 28% 1fr 30%;
+    border-bottom: 1px solid #dfe4ee;
   }
 
-  .jv-pdf-payees td {
+  .jv-pdf-payees-row:last-child {
+    border-bottom: none;
+  }
+
+  .jv-pdf-payees-row > span {
     padding: 9px 12px;
-    border: 1px solid #dfe4ee;
     color: #1a1a2e;
     font-weight: 600;
   }
 
-  .jv-pdf-payees td:first-child {
-    width: 28%;
+  .jv-pdf-payees-row > span:first-child {
     background: #f7f9fc;
     color: #1a3560;
     font-weight: 700;
   }
 
-  .jv-pdf-payees td:last-child {
-    width: 30%;
+  .jv-pdf-payees-row > span:last-child {
+    font-weight: 700;
+  }
+
+  .jv-pdf-payees-row.jv-pdf-payees-head > span {
+    background: #1a3560;
+    color: #fff;
     font-weight: 700;
   }
 }
