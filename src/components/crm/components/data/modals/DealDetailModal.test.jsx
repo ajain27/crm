@@ -533,6 +533,7 @@ describe("DealDetailModal", () => {
           assigned: "Yes",
           assignedPrice: 220000,
           buyerName: "Old Buyer",
+          offerDate: "2026-09-05",
         }}
         updateDealPatch={vi.fn()}
       />,
@@ -551,6 +552,7 @@ describe("DealDetailModal", () => {
     expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
     expect(text).toContain("Assignment Price: $220,000");
     expect(text).toContain("Assignee Deposit: $22,000");
+    expect(text).toContain("with Seller, dated September 5, 2026,");
     const today = new Date().toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",

@@ -1054,6 +1054,7 @@ function DealDetailModal({
           assigneeName={draft.buyerName?.trim() || ""}
           propertyAddress={formatFullAddress(draft)}
           assignedPrice={parseCurrency(draft.assignedPrice)}
+          originalAgreementDate={draft.offerDate}
         />
       )}
       <OfferOptionsModal

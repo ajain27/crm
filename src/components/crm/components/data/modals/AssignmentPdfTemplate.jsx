@@ -22,9 +22,14 @@ const ASSIGNOR_NAME = "You Win Estates LLC";
 const ASSIGNOR_REP = "Ankit Jain";
 const DEPOSIT_RATE = 0.1;
 
-// The assignment's generation date, e.g. "October 18, 2026".
-function todayFormatted() {
-  return new Date().toLocaleDateString("en-US", {
+// A date as e.g. "October 18, 2026"; today when none is given. A
+// "YYYY-MM-DD" date is read as a local date so it doesn't shift a day.
+function formatDate(isoDate) {
+  const [y, m, d] = String(isoDate || "")
+    .split("-")
+    .map(Number);
+  const date = y && m && d ? new Date(y, m - 1, d) : new Date();
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -43,14 +48,14 @@ function Blank({ children }) {
 // Assignment of Contract generated from an assigned deal. Reproduces the
 // uploaded You Win Estates assignment clause for clause; the Assignee is
 // the deal's buyer, the Assignment Price its Assigned Price, and the
-// Assignee Deposit 10% of that. Both signature dates are the day it's
-// generated; the Original Agreement's date stays blank, as in the source.
+// Assignee Deposit 10% of that. The Original Agreement is dated the deal's
+// Offer Date (today if it has none); both signature dates are today.
 const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
-  { assigneeName, propertyAddress, assignedPrice },
+  { assigneeName, propertyAddress, assignedPrice, originalAgreementDate },
   ref,
 ) {
   const deposit = Math.round(assignedPrice * DEPOSIT_RATE);
-  const today = todayFormatted();
+  const today = formatDate();
 
   if (typeof document === "undefined") return null;
 
@@ -104,13 +109,14 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
           <p>
             Assignor, as Buyer, entered into that certain Purchase and Sale
             Agreement (the <strong>"Original Agreement"</strong>) with Seller,
-            dated <Blank />, for the purchase of the Property identified above.
-            Pursuant to Section 6 (Successors, Assignment & Novation) of the
-            Original Agreement, Assignor reserved the unrestricted right to
-            assign the Original Agreement, and Seller consented in advance to
-            such assignment. Assignor now desires to assign, and Assignee
-            desires to accept, all of Assignor's rights, title, and interest in
-            and to the Original Agreement upon the terms set forth herein.
+            dated <Blank>{formatDate(originalAgreementDate)}</Blank>, for the
+            purchase of the Property identified above. Pursuant to Section 6
+            (Successors, Assignment & Novation) of the Original Agreement,
+            Assignor reserved the unrestricted right to assign the Original
+            Agreement, and Seller consented in advance to such assignment.
+            Assignor now desires to assign, and Assignee desires to accept, all
+            of Assignor's rights, title, and interest in and to the Original
+            Agreement upon the terms set forth herein.
           </p>
         </Section>
 
