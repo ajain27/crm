@@ -137,7 +137,7 @@ function NoteText({ text }) {
           ))}
         </dl>
       </div>
-      {table.after && <p className="comps-note-text">{table.after}</p>}
+      {table.after && <NoteText text={table.after} />}
     </>
   );
 }

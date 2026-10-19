@@ -45,6 +45,37 @@ describe("splitQaTable", () => {
     ).toBe("Call back Friday");
   });
 
+  it("finds a table whose header and first label were cut off", () => {
+    const notes = [
+      "Major remodel: kitchen, bathroom, roof, etc.",
+      "ZIP code",
+      "98043",
+      "Property type",
+      "Single family",
+      "Square footage",
+      "1222",
+      "Lot size",
+      "0.15",
+      "Loss in the family",
+      "Seller replied text - not selling.",
+    ].join("\n\n");
+    expect(splitQaTable(notes)).toEqual({
+      before: "Major remodel: kitchen, bathroom, roof, etc.",
+      title: "",
+      rows: [
+        { question: "ZIP code", answer: "98043" },
+        { question: "Property type", answer: "Single family" },
+        { question: "Square footage", answer: "1222" },
+        { question: "Lot size", answer: "0.15" },
+      ],
+      after: "Loss in the family\nSeller replied text - not selling.",
+    });
+  });
+
+  it("needs at least two known labels to call it a table", () => {
+    expect(splitQaTable("Bedrooms\n3\nCall back Friday")).toBeNull();
+  });
+
   it("returns null for notes without a table", () => {
     expect(splitQaTable("Seller wants $200k.\nCall back Friday.")).toBeNull();
     expect(splitQaTable("Question\nAnswer")).toBeNull();
