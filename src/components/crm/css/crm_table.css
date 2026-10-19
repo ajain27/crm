@@ -1232,6 +1232,36 @@
   background: color-mix(in srgb, var(--green) 88%, #000000 12%);
 }
 
+/* Light mode: the plain footer buttons (Cancel, Run comps, Make Active)
+   would otherwise be white on the white footer with no edge — base.css
+   makes every .secondary-btn border transparent with !important — so the
+   border is drawn with an inset shadow instead. */
+:root:not(.dark)
+  .deal-detail-modal
+  .modal-actions
+  .secondary-btn:not(.ddm-offer-btn) {
+  background: #f1f5f9;
+  color: #1e293b;
+  box-shadow:
+    inset 0 0 0 1px #cbd5e1,
+    0 1px 2px rgba(15, 23, 42, 0.06);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    color 0.15s;
+}
+
+:root:not(.dark)
+  .deal-detail-modal
+  .modal-actions
+  .secondary-btn:not(.ddm-offer-btn):hover:not(:disabled) {
+  background: var(--blue-light);
+  color: var(--blue);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent),
+    0 2px 6px rgba(23, 105, 232, 0.12);
+}
+
 /* Small "Create …" links beside a field's label, styled like the Zillow
    link next to Address. */
 .deal-detail-modal .ddm-doc-link {
