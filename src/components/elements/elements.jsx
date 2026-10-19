@@ -103,7 +103,7 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
 }
 
 const Field = forwardRef(function Field(
-  { label, required, wrapperClassName = "", onChange, onBlur, ...props },
+  { label, required, error, wrapperClassName = "", onChange, onBlur, ...props },
   ref,
 ) {
   const trimOnBlur = trimFieldOnBlur(onChange);
@@ -126,6 +126,7 @@ const Field = forwardRef(function Field(
         onBlur={handleBlur}
         {...props}
       />
+      {error && <span className="field-error">{error}</span>}
     </label>
   );
 });

@@ -11,6 +11,17 @@ export const IDLE_LOGOUT_MS = 30 * 60 * 1000;
 
 export const DEAL_TYPES = ["Wholesale", "Potential Rental"];
 
+export const ASSIGNED_PRICE_ERROR =
+  "Assigned price must be more than the contract price.";
+
+// An assignment has to sell the contract for more than it's under
+// contract for. Only checked once both prices are filled in.
+export function isAssignedPriceTooLow(contractPrice, assignedPrice) {
+  return (
+    contractPrice > 0 && assignedPrice > 0 && assignedPrice <= contractPrice
+  );
+}
+
 export const months = [
   "All",
   "01",

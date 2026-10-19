@@ -609,9 +609,39 @@ describe("DealDetailModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
 
     expect(alertSpy).toHaveBeenCalledWith(
-      "Assigned price needs to be more than or equal to contract price.",
+      "Assigned price must be more than the contract price.",
     );
     expect(updateDealPatch).not.toHaveBeenCalled();
     alertSpy.mockRestore();
+  });
+
+  it("flags an assigned price that isn't above the contract price while typing", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          offerStatus: "Offer Sent",
+          sellerAccepted: "Yes",
+          contractPrice: 300000,
+          assigned: "Yes",
+          assignedPrice: 320000,
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    const error = "Assigned price must be more than the contract price.";
+    expect(screen.queryByText(error)).not.toBeInTheDocument();
+
+    const input = screen.getByDisplayValue("$320,000");
+    fireEvent.change(input, { target: { value: "300000" } });
+    expect(screen.getByText(error)).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "250000" } });
+    expect(screen.getByText(error)).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "300001" } });
+    expect(screen.queryByText(error)).not.toBeInTheDocument();
   });
 });

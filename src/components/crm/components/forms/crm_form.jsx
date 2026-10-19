@@ -16,11 +16,14 @@ const SOURCES = [
   "Other",
 ];
 import { STATE_OPTIONS } from "../../../../constants/stateOptions";
+import { parseCurrency } from "../../../../utils/utils";
 import { REHAB_OPTIONS } from "../../../dealAnalyzer/components/fixAndFlip/fixAndFlipConfig";
 import {
   getSuggestedWholesaleMao,
   getWholesaleRehabDetails,
   DEAL_TYPES,
+  ASSIGNED_PRICE_ERROR,
+  isAssignedPriceTooLow,
 } from "../crmConfig";
 
 function Wholesale_form({
@@ -536,6 +539,12 @@ function Wholesale_form({
                     onChange={handleChange}
                     onBlur={handleBlur}
                     required
+                    error={
+                      isAssignedPriceTooLow(
+                        parseCurrency(form.contractPrice),
+                        parseCurrency(form.assignedPrice),
+                      ) && ASSIGNED_PRICE_ERROR
+                    }
                   />
                   <Field
                     label="Buyer Name / LLC"

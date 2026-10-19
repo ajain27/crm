@@ -22,6 +22,8 @@ import {
   getSuggestedWholesaleMao,
   getContractVersions,
   DEAL_TYPES,
+  ASSIGNED_PRICE_ERROR,
+  isAssignedPriceTooLow,
 } from "../../crmConfig";
 
 function formatFullAddress(deal) {
@@ -252,6 +254,10 @@ function DealDetailModal({
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
+  const assignedPriceTooLow = isAssignedPriceTooLow(
+    parseCurrency(draft.contractPrice),
+    parseCurrency(draft.assignedPrice),
+  );
 
   async function handleDelete() {
     const deleted = await deleteDeal(deal.id);
@@ -300,12 +306,8 @@ function DealDetailModal({
       numeric[f] = parseCurrency(draft[f]);
     });
 
-    if (
-      numeric.contractPrice > 0 &&
-      numeric.assignedPrice > 0 &&
-      numeric.assignedPrice < numeric.contractPrice
-    ) {
-      alert("Assigned price needs to be more than or equal to contract price.");
+    if (isAssignedPriceTooLow(numeric.contractPrice, numeric.assignedPrice)) {
+      alert(ASSIGNED_PRICE_ERROR);
       return;
     }
 
@@ -938,6 +940,11 @@ function DealDetailModal({
                       onChange={(e) => set("assignedPrice", e.target.value)}
                       placeholder="$0"
                     />
+                    {assignedPriceTooLow && (
+                      <span className="field-error">
+                        {ASSIGNED_PRICE_ERROR}
+                      </span>
+                    )}
                   </Field>
                   <Field label="Buyer Name">
                     <input

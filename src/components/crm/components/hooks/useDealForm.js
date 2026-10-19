@@ -5,6 +5,8 @@ import {
   createDefaultFilters,
   createContractVersion,
   getWholesaleRehabDetails,
+  ASSIGNED_PRICE_ERROR,
+  isAssignedPriceTooLow,
 } from "../crmConfig";
 import { findDuplicateByAddress } from "../../../../utils/utils";
 
@@ -254,12 +256,10 @@ export function useDealForm({
           rehabCost: totalRehabCost,
           mao: parseNumber(form.mao),
           contractPrice: parseNumber(form.contractPrice),
-          assignedPrice: parseNumber(form.assignedPrice),
         };
         if (name === "arv") currentVals.arv = numVal;
         if (name === "mao") currentVals.mao = numVal;
         if (name === "contractPrice") currentVals.contractPrice = numVal;
-        if (name === "assignedPrice") currentVals.assignedPrice = numVal;
 
         if (currentVals.arv > 0) {
           if (currentVals.rehabCost > currentVals.arv) {
@@ -274,17 +274,6 @@ export function useDealForm({
           }
           if (currentVals.contractPrice > currentVals.arv) {
             alert("Contract price cannot be more than ARV.");
-            setForm((prev) => ({ ...prev, [name]: "" }));
-            return;
-          }
-          if (
-            currentVals.contractPrice > 0 &&
-            currentVals.assignedPrice > 0 &&
-            currentVals.assignedPrice < currentVals.contractPrice
-          ) {
-            alert(
-              "Assigned price needs to be more than or equal to contract price.",
-            );
             setForm((prev) => ({ ...prev, [name]: "" }));
             return;
           }
@@ -380,8 +369,8 @@ export function useDealForm({
         return;
       }
     }
-    if (contractNum > 0 && assignedNum > 0 && assignedNum < contractNum) {
-      alert("Assigned price needs to be more than or equal to contract price.");
+    if (isAssignedPriceTooLow(contractNum, assignedNum)) {
+      alert(ASSIGNED_PRICE_ERROR);
       return;
     }
 
