@@ -892,6 +892,11 @@
      as the active tab pill, kept constant across themes so it never
      flips to a near-white fill in dark mode), neutral outline for Cancel,
      red-tinted outline for the destructive Delete action. */
+  /* Space between the last section (Notes) and the buttons. */
+  .deal-detail-modal .modal-actions {
+    margin-top: 1.25rem;
+  }
+
   .deal-detail-modal .modal-actions > button {
     height: auto;
     width: auto;
