@@ -15,7 +15,8 @@ import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import AssignmentOptionsModal from "./AssignmentOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
 import CompsNoteView from "../comps/CompsNoteView";
-import { splitCompsNotes, withCompsNote } from "../comps/compsNote";
+import { withCompsNote } from "../comps/compsNote";
+import { hasFormattedNotes } from "../comps/notesTable";
 import DealPhotos from "./DealPhotos";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import { StreetViewButton } from "../../../../elements/StreetView";
@@ -256,12 +257,11 @@ function DealDetailModal({
 
   const offerSent = (draft.offerStatus || "Not Sent") === "Offer Sent";
   const locked = offerSent && (draft.sellerAccepted || "No") === "No";
-  // Notes with a comps note in them show laid out until "Edit notes"
+  // Notes with a comps note or a Question / Answer table in them show laid
+  // out until "Edit notes"
   // (always laid out while the deal is locked).
-  const hasCompsNote = splitCompsNotes(draft.notes).some(
-    (seg) => seg.type === "comps",
-  );
-  const showNotesView = hasCompsNote && (locked || !editingNotes);
+  const hasFormatted = hasFormattedNotes(draft.notes);
+  const showNotesView = hasFormatted && (locked || !editingNotes);
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
@@ -1021,7 +1021,7 @@ function DealDetailModal({
           <div className="ddm-section">
             <div className="ddm-section-label ldm-notes-label">
               Notes
-              {hasCompsNote && !locked && (
+              {hasFormatted && !locked && (
                 <button
                   type="button"
                   className="ldm-notes-toggle"
@@ -1040,7 +1040,7 @@ function DealDetailModal({
                 value={draft.notes || ""}
                 onChange={(e) => set("notes", e.target.value)}
                 placeholder="Add notes about this deal…"
-                rows={hasCompsNote ? 12 : 5}
+                rows={hasFormatted ? 12 : 5}
               />
             )}
           </div>

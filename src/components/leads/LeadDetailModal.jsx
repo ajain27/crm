@@ -8,10 +8,8 @@ import { ZillowLink } from "./components/LeadTableCells";
 import { StreetViewButton } from "../elements/StreetView";
 import RunCompsModal from "../crm/components/data/comps/RunCompsModal";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
-import {
-  splitCompsNotes,
-  withCompsNote,
-} from "../crm/components/data/comps/compsNote";
+import { withCompsNote } from "../crm/components/data/comps/compsNote";
+import { hasFormattedNotes } from "../crm/components/data/comps/notesTable";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -91,11 +89,10 @@ export default function LeadDetailModal({
     setDraft((prev) => ({ ...prev, [field]: value }));
   }
 
-  // Notes with a comps note in them show laid out until "Edit notes".
-  const hasCompsNote = splitCompsNotes(draft.notes).some(
-    (seg) => seg.type === "comps",
-  );
-  const showNotesView = hasCompsNote && !editingNotes;
+  // Notes with a comps note or a Question / Answer table in them show laid
+  // out until "Edit notes".
+  const hasFormatted = hasFormattedNotes(draft.notes);
+  const showNotesView = hasFormatted && !editingNotes;
 
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
   // PPL leads are entered with full seller details, so they get the same
@@ -479,7 +476,7 @@ export default function LeadDetailModal({
           <div className="ldm-section">
             <div className="ldm-section-label ldm-notes-label">
               Notes
-              {hasCompsNote && (
+              {hasFormatted && (
                 <button
                   type="button"
                   className="ldm-notes-toggle"
@@ -497,7 +494,7 @@ export default function LeadDetailModal({
                 value={draft.notes || ""}
                 onChange={(e) => set("notes", e.target.value)}
                 placeholder="Add notes about this lead…"
-                rows={hasCompsNote ? 12 : 5}
+                rows={hasFormatted ? 12 : 5}
               />
             )}
           </div>

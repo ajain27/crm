@@ -127,6 +127,55 @@
     line-height: 1.6;
   }
 
+  /* A Question / Answer table from a lead provider, as label / value
+     rows. */
+  .notes-qa {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .notes-qa-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .notes-qa-table {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    overflow: hidden;
+  }
+
+  .notes-qa-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 40%) 1fr;
+    gap: 1rem;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .notes-qa-row:last-child {
+    border-bottom: none;
+  }
+
+  .notes-qa-row:nth-child(even) {
+    background: var(--badge-bg);
+  }
+
+  .notes-qa-row dt {
+    color: var(--muted);
+  }
+
+  .notes-qa-row dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
   .comps-note .run-comps-estimates {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }

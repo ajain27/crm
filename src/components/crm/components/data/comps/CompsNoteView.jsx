@@ -1,6 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { StreetViewButton } from "../../../../elements/StreetView";
 import { splitCompsNotes } from "./compsNote";
+import { splitQaTable } from "./notesTable";
 
 const SOURCE_LABELS = {
   zillow: "Zillow",
@@ -117,8 +118,32 @@ function CompsNote({ comps }) {
   );
 }
 
-// Notes with any comps notes in them laid out like the comps window;
-// everything else stays as written.
+// A run of plain notes text, with any Question / Answer table in it laid
+// out as label / value rows.
+function NoteText({ text }) {
+  const table = splitQaTable(text);
+  if (!table) return <p className="comps-note-text">{text}</p>;
+  return (
+    <>
+      {table.before && <p className="comps-note-text">{table.before}</p>}
+      <div className="notes-qa">
+        {table.title && <div className="notes-qa-title">{table.title}</div>}
+        <dl className="notes-qa-table">
+          {table.rows.map((row, i) => (
+            <div key={i} className="notes-qa-row">
+              <dt>{row.question}</dt>
+              <dd>{row.answer}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      {table.after && <p className="comps-note-text">{table.after}</p>}
+    </>
+  );
+}
+
+// Notes with any comps notes in them laid out like the comps window, and
+// Question / Answer tables as rows; everything else stays as written.
 export default function CompsNoteView({ notes, className = "" }) {
   return (
     <div className={`comps-note-view ${className}`.trim()}>
@@ -126,9 +151,7 @@ export default function CompsNoteView({ notes, className = "" }) {
         seg.type === "comps" ? (
           <CompsNote key={i} comps={seg.comps} />
         ) : (
-          <p key={i} className="comps-note-text">
-            {seg.text}
-          </p>
+          <NoteText key={i} text={seg.text} />
         ),
       )}
     </div>
