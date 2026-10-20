@@ -23,12 +23,14 @@ import {
 const YES_NO = ["No", "Yes"];
 
 // `leadForm` is the useLeadForm() state for residential leads. The PPC and
-// PPL tabs reuse it with a `fixedSource`, which hides the Source picker so
-// the lead always lands in that tab.
+// PPL tabs reuse it in a modal (`inModal`: just the form, no panel) with a
+// `fixedSource`, which hides the Source picker so the lead always lands in
+// that tab.
 export default function ResidentialLeadForm({
   leadForm,
   title = "Add Residential Lead",
   fixedSource,
+  inModal = false,
 }) {
   const {
     form,
@@ -94,6 +96,229 @@ export default function ResidentialLeadForm({
     <SourceSelectField value={form.source} onChange={handleChange} />
   );
 
+  const formEl = (
+    <form className="add-form leads-add-form" onSubmit={handleSubmit}>
+      <LeadSelectField
+        label="Deal Type"
+        name="dealType"
+        value={form.dealType || "Wholesale"}
+        onChange={handleChange}
+        options={DEAL_TYPES}
+      />
+
+      <AddressField
+        ref={addressInputRef}
+        value={form.address}
+        onChange={handleChange}
+        onBlur={handleAddressBlur}
+        placeholder="e.g. 123 Main St, Dallas, TX 75201"
+        action={<ZillowLink address={form.address} />}
+      />
+
+      {isRental ? (
+        <>
+          <LeadSelectField
+            label="On Market"
+            name="onMarket"
+            value={form.onMarket || "No"}
+            onChange={handleChange}
+            options={YES_NO}
+          />
+
+          {form.onMarket === "Yes" ? (
+            <>
+              <TextField
+                label="Listed Price"
+                name="listedPrice"
+                value={form.listedPrice}
+                onChange={handleChange}
+                placeholder="$0"
+              />
+              {agentNameField}
+              {agentPhoneField}
+              {listingUrlField}
+            </>
+          ) : (
+            sellerNameField
+          )}
+
+          {sourceField}
+
+          <TextField
+            label="Rent"
+            name="rent"
+            value={form.rent}
+            onChange={handleChange}
+            placeholder="$0"
+          />
+          <LeadSelectField
+            label="Occupied"
+            name="occupied"
+            value={form.occupied || "No"}
+            onChange={handleChange}
+            options={YES_NO}
+          />
+          <LeadSelectField
+            label="Offer Status"
+            name="offerStatus"
+            value={form.offerStatus || "Not Sent"}
+            onChange={handleChange}
+            options={["Not Sent", "Offer Sent"]}
+          />
+
+          {form.offerStatus !== "Not Sent" && (
+            <>
+              <TextField
+                label="Offer Price"
+                name="offerPrice"
+                value={form.offerPrice}
+                onChange={handleChange}
+                placeholder="$0"
+              />
+              <LeadSelectField
+                label="Accepted"
+                name="sellerAccepted"
+                value={form.sellerAccepted || "No"}
+                onChange={handleChange}
+                options={["No", "Waiting", "Yes"]}
+              />
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          {sourceField}
+
+          {form.source === "MLS / Zillow" && (
+            <>
+              {agentNameField}
+              {agentPhoneField}
+            </>
+          )}
+
+          <TextField
+            label="First Name"
+            name="firstName"
+            value={form.firstName}
+            onChange={handleNameChange}
+            onBlur={handleTrimBlur}
+            placeholder="Seller's first name"
+          />
+          <TextField
+            label="Last Name"
+            name="lastName"
+            value={form.lastName}
+            onChange={handleNameChange}
+            onBlur={handleTrimBlur}
+            placeholder="Seller's last name"
+          />
+          <PhoneField
+            name="phone"
+            value={form.phone}
+            onChange={handlePhoneChange}
+          />
+          <TextField
+            label="Asking Price"
+            name="askingPrice"
+            value={form.askingPrice}
+            onChange={handleChange}
+            onBlur={handleTrimBlur}
+            placeholder="$0"
+          />
+          {form.source === "PPL" && (
+            <TextField
+              label="ARV"
+              name="arv"
+              value={form.arv}
+              onChange={(e) =>
+                setField("arv", fmtCurrencyInput(e.target.value))
+              }
+              placeholder="$0"
+            />
+          )}
+          <LeadSelectField
+            label="Who's Living in the Property"
+            name="occupant"
+            value={form.occupant}
+            onChange={handleChange}
+            options={OCCUPANT_OPTIONS}
+            placeholder="Select…"
+          />
+          <LeadSelectField
+            label="Selling Urgency"
+            name="sellingUrgency"
+            value={form.sellingUrgency}
+            onChange={handleChange}
+            options={SELLING_URGENCY_OPTIONS}
+            placeholder="Select…"
+          />
+          <LeadSelectField
+            label="Seller Motivation"
+            name="sellerMotivation"
+            value={form.sellerMotivation}
+            onChange={handleChange}
+            options={SELLER_MOTIVATION_OPTIONS}
+            placeholder="Select…"
+          />
+
+          {form.source !== "Cold Call" && listingUrlField}
+
+          <LeadField label="Follow-Up Date" required>
+            <input
+              type="date"
+              name="followUpDate"
+              value={form.followUpDate}
+              onChange={handleChange}
+              min={todayStr()}
+              required
+            />
+          </LeadField>
+
+          {form.source !== "MLS / Zillow" && (
+            <TextField
+              label="Email"
+              icon={Mail}
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              onBlur={handleTrimBlur}
+              placeholder="seller@email.com"
+            />
+          )}
+        </>
+      )}
+
+      <LeadField label="Notes" className="leads-notes-field">
+        <textarea
+          name="notes"
+          value={form.notes}
+          onChange={handleChange}
+          placeholder="Any initial notes about this lead…"
+          rows={3}
+        />
+      </LeadField>
+
+      <FormError message={error} />
+
+      <button
+        className="primary-btn form-btn"
+        type="submit"
+        disabled={
+          !form.address.trim() ||
+          (!isRental && !form.followUpDate) ||
+          !!error ||
+          saving
+        }
+      >
+        <Plus size={15} />
+        {saving ? "Saving…" : "Add Lead"}
+      </button>
+    </form>
+  );
+
+  if (inModal) return formEl;
+
   return (
     <section
       className="panel"
@@ -107,224 +332,7 @@ export default function ResidentialLeadForm({
         </div>
       </div>
 
-      <form className="add-form leads-add-form" onSubmit={handleSubmit}>
-        <LeadSelectField
-          label="Deal Type"
-          name="dealType"
-          value={form.dealType || "Wholesale"}
-          onChange={handleChange}
-          options={DEAL_TYPES}
-        />
-
-        <AddressField
-          ref={addressInputRef}
-          value={form.address}
-          onChange={handleChange}
-          onBlur={handleAddressBlur}
-          placeholder="e.g. 123 Main St, Dallas, TX 75201"
-          action={<ZillowLink address={form.address} />}
-        />
-
-        {isRental ? (
-          <>
-            <LeadSelectField
-              label="On Market"
-              name="onMarket"
-              value={form.onMarket || "No"}
-              onChange={handleChange}
-              options={YES_NO}
-            />
-
-            {form.onMarket === "Yes" ? (
-              <>
-                <TextField
-                  label="Listed Price"
-                  name="listedPrice"
-                  value={form.listedPrice}
-                  onChange={handleChange}
-                  placeholder="$0"
-                />
-                {agentNameField}
-                {agentPhoneField}
-                {listingUrlField}
-              </>
-            ) : (
-              sellerNameField
-            )}
-
-            {sourceField}
-
-            <TextField
-              label="Rent"
-              name="rent"
-              value={form.rent}
-              onChange={handleChange}
-              placeholder="$0"
-            />
-            <LeadSelectField
-              label="Occupied"
-              name="occupied"
-              value={form.occupied || "No"}
-              onChange={handleChange}
-              options={YES_NO}
-            />
-            <LeadSelectField
-              label="Offer Status"
-              name="offerStatus"
-              value={form.offerStatus || "Not Sent"}
-              onChange={handleChange}
-              options={["Not Sent", "Offer Sent"]}
-            />
-
-            {form.offerStatus !== "Not Sent" && (
-              <>
-                <TextField
-                  label="Offer Price"
-                  name="offerPrice"
-                  value={form.offerPrice}
-                  onChange={handleChange}
-                  placeholder="$0"
-                />
-                <LeadSelectField
-                  label="Accepted"
-                  name="sellerAccepted"
-                  value={form.sellerAccepted || "No"}
-                  onChange={handleChange}
-                  options={["No", "Waiting", "Yes"]}
-                />
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            {sourceField}
-
-            {form.source === "MLS / Zillow" && (
-              <>
-                {agentNameField}
-                {agentPhoneField}
-              </>
-            )}
-
-            <TextField
-              label="First Name"
-              name="firstName"
-              value={form.firstName}
-              onChange={handleNameChange}
-              onBlur={handleTrimBlur}
-              placeholder="Seller's first name"
-            />
-            <TextField
-              label="Last Name"
-              name="lastName"
-              value={form.lastName}
-              onChange={handleNameChange}
-              onBlur={handleTrimBlur}
-              placeholder="Seller's last name"
-            />
-            <PhoneField
-              name="phone"
-              value={form.phone}
-              onChange={handlePhoneChange}
-            />
-            <TextField
-              label="Asking Price"
-              name="askingPrice"
-              value={form.askingPrice}
-              onChange={handleChange}
-              onBlur={handleTrimBlur}
-              placeholder="$0"
-            />
-            {form.source === "PPL" && (
-              <TextField
-                label="ARV"
-                name="arv"
-                value={form.arv}
-                onChange={(e) =>
-                  setField("arv", fmtCurrencyInput(e.target.value))
-                }
-                placeholder="$0"
-              />
-            )}
-            <LeadSelectField
-              label="Who's Living in the Property"
-              name="occupant"
-              value={form.occupant}
-              onChange={handleChange}
-              options={OCCUPANT_OPTIONS}
-              placeholder="Select…"
-            />
-            <LeadSelectField
-              label="Selling Urgency"
-              name="sellingUrgency"
-              value={form.sellingUrgency}
-              onChange={handleChange}
-              options={SELLING_URGENCY_OPTIONS}
-              placeholder="Select…"
-            />
-            <LeadSelectField
-              label="Seller Motivation"
-              name="sellerMotivation"
-              value={form.sellerMotivation}
-              onChange={handleChange}
-              options={SELLER_MOTIVATION_OPTIONS}
-              placeholder="Select…"
-            />
-
-            {form.source !== "Cold Call" && listingUrlField}
-
-            <LeadField label="Follow-Up Date" required>
-              <input
-                type="date"
-                name="followUpDate"
-                value={form.followUpDate}
-                onChange={handleChange}
-                min={todayStr()}
-                required
-              />
-            </LeadField>
-
-            {form.source !== "MLS / Zillow" && (
-              <TextField
-                label="Email"
-                icon={Mail}
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                onBlur={handleTrimBlur}
-                placeholder="seller@email.com"
-              />
-            )}
-          </>
-        )}
-
-        <LeadField label="Notes" className="leads-notes-field">
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            placeholder="Any initial notes about this lead…"
-            rows={3}
-          />
-        </LeadField>
-
-        <FormError message={error} />
-
-        <button
-          className="primary-btn form-btn"
-          type="submit"
-          disabled={
-            !form.address.trim() ||
-            (!isRental && !form.followUpDate) ||
-            !!error ||
-            saving
-          }
-        >
-          <Plus size={15} />
-          {saving ? "Saving…" : "Add Lead"}
-        </button>
-      </form>
+      {formEl}
     </section>
   );
 }

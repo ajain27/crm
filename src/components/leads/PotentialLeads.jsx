@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Modal from "../modal/Modal";
 import LeadDetailModal from "./LeadDetailModal";
 import CommercialLeadDetailModal from "./CommercialLeadDetailModal";
 import LeadsStatsRow from "./components/LeadsStatsRow";
@@ -56,6 +57,8 @@ export default function PotentialLeads({
   const [detailLead, setDetailLead] = useState(null);
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
   const [ppcDeletedCount, setPpcDeletedCount] = useState(0);
+  // "ppc" or "ppl" while that tab's Add a lead window is open.
+  const [addLeadTab, setAddLeadTab] = useState(null);
 
   const residentialList = useLeadListState(RESIDENTIAL_FILTERS);
   const commercialList = useLeadListState();
@@ -118,6 +121,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
+    onSaved: () => setAddLeadTab(null),
   });
   const pplForm = useLeadForm({
     createEmpty: () => ({ ...createEmptyResidentialForm(), source: "PPL" }),
@@ -127,6 +131,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
+    onSaved: () => setAddLeadTab(null),
   });
   const commercialForm = useLeadForm({
     createEmpty: createEmptyCommercialForm,
@@ -379,14 +384,6 @@ export default function PotentialLeads({
         </>
       )}
 
-      {activeTab === "ppc" && !ppcOnly && (
-        <ResidentialLeadForm
-          leadForm={ppcForm}
-          title="Add PPC Lead"
-          fixedSource
-        />
-      )}
-
       {activeTab === "ppc" && (
         <CampaignLeadList
           title="PPC Leads"
@@ -398,15 +395,8 @@ export default function PotentialLeads({
           noLeadsMessage="Leads submitted through the website form will appear here."
           onBulkDelete={handlePpcBulkDelete}
           onSetQuality={handleSetQuality}
+          onAddLead={() => setAddLeadTab("ppc")}
           {...leadActions}
-        />
-      )}
-
-      {activeTab === "ppl" && !ppcOnly && (
-        <ResidentialLeadForm
-          leadForm={pplForm}
-          title="Add PPL Lead"
-          fixedSource
         />
       )}
 
@@ -419,8 +409,32 @@ export default function PotentialLeads({
           noLeadsMessage="PPL leads will appear here."
           onBulkDelete={handlePplBulkDelete}
           onImport={handlePplImport}
+          onAddLead={() => setAddLeadTab("ppl")}
           {...leadActions}
         />
+      )}
+
+      {!ppcOnly && (
+        <Modal
+          isOpen={!!addLeadTab}
+          onClose={() => setAddLeadTab(null)}
+          title={addLeadTab === "ppl" ? "Add PPL Lead" : "Add PPC Lead"}
+          className="leads-add-modal"
+          style={{
+            width: "min(960px, 96vw)",
+            maxWidth: "min(960px, 96vw)",
+            height: "auto",
+          }}
+        >
+          {addLeadTab && (
+            <ResidentialLeadForm
+              key={addLeadTab}
+              leadForm={addLeadTab === "ppl" ? pplForm : ppcForm}
+              fixedSource
+              inModal
+            />
+          )}
+        </Modal>
       )}
 
       {activeTab === "county" && !ppcOnly && (

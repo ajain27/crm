@@ -238,11 +238,15 @@ describe("PotentialLeads", () => {
     async (tab, heading, source) => {
       const saveLead = vi.fn().mockResolvedValue(undefined);
       const setLeads = vi.fn();
-      const { container } = render(
-        <PotentialLeads {...baseProps({ saveLead, setLeads })} />,
-      );
+      render(<PotentialLeads {...baseProps({ saveLead, setLeads })} />);
       fireEvent.click(screen.getByRole("button", { name: new RegExp(tab) }));
 
+      // The form only shows once "Add a lead" is clicked.
+      expect(screen.queryByText(heading)).toBeNull();
+      expect(
+        screen.queryByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
+      ).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
       expect(screen.getByText(heading)).toBeInTheDocument();
       // The source is fixed by the tab, so there's no picker.
       expect(screen.queryByText("Select source…")).toBeNull();
@@ -251,7 +255,7 @@ describe("PotentialLeads", () => {
         screen.getByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
         { target: { value: "9 Elm St" } },
       );
-      fireEvent.change(container.querySelector('input[name="followUpDate"]'), {
+      fireEvent.change(document.querySelector('input[name="followUpDate"]'), {
         target: { value: "2099-01-01" },
       });
       fireEvent.click(screen.getByRole("button", { name: /Add Lead/i }));
@@ -267,14 +271,16 @@ describe("PotentialLeads", () => {
         );
       });
       expect(setLeads).toHaveBeenCalled();
+      // Saving closes the window.
+      await waitFor(() => expect(screen.queryByText(heading)).toBeNull());
     },
   );
 
-  it("doesn't offer an Add Lead form to PPC-only users", () => {
+  it("doesn't offer Add a lead to PPC-only users", () => {
     render(<PotentialLeads {...baseProps({ ppcOnly: true })} />);
-    expect(screen.queryByText("Add PPC Lead")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add a lead" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /PPL Leads/ }));
-    expect(screen.queryByText("Add PPL Lead")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add a lead" })).toBeNull();
   });
 
   it("saves the reason when a PPC lead is marked bad", async () => {

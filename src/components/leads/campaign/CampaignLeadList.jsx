@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { AccordionHeaderCell } from "../../elements/elements";
 import { formatDate } from "../../../utils/utils";
 import LeadListPanel, {
@@ -57,6 +58,7 @@ export default function CampaignLeadList({
   onRunAutomation,
   onStopAutomation,
   onImport,
+  onAddLead,
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
   const { selectedIds } = listState;
@@ -105,6 +107,19 @@ export default function CampaignLeadList({
         statusMessage={statusMessage}
         noLeadsSubtitle={noLeadsSubtitle}
         noLeadsMessage={noLeadsMessage}
+        titleAction={
+          !readOnly &&
+          onAddLead && (
+            <button
+              type="button"
+              className="leads-mls-link leads-add-link"
+              onClick={onAddLead}
+            >
+              <Plus size={12} />
+              Add a lead
+            </button>
+          )
+        }
       >
         {(pageLeads) => (
           <>

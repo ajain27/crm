@@ -8,7 +8,7 @@ import { joinName, todayStr } from "../leadUtils";
 
 // State + handlers for an "Add Lead" form (residential and commercial share
 // this). Rejects addresses already in `existingLeads`, and on submit saves a
-// new lead of `leadType` and prepends it to the list.
+// new lead of `leadType` and prepends it to the list, then calls `onSaved`.
 export function useLeadForm({
   createEmpty,
   leadType,
@@ -17,6 +17,7 @@ export function useLeadForm({
   currentUser,
   saveLead,
   setLeads,
+  onSaved,
 }) {
   const [form, setForm] = useState(createEmpty);
   const [saving, setSaving] = useState(false);
@@ -75,6 +76,7 @@ export function useLeadForm({
       await saveLead(lead);
       setLeads((prev) => [lead, ...prev]);
       setForm(createEmpty());
+      onSaved?.(lead);
     } catch {
       setError("Failed to save lead. Please try again.");
     } finally {
