@@ -43,7 +43,6 @@ export default function LeadListPanel({
   noLeadsMessage,
   noMatchMessage = "No leads match the current search.",
   revealDelay = "80ms",
-  titleAction,
   children,
 }) {
   const { pageItems, totalPages, page, summary } = paginate(
@@ -59,10 +58,7 @@ export default function LeadListPanel({
     >
       <div className="panel-header leads-list-header">
         <div>
-          <h2 className="leads-list-title">
-            {title}
-            {titleAction}
-          </h2>
+          <h2>{title}</h2>
           <p>
             {totalCount === 0
               ? noLeadsSubtitle

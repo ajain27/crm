@@ -85,6 +85,12 @@ export default function CampaignLeadList({
           onDelete={onBulkDelete}
         />
       )}
+      {!readOnly && onAddLead && (
+        <button type="button" className="leads-export-btn" onClick={onAddLead}>
+          <Plus size={13} />
+          Add a lead
+        </button>
+      )}
       {!readOnly && onImport && <LeadImportButton onImport={onImport} />}
       {!readOnly && (
         <LeadExportButton
@@ -107,19 +113,6 @@ export default function CampaignLeadList({
         statusMessage={statusMessage}
         noLeadsSubtitle={noLeadsSubtitle}
         noLeadsMessage={noLeadsMessage}
-        titleAction={
-          !readOnly &&
-          onAddLead && (
-            <button
-              type="button"
-              className="leads-mls-link leads-add-link"
-              onClick={onAddLead}
-            >
-              <Plus size={12} />
-              Add a lead
-            </button>
-          )
-        }
       >
         {(pageLeads) => (
           <>
