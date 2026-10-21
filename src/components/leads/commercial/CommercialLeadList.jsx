@@ -1,4 +1,4 @@
-import { Globe, RefreshCw } from "lucide-react";
+import { Globe } from "lucide-react";
 import { AccordionHeaderCell } from "../../elements/elements";
 import LeadListPanel, {
   LeadClearFilters,
@@ -13,6 +13,7 @@ import {
   SelectCell,
   SourceCell,
 } from "../components/LeadTableCells";
+import LeadImportButton from "../components/LeadImportButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { leadMatchesSearch } from "../leadUtils";
@@ -22,8 +23,7 @@ const SEARCH_FIELDS = ["address", "source", "phone"];
 export default function CommercialLeadList({
   leads,
   listState,
-  wpSyncing,
-  onSyncWordPress,
+  onImport,
   onOpen,
   onDelete,
   onBulkDelete,
@@ -36,15 +36,6 @@ export default function CommercialLeadList({
 
   const filterBar = (
     <>
-      <button
-        type="button"
-        className="leads-sync-btn"
-        onClick={onSyncWordPress}
-        disabled={wpSyncing}
-      >
-        <RefreshCw size={13} />
-        {wpSyncing ? "Syncing..." : "Sync WordPress"}
-      </button>
       <LeadSearchInput
         value={listState.search}
         onChange={listState.setSearch}
@@ -56,6 +47,7 @@ export default function CommercialLeadList({
         listState={listState}
         onDelete={onBulkDelete}
       />
+      <LeadImportButton onImport={onImport} />
       <LeadExportButton
         selectedLeads={selectedLeads}
         listTitle="Commercial Leads"

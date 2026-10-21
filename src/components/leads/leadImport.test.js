@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { csvToPplLeads } from "./leadImport";
+import { csvToCommercialLeads, csvToPplLeads } from "./leadImport";
 import { leadsToRows, rowsToCsv } from "./leadExport";
 import { isPplLead } from "./leadUtils";
 
@@ -92,4 +92,42 @@ it("reads every column the PPL export writes", () => {
   const csv = `${header.join(",")}\n`;
   const { unmatchedHeaders } = csvToPplLeads(csv);
   expect(unmatchedHeaders.filter((h) => !ignored.includes(h))).toEqual([]);
+});
+
+describe("csvToCommercialLeads", () => {
+  it("maps business columns into a commercial lead", () => {
+    const csv = [
+      "Business Name,Owner,Email,Phone,Address,City,State,Zip,Website,Property Type",
+      "Starlight Hills Campground,Ann Bell,ann@x.com,(830) 998-7050,1 Hill Rd,Kerrville,TX,78028,https://starlight.example,RV Park",
+    ].join("\n");
+    const { leads } = csvToCommercialLeads(csv, { userId: "u1", now: NOW });
+
+    expect(leads).toHaveLength(1);
+    expect(leads[0]).toMatchObject({
+      name: "Starlight Hills Campground",
+      sellerName: "Ann Bell",
+      sellerEmail: "ann@x.com",
+      phone: "830-998-7050",
+      address: "1 Hill Rd, Kerrville, TX 78028",
+      state: "TX",
+      website: "https://starlight.example",
+      propertyType: "RV Park",
+      leadType: "commercial",
+      userId: "u1",
+    });
+  });
+
+  it("skips rows already in the commercial list", () => {
+    const csv = ["Name,Address", "Outback Springs,5 Main St, Austin, TX"].join(
+      "\n",
+    );
+    const existing = [{ leadType: "commercial", address: "5 Main St" }];
+    const result = csvToCommercialLeads(csv, { existingLeads: existing });
+    expect(result.leads).toHaveLength(0);
+    expect(result.skippedDuplicates).toBe(1);
+  });
+
+  it("errors when no lead columns are found", () => {
+    expect(csvToCommercialLeads("Foo,Bar\n1,2").error).toMatch(/headers/);
+  });
 });

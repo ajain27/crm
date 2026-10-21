@@ -1,7 +1,7 @@
 import { parseCsv } from "./countyRecords/countyRecordsCsv";
 import { joinName, splitName, todayStr } from "./leadUtils";
 
-// Turns an uploaded CSV into PPL leads. Columns are matched by header name
+// Turns an uploaded CSV into PPL or commercial leads. Columns are matched by header name
 // (case, spaces and punctuation ignored), so the app's own export and most
 // lead vendors' files import as they are. Unknown columns are ignored.
 
@@ -78,7 +78,8 @@ const addressKey = (v) =>
 // existing lead (or an earlier row) on any of them is a duplicate.
 function identityKeys(lead) {
   const phone = digitsOf(lead.phone).slice(-10);
-  const email = String(lead.email || "")
+  // Commercial leads keep their email in `sellerEmail`.
+  const email = String(lead.email || lead.sellerEmail || "")
     .trim()
     .toLowerCase();
   const street = addressKey(lead.address);
@@ -89,25 +90,22 @@ function identityKeys(lead) {
   ].filter(Boolean);
 }
 
-// Returns { leads, skippedEmpty, skippedDuplicates, unmatchedHeaders }, or
-// { error } when the file has no usable columns.
-export function csvToPplLeads(
-  text,
-  { existingLeads = [], userId = "", now = new Date() } = {},
-) {
+// Reads the header row and returns each data row as { field: value } for
+// the fields in `fieldHeaders`, or { error } when no `identifying` column
+// is present.
+function readCsvRows(text, fieldHeaders, identifying) {
   const [header = [], ...rows] = parseCsv(text);
   const columnFor = {};
   const unmatchedHeaders = [];
   header.forEach((h, i) => {
     const key = normalizeHeader(h);
-    const field = Object.keys(FIELD_HEADERS).find((f) =>
-      FIELD_HEADERS[f].includes(key),
+    const field = Object.keys(fieldHeaders).find((f) =>
+      fieldHeaders[f].includes(key),
     );
     if (field && !(field in columnFor)) columnFor[field] = i;
     else if (key) unmatchedHeaders.push(String(h).trim());
   });
 
-  const identifying = ["sellerName", "firstName", "email", "phone", "address"];
   if (!identifying.some((f) => f in columnFor)) {
     return {
       error:
@@ -115,43 +113,32 @@ export function csvToPplLeads(
     };
   }
 
+  return {
+    unmatchedHeaders,
+    rows: rows.map((row) => ({
+      blank: !row.some((cell) => String(cell).trim()),
+      values: Object.fromEntries(
+        Object.keys(fieldHeaders).map((f) => [
+          f,
+          f in columnFor ? String(row[columnFor[f]] ?? "").trim() : "",
+        ]),
+      ),
+    })),
+  };
+}
+
+// Builds a lead per row with `toLead`, skipping rows `isEmpty` rejects and
+// rows that match an existing lead (or an earlier row).
+function importRows(rows, existingLeads, toLead, isEmpty) {
   const seen = new Set(existingLeads.flatMap(identityKeys));
   const leads = [];
   let skippedEmpty = 0;
   let skippedDuplicates = 0;
-  const today = todayStr();
 
-  rows.forEach((row) => {
-    const get = (field) =>
-      field in columnFor ? String(row[columnFor[field]] ?? "").trim() : "";
-    const values = Object.fromEntries(
-      Object.keys(FIELD_HEADERS).map((f) => [f, get(f)]),
-    );
-
-    const names =
-      values.firstName || values.lastName
-        ? { firstName: values.firstName, lastName: values.lastName }
-        : splitName(values.sellerName);
-    const lead = {
-      ...names,
-      sellerName:
-        values.sellerName || joinName(names.firstName, names.lastName),
-      email: values.email,
-      phone: values.phone ? cleanPhone(values.phone) : "",
-      address: fullAddress(values),
-      dealType: values.dealType || "Wholesale",
-      askingPrice: values.askingPrice,
-      arv: values.arv,
-      occupant: values.occupant,
-      sellingUrgency: values.sellingUrgency,
-      sellerMotivation: values.sellerMotivation,
-      url: values.url,
-      followUpDate: values.followUpDate ? isoDate(values.followUpDate) : "",
-      notes: values.notes,
-    };
-
-    if (!lead.sellerName && !lead.email && !lead.phone && !lead.address) {
-      if (row.some((cell) => String(cell).trim())) skippedEmpty += 1;
+  rows.forEach(({ blank, values }) => {
+    const lead = toLead(values);
+    if (isEmpty(lead)) {
+      if (!blank) skippedEmpty += 1;
       return;
     }
     const keys = identityKeys(lead);
@@ -160,18 +147,129 @@ export function csvToPplLeads(
       return;
     }
     keys.forEach((k) => seen.add(k));
-
-    leads.push({
-      ...lead,
-      id: crypto.randomUUID(),
-      userId,
-      leadType: "residential",
-      source: "PPL",
-      pplSource: true,
-      dateAdded: (values.dateAdded && isoDate(values.dateAdded)) || today,
-      dateAddedAt: now.toISOString(),
-    });
+    leads.push(lead);
   });
 
-  return { leads, skippedEmpty, skippedDuplicates, unmatchedHeaders };
+  return { leads, skippedEmpty, skippedDuplicates };
+}
+
+// Returns { leads, skippedEmpty, skippedDuplicates, unmatchedHeaders }, or
+// { error } when the file has no usable columns.
+export function csvToPplLeads(
+  text,
+  { existingLeads = [], userId = "", now = new Date() } = {},
+) {
+  const parsed = readCsvRows(text, FIELD_HEADERS, [
+    "sellerName",
+    "firstName",
+    "email",
+    "phone",
+    "address",
+  ]);
+  if (parsed.error) return parsed;
+  const today = todayStr();
+
+  return {
+    unmatchedHeaders: parsed.unmatchedHeaders,
+    ...importRows(
+      parsed.rows,
+      existingLeads,
+      (values) => {
+        const names =
+          values.firstName || values.lastName
+            ? { firstName: values.firstName, lastName: values.lastName }
+            : splitName(values.sellerName);
+        return {
+          ...names,
+          sellerName:
+            values.sellerName || joinName(names.firstName, names.lastName),
+          email: values.email,
+          phone: values.phone ? cleanPhone(values.phone) : "",
+          address: fullAddress(values),
+          dealType: values.dealType || "Wholesale",
+          askingPrice: values.askingPrice,
+          arv: values.arv,
+          occupant: values.occupant,
+          sellingUrgency: values.sellingUrgency,
+          sellerMotivation: values.sellerMotivation,
+          url: values.url,
+          followUpDate: values.followUpDate ? isoDate(values.followUpDate) : "",
+          notes: values.notes,
+          id: crypto.randomUUID(),
+          userId,
+          leadType: "residential",
+          source: "PPL",
+          pplSource: true,
+          dateAdded: (values.dateAdded && isoDate(values.dateAdded)) || today,
+          dateAddedAt: now.toISOString(),
+        };
+      },
+      (lead) => !lead.sellerName && !lead.email && !lead.phone && !lead.address,
+    ),
+  };
+}
+
+const COMMERCIAL_HEADERS = {
+  name: [
+    "name",
+    "businessname",
+    "business",
+    "company",
+    "companyname",
+    "propertyname",
+  ],
+  sellerName: ["sellername", "ownername", "owner", "contactname", "contact"],
+  sellerEmail: ["email", "emailaddress", "selleremail"],
+  phone: FIELD_HEADERS.phone,
+  address: FIELD_HEADERS.address,
+  city: FIELD_HEADERS.city,
+  state: FIELD_HEADERS.state,
+  zip: FIELD_HEADERS.zip,
+  propertyType: ["propertytype", "type"],
+  source: ["source", "leadsource"],
+  website: ["website", "websiteurl", "listingwebsiteurl", "url", "listingurl"],
+  dateAdded: FIELD_HEADERS.dateAdded,
+  notes: FIELD_HEADERS.notes,
+};
+
+// Commercial leads, e.g. a list of RV parks or campgrounds. Same rules as
+// the PPL import; the app's own commercial export imports as is.
+export function csvToCommercialLeads(
+  text,
+  { existingLeads = [], userId = "", now = new Date() } = {},
+) {
+  const parsed = readCsvRows(text, COMMERCIAL_HEADERS, [
+    "name",
+    "sellerName",
+    "phone",
+    "address",
+  ]);
+  if (parsed.error) return parsed;
+  const today = todayStr();
+
+  return {
+    unmatchedHeaders: parsed.unmatchedHeaders,
+    ...importRows(
+      parsed.rows,
+      existingLeads,
+      (values) => ({
+        name: values.name,
+        sellerName: values.sellerName,
+        sellerEmail: values.sellerEmail,
+        phone: values.phone ? cleanPhone(values.phone) : "",
+        address: fullAddress(values),
+        state: values.state,
+        propertyType: values.propertyType,
+        source: values.source,
+        website: values.website,
+        notes: values.notes,
+        id: crypto.randomUUID(),
+        userId,
+        leadType: "commercial",
+        dateAdded: (values.dateAdded && isoDate(values.dateAdded)) || today,
+        dateAddedAt: now.toISOString(),
+      }),
+      (lead) => !lead.name && !lead.sellerName && !lead.phone && !lead.address,
+    ),
+  };
 }

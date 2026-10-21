@@ -12,7 +12,7 @@ import CommercialLeadForm from "./commercial/CommercialLeadForm";
 import CommercialLeadList from "./commercial/CommercialLeadList";
 import CampaignLeadList from "./campaign/CampaignLeadList";
 import CountyRecords from "./countyRecords/CountyRecords";
-import { csvToPplLeads } from "./leadImport";
+import { csvToCommercialLeads, csvToPplLeads } from "./leadImport";
 import { useLeadForm } from "./hooks/useLeadForm";
 import { useLeadListState } from "./hooks/useLeadListState";
 import { useWordPressLeadSync } from "./hooks/useWordPressLeadSync";
@@ -201,13 +201,8 @@ export default function PotentialLeads({
     return true;
   }
 
-  // PPL leads aren't synced from WordPress — no WP sync-delete step or
-  // deleted-count stat to keep in sync.
-  async function handlePplImport(text) {
-    const result = csvToPplLeads(text, {
-      existingLeads: leads,
-      userId: currentUser.id,
-    });
+  // Saves leads parsed from a CSV and reports what was skipped.
+  async function importCsvLeads(result) {
     if (result.error) {
       alert(result.error);
       return;
@@ -238,6 +233,21 @@ export default function PotentialLeads({
       ]
         .filter(Boolean)
         .join("\n"),
+    );
+  }
+
+  function handlePplImport(text) {
+    return importCsvLeads(
+      csvToPplLeads(text, { existingLeads: leads, userId: currentUser.id }),
+    );
+  }
+
+  function handleCommercialImport(text) {
+    return importCsvLeads(
+      csvToCommercialLeads(text, {
+        existingLeads: commercialLeads,
+        userId: currentUser.id,
+      }),
     );
   }
 
@@ -376,8 +386,7 @@ export default function PotentialLeads({
             leads={commercialLeads}
             listState={commercialList}
             onBulkDelete={handleBulkDelete}
-            wpSyncing={wpSync.syncing}
-            onSyncWordPress={() => wpSync.sync()}
+            onImport={handleCommercialImport}
             onOpen={setCommercialDetailLead}
             onDelete={handleDelete}
           />
