@@ -16,7 +16,7 @@ const SOURCES = [
   "Other",
 ];
 import { STATE_OPTIONS } from "../../../../constants/stateOptions";
-import { parseCurrency } from "../../../../utils/utils";
+import { formatPhone, parseCurrency } from "../../../../utils/utils";
 import { REHAB_OPTIONS } from "../../../dealAnalyzer/components/fixAndFlip/fixAndFlipConfig";
 import {
   getSuggestedWholesaleMao,
@@ -208,7 +208,14 @@ function Wholesale_form({
                     name="agentPhone"
                     type="tel"
                     value={form.agentPhone}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      handleChange({
+                        target: {
+                          name: "agentPhone",
+                          value: formatPhone(e.target.value),
+                        },
+                      })
+                    }
                     placeholder="e.g. 512-555-0100"
                   />
                   <Field
@@ -426,7 +433,14 @@ function Wholesale_form({
                     name="agentPhone"
                     type="tel"
                     value={form.agentPhone}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      handleChange({
+                        target: {
+                          name: "agentPhone",
+                          value: formatPhone(e.target.value),
+                        },
+                      })
+                    }
                     placeholder="e.g. 512-555-0100"
                   />
                   <Field

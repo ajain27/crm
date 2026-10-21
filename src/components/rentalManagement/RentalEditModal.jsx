@@ -3,7 +3,7 @@ import { Pencil, Check } from "lucide-react";
 import Modal from "../modal/Modal";
 import { Field } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
-import { currency } from "../../utils/utils";
+import { currency, displayPhone } from "../../utils/utils";
 import TenantFormSection from "./TenantFormSection";
 
 function formatAddress(form) {
@@ -264,7 +264,7 @@ export default function RentalEditModal({
                 />
                 <ReadOnlyField
                   label="Contact Phone"
-                  value={editForm.pmContactPhone}
+                  value={displayPhone(editForm.pmContactPhone)}
                 />
                 <ReadOnlyField
                   label="Contact Email"

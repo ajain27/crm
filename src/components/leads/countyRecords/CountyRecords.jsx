@@ -27,6 +27,7 @@ import {
   propertyKey,
 } from "./countyRecordDeal";
 import CountyRecordModal from "./CountyRecordModal";
+import { displayPhone } from "../../../utils/utils";
 import ListNameModal from "./ListNameModal";
 
 const PAGE_SIZE = 25;
@@ -49,7 +50,7 @@ function PhoneCellContent({ value }) {
           className="leads-contact-link"
           onClick={(e) => e.stopPropagation()}
         >
-          {match[0]}
+          {displayPhone(match[0])}
         </a>
         <TextLink phone={match[0]} />
       </span>,

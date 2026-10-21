@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Trash2, Plus, Pencil, Check, X } from "lucide-react";
 import { Field } from "../elements/elements";
 import { TENANT_TYPES } from "./rentalUtils";
-import { formatPhone, fmtCurrencyInput } from "../../utils/utils";
+import { displayPhone, formatPhone, fmtCurrencyInput } from "../../utils/utils";
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -60,7 +60,9 @@ function TenantRecord({ tenant, current, onEdit, onRemove }) {
       <div className="rm-record-details">
         <div className="rm-record-detail">
           <span className="rm-detail-label">Phone:</span>
-          <span className="rm-detail-value">{tenant.phone || "—"}</span>
+          <span className="rm-detail-value">
+            {displayPhone(tenant.phone) || "—"}
+          </span>
         </div>
         <div className="rm-record-detail">
           <span className="rm-detail-label">Email:</span>

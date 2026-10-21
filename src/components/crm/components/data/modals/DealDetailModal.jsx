@@ -4,6 +4,7 @@ import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
 import { joinName, splitName } from "../../../../leads/leadUtils";
+import { formatPhone } from "../../../../../utils/utils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
 import WholesaleOfferPdfTemplate, {
@@ -559,7 +560,9 @@ function DealDetailModal({
                   <input
                     disabled={locked}
                     value={draft.sellerPhone || ""}
-                    onChange={(e) => set("sellerPhone", e.target.value)}
+                    onChange={(e) =>
+                      set("sellerPhone", formatPhone(e.target.value))
+                    }
                     placeholder="555-000-0000"
                   />
                 </Field>
@@ -602,7 +605,9 @@ function DealDetailModal({
                 <input
                   disabled={locked}
                   value={draft.agentPhone || ""}
-                  onChange={(e) => set("agentPhone", e.target.value)}
+                  onChange={(e) =>
+                    set("agentPhone", formatPhone(e.target.value))
+                  }
                   placeholder="555-000-0000"
                 />
               </Field>

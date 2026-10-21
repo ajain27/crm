@@ -4,6 +4,7 @@ import { Select, AccordionHeaderCell } from "../elements/elements";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import {
   formatPhone,
+  displayPhone,
   fmtCurrencyInput,
   parseCurrency,
   currency,
@@ -565,7 +566,7 @@ export default function RentalManagement({
                           : rental.city || rental.state || "—"}
                       </td>
                       <td className="rm-muted rm-col-extra" data-label="Phone">
-                        {currentTenant?.phone || "—"}
+                        {displayPhone(currentTenant?.phone) || "—"}
                       </td>
                       <td className="rm-muted rm-col-extra" data-label="Email">
                         {currentTenant?.email || "—"}

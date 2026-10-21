@@ -58,11 +58,25 @@ function monthKey(dateString) {
   return dateString ? dateString.slice(0, 7) : "";
 }
 
+// Formats as you type: "8309987050" → "830-998-7050". A leading US country
+// code is dropped once the full 11 digits are in.
 function formatPhone(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
+  const digits = String(value ?? "")
+    .replace(/\D/g, "")
+    .replace(/^1(?=\d{10}$)/, "")
+    .slice(0, 10);
   if (digits.length <= 3) return digits;
   if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
   return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+// For showing a saved phone: a single US number reads "830-998-7050";
+// anything else (extensions, several numbers, notes) is shown as saved.
+function displayPhone(value) {
+  const text = String(value ?? "").trim();
+  const digits = text.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+  const onlyNumber = /^[\d\s().+-]*$/.test(text);
+  return onlyNumber && digits.length === 10 ? formatPhone(digits) : text;
 }
 
 // annualRateDecimal: e.g. 0.065 for 6.5%
@@ -201,6 +215,7 @@ export {
   currency,
   monthKey,
   formatPhone,
+  displayPhone,
   calculateMonthlyPayment,
   calculateBalloonBalance,
   parseCurrency,

@@ -7,6 +7,7 @@ import {
   currency,
   monthKey,
   formatPhone,
+  displayPhone,
   calculateMonthlyPayment,
   parseCurrency,
   parsePercent,
@@ -316,5 +317,34 @@ describe("trimFieldOnBlur", () => {
         target: { type: "text", name: "x", value: " y " },
       }),
     ).not.toThrow();
+  });
+});
+
+describe("formatPhone country code", () => {
+  it("drops a leading 1 from an 11-digit number", () => {
+    expect(formatPhone("+1 (830) 998-7050")).toBe("830-998-7050");
+  });
+});
+
+describe("displayPhone", () => {
+  it("formats a bare 10-digit number", () => {
+    expect(displayPhone("8309987050")).toBe("830-998-7050");
+  });
+
+  it("formats a number with a country code", () => {
+    expect(displayPhone("+1 830.998.7050")).toBe("830-998-7050");
+  });
+
+  it("leaves numbers with extensions or notes as saved", () => {
+    expect(displayPhone("937-393-2530 - ext 302")).toBe(
+      "937-393-2530 - ext 302",
+    );
+    expect(displayPhone("240-439-8271 240-257-5529")).toBe(
+      "240-439-8271 240-257-5529",
+    );
+  });
+
+  it("returns blank for empty values", () => {
+    expect(displayPhone(undefined)).toBe("");
   });
 });

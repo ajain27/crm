@@ -165,7 +165,7 @@ describe("CountyRecords", () => {
     ]);
     render(<CountyRecords currentUser={user} />);
 
-    expect(await findInTable("(206) 822-8019")).toHaveAttribute(
+    expect(await findInTable("206-822-8019")).toHaveAttribute(
       "href",
       "tel:2068228019",
     );

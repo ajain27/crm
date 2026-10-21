@@ -6,7 +6,7 @@ import {
   ThumbsUp,
   Trash2,
 } from "lucide-react";
-import { formatDate } from "../../../utils/utils";
+import { displayPhone, formatDate } from "../../../utils/utils";
 import { zillowUrl } from "../leadUtils";
 import CompsNoteView from "../../crm/components/data/comps/CompsNoteView";
 
@@ -83,7 +83,7 @@ export function PhoneLink({ phone }) {
   return phone ? (
     <span className="leads-phone">
       <a href={`tel:${phone}`} className="leads-contact-link">
-        {phone}
+        {displayPhone(phone)}
       </a>
       <TextLink phone={phone} />
     </span>

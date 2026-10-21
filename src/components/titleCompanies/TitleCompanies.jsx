@@ -4,6 +4,7 @@ import Modal from "../modal/Modal";
 import Pagination from "../pagination/Pagination";
 import { Select, AccordionHeaderCell } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
+import { displayPhone } from "../../utils/utils";
 import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
 import "./TitleCompanies.css";
 
@@ -580,7 +581,7 @@ export default function TitleCompanies({
                       {company.contact || <span className="tc-muted">—</span>}
                     </td>
                     <td className="tc-muted tc-phone" data-label="Phone">
-                      {company.phone || "—"}
+                      {displayPhone(company.phone) || "—"}
                     </td>
                     <td className="acc-col-block" data-label="Emails">
                       {company.emails?.length ? (
