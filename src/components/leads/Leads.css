@@ -309,58 +309,6 @@
     min-width: 1100px;
   }
 
-  /* Drag-to-resize column edges (useColumnResize). */
-  .leads-table.is-col-resizable > thead > tr > th {
-    position: relative;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .col-resize-handle {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 2;
-    width: 9px;
-    cursor: col-resize;
-    touch-action: none;
-  }
-
-  .col-resize-handle::after {
-    content: "";
-    position: absolute;
-    top: 25%;
-    bottom: 25%;
-    right: 3px;
-    width: 2px;
-    border-radius: 1px;
-    background: var(--line);
-    transition: background 0.12s;
-  }
-
-  .col-resize-handle:hover::after,
-  .is-col-resizing .col-resize-handle:active::after {
-    top: 0;
-    bottom: 0;
-    background: var(--blue);
-  }
-
-  /* Cells cut long text instead of growing past their set width (table
-     view only — the phone cards ignore set widths). */
-  @container leads-cards (min-width: 1301px) {
-    .leads-table.is-col-resizable[style*="fixed"] td {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-
-  .is-col-resizing,
-  .is-col-resizing * {
-    cursor: col-resize !important;
-    user-select: none;
-  }
-
   .leads-mls-link {
     display: inline-flex;
     align-items: center;
@@ -1494,10 +1442,15 @@
       display: none;
     }
 
-    /* Cards ignore column widths set by dragging (inline styles). */
+    /* Cards ignore column widths set by dragging (ResizableTable). */
     .acc-card-container .acc-card.is-col-resizable {
       table-layout: auto !important;
       width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    .acc-card-container .acc-card.is-col-resizable > tbody > tr > td {
+      overflow: visible;
     }
 
     .acc-card-container .acc-card,

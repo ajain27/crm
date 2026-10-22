@@ -24,6 +24,7 @@ import {
 } from "../../firebase/firestoreService";
 import "./InvoiceGenerator.css";
 import CurrencyInput from "../elements/CurrencyInput";
+import ResizableTable from "../elements/ResizableTable";
 
 const SELLER = {
   name: "You Win Concepts",
@@ -1151,7 +1152,10 @@ export default function InvoiceGenerator({ currentUser }) {
                     </button>
                     {isOpen && (
                       <div className="ig-history-table-wrap">
-                        <table className="ig-history-table">
+                        <ResizableTable
+                          resizeKey="invoice-payments"
+                          className="ig-history-table"
+                        >
                           <thead>
                             <tr>
                               <th>Invoice #</th>
@@ -1199,7 +1203,7 @@ export default function InvoiceGenerator({ currentUser }) {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </ResizableTable>
                       </div>
                     )}
                   </div>
@@ -1221,7 +1225,10 @@ export default function InvoiceGenerator({ currentUser }) {
             <span className="ig-history-count">{sentInvoices.length}</span>
           </div>
           <div className="ig-history-table-wrap">
-            <table className="ig-history-table">
+            <ResizableTable
+              resizeKey="sent-invoices"
+              className="ig-history-table"
+            >
               <thead>
                 <tr>
                   <th>Invoice #</th>
@@ -1269,7 +1276,7 @@ export default function InvoiceGenerator({ currentUser }) {
                     </tr>
                   ))}
               </tbody>
-            </table>
+            </ResizableTable>
           </div>
         </section>
       )}

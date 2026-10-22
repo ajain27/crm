@@ -1,0 +1,63 @@
+/* Drag-to-resize table columns — see ResizableTable / useColumnResize.
+   Each header cell gets a .col-resize-handle on its right edge. */
+@layer components {
+  /* :where() keeps this at zero specificity, so headers that are sticky
+     (e.g. the rentals table's pinned column) stay sticky — a sticky cell
+     positions the handle just as well. */
+  :where(.is-col-resizable > thead > tr > th) {
+    position: relative;
+  }
+
+  .is-col-resizable > thead > tr > th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Room between a cut-off value and the next column. */
+  .is-col-resizable > thead > tr > th,
+  .is-col-resizable > tbody > tr > td {
+    padding-right: 0.875rem;
+  }
+
+  /* Cells cut long text instead of growing past a width set by dragging. */
+  .is-col-resizable[style*="fixed"] > tbody > tr > td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .col-resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    width: 9px;
+    cursor: col-resize;
+    touch-action: none;
+  }
+
+  .col-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 25%;
+    bottom: 25%;
+    right: 3px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--line);
+    transition: background 0.12s;
+  }
+
+  .col-resize-handle:hover::after,
+  .is-col-resizing .col-resize-handle:active::after {
+    top: 0;
+    bottom: 0;
+    background: var(--blue);
+  }
+
+  .is-col-resizing,
+  .is-col-resizing * {
+    cursor: col-resize !important;
+    user-select: none;
+  }
+}

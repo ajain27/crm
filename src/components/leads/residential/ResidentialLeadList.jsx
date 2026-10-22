@@ -6,7 +6,6 @@ import LeadListPanel, {
 import {
   AutomationCell,
   CrmCell,
-  DateAddedCell,
   DeleteCell,
   EmailCell,
   NotesCell,
@@ -184,7 +183,6 @@ export default function ResidentialLeadList({
               <th>Email</th>
               <th>Phone</th>
               <th>Notes</th>
-              <th>Added</th>
               <th></th>
               <th></th>
             </tr>
@@ -220,7 +218,6 @@ export default function ResidentialLeadList({
                   <EmailCell email={isMls ? "" : lead.email} />
                   <PhoneCell phone={lead.phone} phone2={lead.phone2} />
                   <NotesCell notes={lead.notes} />
-                  <DateAddedCell date={lead.dateAdded} />
                   <CrmCell onAdd={() => onAddToCrm(lead.id)} />
                   <AutomationCell
                     lead={lead}

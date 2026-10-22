@@ -5,7 +5,6 @@ import LeadListPanel, {
   LeadSearchInput,
 } from "../components/LeadListPanel";
 import {
-  DateAddedCell,
   DeleteCell,
   EmailCell,
   PhoneCell,
@@ -101,7 +100,6 @@ export default function CommercialLeadList({
               <th>Website</th>
               <th>Email</th>
               <th>Phone</th>
-              <th>Added</th>
             </tr>
           </thead>
           <tbody>
@@ -153,7 +151,6 @@ export default function CommercialLeadList({
                 </td>
                 <EmailCell email={lead.sellerEmail || lead.email} />
                 <PhoneCell phone={lead.phone} phone2={lead.phone2} />
-                <DateAddedCell date={lead.dateAdded} />
               </tr>
             ))}
           </tbody>

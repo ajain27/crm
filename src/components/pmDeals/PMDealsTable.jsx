@@ -3,6 +3,7 @@ import { fmt, formatDate, parseCurrency } from "../../utils/utils";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import { AccordionHeaderCell } from "../elements/elements";
 import "./PMDealsTable.css";
+import ResizableTable from "../elements/ResizableTable";
 
 // When a borrower has more than one deal, number them "Deal 1", "Deal 2"…
 // (earliest lendDate first) so the accordion heading can tell them apart.
@@ -287,7 +288,10 @@ export default function PMDealsTable({
         </div>
       ) : (
         <div className="table-wrap acc-card-container">
-          <table className="compact-table acc-card pm-deals-table">
+          <ResizableTable
+            resizeKey="pm-deals"
+            className="compact-table acc-card pm-deals-table"
+          >
             <thead>
               <tr>
                 <th>Borrower Name</th>
@@ -356,7 +360,7 @@ export default function PMDealsTable({
                 <td colSpan={2} />
               </tr>
             </tfoot>
-          </table>
+          </ResizableTable>
         </div>
       )}
     </section>

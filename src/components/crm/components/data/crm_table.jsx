@@ -9,6 +9,7 @@ import DealRow from "./DealRow";
 import NotesModal from "./modals/NotesModal";
 import ContractPreviewModal from "./modals/ContractPreviewModal";
 import DealDetailModal from "./modals/DealDetailModal";
+import ResizableTable from "../../../elements/ResizableTable";
 
 function Wholesale_data({
   filteredDeals,
@@ -195,7 +196,7 @@ function Wholesale_data({
       </div>
 
       <div className="table-wrap dt-table-container acc-card-container">
-        <table className="dt-table acc-card">
+        <ResizableTable resizeKey="deals" className="dt-table acc-card">
           <thead>
             <tr>
               <th>Address</th>
@@ -217,7 +218,7 @@ function Wholesale_data({
               />
             ))}
           </tbody>
-        </table>
+        </ResizableTable>
       </div>
 
       <Pagination

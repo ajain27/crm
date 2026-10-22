@@ -7,6 +7,7 @@ import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { displayPhone } from "../../utils/utils";
 import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
 import "./TitleCompanies.css";
+import ResizableTable from "../elements/ResizableTable";
 
 function createEmptyForm() {
   return {
@@ -547,7 +548,10 @@ export default function TitleCompanies({
           </div>
         ) : (
           <div className="table-wrap acc-card-container">
-            <table className="compact-table acc-card">
+            <ResizableTable
+              resizeKey="title-companies"
+              className="compact-table acc-card"
+            >
               <thead>
                 <tr>
                   <th>Company Name</th>
@@ -621,7 +625,7 @@ export default function TitleCompanies({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResizableTable>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

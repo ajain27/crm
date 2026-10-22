@@ -3,9 +3,9 @@ import { useLayoutEffect, useRef } from "react";
 const MIN_WIDTH = 40;
 const HANDLE_CLASS = "col-resize-handle";
 
-// Widths are kept per list and per column count (a list can show more or
-// fewer columns, e.g. the read-only PPC view), in this browser only.
-const storageId = (key, count) => `leads:columnWidths:${key}:${count}`;
+// Widths are kept per table and per column count (a table can show more
+// or fewer columns, e.g. the read-only PPC view), in this browser only.
+const storageId = (key, count) => `columnWidths:${key}:${count}`;
 
 function readWidths(key, count) {
   try {

@@ -3,6 +3,7 @@ import { ReadOnlyCell } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
 import { Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
+import ResizableTable from "../../elements/ResizableTable";
 
 const EMPTY_SET = new Set();
 
@@ -58,7 +59,7 @@ function BuyerData({
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
       <div className="table-wrap">
-        <table className="compact-table">
+        <ResizableTable resizeKey="buyers" className="compact-table">
           <thead>
             <tr>
               <th className="buyer-checkbox-cell">
@@ -348,7 +349,7 @@ function BuyerData({
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResizableTable>
       </div>
 
       <Pagination

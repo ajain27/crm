@@ -4,6 +4,7 @@ import { StreetViewButton } from "../../elements/StreetView";
 import CompsMap from "./CompsMap";
 import { medianPricePerSqft } from "./leadComps";
 import "./LeadComps.css";
+import ResizableTable from "../../elements/ResizableTable";
 
 const money = (n) =>
   typeof n === "number" && Number.isFinite(n) && n > 0
@@ -131,7 +132,7 @@ export default function LeadCompsPanel({ comps, lead }) {
 
       <div className="lcp-main">
         <div className="lcp-table-wrap">
-          <table className="lcp-table">
+          <ResizableTable resizeKey="lead-comps" className="lcp-table">
             <thead>
               <tr>
                 <th>Property</th>
@@ -204,7 +205,7 @@ export default function LeadCompsPanel({ comps, lead }) {
                 );
               })}
             </tbody>
-          </table>
+          </ResizableTable>
           {rows.length === 0 && (
             <p className="lcp-muted lcp-empty">No homes sold nearby.</p>
           )}

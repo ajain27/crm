@@ -21,6 +21,7 @@ import RentalStatsGrid from "./RentalStatsGrid";
 import RentalAddForm from "./RentalAddForm";
 import RentalEditModal from "./RentalEditModal";
 import "./RentalManagement.css";
+import ResizableTable from "../elements/ResizableTable";
 
 function createEmptyForm() {
   return {
@@ -514,7 +515,10 @@ export default function RentalManagement({
           </div>
         ) : (
           <div className="table-wrap rm-table-container acc-card-container">
-            <table className="compact-table rm-properties-table acc-card">
+            <ResizableTable
+              resizeKey="rentals"
+              className="compact-table rm-properties-table acc-card"
+            >
               <thead>
                 <tr>
                   <th className="rm-name rm-col-sticky">Address</th>
@@ -676,7 +680,7 @@ export default function RentalManagement({
                   );
                 })}
               </tbody>
-            </table>
+            </ResizableTable>
           </div>
         )}
       </section>

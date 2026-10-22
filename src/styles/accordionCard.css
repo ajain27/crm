@@ -94,6 +94,17 @@
       display: none;
     }
 
+    /* Cards ignore column widths set by dragging (ResizableTable). */
+    .acc-card-container .acc-card.is-col-resizable {
+      table-layout: auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    .acc-card-container .acc-card.is-col-resizable > tbody > tr > td {
+      overflow: visible;
+    }
+
     .acc-card-container .acc-card,
     .acc-card-container .acc-card tbody,
     .acc-card-container .acc-card td {

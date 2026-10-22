@@ -29,6 +29,7 @@ import {
 import CountyRecordModal from "./CountyRecordModal";
 import { displayPhone } from "../../../utils/utils";
 import ListNameModal from "./ListNameModal";
+import ResizableTable from "../../elements/ResizableTable";
 
 const PAGE_SIZE = 25;
 const MAX_FILE_MB = 30;
@@ -651,7 +652,10 @@ export default function CountyRecords({
               record (owner, address, phone). Either opens the record. */}
           <div className="county-records-results">
             <div className="table-wrap county-records-table-wrap">
-              <table className="compact-table county-records-table">
+              <ResizableTable
+                resizeKey="county-records"
+                className="compact-table county-records-table"
+              >
                 <thead>
                   <tr>
                     <th className="county-row-select">
@@ -759,7 +763,7 @@ export default function CountyRecords({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResizableTable>
             </div>
             <ul className="county-records-cards">
               {pageRows.map(({ row, index }) => {

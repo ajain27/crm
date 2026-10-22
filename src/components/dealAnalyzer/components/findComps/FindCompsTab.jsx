@@ -10,6 +10,7 @@ import {
   compsCriteriaText,
   compsStatsText,
 } from "../../../crm/components/data/comps/compsNote";
+import ResizableTable from "../../../elements/ResizableTable";
 
 // v3: comps that follow the comp rules (sold, 0.5 mi, 90 days, same
 // beds/baths, built ±5 years). Searches saved under older keys used looser
@@ -580,7 +581,10 @@ function FindCompsTab({ tab }) {
                   Comparable Sales ({comparables.length})
                 </span>
                 <div className="table-wrap">
-                  <table className="compact-table find-comps-table">
+                  <ResizableTable
+                    resizeKey="find-comps"
+                    className="compact-table find-comps-table"
+                  >
                     <thead>
                       <tr>
                         <th>Address</th>
@@ -654,7 +658,7 @@ function FindCompsTab({ tab }) {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </ResizableTable>
                 </div>
                 <Pagination
                   currentPage={compsPage}
