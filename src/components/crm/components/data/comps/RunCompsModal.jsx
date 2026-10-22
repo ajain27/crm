@@ -25,8 +25,8 @@ const SOURCE_LABELS = {
 };
 
 // Runs comps for `address` as soon as it opens, shows the result, and
-// hands the formatted note to `onSaveNote` (which puts it in the deal's
-// notes in place of any earlier comps note).
+// hands the formatted note (and the result itself) to `onSaveNote`, which
+// puts it in the deal's notes in place of any earlier comps note.
 // `onApply` fills the deal's ARV and Sq Ft from the result (optional). Leads pass their
 // own wording, since their note and ARV only stick after Save Changes.
 export default function RunCompsModal({
@@ -51,7 +51,7 @@ export default function RunCompsModal({
       .then(async (data) => {
         setResult(data);
         try {
-          await onSaveNote(formatCompsNote(data));
+          await onSaveNote(formatCompsNote(data), data);
           setNoteSaved(true);
         } catch {
           setError("Comps ran, but the note couldn't be saved to the deal.");

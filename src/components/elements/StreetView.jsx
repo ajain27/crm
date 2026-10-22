@@ -16,9 +16,21 @@ export function headingBetween(from, to) {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
+const placeLocations = new Map();
+
 // The address's coordinates via Google Places (enabled for address
 // autocomplete), for places we don't already have coordinates for.
-function findPlaceLocation(maps, address) {
+// Lookups are cached for the session, since they're billed per call.
+export function findPlaceLocation(maps, address) {
+  if (!placeLocations.has(address)) {
+    const lookup = lookUpPlace(maps, address);
+    placeLocations.set(address, lookup);
+    lookup.catch(() => placeLocations.delete(address));
+  }
+  return placeLocations.get(address);
+}
+
+function lookUpPlace(maps, address) {
   return new Promise((resolve, reject) => {
     const service = new maps.places.PlacesService(
       document.createElement("div"),

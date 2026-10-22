@@ -244,3 +244,55 @@ describe("LeadDetailModal", () => {
     expect(screen.queryByText("Run comps")).toBeNull();
   });
 });
+
+describe("LeadDetailModal comps tab", () => {
+  it("keeps the comps result on save and opens on the Comps tab", async () => {
+    requestComps.mockResolvedValue({
+      address: "1 Main St",
+      location: { lat: 30.1, lng: -97.7 },
+      arvEstimate: 300000,
+      rentEstimate: 1800,
+      property: { beds: 3, baths: 2, sqft: 1200, yearBuilt: 1980 },
+      topComps: [
+        {
+          address: "5 Oak St",
+          price: 290000,
+          beds: 3,
+          baths: 2,
+          sqft: 1150,
+          lat: 30.11,
+          lng: -97.71,
+        },
+      ],
+    });
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ ...lead, source: "PPL" }}
+        isPpl
+        onSave={onSave}
+      />,
+    );
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    fireEvent.click(screen.getByText("Run comps"));
+    await screen.findByText(/Added to the lead's notes/);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByRole("tab", { name: /Comps/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getAllByText("5 Oak St").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0].compsResult).toMatchObject({
+      location: { lat: 30.1, lng: -97.7 },
+      topComps: [{ address: "5 Oak St", lat: 30.11 }],
+    });
+  });
+});
