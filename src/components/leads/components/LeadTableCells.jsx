@@ -100,11 +100,49 @@ export function EmailCell({ email }) {
   );
 }
 
-export function PhoneCell({ phone }) {
+// A second number (`phone2`, e.g. from an import) shows under the first.
+export function PhoneCell({ phone, phone2 }) {
   return (
     <ActionCell data-label="Phone">
-      <PhoneLink phone={phone} />
+      {phone2 ? (
+        <span className="leads-phone-stack">
+          <PhoneLink phone={phone} />
+          <PhoneLink phone={phone2} />
+        </span>
+      ) : (
+        <PhoneLink phone={phone} />
+      )}
     </ActionCell>
+  );
+}
+
+// Columns from an imported file the app has no field for, shown as
+// label / value rows (read-only).
+export function ExtraDetails({ fields }) {
+  const entries = Object.entries(fields || {}).filter(([, v]) =>
+    String(v ?? "").trim(),
+  );
+  if (!entries.length) return null;
+  return (
+    <div className="ldm-section">
+      <div className="ldm-section-label">More details</div>
+      <dl className="notes-qa-table ldm-extra-details">
+        {entries.map(([label, value]) => (
+          <div key={label} className="notes-qa-row">
+            <dt>{label}</dt>
+            <dd>
+              {/^https?:\/\//i.test(value) ? (
+                <a href={value} target="_blank" rel="noopener noreferrer">
+                  {value}
+                </a>
+              ) : (
+                value
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
 

@@ -336,7 +336,7 @@ describe("PotentialLeads", () => {
     expect(screen.queryByText(/Mark Lead as Bad/i)).toBeNull();
   });
 
-  it("imports PPL leads from a CSV, skipping ones already there", async () => {
+  it("imports PPL leads from a CSV, filling in ones already there", async () => {
     vi.spyOn(window, "alert").mockImplementation(() => {});
     const saveLead = vi.fn().mockResolvedValue(undefined);
     const setLeads = vi.fn();
@@ -356,7 +356,7 @@ describe("PotentialLeads", () => {
     });
 
     await waitFor(() => expect(window.alert).toHaveBeenCalled());
-    expect(saveLead).toHaveBeenCalledTimes(1);
+    expect(saveLead).toHaveBeenCalledTimes(2);
     expect(saveLead).toHaveBeenCalledWith(
       expect.objectContaining({
         sellerName: "New Seller",
@@ -364,9 +364,15 @@ describe("PotentialLeads", () => {
         userId: "u1",
       }),
     );
+    // Pat is already there: the file fills in the missing address but
+    // leaves the saved name alone.
+    expect(saveLead).toHaveBeenCalledWith({
+      ...leads[0],
+      address: "1 Main St",
+    });
     expect(setLeads).toHaveBeenCalled();
     expect(window.alert.mock.calls[0][0]).toMatch(
-      /Imported 1 lead\.\nSkipped 1 already in your leads/,
+      /Imported 1 lead\.\nFilled in missing details on 1 lead already in your list\./,
     );
   });
 

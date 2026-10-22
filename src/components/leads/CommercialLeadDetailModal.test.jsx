@@ -84,3 +84,29 @@ describe("CommercialLeadDetailModal seller name", () => {
     });
   });
 });
+
+describe("CommercialLeadDetailModal imported details", () => {
+  it("shows Phone 2 and the file's extra columns", () => {
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{
+          id: "c4",
+          name: "Princess RV Resort",
+          phone: "407-375-6065",
+          phone2: "407-654-5788",
+          extraFields: { Sites: "120", Brochure: "https://x.example/b.pdf" },
+        }}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByDisplayValue("407-654-5788")).toBeInTheDocument();
+    expect(screen.getByText("More details")).toBeInTheDocument();
+    expect(screen.getByText("Sites")).toBeInTheDocument();
+    expect(screen.getByText("120")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "https://x.example/b.pdf" }),
+    ).toBeInTheDocument();
+  });
+});

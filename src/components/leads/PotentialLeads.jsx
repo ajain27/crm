@@ -205,30 +205,49 @@ export default function PotentialLeads({
     return true;
   }
 
-  // Saves leads parsed from a CSV and reports what was skipped.
+  // Saves leads parsed from a CSV — new ones, and existing ones with blank
+  // details filled in from the file — and reports what happened.
   async function importCsvLeads(result) {
     if (result.error) {
       alert(result.error);
       return;
     }
-    const { leads: imported, skippedEmpty, skippedDuplicates } = result;
-    const saved = [];
-    // Saved a few at a time so a large file doesn't flood Firestore.
-    for (let i = 0; i < imported.length; i += 20) {
-      const batch = imported.slice(i, i + 20);
-      const results = await Promise.allSettled(
-        batch.map((lead) => saveLead(lead)),
-      );
-      batch.forEach((lead, j) => {
-        if (results[j].status === "fulfilled") saved.push(lead);
-      });
-    }
-    if (saved.length) setLeads((prev) => [...saved, ...prev]);
+    const {
+      leads: imported,
+      updates = [],
+      skippedEmpty,
+      skippedDuplicates,
+    } = result;
 
-    const failed = imported.length - saved.length;
+    // Saved a few at a time so a large file doesn't flood Firestore.
+    async function saveAll(list) {
+      const saved = [];
+      for (let i = 0; i < list.length; i += 20) {
+        const batch = list.slice(i, i + 20);
+        const results = await Promise.allSettled(
+          batch.map((lead) => saveLead(lead)),
+        );
+        batch.forEach((lead, j) => {
+          if (results[j].status === "fulfilled") saved.push(lead);
+        });
+      }
+      return saved;
+    }
+
+    const saved = await saveAll(imported);
+    const savedUpdates = await saveAll(updates);
+    if (saved.length || savedUpdates.length) {
+      const byId = new Map(savedUpdates.map((l) => [l.id, l]));
+      setLeads((prev) => [...saved, ...prev.map((l) => byId.get(l.id) || l)]);
+    }
+
+    const failed =
+      imported.length - saved.length + (updates.length - savedUpdates.length);
     alert(
       [
         `Imported ${saved.length} ${pluralizeLeads(saved.length)}.`,
+        savedUpdates.length &&
+          `Filled in missing details on ${savedUpdates.length} ${pluralizeLeads(savedUpdates.length)} already in your list.`,
         skippedDuplicates &&
           `Skipped ${skippedDuplicates} already in your leads (same phone, email or address).`,
         skippedEmpty &&

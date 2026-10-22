@@ -7,6 +7,7 @@ import LeadListPanel, {
 import {
   DateAddedCell,
   DeleteCell,
+  EmailCell,
   PhoneCell,
   CardSelectCheckbox,
   SelectAllHeader,
@@ -23,6 +24,8 @@ const SEARCH_FIELDS = [
   "address",
   "source",
   "phone",
+  "phone2",
+  "sellerEmail",
   "sellerName",
   "firstName",
   "lastName",
@@ -91,6 +94,7 @@ export default function CommercialLeadList({
               <th>State</th>
               <th>Source</th>
               <th>Website</th>
+              <th>Email</th>
               <th>Phone</th>
               <th>Added</th>
             </tr>
@@ -142,7 +146,8 @@ export default function CommercialLeadList({
                     "—"
                   )}
                 </td>
-                <PhoneCell phone={lead.phone} />
+                <EmailCell email={lead.sellerEmail || lead.email} />
+                <PhoneCell phone={lead.phone} phone2={lead.phone2} />
                 <DateAddedCell date={lead.dateAdded} />
               </tr>
             ))}

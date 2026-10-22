@@ -11,10 +11,16 @@ describe("leadExport", () => {
         arv: "$135,000",
       },
       { name: "Acme Plaza", website: "https://acme.com" },
+      {
+        leadType: "commercial",
+        name: "Yacht Haven",
+        sellerName: "Ann Bell",
+        sellerEmail: "ann@x.com",
+      },
     ]);
     const header = rows[0];
     const col = (name) => header.indexOf(name);
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
     expect(rows[1][col("Name")]).toBe("Jane Doe");
     expect(rows[1][col("ARV")]).toBe("$135,000");
     expect(rows[1][col("Phone")]).toBe("");
@@ -25,6 +31,11 @@ describe("leadExport", () => {
     expect(rows[2][col("First Name")]).toBe("");
     expect(rows[2][col("Name")]).toBe("Acme Plaza");
     expect(rows[2][col("Listing / Website URL")]).toBe("https://acme.com");
+    // A commercial lead's Name is the business; its seller goes in First /
+    // Last Name.
+    expect(rows[3][col("Name")]).toBe("Yacht Haven");
+    expect(rows[3][col("First Name")]).toBe("Ann");
+    expect(rows[3][col("Email")]).toBe("ann@x.com");
   });
 
   it("leaves the agent columns out of campaign (PPC/PPL) exports", () => {
@@ -33,7 +44,10 @@ describe("leadExport", () => {
     });
     expect(header).not.toContain("Agent Name");
     expect(header).not.toContain("Agent Phone");
-    expect(header.filter((h) => /phone/i.test(h))).toEqual(["Phone"]);
+    expect(header.filter((h) => /phone/i.test(h))).toEqual([
+      "Phone",
+      "Phone 2",
+    ]);
     expect(row[header.indexOf("Phone")]).toBe("425-478-0576");
     expect(leadsToRows([])[0]).toContain("Agent Phone");
   });

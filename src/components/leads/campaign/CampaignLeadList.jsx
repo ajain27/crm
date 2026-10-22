@@ -32,6 +32,7 @@ const SEARCH_FIELDS = [
   "lastName",
   "email",
   "phone",
+  "phone2",
 ];
 
 function rowClassName(lead, clickable, showQuality) {
@@ -191,7 +192,7 @@ export default function CampaignLeadList({
                       }
                     />
                     <EmailCell email={lead.email} />
-                    <PhoneCell phone={lead.phone} />
+                    <PhoneCell phone={lead.phone} phone2={lead.phone2} />
                     <td className="leads-address-cell" data-label="Address">
                       {lead.address || "—"}
                     </td>

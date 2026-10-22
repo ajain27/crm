@@ -10,13 +10,18 @@ function sellerNameParts(lead) {
 }
 
 const COLUMNS = [
-  // Commercial leads use `name`; everything else uses `sellerName`.
-  ["Name", (l) => l.sellerName || l.name],
+  // Commercial leads' Name is the business; their seller is in First /
+  // Last Name. Everything else uses `sellerName`.
+  [
+    "Name",
+    (l) => (l.leadType === "commercial" ? l.name : l.sellerName || l.name),
+  ],
   // Leads saved with only a combined name (e.g. from Leadzolo) get it split.
   ["First Name", (l) => sellerNameParts(l).firstName],
   ["Last Name", (l) => sellerNameParts(l).lastName],
-  ["Email", (l) => l.email],
+  ["Email", (l) => l.email || l.sellerEmail],
   ["Phone", (l) => l.phone],
+  ["Phone 2", (l) => l.phone2],
   ["Address", (l) => l.address],
   ["State", (l) => l.state],
   ["Source", (l) => l.source],
@@ -35,7 +40,7 @@ const COLUMNS = [
 ];
 
 // Campaign (PPC/PPL) leads never have an agent, so their export leaves the
-// agent columns out and Phone is the only phone column.
+// agent columns out.
 const AGENT_COLUMNS = ["Agent Name", "Agent Phone"];
 
 // Header row first, then one row per lead; every cell is a string.

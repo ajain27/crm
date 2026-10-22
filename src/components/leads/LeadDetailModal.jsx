@@ -4,7 +4,7 @@ import { Badge } from "../elements/elements";
 import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
-import { ZillowLink } from "./components/LeadTableCells";
+import { ExtraDetails, ZillowLink } from "./components/LeadTableCells";
 import { StreetViewButton } from "../elements/StreetView";
 import RunCompsModal from "../crm/components/data/comps/RunCompsModal";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
@@ -398,6 +398,18 @@ export default function LeadDetailModal({
                       maxLength={12}
                     />
                   </Field>
+                  <Field label="Phone 2">
+                    <input
+                      className="ldm-input"
+                      type="tel"
+                      value={draft.phone2 || ""}
+                      onChange={(e) =>
+                        set("phone2", formatPhone(e.target.value))
+                      }
+                      placeholder="555-000-0000"
+                      maxLength={12}
+                    />
+                  </Field>
                 </div>
               </div>
 
@@ -555,6 +567,8 @@ export default function LeadDetailModal({
                   )}
                 </>
               )}
+
+              <ExtraDetails fields={draft.extraFields} />
 
               <div className="ldm-section">
                 <div className="ldm-section-label ldm-notes-label">

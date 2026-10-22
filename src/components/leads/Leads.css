@@ -506,6 +506,17 @@
     text-decoration: underline;
   }
 
+  .leads-phone-stack {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .ldm-extra-details a {
+    color: var(--blue);
+    word-break: break-all;
+  }
+
   .leads-phone {
     display: inline-flex;
     align-items: center;

@@ -1,6 +1,7 @@
 import { parseCsv } from "./countyRecords/countyRecordsCsv";
 import { joinName, splitName, todayStr } from "./leadUtils";
 import { fmtCurrencyInput } from "../../utils/utils";
+import { leadsToRows } from "./leadExport";
 
 // Turns an uploaded CSV into PPL or commercial leads. Columns are matched by header name
 // (case, spaces and punctuation ignored), so the app's own export and most
@@ -20,6 +21,18 @@ const FIELD_HEADERS = {
     "cellphone",
     "sellerphone",
   ],
+  phone2: [
+    "phone2",
+    "phonenumber2",
+    "secondphone",
+    "secondaryphone",
+    "altphone",
+    "alternatephone",
+    "alternativephone",
+    "otherphone",
+    "mobile2",
+    "cell2",
+  ],
   address: ["address", "propertyaddress", "streetaddress", "street"],
   city: ["city", "propertycity"],
   state: ["state", "propertystate"],
@@ -35,6 +48,15 @@ const FIELD_HEADERS = {
   dateAdded: ["dateadded", "date", "createdat", "leaddate"],
   notes: ["notes", "note", "comments", "description"],
 };
+
+// Columns of the app's own export, normalized like file headers below.
+const EXPORT_HEADERS = new Set(
+  leadsToRows([])[0].map((h) =>
+    String(h)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, ""),
+  ),
+);
 
 const normalizeHeader = (h) =>
   String(h || "")
@@ -98,13 +120,22 @@ function readCsvRows(text, fieldHeaders, identifying) {
   const [header = [], ...rows] = parseCsv(text);
   const columnFor = {};
   const unmatchedHeaders = [];
+  const extraColumns = [];
+  const fieldFor = (key) =>
+    Object.keys(fieldHeaders).find((f) => fieldHeaders[f].includes(key));
   header.forEach((h, i) => {
     const key = normalizeHeader(h);
-    const field = Object.keys(fieldHeaders).find((f) =>
-      fieldHeaders[f].includes(key),
-    );
+    // "Seller First Name", "Owner Phone 2", "Contact Email" → the same
+    // field as without the prefix.
+    const field =
+      fieldFor(key) || fieldFor(key.replace(/^(seller|owner|contact)/, ""));
     if (field && !(field in columnFor)) columnFor[field] = i;
-    else if (key) unmatchedHeaders.push(String(h).trim());
+    else if (key) {
+      unmatchedHeaders.push(String(h).trim());
+      // Kept on the lead as extra details, unless it's one of the app's
+      // own export columns that this kind of lead doesn't use.
+      if (!EXPORT_HEADERS.has(key)) extraColumns.push([String(h).trim(), i]);
+    }
   });
 
   if (!identifying.some((f) => f in columnFor)) {
@@ -118,6 +149,11 @@ function readCsvRows(text, fieldHeaders, identifying) {
     unmatchedHeaders,
     rows: rows.map((row) => ({
       blank: !row.some((cell) => String(cell).trim()),
+      extra: Object.fromEntries(
+        extraColumns
+          .map(([label, i]) => [label, String(row[i] ?? "").trim()])
+          .filter(([, value]) => value),
+      ),
       values: Object.fromEntries(
         Object.keys(fieldHeaders).map((f) => [
           f,
@@ -128,21 +164,81 @@ function readCsvRows(text, fieldHeaders, identifying) {
   };
 }
 
+// Fields an import may fill in on a lead that's already in the list.
+const NOT_FILLED = new Set([
+  "id",
+  "userId",
+  "leadType",
+  "source",
+  "pplSource",
+  "dateAdded",
+  "dateAddedAt",
+  "dealType",
+  "extraFields",
+]);
+
+const NAME_FIELDS = ["sellerName", "firstName", "lastName"];
+
+const isBlank = (v) => v === undefined || v === null || String(v).trim() === "";
+
 // Builds a lead per row with `toLead`, skipping rows `isEmpty` rejects and
-// rows that match an existing lead (or an earlier row).
+// rows that match an earlier row. A row matching a lead already in the
+// list isn't added again; instead its values fill in that lead's blank
+// fields (nothing already entered is overwritten) — returned as
+// `updates`, each the existing lead with the new values.
 function importRows(rows, existingLeads, toLead, isEmpty) {
-  const seen = new Set(existingLeads.flatMap(identityKeys));
+  const existingByKey = new Map();
+  existingLeads.forEach((lead) =>
+    identityKeys(lead).forEach((k) => {
+      if (!existingByKey.has(k)) existingByKey.set(k, lead);
+    }),
+  );
+  const seen = new Set();
   const leads = [];
+  const updated = new Map();
   let skippedEmpty = 0;
   let skippedDuplicates = 0;
 
-  rows.forEach(({ blank, values }) => {
+  rows.forEach(({ blank, values, extra }) => {
     const lead = toLead(values);
+    if (Object.keys(extra).length) lead.extraFields = extra;
     if (isEmpty(lead)) {
       if (!blank) skippedEmpty += 1;
       return;
     }
     const keys = identityKeys(lead);
+    const existingKey = keys.find((k) => existingByKey.has(k));
+    if (existingKey) {
+      const existing = existingByKey.get(existingKey);
+      const current = updated.get(existing.id) || existing;
+      // A seller name is filled only when the lead has none at all, so a
+      // first/last name from the file can't contradict the saved name.
+      const hasName = NAME_FIELDS.some((f) => !isBlank(current[f]));
+      const fills = Object.fromEntries(
+        Object.entries(lead).filter(
+          ([field, value]) =>
+            !NOT_FILLED.has(field) &&
+            !(hasName && NAME_FIELDS.includes(field)) &&
+            !isBlank(value) &&
+            isBlank(current[field]),
+        ),
+      );
+      // Extra columns: add the ones the lead doesn't have yet.
+      const newExtras = Object.fromEntries(
+        Object.entries(lead.extraFields || {}).filter(([label]) =>
+          isBlank(current.extraFields?.[label]),
+        ),
+      );
+      if (Object.keys(newExtras).length) {
+        fills.extraFields = { ...current.extraFields, ...newExtras };
+      }
+      if (Object.keys(fills).length) {
+        updated.set(existing.id, { ...current, ...fills });
+      } else {
+        skippedDuplicates += 1;
+      }
+      return;
+    }
     if (keys.some((k) => seen.has(k))) {
       skippedDuplicates += 1;
       return;
@@ -151,7 +247,12 @@ function importRows(rows, existingLeads, toLead, isEmpty) {
     leads.push(lead);
   });
 
-  return { leads, skippedEmpty, skippedDuplicates };
+  return {
+    leads,
+    updates: [...updated.values()],
+    skippedEmpty,
+    skippedDuplicates,
+  };
 }
 
 // Residential imports also read the columns the residential export adds.
@@ -197,6 +298,7 @@ function csvToSellerLeads(
             values.sellerName || joinName(names.firstName, names.lastName),
           email: values.email,
           phone: values.phone ? cleanPhone(values.phone) : "",
+          phone2: values.phone2 ? cleanPhone(values.phone2) : "",
           address: fullAddress(values),
           dealType: values.dealType || "Wholesale",
           askingPrice: fmtCurrencyInput(values.askingPrice),
@@ -250,8 +352,11 @@ const COMMERCIAL_HEADERS = {
     "propertyname",
   ],
   sellerName: ["sellername", "ownername", "owner", "contactname", "contact"],
+  firstName: FIELD_HEADERS.firstName,
+  lastName: FIELD_HEADERS.lastName,
   sellerEmail: ["email", "emailaddress", "selleremail"],
   phone: FIELD_HEADERS.phone,
+  phone2: FIELD_HEADERS.phone2,
   address: FIELD_HEADERS.address,
   city: FIELD_HEADERS.city,
   state: FIELD_HEADERS.state,
@@ -272,6 +377,7 @@ export function csvToCommercialLeads(
   const parsed = readCsvRows(text, COMMERCIAL_HEADERS, [
     "name",
     "sellerName",
+    "firstName",
     "phone",
     "address",
   ]);
@@ -285,9 +391,14 @@ export function csvToCommercialLeads(
       existingLeads,
       (values) => ({
         name: values.name,
-        sellerName: values.sellerName,
+        ...(values.firstName || values.lastName
+          ? { firstName: values.firstName, lastName: values.lastName }
+          : splitName(values.sellerName)),
+        sellerName:
+          values.sellerName || joinName(values.firstName, values.lastName),
         sellerEmail: values.sellerEmail,
         phone: values.phone ? cleanPhone(values.phone) : "",
+        phone2: values.phone2 ? cleanPhone(values.phone2) : "",
         address: fullAddress(values),
         state: values.state,
         propertyType: values.propertyType,
