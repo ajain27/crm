@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  sellerNameOf,
   buildDealFromLead,
   dedupeLeads,
   leadMatchesSearch,
@@ -105,5 +106,16 @@ describe("leadUtils", () => {
         "u1",
       ),
     ).toMatchObject({ sellerFirstName: "Jane", sellerLastName: "Q Doe" });
+  });
+});
+
+describe("sellerNameOf", () => {
+  it("joins first and last name, falling back to the combined name", () => {
+    expect(sellerNameOf({ firstName: "Ann", lastName: "Bell" })).toBe(
+      "Ann Bell",
+    );
+    expect(sellerNameOf({ firstName: "Ann", sellerName: "x" })).toBe("Ann");
+    expect(sellerNameOf({ sellerName: " Old Name " })).toBe("Old Name");
+    expect(sellerNameOf({})).toBe("");
   });
 });

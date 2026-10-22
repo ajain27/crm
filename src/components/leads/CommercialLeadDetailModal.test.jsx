@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import CommercialLeadDetailModal from "./CommercialLeadDetailModal";
 
 describe("CommercialLeadDetailModal", () => {
@@ -58,5 +58,29 @@ describe("CommercialLeadDetailModal map", () => {
     expect(
       screen.getByText("Add an address to see the property on the map."),
     ).toBeInTheDocument();
+  });
+});
+
+describe("CommercialLeadDetailModal seller name", () => {
+  it("splits an older combined name and saves first + last joined", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ id: "c3", name: "Park", sellerName: "Ann Bell" }}
+        onSave={onSave}
+      />,
+    );
+    expect(screen.getByDisplayValue("Ann")).toBeInTheDocument();
+    const last = screen.getByDisplayValue("Bell");
+    fireEvent.change(last, { target: { value: "Bellamy" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/ }));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0]).toMatchObject({
+      firstName: "Ann",
+      lastName: "Bellamy",
+      sellerName: "Ann Bellamy",
+    });
   });
 });

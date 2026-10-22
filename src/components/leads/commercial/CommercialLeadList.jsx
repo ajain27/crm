@@ -16,9 +16,17 @@ import {
 import LeadImportButton from "../components/LeadImportButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { leadMatchesSearch } from "../leadUtils";
+import { leadMatchesSearch, sellerNameOf } from "../leadUtils";
 
-const SEARCH_FIELDS = ["address", "source", "phone"];
+const SEARCH_FIELDS = [
+  "name",
+  "address",
+  "source",
+  "phone",
+  "sellerName",
+  "firstName",
+  "lastName",
+];
 
 export default function CommercialLeadList({
   leads,
@@ -39,7 +47,7 @@ export default function CommercialLeadList({
       <LeadSearchInput
         value={listState.search}
         onChange={listState.setSearch}
-        placeholder="Search address, source or phone…"
+        placeholder="Search name, seller, address or phone…"
       />
       <LeadClearFilters listState={listState} />
       <LeadBulkDeleteButton
@@ -65,6 +73,7 @@ export default function CommercialLeadList({
       noLeadsSubtitle="No commercial leads yet."
       noLeadsMessage="Add your first commercial lead above to get started."
       revealDelay="140ms"
+      resizeKey="Commercial Leads"
     >
       {(pageLeads) => (
         <>
@@ -77,6 +86,7 @@ export default function CommercialLeadList({
               />
               <th></th>
               <th>Name</th>
+              <th>Seller Name</th>
               <th>Address</th>
               <th>State</th>
               <th>Source</th>
@@ -108,6 +118,7 @@ export default function CommercialLeadList({
                   label="Name"
                   value={lead.name || "—"}
                 />
+                <td data-label="Seller Name">{sellerNameOf(lead) || "—"}</td>
                 <td className="leads-address-cell" data-label="Address">
                   {lead.address}
                 </td>

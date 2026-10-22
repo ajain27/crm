@@ -109,11 +109,15 @@ export default function LeadDetailModal({
   const comps = canRunComps ? leadComps(draft) : null;
   const activeTab = canRunComps ? tab : "details";
 
+  // PPC leads and rentals not on the market ask for the seller's first and
+  // last name in the Property section (others have a Seller section).
+  const hasNameFields = isPpc || (isRental && draft.onMarket !== "Yes");
+
   async function handleSave() {
     setSaving(true);
     try {
       await onSave(
-        hasSellerSection
+        hasSellerSection || hasNameFields
           ? {
               ...draft,
               sellerName: joinName(draft.firstName, draft.lastName),
@@ -348,21 +352,31 @@ export default function LeadDetailModal({
                       />
                     </Field>
                   )}
-                  {(isPpc || (isRental && draft.onMarket !== "Yes")) && (
-                    <Field label="Seller Name">
-                      <input
-                        className="ldm-input"
-                        value={draft.sellerName || ""}
-                        onChange={(e) =>
-                          set(
-                            "sellerName",
-                            e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
-                          )
+                  {hasNameFields &&
+                    ["firstName", "lastName"].map((field) => (
+                      <Field
+                        key={field}
+                        label={
+                          field === "firstName"
+                            ? "Seller First Name"
+                            : "Seller Last Name"
                         }
-                        placeholder="Seller's name"
-                      />
-                    </Field>
-                  )}
+                      >
+                        <input
+                          className="ldm-input"
+                          value={draft[field] || ""}
+                          onChange={(e) =>
+                            set(
+                              field,
+                              e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
+                            )
+                          }
+                          placeholder={
+                            field === "firstName" ? "First name" : "Last name"
+                          }
+                        />
+                      </Field>
+                    ))}
                   <Field label="Email">
                     <input
                       className="ldm-input"

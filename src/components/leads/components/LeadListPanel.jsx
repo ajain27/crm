@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import ClearFiltersButton from "../../elements/ClearFiltersButton";
 import Pagination from "../../pagination/Pagination";
 import { paginate, pluralizeLeads } from "../leadUtils";
+import { useColumnResize } from "../hooks/useColumnResize";
 
 export function LeadSearchInput({ value, onChange, placeholder }) {
   return (
@@ -32,6 +33,8 @@ export function LeadClearFilters({ listState }) {
 // The panel every lead list shares: title + "X of Y leads" count, a filter
 // bar, empty states, the table and pagination. `children` is a render
 // function given the current page's leads; it returns the <thead>/<tbody>.
+// With `resizeKey`, columns can be resized by dragging their header edges
+// (widths are remembered under that key).
 export default function LeadListPanel({
   title,
   totalCount,
@@ -43,8 +46,10 @@ export default function LeadListPanel({
   noLeadsMessage,
   noMatchMessage = "No leads match the current search.",
   revealDelay = "80ms",
+  resizeKey,
   children,
 }) {
+  const tableRef = useColumnResize(resizeKey);
   const { pageItems, totalPages, page, summary } = paginate(
     filteredLeads,
     listState.page,
@@ -83,7 +88,10 @@ export default function LeadListPanel({
             className="table-wrap leads-table-wrap acc-card-container"
             style={{ overflowX: "auto" }}
           >
-            <table className="compact-table leads-table acc-card">
+            <table
+              ref={tableRef}
+              className={`compact-table leads-table acc-card${resizeKey ? " is-col-resizable" : ""}`}
+            >
               {children(pageItems)}
             </table>
           </div>

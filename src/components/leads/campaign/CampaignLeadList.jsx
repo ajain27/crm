@@ -23,9 +23,16 @@ import MarkBadLeadModal from "../components/MarkBadLeadModal";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadImportButton from "../components/LeadImportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { leadMatchesSearch } from "../leadUtils";
+import { leadMatchesSearch, sellerNameOf } from "../leadUtils";
 
-const SEARCH_FIELDS = ["address", "sellerName", "email", "phone"];
+const SEARCH_FIELDS = [
+  "address",
+  "sellerName",
+  "firstName",
+  "lastName",
+  "email",
+  "phone",
+];
 
 function rowClassName(lead, clickable, showQuality) {
   const quality = !showQuality
@@ -113,6 +120,7 @@ export default function CampaignLeadList({
         statusMessage={statusMessage}
         noLeadsSubtitle={noLeadsSubtitle}
         noLeadsMessage={noLeadsMessage}
+        resizeKey={title}
       >
         {(pageLeads) => (
           <>
@@ -128,7 +136,7 @@ export default function CampaignLeadList({
                     <th></th>
                   </>
                 )}
-                <th>Name</th>
+                <th>Seller Name</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Address</th>
@@ -172,10 +180,10 @@ export default function CampaignLeadList({
                         )
                       }
                       id={lead.id}
-                      label="Name"
+                      label="Seller Name"
                       value={
                         <span className="leads-accordion-name-stack">
-                          <span>{lead.sellerName || "—"}</span>
+                          <span>{sellerNameOf(lead) || "—"}</span>
                           <span className="leads-accordion-date">
                             {formatDate(lead.dateAdded)}
                           </span>

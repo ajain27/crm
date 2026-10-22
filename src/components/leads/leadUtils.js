@@ -182,6 +182,15 @@ export function joinName(firstName, lastName) {
     .join(" ");
 }
 
+// The seller's full name from their first and last name, falling back to
+// the combined name older leads (and some imports) only have.
+export function sellerNameOf(lead) {
+  return (
+    joinName(lead?.firstName, lead?.lastName) ||
+    String(lead?.sellerName || "").trim()
+  );
+}
+
 // "Jane Q Doe" → { firstName: "Jane", lastName: "Q Doe" }, for leads saved
 // with only a combined sellerName.
 export function splitName(fullName) {

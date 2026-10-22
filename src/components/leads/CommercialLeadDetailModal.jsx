@@ -5,7 +5,7 @@ import { StreetViewButton } from "../elements/StreetView";
 import { formatPhone } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { COMMERCIAL_PROPERTY_TYPES } from "./leadsConfig";
-import { SOURCES } from "./leadUtils";
+import { SOURCES, joinName, splitName } from "./leadUtils";
 import CompsMap from "./comps/CompsMap";
 import "./Leads.css";
 
@@ -32,7 +32,12 @@ export default function CommercialLeadDetailModal({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (lead) setDraft({ ...lead });
+    if (lead)
+      setDraft({
+        // Older leads only have a combined sellerName.
+        ...(lead.firstName || lead.lastName ? {} : splitName(lead.sellerName)),
+        ...lead,
+      });
   }, [lead]);
 
   if (!lead) return null;
@@ -44,7 +49,10 @@ export default function CommercialLeadDetailModal({
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({ ...draft });
+      await onSave({
+        ...draft,
+        sellerName: joinName(draft.firstName, draft.lastName),
+      });
       onClose();
     } catch (error) {
       console.error("Failed to save lead", error);
@@ -56,7 +64,6 @@ export default function CommercialLeadDetailModal({
     }
   }
 
-  const isColdCall = draft.source === "Cold Call";
   // The saved address, so editing the field doesn't look up the map on
   // every keystroke.
   const mapAddress = String(lead.address || "").trim();
@@ -170,32 +177,38 @@ export default function CommercialLeadDetailModal({
                   ))}
                 </select>
               </Field>
-              {isColdCall && (
-                <>
-                  <Field label="Seller Name">
-                    <input
-                      className="ldm-input"
-                      value={draft.sellerName || ""}
-                      onChange={(e) =>
-                        set(
-                          "sellerName",
-                          e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
-                        )
-                      }
-                      placeholder="Seller's name"
-                    />
-                  </Field>
-                  <Field label="Seller Email">
-                    <input
-                      className="ldm-input"
-                      type="email"
-                      value={draft.sellerEmail || ""}
-                      onChange={(e) => set("sellerEmail", e.target.value)}
-                      placeholder="seller@email.com"
-                    />
-                  </Field>
-                </>
-              )}
+            </div>
+          </div>
+
+          <div className="ldm-section">
+            <div className="ldm-section-label">Seller</div>
+            <div className="ldm-grid">
+              {["firstName", "lastName"].map((field) => (
+                <Field
+                  key={field}
+                  label={field === "firstName" ? "First Name" : "Last Name"}
+                >
+                  <input
+                    className="ldm-input"
+                    value={draft[field] || ""}
+                    onChange={(e) =>
+                      set(field, e.target.value.replace(/[^a-zA-Z\s'.]/g, ""))
+                    }
+                    placeholder={
+                      field === "firstName" ? "First name" : "Last name"
+                    }
+                  />
+                </Field>
+              ))}
+              <Field label="Seller Email">
+                <input
+                  className="ldm-input"
+                  type="email"
+                  value={draft.sellerEmail || ""}
+                  onChange={(e) => set("sellerEmail", e.target.value)}
+                  placeholder="seller@email.com"
+                />
+              </Field>
             </div>
           </div>
 

@@ -313,3 +313,29 @@ describe("LeadDetailModal dollar fields", () => {
     expect(asking).toHaveValue("$1,000,005");
   });
 });
+
+describe("LeadDetailModal PPC seller name", () => {
+  it("edits the seller's first and last name and saves them joined", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ id: "p1", address: "1 Main St", sellerName: "Jo Smith" }}
+        isPpc
+        onSave={onSave}
+      />,
+    );
+    expect(screen.getByText("Seller First Name")).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue("Jo"), {
+      target: { value: "Joanne" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0]).toMatchObject({
+      firstName: "Joanne",
+      lastName: "Smith",
+      sellerName: "Joanne Smith",
+    });
+  });
+});
