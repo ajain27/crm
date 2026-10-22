@@ -14,7 +14,6 @@ import {
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
-  SourceCell,
 } from "../components/LeadTableCells";
 import LeadImportButton from "../components/LeadImportButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
@@ -181,7 +180,6 @@ export default function ResidentialLeadList({
               />
               <th></th>
               <th>Address</th>
-              <th>Source</th>
               <th>Seller</th>
               <th>Email</th>
               <th>Phone</th>
@@ -217,7 +215,6 @@ export default function ResidentialLeadList({
                     value={lead.address}
                     className="leads-address-cell"
                   />
-                  <SourceCell source={lead.source} />
                   <td data-label="Seller">{sellerNameOf(lead) || "—"}</td>
                   {/* MLS leads carry the agent's email, not the seller's. */}
                   <EmailCell email={isMls ? "" : lead.email} />
