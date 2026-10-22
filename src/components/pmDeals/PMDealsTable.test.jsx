@@ -83,9 +83,20 @@ describe("PMDealsTable", () => {
     expect(onRowClick).toHaveBeenCalledWith(deal);
   });
 
-  it("clicking the borrower name heading toggles the accordion instead of opening the row", () => {
+  it("clicking the borrower name opens the row in the table view", () => {
     const onRowClick = vi.fn();
     render(<PMDealsTable {...baseProps({ onRowClick })} />);
+    fireEvent.click(screen.getByText("Jane"));
+    expect(onRowClick).toHaveBeenCalledWith(deal);
+  });
+
+  it("clicking the borrower name heading toggles the card instead of opening the row in card view", () => {
+    const onRowClick = vi.fn();
+    const { container } = render(
+      <PMDealsTable {...baseProps({ onRowClick })} />,
+    );
+    // Card view hides the header row.
+    container.querySelector("thead").style.display = "none";
     fireEvent.click(screen.getByText("Jane"));
     expect(onRowClick).not.toHaveBeenCalled();
   });

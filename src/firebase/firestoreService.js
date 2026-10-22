@@ -762,6 +762,34 @@ export async function deleteCountyRecordRows(importId, rowIndexes) {
   });
 }
 
+// Firestore's limit for one document is 1 MiB; leave room for the fields.
+const MAX_CHUNK_DOC_BYTES = 1_000_000;
+
+// Replaces one record (by its position in the file) with `row`. Only the
+// chunk holding it is rewritten. Throws when the edited chunk would no
+// longer fit in a document.
+export async function updateCountyRecordRow(importId, rowIndex, row) {
+  const snapshot = await getDocs(countyRecordChunksSubcollection(importId));
+  const chunks = snapshot.docs
+    .map((d) => ({ ref: d.ref, ...d.data() }))
+    .sort((a, b) => a.index - b.index);
+  let start = 0;
+  for (const chunk of chunks) {
+    const rows = JSON.parse(chunk.rows);
+    if (rowIndex < start + rows.length) {
+      rows[rowIndex - start] = row;
+      const json = JSON.stringify(rows);
+      if (new TextEncoder().encode(json).length > MAX_CHUNK_DOC_BYTES) {
+        throw new Error("This record is too large to save.");
+      }
+      await updateDoc(chunk.ref, { rows: json });
+      return;
+    }
+    start += rows.length;
+  }
+  throw new Error("Couldn't find this record in the list.");
+}
+
 export async function deleteCountyRecordImportById(importId) {
   const snapshot = await getDocs(countyRecordChunksSubcollection(importId));
   await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));

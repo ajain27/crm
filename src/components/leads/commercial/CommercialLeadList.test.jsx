@@ -113,4 +113,38 @@ describe("CommercialLeadList", () => {
       "",
     );
   });
+
+  it("opens the lead from anywhere in the row except its controls", () => {
+    const onOpen = vi.fn();
+    render(
+      <CommercialLeadList
+        leads={[
+          {
+            id: "c1",
+            name: "Yacht Haven",
+            address: "2323 W State Rd 84",
+            phone: "516-695-1008",
+          },
+        ]}
+        listState={listState}
+        onOpen={onOpen}
+        onDelete={vi.fn()}
+        onBulkDelete={vi.fn()}
+      />,
+    );
+    const row = screen.getByText("2323 W State Rd 84").closest("tr");
+
+    // The name heading (the card toggle on phones) and the phone cell's
+    // empty space both open the lead.
+    fireEvent.click(screen.getByText("Yacht Haven"));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    const phoneCell = row.querySelector('td[data-label="Phone"]');
+    fireEvent.click(phoneCell);
+    expect(onOpen).toHaveBeenCalledTimes(2);
+
+    // The phone link and the select checkbox don't.
+    fireEvent.click(screen.getByRole("link", { name: "516-695-1008" }));
+    fireEvent.click(row.querySelector(".buyer-checkbox-cell"));
+    expect(onOpen).toHaveBeenCalledTimes(2);
+  });
 });

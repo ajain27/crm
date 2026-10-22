@@ -16,11 +16,23 @@ function stopPropagation(e) {
   e.stopPropagation();
 }
 
-// A <td> whose clicks don't reach the row — for cells holding links or
-// buttons inside a clickable row.
-export function ActionCell({ className, children, ...props }) {
+const INTERACTIVE = "a, button, input, select, textarea, label";
+
+// A <td> holding links or buttons inside a clickable row: clicking those
+// doesn't also open the row, but clicking the rest of the cell does.
+// `guardWholeCell` keeps the whole cell from opening the row — for small
+// cells (a checkbox, a delete button) where a near miss shouldn't open it.
+export function ActionCell({ className, children, guardWholeCell, ...props }) {
   return (
-    <td className={className} onClick={stopPropagation} {...props}>
+    <td
+      className={className}
+      onClick={(e) => {
+        if (guardWholeCell || e.target.closest(INTERACTIVE)) {
+          e.stopPropagation();
+        }
+      }}
+      {...props}
+    >
       {children}
     </td>
   );
@@ -182,7 +194,7 @@ export function DateAddedCell({ date }) {
 
 export function DeleteCell({ onDelete }) {
   return (
-    <ActionCell className="acc-col-action-mobile">
+    <ActionCell className="acc-col-action-mobile" guardWholeCell>
       <button
         className="leads-delete-btn acc-delete-btn"
         title="Delete lead"
@@ -288,7 +300,10 @@ export function QualityCell({ quality, onMarkGood, onMarkBad, onClear }) {
 
 export function SelectCell({ checked, onToggle }) {
   return (
-    <ActionCell className="buyer-checkbox-cell acc-col-hide-mobile">
+    <ActionCell
+      className="buyer-checkbox-cell acc-col-hide-mobile"
+      guardWholeCell
+    >
       <input
         type="checkbox"
         className="buyer-checkbox"

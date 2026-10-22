@@ -14,6 +14,7 @@ import {
   updateCountyRecordImport,
   fetchCountyRecordRows,
   saveCountyRecordImport,
+  updateCountyRecordRow,
 } from "../../../firebase/firestoreService";
 
 vi.mock("../../../firebase/firestoreService", () => ({
@@ -23,6 +24,7 @@ vi.mock("../../../firebase/firestoreService", () => ({
   deleteCountyRecordImportById: vi.fn(),
   deleteCountyRecordRows: vi.fn(),
   updateCountyRecordImport: vi.fn(),
+  updateCountyRecordRow: vi.fn(),
 }));
 
 const user = { id: "u1" };
@@ -218,9 +220,8 @@ describe("CountyRecords", () => {
         name: "164 Auburn St, Russellville, 35654",
       }),
     ).toBeInTheDocument();
-    const fields = document.querySelector(".county-record-fields");
-    expect(fields).toHaveTextContent("Acres0.5");
-    expect(fields).toHaveTextContent("Owner NameJane Doe");
+    expect(screen.getByLabelText("Acres")).toHaveValue("0.5");
+    expect(screen.getByLabelText("Owner Name")).toHaveValue("Jane Doe");
 
     fireEvent.click(screen.getByText("Add to CRM"));
     await waitFor(() => expect(saveDeal).toHaveBeenCalled());
@@ -234,6 +235,50 @@ describe("CountyRecords", () => {
     });
     expect(setDeals).toHaveBeenCalled();
     expect(await screen.findByText("Added to CRM")).toBeInTheDocument();
+  });
+
+  it("edits a record's fields and saves them", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "king.csv",
+        columns: ["Owner Name", "Property Address", "Phone"],
+        rowCount: 2,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann Bell", "1 Main St", ""],
+      ["Wayfarer Apartments", "4725 15th Ave NE", ""],
+    ]);
+    updateCountyRecordRow.mockResolvedValue(undefined);
+    render(
+      <CountyRecords
+        currentUser={user}
+        deals={[]}
+        saveDeal={vi.fn()}
+        setDeals={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await findInTable("Wayfarer Apartments"));
+    const save = screen.getByRole("button", { name: /Save changes/ });
+    expect(save).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Phone"), {
+      target: { value: " 206-555-0100 " },
+    });
+    fireEvent.click(save);
+
+    await waitFor(() =>
+      expect(updateCountyRecordRow).toHaveBeenCalledWith("i1", 1, [
+        "Wayfarer Apartments",
+        "4725 15th Ave NE",
+        "206-555-0100",
+      ]),
+    );
+    expect(await screen.findByRole("button", { name: /Saved/ })).toBeDisabled();
+    expect(inTable().getByText("206-555-0100")).toBeInTheDocument();
   });
 
   it("won't add a record that's already in the CRM", async () => {
@@ -335,9 +380,7 @@ describe("CountyRecords", () => {
       "tel:2067959395",
     );
     fireEvent.click(card);
-    expect(document.querySelector(".county-record-fields")).toHaveTextContent(
-      "Phone 1206-795-9395",
-    );
+    expect(screen.getByLabelText("Phone 1")).toHaveValue("206-795-9395");
   });
 
   it("shows a loader, not the empty state, until data arrives", async () => {
@@ -483,11 +526,11 @@ describe("CountyRecords", () => {
     );
 
     fireEvent.click(inTable().getByText("Ann"));
-    const fields = document.querySelector(".county-record-fields");
+    const fields = document.querySelector(".county-record-form");
     expect(within(fields).getByText("Amount Due")).toHaveClass(
       "county-amount-due",
     );
-    expect(within(fields).getByText("$4,210.55")).toHaveClass(
+    expect(within(fields).getByLabelText("Amount Due")).toHaveClass(
       "county-amount-due",
     );
   });

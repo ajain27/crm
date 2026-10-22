@@ -9,6 +9,7 @@ import {
   deleteCountyRecordRows,
   fetchCountyRecordImports,
   fetchCountyRecordRows,
+  updateCountyRecordRow,
   saveCountyRecordImport,
   updateCountyRecordImport,
 } from "../../../firebase/firestoreService";
@@ -395,6 +396,15 @@ export default function CountyRecords({
     if (amountDueColumns[columnIndex])
       return <span className="county-amount-due">{cell}</span>;
     return cell;
+  }
+
+  // Saves an edited record (by its position in the file) and shows it.
+  async function handleSaveRecord(index, row) {
+    await updateCountyRecordRow(selectedId, index, row);
+    setRowsById((prev) => ({
+      ...prev,
+      [selectedId]: prev[selectedId].map((r, i) => (i === index ? row : r)),
+    }));
   }
 
   async function handleAddToCrm(row) {
@@ -816,10 +826,10 @@ export default function CountyRecords({
           columns={columns}
           row={allRows[openRowIndex]}
           inCrm={isInCrm(allRows[openRowIndex])}
-          onAddToCrm={() => handleAddToCrm(allRows[openRowIndex])}
+          onAddToCrm={(row) => handleAddToCrm(row)}
+          onSave={(row) => handleSaveRecord(openRowIndex, row)}
           onClose={() => setOpenRowIndex(null)}
           onDelete={() => handleDeleteRecord(openRowIndex)}
-          renderValue={renderCell}
         />
       )}
       {pendingImport && (

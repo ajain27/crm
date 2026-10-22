@@ -1121,7 +1121,6 @@
 
   /* Amount Due / Total Due / Balance Due… columns, header and values. */
   .county-records-table th.county-amount-due,
-  .county-record-field dt.county-amount-due,
   .county-amount-due {
     color: var(--red);
   }
@@ -1153,31 +1152,15 @@
     font-weight: 700;
   }
 
-  .county-record-fields {
-    display: grid;
+  /* The record's columns as a form (CountyRecordModal). */
+  .county-record-form {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem 1.25rem;
-    margin: 0;
     padding: 0.25rem 0 1rem;
     align-content: start;
   }
 
-  .county-record-field {
-    min-width: 0;
-  }
-
-  .county-record-field dt {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+  .county-record-form .ldm-label {
     text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .county-record-field dd {
-    margin: 0.2rem 0 0;
-    overflow-wrap: anywhere;
-    color: var(--text);
   }
 
   .county-record-modal .modal-actions {

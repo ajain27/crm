@@ -191,8 +191,20 @@ function AccordionHeaderCell({
       data-label={label}
       colSpan={colSpan}
       onClick={(e) => {
-        e.stopPropagation();
-        onHeaderClick?.(e);
+        if (onHeaderClick) {
+          e.stopPropagation();
+          onHeaderClick(e);
+          return;
+        }
+        // In card view the heading opens and closes the card. In table
+        // view it's an ordinary cell: let the click reach the row (and
+        // don't toggle the hidden checkbox).
+        const head = e.currentTarget.closest("table")?.tHead;
+        const cardView = head && getComputedStyle(head).display === "none";
+        if (cardView) e.stopPropagation();
+        else if (e.target.closest("label, .acc-accordion-toggle")) {
+          e.preventDefault();
+        }
       }}
     >
       {/* Card view only: shown just outside the card's left edge, centered

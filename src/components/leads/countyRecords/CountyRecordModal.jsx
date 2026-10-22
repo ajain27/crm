@@ -1,34 +1,69 @@
 import { useState } from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Save, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import { countyRecordFields, isAmountDueColumn } from "./countyRecordDeal";
 import { ZillowLink } from "../components/LeadTableCells";
 import { StreetViewButton } from "../../elements/StreetView";
 
-// One county record: every column and value, with an Add to CRM action.
-// `renderValue` formats a cell (e.g. phone links) the same way as the table.
+// One county record as a form: every column can be filled in or edited
+// and saved with `onSave(row)` (async). Add to CRM (`onAddToCrm(row)`)
+// saves any edits first, then adds the record as it now reads.
 export default function CountyRecordModal({
   columns,
   row,
   inCrm,
   onAddToCrm,
+  onSave,
   onClose,
   onDelete,
-  renderValue,
 }) {
+  const [draft, setDraft] = useState(() =>
+    columns.map((_, i) => String(row?.[i] ?? "")),
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
 
   if (!row) return null;
-  const { address, ownerName } = countyRecordFields(columns, row);
+  const { address, ownerName } = countyRecordFields(columns, draft);
   const alreadyInCrm = inCrm || added;
+  const dirty = draft.some((value, i) => value !== String(row[i] ?? ""));
+  const busy = saving || adding;
+
+  function setValue(index, value) {
+    setDraft((prev) => prev.map((v, i) => (i === index ? value : v)));
+    setSaved(false);
+  }
+
+  async function save() {
+    // Trimmed, like other forms (surrounding spaces from pasting).
+    const next = draft.map((v) => v.trim());
+    await onSave(next);
+    setDraft(next);
+    setSaved(true);
+    return next;
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setError("");
+    try {
+      await save();
+    } catch (err) {
+      setError(err.message || "Couldn't save this record.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleAdd() {
     setAdding(true);
     setError("");
     try {
-      await onAddToCrm();
+      const current = dirty ? await save() : draft;
+      await onAddToCrm(current);
       setAdded(true);
     } catch (err) {
       setError(err.message || "Couldn't add this record to the CRM.");
@@ -64,7 +99,7 @@ export default function CountyRecordModal({
               type="button"
               className="danger-btn county-record-delete"
               onClick={onDelete}
-              disabled={adding}
+              disabled={busy}
             >
               <Trash2 size={14} />
               Delete record
@@ -80,38 +115,50 @@ export default function CountyRecordModal({
             Close
           </button>
           {alreadyInCrm ? (
-            <button type="button" className="primary-btn" disabled>
+            <button type="button" className="secondary-btn" disabled>
               <Check size={14} />
               {added ? "Added to CRM" : "Already in CRM"}
             </button>
           ) : (
             <button
               type="button"
-              className="primary-btn"
+              className="secondary-btn"
               onClick={handleAdd}
-              disabled={adding || !address}
+              disabled={busy || !address}
             >
               <Plus size={14} />
               {adding ? "Adding…" : "Add to CRM"}
             </button>
           )}
+          <button
+            type="button"
+            className="primary-btn"
+            onClick={handleSave}
+            disabled={busy || !dirty}
+          >
+            {saved && !dirty ? <Check size={14} /> : <Save size={14} />}
+            {saving ? "Saving…" : saved && !dirty ? "Saved" : "Save changes"}
+          </button>
         </>
       }
     >
-      <dl className="county-record-fields">
+      <div className="ldm-grid county-record-form">
         {columns.map((column, i) => (
-          <div key={column} className="county-record-field">
-            <dt
-              className={
-                isAmountDueColumn(column) ? "county-amount-due" : undefined
-              }
+          <label key={`${column}-${i}`} className="ldm-field">
+            <span
+              className={`ldm-label${isAmountDueColumn(column) ? " county-amount-due" : ""}`}
             >
               {column}
-            </dt>
-            <dd>{row[i] ? renderValue(row[i], i) : "—"}</dd>
-          </div>
+            </span>
+            <input
+              className={`ldm-input${isAmountDueColumn(column) ? " county-amount-due" : ""}`}
+              value={draft[i]}
+              onChange={(e) => setValue(i, e.target.value)}
+              placeholder="—"
+            />
+          </label>
         ))}
-      </dl>
+      </div>
     </Modal>
   );
 }
