@@ -1,4 +1,5 @@
 import { fillBlanks } from "./leadImport";
+import { uniqueById } from "./leadUtils";
 
 const normalize = (text) =>
   String(text || "")
@@ -26,7 +27,9 @@ const addedAt = (lead) => lead.dateAddedAt || lead.dateAdded || "";
 // lead — `changed` when `keep` picked up details and needs saving.
 export function findAddressDuplicates(leads) {
   const groups = new Map();
-  leads.forEach((lead) => {
+  // The same lead listed twice isn't a duplicate of itself: removing the
+  // "duplicate" would delete the lead.
+  uniqueById(leads).forEach((lead) => {
     const key = addressMatchKey(lead.address);
     if (!key) return;
     if (!groups.has(key)) groups.set(key, []);

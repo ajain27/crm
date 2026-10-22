@@ -125,7 +125,7 @@ describe("LeadDetailModal", () => {
     expect(screen.getByDisplayValue("555-9876")).toBeInTheDocument();
   });
 
-  it("asks for an ARV on PPL leads only and saves it formatted", async () => {
+  it("asks for an ARV on seller leads (not PPC) and saves it formatted", async () => {
     const onSave = vi.fn(async () => {});
     const { unmount } = render(
       <LeadDetailModal
@@ -152,6 +152,7 @@ describe("LeadDetailModal", () => {
         isOpen={true}
         onClose={vi.fn()}
         lead={lead}
+        isPpc
         onSave={vi.fn()}
       />,
     );
@@ -232,12 +233,25 @@ describe("LeadDetailModal", () => {
     expect(onSave.mock.calls[0][0].notes).toMatch(/^Comps \(/);
   });
 
-  it("only offers Run comps on PPL and PPC leads", () => {
+  it("offers Run comps and a Comps tab on residential leads", () => {
     render(
       <LeadDetailModal
         isOpen={true}
         onClose={vi.fn()}
         lead={lead}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Run comps")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Comps/ })).toBeInTheDocument();
+  });
+
+  it("doesn't offer Run comps on potential rentals", () => {
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={{ ...lead, dealType: "Potential Rental" }}
         onSave={vi.fn()}
       />,
     );

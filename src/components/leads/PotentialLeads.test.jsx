@@ -376,6 +376,24 @@ describe("PotentialLeads", () => {
     );
   });
 
+  it("says when an import finds no duplicates", async () => {
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    render(<PotentialLeads {...baseProps()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Commercial/i }));
+    const csv = [
+      "Business Name,Phone,Address",
+      "Park A,206-555-0100,1 Main St, Dallas, TX",
+      "Park B,206-555-0101,2 Oak St, Dallas, TX",
+    ].join("\n");
+    fireEvent.change(screen.getByLabelText("Import CSV"), {
+      target: { files: [new File([csv], "leads.csv", { type: "text/csv" })] },
+    });
+    await waitFor(() => expect(window.alert).toHaveBeenCalled());
+    expect(window.alert.mock.calls[0][0]).toMatch(
+      /Imported 2 leads\.\nNo duplicates found\./,
+    );
+  });
+
   it("doesn't offer CSV import on the PPC tab", () => {
     render(<PotentialLeads {...baseProps()} />);
     fireEvent.click(screen.getByRole("button", { name: /PPC Leads/i }));

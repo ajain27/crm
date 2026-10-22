@@ -33,6 +33,7 @@ import {
   leadIdentityKeys,
   leadMatchesAnyKey,
   pluralizeLeads,
+  uniqueById,
   sortNewestFirst,
 } from "./leadUtils";
 import {
@@ -207,8 +208,10 @@ export default function PotentialLeads({
   }
 
   // Saves leads parsed from a CSV — new ones, and existing ones with blank
-  // details filled in from the file — and reports what happened.
-  async function importCsvLeads(result) {
+  // details filled in from the file — and reports what happened, including
+  // whether the list (`listLeads`, before the import) now has leads
+  // sharing an address.
+  async function importCsvLeads(result, listLeads) {
     if (result.error) {
       alert(result.error);
       return;
@@ -244,6 +247,20 @@ export default function PotentialLeads({
 
     const failed =
       imported.length - saved.length + (updates.length - savedUpdates.length);
+    const byId = new Map(savedUpdates.map((l) => [l.id, l]));
+    const listAfter = uniqueById([
+      ...saved,
+      ...listLeads.map((l) => byId.get(l.id) || l),
+    ]);
+    const sharedAddress = findAddressDuplicates(listAfter).reduce(
+      (n, group) => n + group.duplicates.length,
+      0,
+    );
+    const duplicatesNote = sharedAddress
+      ? `${sharedAddress} ${pluralizeLeads(sharedAddress)} in this list share an address with another — use Remove duplicates to clean them up.`
+      : !skippedDuplicates && !savedUpdates.length
+        ? "No duplicates found."
+        : "No other duplicates in this list.";
     alert(
       [
         `Imported ${saved.length} ${pluralizeLeads(saved.length)}.`,
@@ -254,6 +271,7 @@ export default function PotentialLeads({
         skippedEmpty &&
           `Skipped ${skippedEmpty} ${skippedEmpty === 1 ? "row" : "rows"} with no name, email, phone or address.`,
         failed && `${failed} couldn't be saved — try importing again.`,
+        duplicatesNote,
       ]
         .filter(Boolean)
         .join("\n"),
@@ -293,10 +311,12 @@ export default function PotentialLeads({
           continue;
         }
       }
+      // Never delete the record being kept.
+      const others = duplicates.filter((l) => l.id !== keep.id);
       const results = await Promise.allSettled(
-        duplicates.map((l) => deleteLeadById(l.id)),
+        others.map((l) => deleteLeadById(l.id)),
       );
-      duplicates.forEach((l, i) => {
+      others.forEach((l, i) => {
         if (results[i].status === "fulfilled") removedIds.push(l.id);
         else failed += 1;
       });
@@ -326,6 +346,7 @@ export default function PotentialLeads({
   function handlePplImport(text) {
     return importCsvLeads(
       csvToPplLeads(text, { existingLeads: leads, userId: currentUser.id }),
+      pplLeads,
     );
   }
 
@@ -335,6 +356,7 @@ export default function PotentialLeads({
         existingLeads: leads,
         userId: currentUser.id,
       }),
+      residentialLeads,
     );
   }
 
@@ -344,6 +366,7 @@ export default function PotentialLeads({
         existingLeads: commercialLeads,
         userId: currentUser.id,
       }),
+      commercialLeads,
     );
   }
 

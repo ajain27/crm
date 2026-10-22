@@ -1,12 +1,9 @@
-import { ExternalLink } from "lucide-react";
 import { AccordionHeaderCell } from "../../elements/elements";
-import { formatDate } from "../../../utils/utils";
 import LeadListPanel, {
   LeadClearFilters,
   LeadSearchInput,
 } from "../components/LeadListPanel";
 import {
-  ActionCell,
   AutomationCell,
   CrmCell,
   DateAddedCell,
@@ -14,18 +11,21 @@ import {
   EmailCell,
   NotesCell,
   PhoneCell,
-  PhoneLink,
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
   SourceCell,
-  ZillowLink,
 } from "../components/LeadTableCells";
 import LeadImportButton from "../components/LeadImportButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { followUpStatus, leadMatchesSearch, parseAddress } from "../leadUtils";
+import {
+  followUpStatus,
+  leadMatchesSearch,
+  parseAddress,
+  sellerNameOf,
+} from "../leadUtils";
 
 export const RESIDENTIAL_FILTERS = {
   source: "",
@@ -183,13 +183,10 @@ export default function ResidentialLeadList({
               <th>Address</th>
               <th>Source</th>
               <th>Seller</th>
-              <th>Agent</th>
-              <th>Follow-Up</th>
               <th>Email</th>
               <th>Phone</th>
               <th>Notes</th>
               <th>Added</th>
-              <th>Links</th>
               <th></th>
               <th></th>
             </tr>
@@ -221,56 +218,12 @@ export default function ResidentialLeadList({
                     className="leads-address-cell"
                   />
                   <SourceCell source={lead.source} />
-                  <td data-label="Seller">{lead.sellerName || "—"}</td>
-                  <ActionCell className="acc-col-block" data-label="Agent">
-                    {lead.agentName || lead.agentPhone ? (
-                      <div className="leads-agent-cell">
-                        {lead.agentName && <span>{lead.agentName}</span>}
-                        {lead.agentPhone && (
-                          <PhoneLink phone={lead.agentPhone} />
-                        )}
-                      </div>
-                    ) : (
-                      "—"
-                    )}
-                  </ActionCell>
-                  <td data-label="Follow-Up">
-                    {lead.followUpDate ? (
-                      <span
-                        className={`leads-followup-badge leads-followup-${followUpStatus(lead.followUpDate)}`}
-                      >
-                        {formatDate(lead.followUpDate)}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
+                  <td data-label="Seller">{sellerNameOf(lead) || "—"}</td>
                   {/* MLS leads carry the agent's email, not the seller's. */}
                   <EmailCell email={isMls ? "" : lead.email} />
                   <PhoneCell phone={lead.phone} phone2={lead.phone2} />
                   <NotesCell notes={lead.notes} />
                   <DateAddedCell date={lead.dateAdded} />
-                  <ActionCell data-label="Links">
-                    {lead.url || lead.address ? (
-                      <div className="leads-link-stack">
-                        {lead.url && (
-                          <a
-                            href={lead.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="leads-mls-link"
-                            title={lead.url}
-                          >
-                            <ExternalLink size={12} />
-                            {isMls ? "MLS" : "Link"}
-                          </a>
-                        )}
-                        <ZillowLink address={lead.address} />
-                      </div>
-                    ) : (
-                      "—"
-                    )}
-                  </ActionCell>
                   <CrmCell onAdd={() => onAddToCrm(lead.id)} />
                   <AutomationCell
                     lead={lead}

@@ -1,4 +1,5 @@
 import { createEmptyDealForm } from "../crm/components/crmConfig";
+import { STATE_OPTIONS } from "../../constants/stateOptions";
 
 export const ITEMS_PER_PAGE = 10;
 
@@ -218,22 +219,62 @@ export function todayStr() {
 }
 
 // Parses "123 Main St, Dallas, TX 75201" → { address, city, state, zipCode }
+const STATE_CODES = new Set(STATE_OPTIONS.map((o) => o.value).filter(Boolean));
+// "georgia" → "GA", from labels like "Georgia (GA)".
+const STATE_BY_NAME = new Map(
+  STATE_OPTIONS.filter((o) => o.value).map((o) => [
+    o.label.replace(/\s*\(.*\)$/, "").toLowerCase(),
+    o.value,
+  ]),
+);
+
+// The state code in what follows the city — "GA 30318", "Fulton, GA",
+// "Georgia 30318, USA" — skipping counties and the country. Searched from
+// the end, where the state sits. "" when there's none.
+function findState(parts) {
+  for (const part of [...parts].reverse()) {
+    const words = part.replace(/\d{5}(-\d{4})?/g, " ").trim();
+    const byName = STATE_BY_NAME.get(words.toLowerCase());
+    if (byName) return byName;
+    const code = words
+      .split(/\s+/)
+      .reverse()
+      .find((w) => STATE_CODES.has(w.toUpperCase()) && w.length === 2);
+    if (code) return code.toUpperCase();
+  }
+  return "";
+}
+
+const findZip = (parts) =>
+  parts.join(" ").match(/\b(\d{5})(?:-\d{4})?\b/)?.[1] || "";
+
+// "123 Main St, Dallas, TX 75201" → street, city, state and ZIP. Extra
+// parts like a county ("…, Atlanta, Fulton, GA 30318") or "USA" are
+// skipped when finding the state.
 export function parseAddress(full) {
-  const parts = full
+  const parts = String(full || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
   if (parts.length >= 3) {
-    const street = parts[0];
-    const city = parts[1];
-    const stateZipRaw = parts.slice(2).join(" ").trim();
-    const [state = "", zipCode = ""] = stateZipRaw.split(/\s+/);
-    return { address: street, city, state, zipCode };
+    const rest = parts.slice(2);
+    return {
+      address: parts[0],
+      city: parts[1],
+      state: findState(rest),
+      zipCode: findZip(rest),
+    };
   }
   if (parts.length === 2) {
-    const street = parts[0];
-    const [state = "", zipCode = ""] = parts[1].split(/\s+/);
-    return { address: street, city: "", state, zipCode };
+    const rest = parts.slice(1);
+    const state = findState(rest);
+    return {
+      address: parts[0],
+      // "123 Main St, Dallas" — no state, so it's the city.
+      city: state ? "" : parts[1],
+      state,
+      zipCode: findZip(rest),
+    };
   }
   return { address: full, city: "", state: "", zipCode: "" };
 }
@@ -330,4 +371,15 @@ export function buildDealFromLead(lead, userId) {
       .filter(Boolean)
       .join("\n"),
   };
+}
+
+// One entry per id, keeping the first.
+export function uniqueById(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    if (!item?.id) return true;
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }

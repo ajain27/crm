@@ -70,3 +70,19 @@ describe("findAddressDuplicates", () => {
     ).toEqual([]);
   });
 });
+
+describe("findAddressDuplicates with the same lead listed twice", () => {
+  it("doesn't treat a lead as a duplicate of itself", () => {
+    const lead = { id: "a", address: "1 Main St, Dallas, TX" };
+    expect(findAddressDuplicates([lead, { ...lead }])).toEqual([]);
+  });
+
+  it("still finds real duplicates alongside repeated entries", () => {
+    const a = { id: "a", address: "1 Main St, Dallas", phone: "1" };
+    const b = { id: "b", address: "1 Main St, Dallas" };
+    const groups = findAddressDuplicates([a, b, { ...a }, { ...b }]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].keep.id).toBe("a");
+    expect(groups[0].duplicates.map((l) => l.id)).toEqual(["b"]);
+  });
+});

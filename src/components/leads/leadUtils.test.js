@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  uniqueById,
   sellerNameOf,
   buildDealFromLead,
   dedupeLeads,
@@ -117,5 +118,44 @@ describe("sellerNameOf", () => {
     expect(sellerNameOf({ firstName: "Ann", sellerName: "x" })).toBe("Ann");
     expect(sellerNameOf({ sellerName: " Old Name " })).toBe("Old Name");
     expect(sellerNameOf({})).toBe("");
+  });
+});
+
+describe("uniqueById", () => {
+  it("keeps the first entry for each id", () => {
+    expect(
+      uniqueById([{ id: "a", v: 1 }, { id: "b" }, { id: "a", v: 2 }]),
+    ).toEqual([{ id: "a", v: 1 }, { id: "b" }]);
+  });
+});
+
+describe("parseAddress state", () => {
+  it("skips a county between the city and the state", () => {
+    expect(parseAddress("1191 6th St NW, Atlanta, Fulton, GA 30318")).toEqual({
+      address: "1191 6th St NW",
+      city: "Atlanta",
+      state: "GA",
+      zipCode: "30318",
+    });
+    expect(
+      parseAddress("15516 Elderwood Avenue, Cleveland, Cuyahoga County, OH"),
+    ).toMatchObject({ city: "Cleveland", state: "OH", zipCode: "" });
+  });
+
+  it("reads full state names and ignores the country", () => {
+    expect(
+      parseAddress("4059 Hammock Trace, Atlanta, Georgia 30349, USA"),
+    ).toMatchObject({ state: "GA", zipCode: "30349" });
+    expect(
+      parseAddress("205 Elm Pass II Rd E, Center Point, TX 78010, USA"),
+    ).toMatchObject({ state: "TX", zipCode: "78010" });
+  });
+
+  it("leaves the state blank rather than guessing a county", () => {
+    expect(parseAddress("25233 Lyndon, Monroe, Snohomish").state).toBe("");
+    expect(parseAddress("1 Main St, Dallas")).toMatchObject({
+      city: "Dallas",
+      state: "",
+    });
   });
 });

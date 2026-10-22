@@ -6,12 +6,15 @@ import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
 import { ExtraDetails, ZillowLink } from "./components/LeadTableCells";
 import { StreetViewButton } from "../elements/StreetView";
-import RunCompsModal from "../crm/components/data/comps/RunCompsModal";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
-import { withCompsNote } from "../crm/components/data/comps/compsNote";
 import { hasFormattedNotes } from "../crm/components/data/comps/notesTable";
-import LeadCompsPanel from "./comps/LeadCompsPanel";
-import { compsResultToSave, leadComps } from "./comps/leadComps";
+import { useLeadComps } from "./comps/useLeadComps";
+import {
+  LeadCompsTab,
+  LeadCompsTabBar,
+  LeadRunCompsModal,
+  RunCompsButton,
+} from "./comps/LeadCompsTabs";
 import {
   OCCUPANT_OPTIONS,
   SELLER_MOTIVATION_OPTIONS,
@@ -72,9 +75,16 @@ export default function LeadDetailModal({
 }) {
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
-  const [compsOpen, setCompsOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
-  const [tab, setTab] = useState("details");
+  // Every lead except a potential rental can run comps; those get a wide
+  // window with a Comps tab (table and map) beside the lead's details.
+  const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
+  const compsState = useLeadComps({
+    lead,
+    draft,
+    setDraft,
+    enabled: Boolean(lead) && !isRental,
+  });
 
   useEffect(() => {
     if (lead)
@@ -85,7 +95,6 @@ export default function LeadDetailModal({
         source: isPpc ? "PPC" : isPpl ? "PPL" : lead.source,
       });
     setEditingNotes(false);
-    setTab(lead && leadComps(lead) ? "comps" : "details");
   }, [lead, isPpc, isPpl]);
 
   if (!lead) return null;
@@ -99,15 +108,11 @@ export default function LeadDetailModal({
   const hasFormatted = hasFormattedNotes(draft.notes);
   const showNotesView = hasFormatted && !editingNotes;
 
-  const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
   // PPL leads are entered with full seller details, so they get the same
   // sections as other residential leads; only website PPC leads stay minimal.
   const hasSellerSection = !isRental && !isPpc;
-  // PPC and PPL leads can run comps; they get a wide window with a Comps
-  // tab (table and map) beside the lead's details.
-  const canRunComps = (isPpl || isPpc) && !isRental;
-  const comps = canRunComps ? leadComps(draft) : null;
-  const activeTab = canRunComps ? tab : "details";
+  const canRunComps = compsState.enabled;
+  const activeTab = compsState.tab;
 
   // PPC leads and rentals not on the market ask for the seller's first and
   // last name in the Property section (others have a Seller section).
@@ -135,17 +140,7 @@ export default function LeadDetailModal({
     }
   }
 
-  // Comps results go into the draft; Save Changes keeps them.
-  function handleSaveCompsNote(note, result) {
-    setDraft((prev) => ({
-      ...prev,
-      notes: withCompsNote(prev.notes, note),
-      ...(result ? { compsResult: compsResultToSave(result) } : {}),
-    }));
-    setTab("comps");
-  }
-
-  function handleApplyComps({ arv }) {
+  function handleApplyArv(arv) {
     if (arv > 0) set("arv", fmtCurrencyInput(String(Math.round(arv))));
   }
 
@@ -190,14 +185,11 @@ export default function LeadDetailModal({
               Cancel
             </button>
             {canRunComps && (
-              <button
-                className="secondary-btn"
-                onClick={() => setCompsOpen(true)}
-                disabled={saving || !draft.address?.trim()}
-                title="Pull comps from Zillow, Redfin and Realtor.com"
-              >
-                Run comps
-              </button>
+              <RunCompsButton
+                compsState={compsState}
+                address={draft.address}
+                disabled={saving}
+              />
             )}
             <button
               className="primary-btn"
@@ -210,48 +202,15 @@ export default function LeadDetailModal({
         }
       >
         <div className="ldm-body">
-          {canRunComps && (
-            <div className="ldm-tabs" role="tablist" aria-label="Lead">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "comps"}
-                className={`ldm-tab ${activeTab === "comps" ? "active" : ""}`}
-                onClick={() => setTab("comps")}
-              >
-                Comps
-                {comps && (
-                  <span className="ldm-tab-count">{comps.comps.length}</span>
-                )}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "details"}
-                className={`ldm-tab ${activeTab === "details" ? "active" : ""}`}
-                onClick={() => setTab("details")}
-              >
-                Details
-              </button>
-            </div>
-          )}
+          {canRunComps && <LeadCompsTabBar compsState={compsState} />}
 
-          {activeTab === "comps" &&
-            (comps ? (
-              <LeadCompsPanel comps={comps} lead={draft} />
-            ) : (
-              <div className="ldm-comps-empty">
-                No comps for this lead yet.
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={() => setCompsOpen(true)}
-                  disabled={saving || !draft.address?.trim()}
-                >
-                  Run comps
-                </button>
-              </div>
-            ))}
+          {activeTab === "comps" && (
+            <LeadCompsTab
+              compsState={compsState}
+              lead={draft}
+              disabled={saving}
+            />
+          )}
 
           {activeTab === "details" && (
             <>
@@ -510,7 +469,7 @@ export default function LeadDetailModal({
                             placeholder="$0"
                           />
                         </Field>
-                        {isPpl && (
+                        {hasSellerSection && (
                           <Field label="ARV">
                             <CurrencyInput
                               className="ldm-input"
@@ -602,17 +561,12 @@ export default function LeadDetailModal({
           )}
         </div>
       </Modal>
-      {compsOpen && (
-        <RunCompsModal
-          address={draft.address.trim()}
-          onSaveNote={handleSaveCompsNote}
-          // PPC leads have no ARV field to fill.
-          onApply={isPpl ? handleApplyComps : undefined}
-          onClose={() => setCompsOpen(false)}
-          noteSavedLabel="Added to the lead's notes — Save Changes to keep"
-          applyLabel="Use ARV"
-        />
-      )}
+      <LeadRunCompsModal
+        compsState={compsState}
+        address={draft.address}
+        // PPC leads have no ARV field to fill.
+        onApplyArv={isPpc ? undefined : handleApplyArv}
+      />
     </>
   );
 }

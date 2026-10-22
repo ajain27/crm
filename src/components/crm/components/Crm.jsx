@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { RefreshCw } from "lucide-react";
 import "../../../styles/styles.css";
@@ -43,6 +43,7 @@ import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
+import { uniqueById } from "../../leads/leadUtils";
 import InvoiceGenerator from "../../invoiceGenerator/InvoiceGenerator";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
@@ -92,7 +93,17 @@ function Wholesale() {
   const [sidebarOpen, setSidebarOpen] = useState(
     typeof window !== "undefined" && window.innerWidth >= 901,
   );
-  const [leads, setLeads] = useState([]);
+  const [leads, setLeadsState] = useState([]);
+  // Leads arrive from the live subscription and are also added to the list
+  // right after saving (so they show at once). Both can land, so keep one
+  // entry per id — the first, i.e. the freshly saved one.
+  const setLeads = useCallback(
+    (next) =>
+      setLeadsState((prev) =>
+        uniqueById(typeof next === "function" ? next(prev) : next),
+      ),
+    [],
+  );
 
   useEffect(() => {
     if (!currentUser) return;
