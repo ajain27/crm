@@ -1163,6 +1163,14 @@
     text-transform: uppercase;
   }
 
+  .county-record-long {
+    grid-column: 1 / -1;
+  }
+
+  .county-record-long .ldm-notes {
+    margin-bottom: 0;
+  }
+
   .county-record-add-phone {
     display: inline-flex;
     align-items: center;

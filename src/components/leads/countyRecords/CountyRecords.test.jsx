@@ -296,6 +296,35 @@ describe("CountyRecords", () => {
     expect(inTable().getByText("206-555-0100")).toBeInTheDocument();
   });
 
+  it("edits a Reason column in a text area", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "king.csv",
+        columns: ["Owner Name", "Property Address", "Reason"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann Bell", "1 Main St", "A neighboring unit has a roach infestation"],
+    ]);
+    render(
+      <CountyRecords
+        currentUser={user}
+        deals={[]}
+        saveDeal={vi.fn()}
+        setDeals={vi.fn()}
+      />,
+    );
+    fireEvent.click(await findInTable("Ann Bell"));
+    expect(screen.getByLabelText("Reason").tagName).toBe("TEXTAREA");
+    expect(screen.getByLabelText("Reason")).toHaveValue(
+      "A neighboring unit has a roach infestation",
+    );
+    expect(screen.getByLabelText("Owner Name").tagName).toBe("INPUT");
+  });
+
   it("adds another phone number as a new Phone 2 column", async () => {
     fetchCountyRecordImports.mockResolvedValue([
       {

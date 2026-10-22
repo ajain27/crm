@@ -14,6 +14,8 @@ import {
 } from "../comps/LeadCompsTabs";
 
 const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone/i;
+const LONG_TEXT_COLUMN =
+  /reason|note|description|comment|remark|detail|summary|narrative|violation/i;
 
 // "Phone 2", "Phone 3", … — the first not already a column.
 function nextPhoneColumn(columns) {
@@ -97,6 +99,22 @@ export default function CountyRecordModal({
   const phoneIndexes = allColumns
     .map((column, i) => (PHONE_COLUMN.test(column) ? i : -1))
     .filter((i) => i >= 0);
+
+  // Free-text columns (and long values) get a full-width text area after
+  // the other fields. Decided by the saved value, so a field doesn't turn
+  // into a text area while typing.
+  const fields = allColumns.map((column, i) => ({ column, i }));
+  const isLong = ({ column, i }) =>
+    LONG_TEXT_COLUMN.test(column) || String(row[i] ?? "").length > 60;
+  const shortFields = fields.filter((f) => !isLong(f));
+  const longFields = fields.filter(isLong);
+
+  function focusOnce(el) {
+    if (el) {
+      el.focus();
+      setFocusIndex(null);
+    }
+  }
 
   // Goes to this record's first empty phone column, or adds a new one.
   function addPhone() {
@@ -246,7 +264,7 @@ export default function CountyRecordModal({
             />
           ) : (
             <div className="ldm-grid county-record-form">
-              {allColumns.map((column, i) => (
+              {shortFields.map(({ column, i }) => (
                 <label key={`${column}-${i}`} className="ldm-field">
                   <span
                     className={`ldm-label${isAmountDueColumn(column) ? " county-amount-due" : ""}`}
@@ -259,16 +277,7 @@ export default function CountyRecordModal({
                     value={draft[i] ?? ""}
                     onChange={(e) => setValue(i, e.target.value)}
                     placeholder="—"
-                    ref={
-                      i === focusIndex
-                        ? (el) => {
-                            if (el) {
-                              el.focus();
-                              setFocusIndex(null);
-                            }
-                          }
-                        : undefined
-                    }
+                    ref={i === focusIndex ? focusOnce : undefined}
                   />
                 </label>
               ))}
@@ -279,6 +288,21 @@ export default function CountyRecordModal({
               >
                 <Plus size={13} /> Add phone number
               </button>
+              {longFields.map(({ column, i }) => (
+                <label
+                  key={`${column}-${i}`}
+                  className="ldm-field county-record-long"
+                >
+                  <span className="ldm-label">{column}</span>
+                  <textarea
+                    className="ldm-notes"
+                    value={draft[i] ?? ""}
+                    onChange={(e) => setValue(i, e.target.value)}
+                    placeholder="—"
+                    rows={4}
+                  />
+                </label>
+              ))}
             </div>
           )}
         </div>
