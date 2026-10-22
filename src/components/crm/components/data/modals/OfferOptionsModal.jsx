@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Modal from "../../../../modal/Modal";
 import { DEFAULT_OFFER_OPTIONS } from "./WholesaleOfferPdfTemplate";
+import CurrencyInput from "../../../../elements/CurrencyInput";
 
 const MAX_INSPECTION_DAYS = 365;
 
@@ -133,15 +134,10 @@ export default function OfferOptionsModal({
 
         <label className="field">
           <span>Earnest Money Deposit (EMD)</span>
-          <input
-            inputMode="numeric"
-            value={
-              form.emdAmount
-                ? `$${Number(form.emdAmount).toLocaleString("en-US")}`
-                : ""
-            }
-            onChange={(e) =>
-              setForm((p) => ({ ...p, emdAmount: digitsOnly(e.target.value) }))
+          <CurrencyInput
+            value={form.emdAmount}
+            onValueChange={(v) =>
+              setForm((p) => ({ ...p, emdAmount: digitsOnly(v) }))
             }
             placeholder="$100"
             aria-label="Earnest Money Deposit"

@@ -720,6 +720,7 @@ function SellerFinanceTab({ tab }) {
             placeholder="e.g. 123 Main St, Austin, TX"
           />
           <Field
+            currency
             label="Purchase Price"
             name="purchasePrice"
             value={form.purchasePrice}
@@ -745,6 +746,7 @@ function SellerFinanceTab({ tab }) {
           />
           {isFullySellerFinanced && (
             <Field
+              currency
               label="Down Payment (Optional)"
               name="downPayment"
               value={form.downPayment}
@@ -890,6 +892,7 @@ function SellerFinanceTab({ tab }) {
             </div>
             <div className="deal-analyzer-form-grid">
               <Field
+                currency
                 label="Origination Fees"
                 name="originationFees"
                 value={form.originationFees}
@@ -898,6 +901,7 @@ function SellerFinanceTab({ tab }) {
                 placeholder="e.g. $2,500"
               />
               <Field
+                currency
                 label="Doc Fees"
                 name="legalFees"
                 value={form.legalFees}
@@ -906,6 +910,7 @@ function SellerFinanceTab({ tab }) {
                 placeholder="e.g. $1,000"
               />
               <Field
+                currency
                 label="Appraisal Fees"
                 name="appraisalFees"
                 value={form.appraisalFees}
@@ -914,6 +919,7 @@ function SellerFinanceTab({ tab }) {
                 placeholder="e.g. $500"
               />
               <Field
+                currency
                 label="Underwriting Fees"
                 name="underwritingFees"
                 value={form.underwritingFees}
@@ -928,6 +934,7 @@ function SellerFinanceTab({ tab }) {
                 </label>
               )}
               <Field
+                currency
                 label="Closing Costs"
                 name="closingCosts"
                 value={form.closingCosts}
@@ -977,6 +984,7 @@ function SellerFinanceTab({ tab }) {
             </a>
           </div>
           <Field
+            currency
             label="Monthly Rent"
             name="monthlyRent"
             value={form.monthlyRent}
@@ -986,6 +994,7 @@ function SellerFinanceTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Yearly Property Tax"
             name="yearlyTaxes"
             value={form.yearlyTaxes}
@@ -1003,6 +1012,7 @@ function SellerFinanceTab({ tab }) {
             </label>
           )}
           <Field
+            currency
             label="Yearly Insurance"
             name="yearlyInsurance"
             value={form.yearlyInsurance}
@@ -1020,6 +1030,7 @@ function SellerFinanceTab({ tab }) {
             </label>
           )}
           <Field
+            currency
             label="Appliance Insurance (Monthly)"
             name="applianceInsurance"
             value={form.applianceInsurance}

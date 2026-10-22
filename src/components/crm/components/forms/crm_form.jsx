@@ -25,6 +25,7 @@ import {
   ASSIGNED_PRICE_ERROR,
   isAssignedPriceTooLow,
 } from "../crmConfig";
+import CurrencyInput from "../../../elements/CurrencyInput";
 
 function Wholesale_form({
   addDeal,
@@ -188,9 +189,9 @@ function Wholesale_form({
               {form.onMarket === "Yes" && (
                 <>
                   <Field
+                    currency
                     label="Listed Price"
                     name="listedPrice"
-                    type="text"
                     value={form.listedPrice}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -253,9 +254,9 @@ function Wholesale_form({
               />
               {form.occupied === "Yes" && (
                 <Field
+                  currency
                   label="Rent"
                   name="rent"
-                  type="text"
                   value={form.rent}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -284,9 +285,9 @@ function Wholesale_form({
               )}
               {form.offerStatus !== "Not Sent" && (
                 <Field
+                  currency
                   label="Offer Price"
                   name="contractPrice"
-                  type="text"
                   value={form.contractPrice}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -307,9 +308,9 @@ function Wholesale_form({
           ) : (
             <>
               <Field
+                currency
                 label="ARV"
                 name="arv"
-                type="text"
                 value={form.arv}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -353,13 +354,13 @@ function Wholesale_form({
                   </label>
                 ) : (
                   <Field
+                    currency
                     label={
                       isManualRehab && form.rehabType && sqft > 3500
                         ? "Rehab Cost (manual — sq ft > 3,500)"
                         : "Rehab Cost"
                     }
                     name="rehabCost"
-                    type="text"
                     value={form.rehabCost}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -368,9 +369,9 @@ function Wholesale_form({
                 ))}
               {form.rehabType !== "no-rehab" && (
                 <Field
+                  currency
                   label="Additional Rehab Cost"
                   name="additionalRehabCost"
-                  type="text"
                   value={form.additionalRehabCost}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -378,9 +379,9 @@ function Wholesale_form({
                 />
               )}
               <Field
+                currency
                 label="Desired Profit"
                 name="desiredProfit"
-                type="text"
                 value={form.desiredProfit}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -391,11 +392,10 @@ function Wholesale_form({
                   MAO
                   <span className="required-marker">*</span>
                 </span>
-                <input
+                <CurrencyInput
                   required
                   id="mao"
                   name="mao"
-                  type="text"
                   value={form.mao}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -413,9 +413,9 @@ function Wholesale_form({
               {form.onMarket === "Yes" && (
                 <>
                   <Field
+                    currency
                     label="Listed Price"
                     name="listedPrice"
-                    type="text"
                     value={form.listedPrice}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -514,9 +514,9 @@ function Wholesale_form({
               )}
               {form.offerStatus !== "Not Sent" && (
                 <Field
+                  currency
                   label="Contract Price"
                   name="contractPrice"
-                  type="text"
                   value={form.contractPrice}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -546,9 +546,9 @@ function Wholesale_form({
               {form.assigned === "Yes" && (
                 <>
                   <Field
+                    currency
                     label="Assigned Price"
                     name="assignedPrice"
-                    type="text"
                     value={form.assignedPrice}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -604,9 +604,9 @@ function Wholesale_form({
                     required
                   />
                   <Field
+                    currency
                     label="JV Split ($)"
                     name="jvSplit"
-                    type="text"
                     value={form.jvSplit || ""}
                     onChange={handleChange}
                     onBlur={handleBlur}

@@ -88,6 +88,7 @@ function NovationTab({ tab }) {
         <div className="deal-analyzer-section-label">Property &amp; Deal</div>
         <div className="deal-analyzer-form-grid">
           <Field
+            currency
             label="ARV"
             name="arv"
             value={form.arv}
@@ -96,6 +97,7 @@ function NovationTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Repairs"
             name="repairs"
             value={form.repairs}
@@ -104,6 +106,7 @@ function NovationTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Assignment Fee"
             name="wholesaleFee"
             value={form.wholesaleFee}

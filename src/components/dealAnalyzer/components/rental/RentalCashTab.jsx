@@ -168,6 +168,7 @@ function RentalCashTab() {
       </div>
       <div className="deal-analyzer-form-grid">
         <Field
+          currency
           label="Purchase Price"
           name="purchasePrice"
           value={form.purchasePrice}
@@ -190,6 +191,7 @@ function RentalCashTab() {
           </label>
         )}
         <Field
+          currency
           label="Closing Costs"
           name="closingCosts"
           value={form.closingCosts}
@@ -208,6 +210,7 @@ function RentalCashTab() {
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
       <div className="deal-analyzer-form-grid">
         <Field
+          currency
           label="Estimated Monthly Rent"
           name="monthlyRent"
           value={form.monthlyRent}
@@ -232,6 +235,7 @@ function RentalCashTab() {
           />
         </label>
         <Field
+          currency
           label="Yearly Home Insurance"
           name="yearlyInsurance"
           value={form.yearlyInsurance}
@@ -239,6 +243,7 @@ function RentalCashTab() {
           placeholder="e.g. $1,200"
         />
         <Field
+          currency
           label="Yearly Property Taxes"
           name="yearlyTaxes"
           value={form.yearlyTaxes}
@@ -246,6 +251,7 @@ function RentalCashTab() {
           placeholder="e.g. $3,000"
         />
         <Field
+          currency
           label="Annual Miscellaneous Expense"
           name="annualMiscExpense"
           value={form.annualMiscExpense}
@@ -262,6 +268,7 @@ function RentalCashTab() {
           </label>
         )}
         <Field
+          currency
           label="Monthly Home Warranty"
           name="monthlyHomeWarranty"
           value={form.monthlyHomeWarranty}

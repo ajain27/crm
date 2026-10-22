@@ -3,6 +3,7 @@ import { Eye, Upload, Loader2, Pencil, Check } from "lucide-react";
 import Modal from "../modal/Modal";
 import { fmt, formatDate } from "../../utils/utils";
 import "./PMDealsTable.css";
+import CurrencyInput from "../elements/CurrencyInput";
 
 function ReadOnlyField({ label, value }) {
   return (
@@ -112,7 +113,7 @@ export default function PMDealEditModal({
               </div>
               <div className="field">
                 <span>Amount Lent</span>
-                <input
+                <CurrencyInput
                   name="amountLent"
                   value={editForm.amountLent}
                   onChange={onChange}

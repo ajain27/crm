@@ -188,6 +188,7 @@ function WholesaleTab({ tab }) {
             </select>
           </label>
           <Field
+            currency
             label="ARV"
             name="arv"
             value={form.arv}
@@ -235,6 +236,7 @@ function WholesaleTab({ tab }) {
               </label>
             ) : (
               <Field
+                currency
                 label={
                   isManualRehab && form.rehabType && sqft > 5500
                     ? "Rehab Cost (manual — sq ft > 3,500)"
@@ -250,6 +252,7 @@ function WholesaleTab({ tab }) {
 
           {form.rehabType !== "no-rehab" && (
             <Field
+              currency
               label="Additional Rehab Needed"
               name="additionalRehabCost"
               value={form.additionalRehabCost}
@@ -259,6 +262,7 @@ function WholesaleTab({ tab }) {
           )}
 
           <Field
+            currency
             label="Assignment Fee"
             name="wholesaleFee"
             value={form.wholesaleFee}

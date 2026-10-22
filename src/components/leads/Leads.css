@@ -607,6 +607,11 @@
     max-height: calc(100dvh - 6rem);
   }
 
+  /* Keeps the scrolled content (e.g. the comps map) off the buttons. */
+  .lead-detail-modal .modal-actions {
+    margin-top: 1.25rem;
+  }
+
   .ldm-body {
     display: flex;
     flex-direction: column;

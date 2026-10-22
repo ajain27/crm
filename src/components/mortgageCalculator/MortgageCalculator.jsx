@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { calculateMonthlyPayment } from "../../utils/utils";
+import CurrencyInput from "../elements/CurrencyInput";
 
 function sanitizeNumericInput(value, { allowDecimal = false, maxLength } = {}) {
   let s = value.replace(/[^\d.]/g, "");
@@ -15,15 +16,6 @@ function sanitizeNumericInput(value, { allowDecimal = false, maxLength } = {}) {
     s = decimal !== undefined ? `${w}.${decimal}` : w;
   }
   return s;
-}
-
-function formatCurrencyInput(value) {
-  if (value === "") return "";
-  const [whole = "", decimal] = value.split(".");
-  const formatted = Number(whole || 0).toLocaleString("en-US");
-  return decimal !== undefined
-    ? `$${formatted}.${decimal.slice(0, 2)}`
-    : `$${formatted}`;
 }
 
 function parseNum(value) {
@@ -164,14 +156,10 @@ function MortgageCalculator() {
         <div className="mc-form-grid">
           <label className="field">
             <span>Home Price</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formatCurrencyInput(homePrice)}
-              onChange={(e) => {
-                setHomePrice(
-                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
-                );
+            <CurrencyInput
+              value={homePrice}
+              onValueChange={(v) => {
+                setHomePrice(sanitizeNumericInput(v, { allowDecimal: true }));
                 setHasCalculated(false);
               }}
               placeholder="e.g. $350,000"
@@ -234,14 +222,10 @@ function MortgageCalculator() {
         <div className="mc-form-grid">
           <label className="field">
             <span>Annual Property Tax</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formatCurrencyInput(propertyTax)}
-              onChange={(e) => {
-                setPropertyTax(
-                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
-                );
+            <CurrencyInput
+              value={propertyTax}
+              onValueChange={(v) => {
+                setPropertyTax(sanitizeNumericInput(v, { allowDecimal: true }));
                 setHasCalculated(false);
               }}
               placeholder="e.g. $4,200"
@@ -250,13 +234,11 @@ function MortgageCalculator() {
 
           <label className="field">
             <span>Annual Home Insurance</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formatCurrencyInput(homeInsurance)}
-              onChange={(e) => {
+            <CurrencyInput
+              value={homeInsurance}
+              onValueChange={(v) => {
                 setHomeInsurance(
-                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
+                  sanitizeNumericInput(v, { allowDecimal: true }),
                 );
                 setHasCalculated(false);
               }}
@@ -266,14 +248,10 @@ function MortgageCalculator() {
 
           <label className="field">
             <span>Monthly HOA</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formatCurrencyInput(hoa)}
-              onChange={(e) => {
-                setHoa(
-                  sanitizeNumericInput(e.target.value, { allowDecimal: true }),
-                );
+            <CurrencyInput
+              value={hoa}
+              onValueChange={(v) => {
+                setHoa(sanitizeNumericInput(v, { allowDecimal: true }));
                 setHasCalculated(false);
               }}
               placeholder="e.g. $200"

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import { useAddressAutocomplete } from "../../../hooks/useAddressAutocomplete";
+import CurrencyInput from "../../elements/CurrencyInput";
 
 async function sendViaBrevo({
   apiKey,
@@ -462,7 +463,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               </label>
               <label className="field">
                 <span>Price</span>
-                <input
+                <CurrencyInput
                   name="price"
                   value={dealTemplate.price}
                   onChange={handleDealChange}
@@ -472,7 +473,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               </label>
               <label className="field">
                 <span>ARV</span>
-                <input
+                <CurrencyInput
                   name="arv"
                   value={dealTemplate.arv}
                   onChange={handleDealChange}
@@ -482,7 +483,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               </label>
               <label className="field">
                 <span>Repairs</span>
-                <input
+                <CurrencyInput
                   name="repairs"
                   value={dealTemplate.repairs}
                   onChange={handleDealChange}

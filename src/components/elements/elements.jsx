@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { useCountUp } from "../../hooks/useCountUp";
 import { trimFieldOnBlur } from "../../utils/utils";
+import CurrencyInput from "./CurrencyInput";
 
 export function SimpleStat({
   icon,
@@ -102,8 +103,18 @@ export function GaugeStat({ label, subtitle, value, max, colorTheme }) {
   );
 }
 
+// `currency` makes it a dollar-amount input (see CurrencyInput).
 const Field = forwardRef(function Field(
-  { label, required, error, wrapperClassName = "", onChange, onBlur, ...props },
+  {
+    label,
+    required,
+    error,
+    wrapperClassName = "",
+    onChange,
+    onBlur,
+    currency = false,
+    ...props
+  },
   ref,
 ) {
   const trimOnBlur = trimFieldOnBlur(onChange);
@@ -118,14 +129,25 @@ const Field = forwardRef(function Field(
         {label}
         {required && <span className="required-marker">*</span>}
       </span>
-      <input
-        ref={ref}
-        required={required}
-        id={props.id || props.name}
-        onChange={onChange}
-        onBlur={handleBlur}
-        {...props}
-      />
+      {currency ? (
+        <CurrencyInput
+          ref={ref}
+          required={required}
+          id={props.id || props.name}
+          onChange={onChange}
+          onBlur={onBlur}
+          {...props}
+        />
+      ) : (
+        <input
+          ref={ref}
+          required={required}
+          id={props.id || props.name}
+          onChange={onChange}
+          onBlur={handleBlur}
+          {...props}
+        />
+      )}
       {error && <span className="field-error">{error}</span>}
     </label>
   );

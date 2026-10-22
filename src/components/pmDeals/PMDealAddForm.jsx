@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Plus } from "lucide-react";
 import { useAddressAutocomplete } from "../../hooks/useAddressAutocomplete";
 import "./PMDealsTable.css";
+import CurrencyInput from "../elements/CurrencyInput";
 
 export default function PMDealAddForm({
   form,
@@ -74,7 +75,7 @@ export default function PMDealAddForm({
           <span>
             Amount Lent <span className="required-star">*</span>
           </span>
-          <input
+          <CurrencyInput
             name="amountLent"
             value={form.amountLent}
             onChange={onChange}

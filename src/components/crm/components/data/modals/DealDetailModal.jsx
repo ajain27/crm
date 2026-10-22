@@ -28,6 +28,7 @@ import {
   ASSIGNED_PRICE_ERROR,
   isAssignedPriceTooLow,
 } from "../../crmConfig";
+import CurrencyInput from "../../../../elements/CurrencyInput";
 
 function formatFullAddress(deal) {
   const stateZip = [deal?.state, deal?.zipCode].filter(Boolean).join(" ");
@@ -586,7 +587,7 @@ function DealDetailModal({
           {draft.onMarket === "Yes" && (
             <Section title="Listing">
               <Field label="Listed Price">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.listedPrice || ""}
                   onChange={(e) => set("listedPrice", e.target.value)}
@@ -626,7 +627,7 @@ function DealDetailModal({
           {isRental && (
             <Section title="Rental Details">
               <Field label="Rent">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.rent || ""}
                   onChange={(e) => set("rent", e.target.value)}
@@ -652,7 +653,7 @@ function DealDetailModal({
           {!isRental && (
             <Section title="Deal Numbers">
               <Field label="ARV">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.arv || ""}
                   onChange={(e) => set("arv", e.target.value)}
@@ -660,7 +661,7 @@ function DealDetailModal({
                 />
               </Field>
               <Field label="Rehab Cost">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.rehabCost || ""}
                   onChange={(e) => set("rehabCost", e.target.value)}
@@ -668,7 +669,7 @@ function DealDetailModal({
                 />
               </Field>
               <Field label="Additional Rehab">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.additionalRehabCost || ""}
                   onChange={(e) => set("additionalRehabCost", e.target.value)}
@@ -676,7 +677,7 @@ function DealDetailModal({
                 />
               </Field>
               <Field label="Desired Profit">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.desiredProfit || ""}
                   onChange={(e) => set("desiredProfit", e.target.value)}
@@ -684,7 +685,7 @@ function DealDetailModal({
                 />
               </Field>
               <Field label="MAO (auto)">
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.mao || ""}
                   onChange={(e) => set("mao", e.target.value)}
@@ -733,7 +734,7 @@ function DealDetailModal({
             )}
             {offerSent && (
               <Field label={isRental ? "Offer Price" : "Contract Price"}>
-                <input
+                <CurrencyInput
                   disabled={locked}
                   value={draft.contractPrice || ""}
                   onChange={(e) => set("contractPrice", e.target.value)}
@@ -950,7 +951,7 @@ function DealDetailModal({
               {draft.assigned === "Yes" && (
                 <>
                   <Field label="Assigned Price">
-                    <input
+                    <CurrencyInput
                       disabled={locked}
                       value={draft.assignedPrice || ""}
                       onChange={(e) => set("assignedPrice", e.target.value)}
@@ -1001,7 +1002,7 @@ function DealDetailModal({
                     />
                   </Field>
                   <Field label="JV Split ($)">
-                    <input
+                    <CurrencyInput
                       disabled={locked}
                       value={draft.jvSplit || ""}
                       onChange={(e) => set("jvSplit", e.target.value)}

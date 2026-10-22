@@ -120,6 +120,7 @@ export default function RentalAddForm({
           placeholder="john@example.com"
         />
         <Field
+          currency
           label="Monthly Rent"
           name="monthlyRent"
           value={form.monthlyRent}
@@ -128,6 +129,7 @@ export default function RentalAddForm({
           inputMode="numeric"
         />
         <Field
+          currency
           label="Monthly Mortgage"
           name="monthlyMortgage"
           value={form.monthlyMortgage}
@@ -204,6 +206,7 @@ export default function RentalAddForm({
               inputMode="numeric"
             />
             <Field
+              currency
               label="Price Paid"
               name="applianceInsurancePricePaid"
               value={form.applianceInsurancePricePaid}

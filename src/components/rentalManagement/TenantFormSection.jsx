@@ -217,6 +217,7 @@ export default function TenantFormSection({
             </select>
           </label>
           <Field
+            currency
             label="Monthly Rent"
             name="monthlyRent"
             value={currentTenant.monthlyRent}
@@ -304,6 +305,7 @@ export default function TenantFormSection({
             </select>
           </label>
           <Field
+            currency
             label="Monthly Rent"
             name="monthlyRent"
             value={draft.monthlyRent}

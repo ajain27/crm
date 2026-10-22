@@ -25,6 +25,7 @@ export function HoaFields({ form, onChange }) {
       />
       {form.hasHoa === "Yes" && (
         <Field
+          currency
           label="Monthly HOA Dues"
           name="monthlyHoa"
           value={form.monthlyHoa}

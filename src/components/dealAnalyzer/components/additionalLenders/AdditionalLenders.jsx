@@ -134,6 +134,7 @@ export default function AdditionalLenders({
                   <div className="additional-lender-spacer" aria-hidden />
                 ))}
               <Field
+                currency
                 label={`Lender ${idx + 1} Amount`}
                 wrapperClassName={lender.auto ? "deal-analyzer-output" : ""}
                 name={`lender-amount-${lender.id}`}

@@ -208,6 +208,7 @@ function MultiFamilyTab({ tab }) {
         </div>
         <div className="deal-analyzer-form-grid">
           <Field
+            currency
             label="Purchase Price"
             name="purchasePrice"
             value={form.purchasePrice}
@@ -224,6 +225,7 @@ function MultiFamilyTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Rehab Cost"
             name="rehabCost"
             value={form.rehabCost}
@@ -276,6 +278,7 @@ function MultiFamilyTab({ tab }) {
         <div className="deal-analyzer-section-label">Rental Income</div>
         <div className="deal-analyzer-form-grid">
           <Field
+            currency
             label="Monthly Rent Per Unit"
             name="rentPerUnit"
             value={form.rentPerUnit}
@@ -284,6 +287,7 @@ function MultiFamilyTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Other Monthly Income"
             name="otherIncome"
             value={form.otherIncome}
@@ -309,6 +313,7 @@ function MultiFamilyTab({ tab }) {
             <input value="35%" readOnly tabIndex={-1} />
           </label>
           <Field
+            currency
             label="Additional Expenses (monthly)"
             name="additionalExpenses"
             value={form.additionalExpenses}

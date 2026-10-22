@@ -1,5 +1,6 @@
 import { parseCsv } from "./countyRecords/countyRecordsCsv";
 import { joinName, splitName, todayStr } from "./leadUtils";
+import { fmtCurrencyInput } from "../../utils/utils";
 
 // Turns an uploaded CSV into PPL or commercial leads. Columns are matched by header name
 // (case, spaces and punctuation ignored), so the app's own export and most

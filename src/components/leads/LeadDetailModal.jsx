@@ -17,6 +17,7 @@ import {
   SELLER_MOTIVATION_OPTIONS,
   SELLING_URGENCY_OPTIONS,
 } from "./leadsConfig";
+import CurrencyInput from "../elements/CurrencyInput";
 
 const SOURCES = [
   "Driving for Dollars",
@@ -339,7 +340,7 @@ export default function LeadDetailModal({
                   )}
                   {isRental && draft.onMarket === "Yes" && (
                     <Field label="Listed Price">
-                      <input
+                      <CurrencyInput
                         className="ldm-input"
                         value={draft.listedPrice || ""}
                         onChange={(e) => set("listedPrice", e.target.value)}
@@ -391,7 +392,7 @@ export default function LeadDetailModal({
                   <div className="ldm-section-label">Rental Details</div>
                   <div className="ldm-grid">
                     <Field label="Rent">
-                      <input
+                      <CurrencyInput
                         className="ldm-input"
                         value={draft.rent || ""}
                         onChange={(e) => set("rent", e.target.value)}
@@ -421,7 +422,7 @@ export default function LeadDetailModal({
                     {draft.offerStatus !== "Not Sent" && (
                       <>
                         <Field label="Offer Price">
-                          <input
+                          <CurrencyInput
                             className="ldm-input"
                             value={draft.offerPrice || ""}
                             onChange={(e) => set("offerPrice", e.target.value)}
@@ -476,7 +477,7 @@ export default function LeadDetailModal({
                           </Field>
                         ))}
                         <Field label="Asking Price">
-                          <input
+                          <CurrencyInput
                             className="ldm-input"
                             value={draft.askingPrice || ""}
                             onChange={(e) => set("askingPrice", e.target.value)}
@@ -485,7 +486,7 @@ export default function LeadDetailModal({
                         </Field>
                         {isPpl && (
                           <Field label="ARV">
-                            <input
+                            <CurrencyInput
                               className="ldm-input"
                               value={draft.arv || ""}
                               onChange={(e) =>

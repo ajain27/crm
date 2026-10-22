@@ -296,3 +296,20 @@ describe("LeadDetailModal comps tab", () => {
     });
   });
 });
+
+describe("LeadDetailModal dollar fields", () => {
+  it("formats the asking price as it's typed, and old plain values too", () => {
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ ...lead, source: "PPL", askingPrice: "100000" }}
+        isPpl
+        onSave={vi.fn()}
+      />,
+    );
+    const asking = screen.getByDisplayValue("$100,000");
+    fireEvent.change(asking, { target: { value: "$100,0005" } });
+    expect(asking).toHaveValue("$1,000,005");
+  });
+});

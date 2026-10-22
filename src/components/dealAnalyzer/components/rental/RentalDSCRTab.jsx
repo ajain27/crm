@@ -60,6 +60,7 @@ function RentalDSCRTab() {
       </div>
       <div className="deal-analyzer-form-grid">
         <Field
+          currency
           label="Purchase Price"
           name="purchasePrice"
           value={form.purchasePrice}
@@ -82,6 +83,7 @@ function RentalDSCRTab() {
           </label>
         )}
         <Field
+          currency
           label="Closing Costs"
           name="closingCosts"
           value={form.closingCosts}
@@ -119,6 +121,7 @@ function RentalDSCRTab() {
           />
         </label>
         <Field
+          currency
           label="Extra Down Payment"
           name="extraDownPayment"
           value={form.extraDownPayment}
@@ -160,6 +163,7 @@ function RentalDSCRTab() {
           placeholder="e.g. 1.5"
         />
         <Field
+          currency
           label="Doc Fees"
           name="legalFees"
           value={form.legalFees}
@@ -167,6 +171,7 @@ function RentalDSCRTab() {
           placeholder="e.g. $1,000"
         />
         <Field
+          currency
           label="Appraisal Fees"
           name="appraisalFees"
           value={form.appraisalFees}
@@ -174,6 +179,7 @@ function RentalDSCRTab() {
           placeholder="e.g. $500"
         />
         <Field
+          currency
           label="Underwriting Fees"
           name="underwritingFees"
           value={form.underwritingFees}
@@ -270,6 +276,7 @@ function RentalDSCRTab() {
       <div className="deal-analyzer-section-label">Income &amp; Expenses</div>
       <div className="deal-analyzer-form-grid">
         <Field
+          currency
           label="Estimated Monthly Rent"
           name="monthlyRent"
           value={form.monthlyRent}
@@ -294,6 +301,7 @@ function RentalDSCRTab() {
           />
         </label>
         <Field
+          currency
           label="Yearly Home Insurance"
           name="yearlyInsurance"
           value={form.yearlyInsurance}
@@ -301,6 +309,7 @@ function RentalDSCRTab() {
           placeholder="e.g. $1,200"
         />
         <Field
+          currency
           label="Yearly Property Taxes"
           name="yearlyTaxes"
           value={form.yearlyTaxes}
@@ -308,6 +317,7 @@ function RentalDSCRTab() {
           placeholder="e.g. $3,000"
         />
         <Field
+          currency
           label="Annual Miscellaneous Expense"
           name="annualMiscExpense"
           value={form.annualMiscExpense}
@@ -324,6 +334,7 @@ function RentalDSCRTab() {
           </label>
         )}
         <Field
+          currency
           label="Monthly Home Warranty"
           name="monthlyHomeWarranty"
           value={form.monthlyHomeWarranty}

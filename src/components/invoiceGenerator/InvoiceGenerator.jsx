@@ -23,6 +23,7 @@ import {
   deleteScheduledPaymentById,
 } from "../../firebase/firestoreService";
 import "./InvoiceGenerator.css";
+import CurrencyInput from "../elements/CurrencyInput";
 
 const SELLER = {
   name: "You Win Concepts",
@@ -768,7 +769,7 @@ export default function InvoiceGenerator({ currentUser }) {
           </label>
           <label className="field">
             <span>Setup Fee</span>
-            <input
+            <CurrencyInput
               value={setupFee}
               onChange={(e) => handleSetupFeeChange(e.target.value)}
               placeholder="$0.00"
@@ -819,7 +820,7 @@ export default function InvoiceGenerator({ currentUser }) {
                     />
                   </div>
                   <div className="igc-amt">
-                    <input
+                    <CurrencyInput
                       value={line.amount}
                       onChange={(e) =>
                         updateLine(line.id, "amount", e.target.value)

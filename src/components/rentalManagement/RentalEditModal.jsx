@@ -224,6 +224,7 @@ export default function RentalEditModal({
             }
           >
             <Field
+              currency
               label="Monthly Rent"
               name="monthlyRent"
               value={editForm.monthlyRent}
@@ -232,6 +233,7 @@ export default function RentalEditModal({
               inputMode="numeric"
             />
             <Field
+              currency
               label="Monthly Mortgage"
               name="monthlyMortgage"
               value={editForm.monthlyMortgage}
@@ -363,6 +365,7 @@ export default function RentalEditModal({
                   inputMode="numeric"
                 />
                 <Field
+                  currency
                   label="Price Paid"
                   name="applianceInsurancePricePaid"
                   value={editForm.applianceInsurancePricePaid}

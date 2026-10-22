@@ -199,6 +199,7 @@ function FixAndFlipTab({ tab }) {
             </select>
           </label>
           <Field
+            currency
             label="ARV"
             name="arv"
             value={form.arv}
@@ -207,6 +208,7 @@ function FixAndFlipTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Purchase Price"
             name="purchasePrice"
             value={form.purchasePrice}
@@ -285,6 +287,7 @@ function FixAndFlipTab({ tab }) {
                 </label>
               ) : (
                 <Field
+                  currency
                   label={
                     isManualRehab && form.rehabType && sqft > 5500
                       ? "Min Rehab Cost (manual — sq ft > 3,500)"
@@ -299,6 +302,7 @@ function FixAndFlipTab({ tab }) {
               )}
 
               <Field
+                currency
                 label="Additional Rehab Cost"
                 name="additionalRehabCost"
                 value={form.additionalRehabCost}
@@ -357,6 +361,7 @@ function FixAndFlipTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Origination Fees"
             name="originationFees"
             value={form.originationFees}
@@ -364,6 +369,7 @@ function FixAndFlipTab({ tab }) {
             placeholder="e.g. $1,500"
           />
           <Field
+            currency
             label="Doc Fees"
             name="legalFees"
             value={form.legalFees}
@@ -371,6 +377,7 @@ function FixAndFlipTab({ tab }) {
             placeholder="e.g. $1,000"
           />
           <Field
+            currency
             label="Appraisal Fees"
             name="appraisalFees"
             value={form.appraisalFees}

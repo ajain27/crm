@@ -128,6 +128,7 @@ export default function ResidentialLeadForm({
           {form.onMarket === "Yes" ? (
             <>
               <TextField
+                currency
                 label="Listed Price"
                 name="listedPrice"
                 value={form.listedPrice}
@@ -145,6 +146,7 @@ export default function ResidentialLeadForm({
           {sourceField}
 
           <TextField
+            currency
             label="Rent"
             name="rent"
             value={form.rent}
@@ -169,6 +171,7 @@ export default function ResidentialLeadForm({
           {form.offerStatus !== "Not Sent" && (
             <>
               <TextField
+                currency
                 label="Offer Price"
                 name="offerPrice"
                 value={form.offerPrice}
@@ -218,6 +221,7 @@ export default function ResidentialLeadForm({
             onChange={handlePhoneChange}
           />
           <TextField
+            currency
             label="Asking Price"
             name="askingPrice"
             value={form.askingPrice}
@@ -227,6 +231,7 @@ export default function ResidentialLeadForm({
           />
           {form.source === "PPL" && (
             <TextField
+              currency
               label="ARV"
               name="arv"
               value={form.arv}

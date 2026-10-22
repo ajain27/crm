@@ -290,6 +290,7 @@ function SubToTab({ tab }) {
 
         <div className="deal-analyzer-form-grid">
           <Field
+            currency
             label="Property Value"
             name="propertyValue"
             value={form.propertyValue}
@@ -298,6 +299,7 @@ function SubToTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Entry Fee"
             name="entryFee"
             value={form.entryFee}
@@ -307,6 +309,7 @@ function SubToTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Rehab Cost"
             name="rehabCost"
             value={form.rehabCost}
@@ -318,6 +321,7 @@ function SubToTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Mortgage Balance"
             name="mortgageBalance"
             value={form.mortgageBalance}
@@ -338,6 +342,7 @@ function SubToTab({ tab }) {
           />
           {form.hasArrears === "Yes" ? (
             <Field
+              currency
               label="Arrears Amount"
               name="arrearsAmount"
               value={form.arrearsAmount}
@@ -387,6 +392,7 @@ function SubToTab({ tab }) {
             </div>
           </label>
           <Field
+            currency
             label="Tax (/yr)"
             name="tax"
             value={form.tax}
@@ -395,6 +401,7 @@ function SubToTab({ tab }) {
             required
           />
           <Field
+            currency
             label="Insurance (/yr)"
             name="insurance"
             value={form.insurance}
@@ -415,6 +422,7 @@ function SubToTab({ tab }) {
           </div>
 
           <Field
+            currency
             label="Rent Estimate"
             name="rentEstimate"
             value={form.rentEstimate}

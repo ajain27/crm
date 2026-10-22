@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { MapPin, Phone, Tag } from "lucide-react";
 import { SOURCES } from "../leadUtils";
+import CurrencyInput from "../../elements/CurrencyInput";
 
 // A labelled form cell in the "Add Lead" grids. Pass `icon` to show a
 // lucide icon inside the input.
@@ -99,6 +100,7 @@ export function PhoneField({ label = "Phone", name, value, onChange }) {
   );
 }
 
+// `currency` makes it a dollar-amount input (see CurrencyInput).
 export function TextField({
   label,
   icon,
@@ -108,7 +110,21 @@ export function TextField({
   onChange,
   onBlur,
   placeholder,
+  currency = false,
 }) {
+  if (currency) {
+    return (
+      <LeadField label={label} icon={icon}>
+        <CurrencyInput
+          name={name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          placeholder={placeholder}
+        />
+      </LeadField>
+    );
+  }
   return (
     <LeadField label={label} icon={icon}>
       <input
