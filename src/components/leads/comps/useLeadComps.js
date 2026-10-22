@@ -5,8 +5,9 @@ import { compsResultToSave, leadComps } from "./leadComps";
 // State for a lead window's Comps tab: which tab is showing (Comps when
 // the lead has comps, otherwise Details), the Run comps window, and
 // putting a comps run's note and result on the draft (Save Changes keeps
-// them). With `enabled` false the window stays on Details.
-export function useLeadComps({ lead, draft, setDraft, enabled }) {
+// them; `onRunSaved(note, result)` is for windows that save a run right
+// away). With `enabled` false the window stays on Details.
+export function useLeadComps({ lead, draft, setDraft, enabled, onRunSaved }) {
   const [tab, setTab] = useState("details");
   const [runOpen, setRunOpen] = useState(false);
 
@@ -14,7 +15,8 @@ export function useLeadComps({ lead, draft, setDraft, enabled }) {
     setTab(lead && leadComps(lead) ? "comps" : "details");
   }, [lead]);
 
-  function saveRun(note, result) {
+  async function saveRun(note, result) {
+    await onRunSaved?.(note, result);
     setDraft((prev) => ({
       ...prev,
       notes: withCompsNote(prev.notes, note),

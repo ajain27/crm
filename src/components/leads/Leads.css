@@ -1163,6 +1163,15 @@
     text-transform: uppercase;
   }
 
+  .county-record-add-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    align-self: end;
+    justify-self: start;
+    padding: 0.6rem 0;
+  }
+
   .county-record-modal .modal-actions {
     align-items: center;
     flex-wrap: wrap;

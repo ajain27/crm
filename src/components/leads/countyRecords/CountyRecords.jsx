@@ -10,6 +10,8 @@ import {
   fetchCountyRecordImports,
   fetchCountyRecordRows,
   updateCountyRecordRow,
+  fetchCountyRecordComps,
+  saveCountyRecordComps,
   saveCountyRecordImport,
   updateCountyRecordImport,
 } from "../../../firebase/firestoreService";
@@ -398,8 +400,18 @@ export default function CountyRecords({
     return cell;
   }
 
-  // Saves an edited record (by its position in the file) and shows it.
-  async function handleSaveRecord(index, row) {
+  // Saves an edited record; `newColumns` (e.g. "Phone 2") are added to
+  // the list's columns first — other records just have them blank.
+  async function handleSaveRecord(index, row, newColumns = []) {
+    if (newColumns.length) {
+      const nextColumns = [...columns, ...newColumns];
+      await updateCountyRecordImport(selectedId, { columns: nextColumns });
+      setImports((prev) =>
+        prev.map((i) =>
+          i.id === selectedId ? { ...i, columns: nextColumns } : i,
+        ),
+      );
+    }
     await updateCountyRecordRow(selectedId, index, row);
     setRowsById((prev) => ({
       ...prev,
@@ -407,12 +419,13 @@ export default function CountyRecords({
     }));
   }
 
-  async function handleAddToCrm(row) {
+  async function handleAddToCrm(row, comps) {
     const deal = buildDealFromCountyRecord({
       columns,
       row,
       fileName: selected.fileName,
       userId: currentUser.id,
+      comps,
     });
     if (!deal) throw new Error("This record has no property address.");
     await saveDeal(deal);
@@ -826,8 +839,14 @@ export default function CountyRecords({
           columns={columns}
           row={allRows[openRowIndex]}
           inCrm={isInCrm(allRows[openRowIndex])}
-          onAddToCrm={(row) => handleAddToCrm(row)}
-          onSave={(row) => handleSaveRecord(openRowIndex, row)}
+          onAddToCrm={handleAddToCrm}
+          onSave={(row, newColumns) =>
+            handleSaveRecord(openRowIndex, row, newColumns)
+          }
+          loadComps={() => fetchCountyRecordComps(selectedId, openRowIndex)}
+          saveComps={(comps) =>
+            saveCountyRecordComps(selectedId, openRowIndex, comps)
+          }
           onClose={() => setOpenRowIndex(null)}
           onDelete={() => handleDeleteRecord(openRowIndex)}
         />

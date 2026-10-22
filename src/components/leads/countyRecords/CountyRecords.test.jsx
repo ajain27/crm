@@ -15,7 +15,17 @@ import {
   fetchCountyRecordRows,
   saveCountyRecordImport,
   updateCountyRecordRow,
+  saveCountyRecordComps,
 } from "../../../firebase/firestoreService";
+import { requestComps } from "../../crm/components/data/comps/compsNote";
+
+vi.mock(
+  "../../crm/components/data/comps/compsNote",
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    requestComps: vi.fn(),
+  }),
+);
 
 vi.mock("../../../firebase/firestoreService", () => ({
   fetchCountyRecordImports: vi.fn(),
@@ -25,6 +35,8 @@ vi.mock("../../../firebase/firestoreService", () => ({
   deleteCountyRecordRows: vi.fn(),
   updateCountyRecordImport: vi.fn(),
   updateCountyRecordRow: vi.fn(),
+  fetchCountyRecordComps: vi.fn().mockResolvedValue(null),
+  saveCountyRecordComps: vi.fn(),
 }));
 
 const user = { id: "u1" };
@@ -277,8 +289,122 @@ describe("CountyRecords", () => {
         "206-555-0100",
       ]),
     );
-    expect(await screen.findByRole("button", { name: /Saved/ })).toBeDisabled();
+    // Saving closes the record; the table shows the new value.
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /Save changes/ })).toBeNull(),
+    );
     expect(inTable().getByText("206-555-0100")).toBeInTheDocument();
+  });
+
+  it("adds another phone number as a new Phone 2 column", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "king.csv",
+        columns: ["Owner Name", "Property Address", "Phone"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann Bell", "1 Main St", "206-555-0100"],
+    ]);
+    updateCountyRecordRow.mockResolvedValue(undefined);
+    updateCountyRecordImport.mockResolvedValue(undefined);
+    render(
+      <CountyRecords
+        currentUser={user}
+        deals={[]}
+        saveDeal={vi.fn()}
+        setDeals={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await findInTable("Ann Bell"));
+    fireEvent.click(screen.getByRole("button", { name: /Add phone number/ }));
+    const phone2 = screen.getByLabelText("Phone 2");
+    expect(phone2).toHaveFocus();
+    fireEvent.change(phone2, { target: { value: "206-555-0101" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save changes/ }));
+
+    await waitFor(() =>
+      expect(updateCountyRecordRow).toHaveBeenCalledWith("i1", 0, [
+        "Ann Bell",
+        "1 Main St",
+        "206-555-0100",
+        "206-555-0101",
+      ]),
+    );
+    expect(updateCountyRecordImport).toHaveBeenCalledWith("i1", {
+      columns: ["Owner Name", "Property Address", "Phone", "Phone 2"],
+    });
+    expect(
+      await screen.findByRole("columnheader", { name: /Phone 2/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("runs comps on a record, saves them and adds them with the deal", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "king.csv",
+        columns: ["Owner Name", "Property Address"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Ann Bell", "4725 15th Ave NE, Seattle, WA"],
+    ]);
+    requestComps.mockResolvedValue({
+      address: "4725 15th Ave NE, Seattle, WA",
+      location: { lat: 47.66, lng: -122.31 },
+      arvEstimate: 900000,
+      rentEstimate: 3500,
+      property: { beds: 3, baths: 2, sqft: 1800, yearBuilt: 1950 },
+      topComps: [
+        {
+          address: "4700 15th Ave NE",
+          price: 880000,
+          lat: 47.66,
+          lng: -122.31,
+        },
+      ],
+    });
+    const saveDeal = vi.fn().mockResolvedValue(undefined);
+    render(
+      <CountyRecords
+        currentUser={user}
+        deals={[]}
+        saveDeal={saveDeal}
+        setDeals={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await findInTable("Ann Bell"));
+    fireEvent.click(screen.getByRole("button", { name: "Run comps" }));
+    await waitFor(() =>
+      expect(saveCountyRecordComps).toHaveBeenCalledWith(
+        "i1",
+        0,
+        expect.objectContaining({
+          note: expect.stringMatching(/^Comps \(/),
+          compsResult: expect.objectContaining({ arvEstimate: 900000 }),
+        }),
+      ),
+    );
+    expect(await screen.findByText("Saved to this record")).toBeInTheDocument();
+    // The comps window is on top of the record's; close it.
+    fireEvent.click(screen.getAllByRole("button", { name: "Close" }).at(-1));
+    expect(screen.getByRole("tab", { name: /Comps/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Add to CRM/ }));
+    await waitFor(() => expect(saveDeal).toHaveBeenCalled());
+    expect(saveDeal.mock.calls[0][0]).toMatchObject({ arv: 900000 });
+    expect(saveDeal.mock.calls[0][0].notes).toMatch(/\n\nComps \(/);
   });
 
   it("won't add a record that's already in the CRM", async () => {

@@ -62,6 +62,12 @@ function countyRecordChunksSubcollection(importId) {
   return collection(db, "countyRecordImports", importId, "chunks");
 }
 
+// Comps run on a county record, one document per record (by its position
+// in the file), so the record chunks themselves aren't rewritten.
+function countyRecordCompsSubcollection(importId) {
+  return collection(db, "countyRecordImports", importId, "comps");
+}
+
 function mapSnapshot(snapshot) {
   return snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
@@ -790,8 +796,28 @@ export async function updateCountyRecordRow(importId, rowIndex, row) {
   throw new Error("Couldn't find this record in the list.");
 }
 
+// { compsResult, note } for a record, or null when comps haven't been run.
+export async function fetchCountyRecordComps(importId, rowIndex) {
+  const snap = await getDoc(
+    doc(countyRecordCompsSubcollection(importId), String(rowIndex)),
+  );
+  return snap.exists() ? snap.data() : null;
+}
+
+export async function saveCountyRecordComps(importId, rowIndex, comps) {
+  await setDoc(
+    doc(countyRecordCompsSubcollection(importId), String(rowIndex)),
+    { rowIndex, ...comps },
+  );
+}
+
 export async function deleteCountyRecordImportById(importId) {
-  const snapshot = await getDocs(countyRecordChunksSubcollection(importId));
-  await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
+  const [chunks, comps] = await Promise.all([
+    getDocs(countyRecordChunksSubcollection(importId)),
+    getDocs(countyRecordCompsSubcollection(importId)),
+  ]);
+  await Promise.all(
+    [...chunks.docs, ...comps.docs].map((d) => deleteDoc(d.ref)),
+  );
   await deleteDoc(doc(countyRecordImportsCollection, importId));
 }

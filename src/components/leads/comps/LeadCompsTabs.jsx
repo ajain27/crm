@@ -66,7 +66,12 @@ export function LeadCompsTab({ compsState, lead, disabled }) {
 
 // The Run comps window for a lead; `onApplyArv(arv)` (optional) offers to
 // fill the lead's ARV from the result.
-export function LeadRunCompsModal({ compsState, address, onApplyArv }) {
+export function LeadRunCompsModal({
+  compsState,
+  address,
+  onApplyArv,
+  noteSavedLabel = "Added to the lead's notes — Save Changes to keep",
+}) {
   if (!compsState.runOpen) return null;
   return (
     <RunCompsModal
@@ -74,7 +79,7 @@ export function LeadRunCompsModal({ compsState, address, onApplyArv }) {
       onSaveNote={compsState.saveRun}
       onApply={onApplyArv ? ({ arv }) => onApplyArv(arv) : undefined}
       onClose={compsState.closeRun}
-      noteSavedLabel="Added to the lead's notes — Save Changes to keep"
+      noteSavedLabel={noteSavedLabel}
       applyLabel="Use ARV"
     />
   );

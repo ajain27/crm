@@ -107,7 +107,15 @@ export function countyRecordFields(columns, row) {
 // Builds a CRM deal from a county record, or null when no property
 // address could be found. Every non-empty column goes into the deal's
 // notes, so nothing in the record is lost.
-export function buildDealFromCountyRecord({ columns, row, fileName, userId }) {
+// `comps` ({ note, arv }, optional): comps run on the record, added to the
+// deal's notes and ARV.
+export function buildDealFromCountyRecord({
+  columns,
+  row,
+  fileName,
+  userId,
+  comps,
+}) {
   const fields = countyRecordFields(columns, row);
   const recordLines = columns
     .map((column, i) => (row[i] ? `${column}: ${row[i]}` : ""))
@@ -121,7 +129,13 @@ export function buildDealFromCountyRecord({ columns, row, fileName, userId }) {
       lastName: fields.lastName,
       phone: fields.phone,
       source: "County Records",
-      notes: [`County record (${fileName}):`, ...recordLines].join("\n"),
+      arv: comps?.arv || "",
+      notes: [
+        [`County record (${fileName}):`, ...recordLines].join("\n"),
+        comps?.note,
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
     },
     userId,
   );
