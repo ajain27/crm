@@ -121,6 +121,8 @@ export default function CommercialLeadList({
                       rel="noopener noreferrer"
                       className="leads-mls-link"
                       title={lead.website}
+                      // Open the site without also opening the lead.
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Globe size={12} />
                       Site

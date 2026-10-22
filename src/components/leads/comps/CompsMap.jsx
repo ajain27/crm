@@ -3,6 +3,7 @@ import { Loader } from "lucide-react";
 import { loadGooglePlaces } from "../../../utils/googleMapsLoader";
 import { findPlaceLocation } from "../../elements/StreetView";
 import { shortPrice } from "./leadComps";
+import "./LeadComps.css";
 
 const HOUSE_ICON =
   '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg>';
@@ -57,7 +58,15 @@ function pinElement(point, onSelect) {
 // { key, kind: "subject" | "comp", address, price, lat, lng }; points
 // without coordinates are looked up by address. Clicking a pin calls
 // `onSelect(key)`; the `selectedKey` pin is highlighted and kept in view.
-export default function CompsMap({ points, selectedKey, onSelect }) {
+// `mapTypeId` ("roadmap", "hybrid", …) and `zoom` (used when there's a
+// single point) suit a map of just one property.
+export default function CompsMap({
+  points,
+  selectedKey,
+  onSelect,
+  mapTypeId = "roadmap",
+  zoom = 14,
+}) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const pinsRef = useRef(new Map());
@@ -105,8 +114,10 @@ export default function CompsMap({ points, selectedKey, onSelect }) {
           mapRef.current ||
           new maps.Map(containerRef.current, {
             center: found[0],
-            zoom: 14,
-            mapTypeControl: false,
+            zoom,
+            mapTypeId,
+            // Lets a satellite view switch back to the road map.
+            mapTypeControl: mapTypeId !== "roadmap",
             streetViewControl: false,
             fullscreenControl: true,
             clickableIcons: false,
@@ -167,7 +178,9 @@ export default function CompsMap({ points, selectedKey, onSelect }) {
       )}
       {status === "error" && (
         <div className="comps-map-status">
-          Couldn't load the map for these addresses.
+          {points.length === 1
+            ? "Couldn't find this address on the map."
+            : "Couldn't load the map for these addresses."}
         </div>
       )}
       {status === "ready" && missing > 0 && (

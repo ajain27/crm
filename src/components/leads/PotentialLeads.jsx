@@ -12,7 +12,11 @@ import CommercialLeadForm from "./commercial/CommercialLeadForm";
 import CommercialLeadList from "./commercial/CommercialLeadList";
 import CampaignLeadList from "./campaign/CampaignLeadList";
 import CountyRecords from "./countyRecords/CountyRecords";
-import { csvToCommercialLeads, csvToPplLeads } from "./leadImport";
+import {
+  csvToCommercialLeads,
+  csvToPplLeads,
+  csvToResidentialLeads,
+} from "./leadImport";
 import { useLeadForm } from "./hooks/useLeadForm";
 import { useLeadListState } from "./hooks/useLeadListState";
 import { useWordPressLeadSync } from "./hooks/useWordPressLeadSync";
@@ -242,6 +246,15 @@ export default function PotentialLeads({
     );
   }
 
+  function handleResidentialImport(text) {
+    return importCsvLeads(
+      csvToResidentialLeads(text, {
+        existingLeads: leads,
+        userId: currentUser.id,
+      }),
+    );
+  }
+
   function handleCommercialImport(text) {
     return importCsvLeads(
       csvToCommercialLeads(text, {
@@ -374,6 +387,7 @@ export default function PotentialLeads({
             leads={residentialLeads}
             listState={residentialList}
             onBulkDelete={handleBulkDelete}
+            onImport={handleResidentialImport}
             {...leadActions}
           />
         </>

@@ -154,13 +154,24 @@ function importRows(rows, existingLeads, toLead, isEmpty) {
   return { leads, skippedEmpty, skippedDuplicates };
 }
 
-// Returns { leads, skippedEmpty, skippedDuplicates, unmatchedHeaders }, or
-// { error } when the file has no usable columns.
-export function csvToPplLeads(
+// Residential imports also read the columns the residential export adds.
+const RESIDENTIAL_HEADERS = {
+  ...FIELD_HEADERS,
+  source: ["source", "leadsource"],
+  agentName: ["agentname", "agent", "listingagent"],
+  agentPhone: ["agentphone", "listingagentphone"],
+  listedPrice: ["listedprice", "listprice", "listingprice"],
+};
+
+// Seller leads (PPL or residential) from CSV rows; `extra(values)` adds the
+// fields that differ between the two.
+function csvToSellerLeads(
   text,
-  { existingLeads = [], userId = "", now = new Date() } = {},
+  { existingLeads = [], userId = "", now = new Date() },
+  headers,
+  extra,
 ) {
-  const parsed = readCsvRows(text, FIELD_HEADERS, [
+  const parsed = readCsvRows(text, headers, [
     "sellerName",
     "firstName",
     "email",
@@ -188,8 +199,8 @@ export function csvToPplLeads(
           phone: values.phone ? cleanPhone(values.phone) : "",
           address: fullAddress(values),
           dealType: values.dealType || "Wholesale",
-          askingPrice: values.askingPrice,
-          arv: values.arv,
+          askingPrice: fmtCurrencyInput(values.askingPrice),
+          arv: fmtCurrencyInput(values.arv),
           occupant: values.occupant,
           sellingUrgency: values.sellingUrgency,
           sellerMotivation: values.sellerMotivation,
@@ -199,15 +210,34 @@ export function csvToPplLeads(
           id: crypto.randomUUID(),
           userId,
           leadType: "residential",
-          source: "PPL",
-          pplSource: true,
           dateAdded: (values.dateAdded && isoDate(values.dateAdded)) || today,
           dateAddedAt: now.toISOString(),
+          ...extra(values),
         };
       },
       (lead) => !lead.sellerName && !lead.email && !lead.phone && !lead.address,
     ),
   };
+}
+
+// Returns { leads, skippedEmpty, skippedDuplicates, unmatchedHeaders }, or
+// { error } when the file has no usable columns.
+export function csvToPplLeads(text, options = {}) {
+  return csvToSellerLeads(text, options, FIELD_HEADERS, () => ({
+    source: "PPL",
+    pplSource: true,
+  }));
+}
+
+// Same as csvToPplLeads, for the Residential list: the file's own Source
+// column is kept, along with any agent and listed price.
+export function csvToResidentialLeads(text, options = {}) {
+  return csvToSellerLeads(text, options, RESIDENTIAL_HEADERS, (values) => ({
+    source: values.source,
+    agentName: values.agentName,
+    agentPhone: values.agentPhone ? cleanPhone(values.agentPhone) : "",
+    listedPrice: fmtCurrencyInput(values.listedPrice),
+  }));
 }
 
 const COMMERCIAL_HEADERS = {

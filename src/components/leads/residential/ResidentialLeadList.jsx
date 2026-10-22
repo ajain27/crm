@@ -21,6 +21,7 @@ import {
   SourceCell,
   ZillowLink,
 } from "../components/LeadTableCells";
+import LeadImportButton from "../components/LeadImportButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { followUpStatus, leadMatchesSearch, parseAddress } from "../leadUtils";
@@ -62,6 +63,7 @@ export default function ResidentialLeadList({
   onOpen,
   onDelete,
   onBulkDelete,
+  onImport,
   onAddToCrm,
   onRunAutomation,
   onStopAutomation,
@@ -143,6 +145,7 @@ export default function ResidentialLeadList({
         listState={listState}
         onDelete={onBulkDelete}
       />
+      {onImport && <LeadImportButton onImport={onImport} />}
       <LeadExportButton
         selectedLeads={selectedLeads}
         listTitle="Residential Leads"

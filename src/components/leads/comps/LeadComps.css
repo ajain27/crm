@@ -394,4 +394,55 @@
       font-size: 1.125rem;
     }
   }
+
+  /* Commercial lead window: details beside a map of the property */
+  .cldm-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    /* One row the height of the window: the form scrolls on its own and
+       the map fills its column. */
+    grid-template-rows: minmax(0, 1fr);
+    gap: 1.5rem;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .cldm-map {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+  }
+
+  .cldm-map .comps-map {
+    flex: 1;
+  }
+
+  .cldm-map-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .cldm-layout {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      overflow-y: auto;
+    }
+
+    .cldm-layout .ldm-body {
+      overflow: visible;
+    }
+
+    .cldm-map .comps-map {
+      flex: none;
+      height: 20rem;
+      min-height: 20rem;
+    }
+  }
 }

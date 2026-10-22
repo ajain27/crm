@@ -612,6 +612,14 @@
     margin-top: 1.25rem;
   }
 
+  /* danger-btn is an icon-sized square elsewhere; here it holds "Delete". */
+  .lead-detail-modal .modal-actions .danger-btn {
+    width: auto;
+    height: auto;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+  }
+
   .ldm-body {
     display: flex;
     flex-direction: column;

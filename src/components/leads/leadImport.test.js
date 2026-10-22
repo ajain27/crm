@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { csvToCommercialLeads, csvToPplLeads } from "./leadImport";
+import {
+  csvToCommercialLeads,
+  csvToPplLeads,
+  csvToResidentialLeads,
+} from "./leadImport";
 import { leadsToRows, rowsToCsv } from "./leadExport";
-import { isPplLead } from "./leadUtils";
+import { isPplLead, isResidentialLead } from "./leadUtils";
 
 const NOW = new Date("2026-10-13T12:00:00Z");
 
@@ -129,5 +133,56 @@ describe("csvToCommercialLeads", () => {
 
   it("errors when no lead columns are found", () => {
     expect(csvToCommercialLeads("Foo,Bar\n1,2").error).toMatch(/headers/);
+  });
+});
+
+describe("csvToResidentialLeads", () => {
+  it("keeps the file's source, agent and listed price", () => {
+    const csv = [
+      "Name,Phone,Address,Source,Agent Name,Agent Phone,Listed Price,Asking Price",
+      "Jane Doe,2065550100,12 Oak St,Driving for Dollars,Sam Agent,+1 512 555 0199,250000,200000",
+    ].join("\n");
+    const { leads } = csvToResidentialLeads(csv, { userId: "u1", now: NOW });
+
+    expect(leads[0]).toMatchObject({
+      sellerName: "Jane Doe",
+      phone: "206-555-0100",
+      source: "Driving for Dollars",
+      agentName: "Sam Agent",
+      agentPhone: "512-555-0199",
+      listedPrice: "$250,000",
+      askingPrice: "$200,000",
+      leadType: "residential",
+    });
+    expect(leads[0]).not.toHaveProperty("pplSource");
+    expect(isResidentialLead(leads[0])).toBe(true);
+  });
+
+  it("re-imports the app's own residential export", () => {
+    const original = {
+      sellerName: "Sam Lee",
+      phone: "512-555-0199",
+      address: "9 Elm St, Austin, TX 78701",
+      source: "Cold Call",
+      agentName: "Pat",
+      agentPhone: "512-555-0100",
+      askingPrice: "$150,000",
+      dateAdded: "2026-10-01",
+    };
+    const { leads, unmatchedHeaders } = csvToResidentialLeads(
+      rowsToCsv(leadsToRows([original])),
+      { now: NOW },
+    );
+    expect(leads[0]).toMatchObject(original);
+    expect(unmatchedHeaders).toEqual([]);
+  });
+
+  it("skips leads already in the list", () => {
+    const csv = "Name,Phone\nJane,206-555-0100";
+    const result = csvToResidentialLeads(csv, {
+      existingLeads: [{ phone: "(206) 555-0100" }],
+    });
+    expect(result.leads).toHaveLength(0);
+    expect(result.skippedDuplicates).toBe(1);
   });
 });
