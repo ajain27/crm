@@ -164,7 +164,7 @@ function readCsvRows(text, fieldHeaders, identifying) {
   };
 }
 
-// Fields an import may fill in on a lead that's already in the list.
+// Fields never filled in on a lead that's already in the list.
 const NOT_FILLED = new Set([
   "id",
   "userId",
@@ -180,6 +180,39 @@ const NOT_FILLED = new Set([
 const NAME_FIELDS = ["sellerName", "firstName", "lastName"];
 
 const isBlank = (v) => v === undefined || v === null || String(v).trim() === "";
+
+// The values in `source` that `target` is missing, to fill in without
+// overwriting anything. A seller name is only filled when `target` has no
+// name at all, so a different name can't contradict the saved one; extra
+// columns are merged, keeping `target`'s.
+function blankFills(target, source) {
+  const hasName = NAME_FIELDS.some((f) => !isBlank(target[f]));
+  const fills = Object.fromEntries(
+    Object.entries(source).filter(
+      ([field, value]) =>
+        !NOT_FILLED.has(field) &&
+        !(hasName && NAME_FIELDS.includes(field)) &&
+        !isBlank(value) &&
+        isBlank(target[field]),
+    ),
+  );
+  const newExtras = Object.fromEntries(
+    Object.entries(source.extraFields || {}).filter(([label]) =>
+      isBlank(target.extraFields?.[label]),
+    ),
+  );
+  if (Object.keys(newExtras).length) {
+    fills.extraFields = { ...target.extraFields, ...newExtras };
+  }
+  return fills;
+}
+
+// `target` with the blanks `source` can fill (see blankFills); the same
+// object when there's nothing to fill.
+export function fillBlanks(target, source) {
+  const fills = blankFills(target, source);
+  return Object.keys(fills).length ? { ...target, ...fills } : target;
+}
 
 // Builds a lead per row with `toLead`, skipping rows `isEmpty` rejects and
 // rows that match an earlier row. A row matching a lead already in the
@@ -211,27 +244,7 @@ function importRows(rows, existingLeads, toLead, isEmpty) {
     if (existingKey) {
       const existing = existingByKey.get(existingKey);
       const current = updated.get(existing.id) || existing;
-      // A seller name is filled only when the lead has none at all, so a
-      // first/last name from the file can't contradict the saved name.
-      const hasName = NAME_FIELDS.some((f) => !isBlank(current[f]));
-      const fills = Object.fromEntries(
-        Object.entries(lead).filter(
-          ([field, value]) =>
-            !NOT_FILLED.has(field) &&
-            !(hasName && NAME_FIELDS.includes(field)) &&
-            !isBlank(value) &&
-            isBlank(current[field]),
-        ),
-      );
-      // Extra columns: add the ones the lead doesn't have yet.
-      const newExtras = Object.fromEntries(
-        Object.entries(lead.extraFields || {}).filter(([label]) =>
-          isBlank(current.extraFields?.[label]),
-        ),
-      );
-      if (Object.keys(newExtras).length) {
-        fills.extraFields = { ...current.extraFields, ...newExtras };
-      }
+      const fills = blankFills(current, lead);
       if (Object.keys(fills).length) {
         updated.set(existing.id, { ...current, ...fills });
       } else {

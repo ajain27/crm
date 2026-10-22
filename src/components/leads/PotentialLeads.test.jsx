@@ -382,6 +382,58 @@ describe("PotentialLeads", () => {
     expect(screen.queryByLabelText("Import CSV")).toBeNull();
   });
 
+  it("removes commercial leads that share an address, keeping one", async () => {
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    const deleteLeadById = vi.fn().mockResolvedValue(undefined);
+    const setLeads = vi.fn();
+    const leads = [
+      {
+        id: "c1",
+        leadType: "commercial",
+        name: "Princess RV",
+        address: "3000 Clarcona Rd, Apopka, FL",
+        phone: "407-375-6065",
+        sellerEmail: "a@x.com",
+      },
+      {
+        id: "c2",
+        leadType: "commercial",
+        name: "Princess RV",
+        address: "3000 Clarcona Rd, Apopka, FL 32703",
+        phone2: "407-654-5788",
+      },
+      {
+        id: "c3",
+        leadType: "commercial",
+        name: "Other Park",
+        address: "9770 County Rd 769, Arcadia, FL",
+      },
+    ];
+    render(
+      <PotentialLeads
+        {...baseProps({ leads, saveLead, deleteLeadById, setLeads })}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Commercial/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove duplicates (1)" }),
+    );
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalled());
+    expect(deleteLeadById).toHaveBeenCalledTimes(1);
+    expect(deleteLeadById).toHaveBeenCalledWith("c2");
+    expect(saveLead).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "c1", phone2: "407-654-5788" }),
+    );
+    const next = setLeads.mock.calls.at(-1)[0](leads);
+    expect(next.map((l) => l.id)).toEqual(["c1", "c3"]);
+    expect(window.alert.mock.calls[0][0]).toMatch(
+      /Removed 1 duplicate lead\.\nCopied missing details to 1 lead\./,
+    );
+  });
+
   it("bulk-deletes selected PPL leads", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteLeadById = vi.fn().mockResolvedValue(undefined);

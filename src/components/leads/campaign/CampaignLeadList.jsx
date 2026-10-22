@@ -22,6 +22,7 @@ import {
 import MarkBadLeadModal from "../components/MarkBadLeadModal";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadImportButton from "../components/LeadImportButton";
+import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { leadMatchesSearch, sellerNameOf } from "../leadUtils";
 
@@ -66,6 +67,7 @@ export default function CampaignLeadList({
   onRunAutomation,
   onStopAutomation,
   onImport,
+  onRemoveDuplicates,
   onAddLead,
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
@@ -100,6 +102,9 @@ export default function CampaignLeadList({
         </button>
       )}
       {!readOnly && onImport && <LeadImportButton onImport={onImport} />}
+      {!readOnly && onRemoveDuplicates && (
+        <LeadDedupeButton leads={leads} onRemove={onRemoveDuplicates} />
+      )}
       {!readOnly && (
         <LeadExportButton
           selectedLeads={selectedLeads}

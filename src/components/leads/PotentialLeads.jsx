@@ -43,6 +43,7 @@ import {
   startEmailSequence,
   stopEmailSequence,
 } from "../../constants/emailSequence";
+import { findAddressDuplicates } from "./leadDuplicates";
 import "./Leads.css";
 
 export default function PotentialLeads({
@@ -259,6 +260,69 @@ export default function PotentialLeads({
     );
   }
 
+  // Removes leads in `listLeads` that share an address, keeping one per
+  // address with any details the others had. Deleted by id only — the
+  // kept lead shares their address (and maybe phone/email), so matching
+  // by those would delete it too.
+  async function handleRemoveDuplicates(listLeads) {
+    const groups = findAddressDuplicates(listLeads);
+    const count = groups.reduce((n, g) => n + g.duplicates.length, 0);
+    if (count === 0) {
+      alert("No leads share an address in this list.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Remove ${count} duplicate ${pluralizeLeads(count)}?\n\n` +
+        `${groups.length} ${groups.length === 1 ? "address has" : "addresses have"} more than one lead. ` +
+        "The lead with the most details is kept for each, and any details only the others had are copied to it.",
+    );
+    if (!confirmed) return;
+
+    const saved = [];
+    const removedIds = [];
+    let failed = 0;
+    for (const { keep, changed, duplicates } of groups) {
+      if (changed) {
+        try {
+          await saveLead(keep);
+          saved.push(keep);
+        } catch {
+          // The merged details didn't save: keep the duplicates, so
+          // nothing is lost.
+          failed += duplicates.length;
+          continue;
+        }
+      }
+      const results = await Promise.allSettled(
+        duplicates.map((l) => deleteLeadById(l.id)),
+      );
+      duplicates.forEach((l, i) => {
+        if (results[i].status === "fulfilled") removedIds.push(l.id);
+        else failed += 1;
+      });
+    }
+
+    const removed = new Set(removedIds);
+    const byId = new Map(saved.map((l) => [l.id, l]));
+    setLeads((prev) =>
+      prev.filter((l) => !removed.has(l.id)).map((l) => byId.get(l.id) || l),
+    );
+    [residentialList, commercialList, ppcList, pplList].forEach((list) =>
+      list.setManySelected(removedIds, false),
+    );
+
+    alert(
+      [
+        `Removed ${removedIds.length} duplicate ${pluralizeLeads(removedIds.length)}.`,
+        saved.length &&
+          `Copied missing details to ${saved.length} ${pluralizeLeads(saved.length)}.`,
+        failed && `${failed} couldn't be removed — try again.`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+
   function handlePplImport(text) {
     return importCsvLeads(
       csvToPplLeads(text, { existingLeads: leads, userId: currentUser.id }),
@@ -407,6 +471,7 @@ export default function PotentialLeads({
             listState={residentialList}
             onBulkDelete={handleBulkDelete}
             onImport={handleResidentialImport}
+            onRemoveDuplicates={() => handleRemoveDuplicates(residentialLeads)}
             {...leadActions}
           />
         </>
@@ -420,6 +485,7 @@ export default function PotentialLeads({
             listState={commercialList}
             onBulkDelete={handleBulkDelete}
             onImport={handleCommercialImport}
+            onRemoveDuplicates={() => handleRemoveDuplicates(commercialLeads)}
             onOpen={setCommercialDetailLead}
             onDelete={handleDelete}
           />
@@ -451,6 +517,7 @@ export default function PotentialLeads({
           noLeadsMessage="PPL leads will appear here."
           onBulkDelete={handlePplBulkDelete}
           onImport={handlePplImport}
+          onRemoveDuplicates={() => handleRemoveDuplicates(pplLeads)}
           onAddLead={() => setAddLeadTab("ppl")}
           {...leadActions}
         />
