@@ -4,13 +4,8 @@ import LeadCompsPanel from "./LeadCompsPanel";
 // Building blocks for a lead window with comps; `compsState` is what
 // useLeadComps returns.
 
-// "Comps (n) | Details" tabs.
-export function LeadCompsTabBar({ compsState }) {
-  const { tab, setTab, comps } = compsState;
-  const tabs = [
-    { id: "comps", label: "Comps", count: comps?.comps.length },
-    { id: "details", label: "Details" },
-  ];
+// A lead window's tabs: `tabs` is [{ id, label, count? }].
+export function LeadTabBar({ tabs, tab, setTab }) {
   return (
     <div className="ldm-tabs" role="tablist" aria-label="Lead">
       {tabs.map(({ id, label, count }) => (
@@ -30,6 +25,25 @@ export function LeadCompsTabBar({ compsState }) {
       ))}
     </div>
   );
+}
+
+export const HISTORY_TABS = [
+  { id: "price-history", label: "Price History" },
+  { id: "property-history", label: "Property History" },
+];
+
+// "Comps (n) | Details" tabs (Comps only when the lead can run comps),
+// then `extraTabs`.
+export function LeadCompsTabBar({ compsState, extraTabs = [] }) {
+  const { tab, setTab, comps, enabled } = compsState;
+  const tabs = [
+    ...(enabled
+      ? [{ id: "comps", label: "Comps", count: comps?.comps.length }]
+      : []),
+    { id: "details", label: "Details" },
+    ...extraTabs,
+  ];
+  return <LeadTabBar tabs={tabs} tab={tab} setTab={setTab} />;
 }
 
 // "Run comps" — needs an address to run.

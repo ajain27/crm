@@ -12,7 +12,7 @@ const tab = {
 };
 
 const MOCK_ADDRESS = "5500 Grand Lake Dr, San Antonio, TX 78244";
-const CACHE_KEY = "findComps_cache_v3";
+const CACHE_KEY = "findComps_cache_v4";
 
 // What /api/run-comps returns (Serper → Firecrawl → Redfin, Claude optional).
 const mockApiResponse = {
@@ -847,5 +847,42 @@ describe("adjusting the subject property", () => {
       await screen.findByText(/Couldn't load recent sales from Redfin/),
     ).toBeInTheDocument();
     expect(screen.getByText("Estimated ARV")).toBeInTheDocument();
+  });
+
+  it("shows the property's sales, taxes and price history from the comps run", async () => {
+    mockFetchSuccess({
+      ...mockApiResponse,
+      history: {
+        timeline: [
+          {
+            date: "2022-09-16",
+            kind: "sold",
+            event: "Sold",
+            price: 116000,
+            sources: ["Redfin", "Realtor.com"],
+          },
+          {
+            date: "2022-04-29",
+            kind: "listed",
+            event: "Listed for sale",
+            price: 145000,
+            sources: ["Redfin"],
+          },
+        ],
+        sales: [
+          { date: "2022-09-16", price: 116000, heldYears: null, change: null },
+        ],
+        taxes: [{ year: 2025, tax: 5273, assessedValue: 57610 }],
+      },
+    });
+    render(<FindCompsTab tab={tab} />);
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\./i), {
+      target: { value: MOCK_ADDRESS },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Find Comps/i }));
+    expect(await screen.findByText("Sales (1)")).toBeInTheDocument();
+    expect(screen.getByText("Price History (2)")).toBeInTheDocument();
+    expect(screen.getByText("Listed for sale")).toBeInTheDocument();
+    expect(screen.getByText("$5,273")).toBeInTheDocument();
   });
 });

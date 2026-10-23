@@ -13,6 +13,9 @@
     },
     "api/run-comps.js": {
       "maxDuration": 60
+    },
+    "api/property-history.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

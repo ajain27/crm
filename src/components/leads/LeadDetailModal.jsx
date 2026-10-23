@@ -10,8 +10,13 @@ import { StreetViewButton } from "../elements/StreetView";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
 import { hasFormattedNotes } from "../crm/components/data/comps/notesTable";
 import { useLeadComps } from "./comps/useLeadComps";
+import {
+  LeadHistoryTab,
+  useLeadHistory,
+} from "../propertyHistory/LeadHistoryTab";
 import ArvHighlight from "../elements/ArvHighlight";
 import {
+  HISTORY_TABS,
   LeadCompsTab,
   LeadCompsTabBar,
   LeadRunCompsModal,
@@ -98,6 +103,7 @@ export default function LeadDetailModal({
     setDraft,
     enabled: Boolean(lead) && !isRental,
   });
+  const historyState = useLeadHistory({ lead, draft, setDraft });
 
   useEffect(() => {
     if (lead)
@@ -216,12 +222,22 @@ export default function LeadDetailModal({
         }
       >
         <div className="ldm-body">
-          {canRunComps && <LeadCompsTabBar compsState={compsState} />}
+          <LeadCompsTabBar compsState={compsState} extraTabs={HISTORY_TABS} />
 
           {activeTab === "comps" && (
             <LeadCompsTab
               compsState={compsState}
               lead={draft}
+              disabled={saving}
+            />
+          )}
+
+          {(activeTab === "price-history" ||
+            activeTab === "property-history") && (
+            <LeadHistoryTab
+              view={activeTab === "price-history" ? "price" : "property"}
+              historyState={historyState}
+              address={draft.address}
               disabled={saving}
             />
           )}

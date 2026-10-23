@@ -20,7 +20,9 @@
 //   4. Claude (optional) reviews the top candidates, drops bad or
 //      irrelevant comps and picks the 5 closest. It never estimates value.
 //      Without Claude, or if it fails, the ranking's top 5 are used.
-//   5. ARV is worked out in code from the final comps: the upper quartile
+//   5. The property's own history (sales, listings, taxes) comes from the
+//      same pages, read in the same scrape.
+//   6. ARV is worked out in code from the final comps: the upper quartile
 //      of their price per sq ft × the subject's size.
 //
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); ANTHROPIC_API_KEY
@@ -41,6 +43,7 @@ import {
   reconcileSubject,
   saneValue,
   serperSearch,
+  listingQueries,
 } from "./subject.js";
 import { geocodeAddress, geocodeWithOpenStreetMap } from "./geocode.js";
 import { fetchRedfinSold } from "./sales.js";
@@ -48,6 +51,7 @@ import { fetchMajorHighways } from "./highways.js";
 import { rankComps } from "./rank.js";
 import { claudeReview } from "./review.js";
 import { estimateArv, plural, ruleReason } from "./arv.js";
+import { historyFromSources } from "../propertyHistory.js";
 
 // The sales and major highways around a location, loaded together.
 async function loadArea(location, search = SEARCH) {
@@ -73,10 +77,7 @@ async function gatherSubject(address, env) {
 
   // The subject's pages and its coordinates, in parallel.
   const [searchResults, geocoded] = await Promise.all([
-    serperSearch(
-      SITES.map((s) => `${address} site:${s.domain}`),
-      env.SERPER_API_KEY,
-    ),
+    serperSearch(listingQueries(address), env.SERPER_API_KEY),
     geocodeAddress(address),
   ]);
   const listingUrls = pickListingUrls(searchResults, address);
@@ -299,6 +300,9 @@ export async function runComps(
         ]),
     ),
     adjusted: Boolean(adjust),
+    // The property's sales, listings and taxes, from the same pages (none
+    // on a re-run, which doesn't scrape).
+    history: adjust ? null : historyFromSources(sources, address),
     criteria: {
       radiusMiles: COMP_RULES.radiusMiles,
       soldWithinDays: COMP_RULES.soldWithinDays,

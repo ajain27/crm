@@ -61,6 +61,35 @@ export const SUBJECT_SCHEMA = {
       type: "number",
       description: "Most recent annual property tax",
     },
+    priceHistory: {
+      type: "array",
+      description:
+        "Every row of this home's price / sale / property history table",
+      items: {
+        type: "object",
+        properties: {
+          date: { type: "string", description: "As shown, e.g. 4/29/2025" },
+          event: {
+            type: "string",
+            description:
+              "e.g. Sold, Listed for sale, Price change, Pending, Listing removed, Listed for rent",
+          },
+          price: { type: "number" },
+        },
+      },
+    },
+    taxHistory: {
+      type: "array",
+      description: "Every row of this home's tax history table",
+      items: {
+        type: "object",
+        properties: {
+          year: { type: "number" },
+          tax: { type: "number", description: "Property tax paid" },
+          assessedValue: { type: "number" },
+        },
+      },
+    },
   },
 };
 
@@ -103,12 +132,29 @@ export function addressParts(address) {
   return { number, street };
 }
 
+// Street-name words the sites spell out or abbreviate either way
+// ("15315 Hwy 99" is "15315-Highway-99" on Zillow).
+const STREET_ALIASES = [
+  ["hwy", "highway"],
+  ["rte", "rt", "route"],
+  ["mt", "mount"],
+  ["ft", "fort"],
+  ["st", "saint"],
+];
+
+function streetSpellings(street) {
+  return STREET_ALIASES.find((names) => names.includes(street)) || [street];
+}
+
 function urlIsForAddress(url, { number, street }) {
   if (!number || !street) return false;
   const slug = decodeURIComponent(url)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ");
-  return slug.includes(` ${number} `) && slug.includes(` ${street} `);
+  return (
+    slug.includes(` ${number} `) &&
+    streetSpellings(street).some((name) => slug.includes(` ${name} `))
+  );
 }
 
 // Each site's property page for this exact address (house number and
@@ -126,6 +172,13 @@ export function pickListingUrls(organicResultsBySite, address) {
       links.find((link) => urlIsForAddress(` ${link} `, parts)) || null;
   });
   return urls;
+}
+
+// One search per site for the address. The ", USA" Google's address box
+// adds is left off — with it, Google sometimes misses the property's page.
+export function listingQueries(address) {
+  const where = String(address || "").replace(/,?\s*USA$/i, "");
+  return SITES.map((s) => `${where} site:${s.domain}`);
 }
 
 export async function serperSearch(queries, apiKey) {
@@ -178,6 +231,9 @@ export function cleanScraped(value) {
   return value ?? null;
 }
 
+const SUBJECT_PROMPT =
+  "Extract this property's own details (not nearby or similar homes) — its address, type, beds, total baths, square feet, year built, estimated value, estimated monthly rent and annual property tax — and every row of its price/sale history and tax history tables.";
+
 export async function firecrawlExtract(url, apiKey) {
   const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
@@ -191,8 +247,7 @@ export async function firecrawlExtract(url, apiKey) {
         {
           type: "json",
           schema: SUBJECT_SCHEMA,
-          prompt:
-            "Extract this property's own details (not nearby or similar homes): its address, type, beds, total baths, square feet, year built, estimated value, estimated monthly rent and annual property tax.",
+          prompt: SUBJECT_PROMPT,
         },
       ],
       onlyMainContent: true,
@@ -241,7 +296,7 @@ export function saneValue(field, value) {
 
 // A page's data is only used if the address it shows has the subject's
 // house number (when the page shows an address at all).
-function isSubjectData(data, address) {
+export function isSubjectData(data, address) {
   if (!data) return false;
   const { number } = addressParts(address);
   if (!number || !data.address) return true;

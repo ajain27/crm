@@ -2,6 +2,32 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LeadDetailModal from "./LeadDetailModal";
 import { requestComps } from "../crm/components/data/comps/compsNote";
+import { requestPropertyHistory } from "../../services/propertyHistoryService";
+
+vi.mock("../../services/propertyHistoryService", () => ({
+  requestPropertyHistory: vi.fn(),
+}));
+
+const HISTORY = {
+  timeline: [
+    {
+      date: "2022-09-16",
+      kind: "sold",
+      event: "Sold",
+      price: 116000,
+      sources: ["Redfin", "Realtor.com"],
+    },
+    {
+      date: "2022-04-29",
+      kind: "listed",
+      event: "Listed for sale",
+      price: 145000,
+      sources: ["Redfin"],
+    },
+  ],
+  sales: [{ date: "2022-09-16", price: 116000, heldYears: null, change: null }],
+  taxes: [{ year: 2025, tax: 5273, assessedValue: 57610 }],
+};
 
 vi.mock("../crm/components/data/comps/compsNote", async (importOriginal) => ({
   ...(await importOriginal()),
@@ -351,5 +377,69 @@ describe("LeadDetailModal PPC seller name", () => {
       lastName: "Smith",
       sellerName: "Joanne Smith",
     });
+  });
+
+  it("shows the history from the lead's comps run in the Price and Property History tabs", () => {
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{
+          ...lead,
+          compsResult: {
+            address: lead.address,
+            topComps: [],
+            history: HISTORY,
+          },
+        }}
+        onSave={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Price History" }));
+    expect(screen.getByText("Listed for sale")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Property History" }));
+    expect(screen.getByText("Sales (1)")).toBeInTheDocument();
+    expect(screen.getByText("$5,273")).toBeInTheDocument();
+  });
+
+  it("loads the history for a lead without one and saves it with the lead", async () => {
+    requestPropertyHistory.mockResolvedValue({
+      address: lead.address,
+      ...HISTORY,
+    });
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LeadDetailModal isOpen onClose={vi.fn()} lead={lead} onSave={onSave} />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Price History" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load history" }));
+    expect(await screen.findByText("Listed for sale")).toBeInTheDocument();
+    expect(requestPropertyHistory).toHaveBeenCalledWith("1 Main St");
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          propertyHistory: expect.objectContaining({
+            timeline: HISTORY.timeline,
+            taxes: HISTORY.taxes,
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("has the history tabs on a rental, without a Comps tab", () => {
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ ...lead, dealType: "Potential Rental" }}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("tab", { name: /Comps/ })).toBeNull();
+    expect(
+      screen.getByRole("tab", { name: "Price History" }),
+    ).toBeInTheDocument();
   });
 });

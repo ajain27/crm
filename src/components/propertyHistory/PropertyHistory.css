@@ -1,0 +1,61 @@
+@layer components {
+  .ph-section {
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+  }
+
+  .ph-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ph-event {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .ph-up {
+    color: #16a34a;
+    font-weight: 600;
+  }
+
+  .ph-down {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .ph-muted {
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .ph-empty {
+    padding: 2rem 1rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  /* The lead windows' history tabs */
+  .ldm-history {
+    padding-top: 1rem;
+  }
+
+  .ldm-history-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .ldm-history-error {
+    color: #dc2626;
+    font-size: 0.8125rem;
+  }
+}

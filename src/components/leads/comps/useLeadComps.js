@@ -6,7 +6,7 @@ import { compsResultToSave, leadComps } from "./leadComps";
 // the lead has comps, otherwise Details), the Run comps window, and
 // putting a comps run's note and result on the draft (Save Changes keeps
 // them; `onRunSaved(note, result)` is for windows that save a run right
-// away). With `enabled` false the window stays on Details.
+// away). With `enabled` false the Comps tab falls back to Details.
 export function useLeadComps({ lead, draft, setDraft, enabled, onRunSaved }) {
   const [tab, setTab] = useState("details");
   const [runOpen, setRunOpen] = useState(false);
@@ -27,7 +27,8 @@ export function useLeadComps({ lead, draft, setDraft, enabled, onRunSaved }) {
 
   return {
     enabled,
-    tab: enabled ? tab : "details",
+    // Without comps, any other tab (e.g. Price History) still shows.
+    tab: enabled || tab !== "comps" ? tab : "details",
     setTab,
     comps: enabled ? leadComps(draft) : null,
     runOpen: enabled && runOpen,

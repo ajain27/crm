@@ -227,6 +227,32 @@ describe("run-comps", () => {
     ).toEqual({ zillow: LISTINGS.zillow, redfin: null, realtor: null });
   });
 
+  it("matches a site's page that spells the street out (Hwy → Highway)", () => {
+    expect(
+      pickListingUrls(
+        [
+          [
+            {
+              link: "https://www.zillow.com/homedetails/15315-Highway-99-Lynnwood-WA-98087/81367370_zpid/",
+            },
+          ],
+          [
+            {
+              link: "https://www.redfin.com/WA/Edmonds/15315-50th-Ave-W-98026/home/2782119",
+            },
+          ],
+          [],
+        ],
+        "15315 Hwy 99, Lynnwood, WA 98087, USA",
+      ),
+    ).toEqual({
+      zillow:
+        "https://www.zillow.com/homedetails/15315-Highway-99-Lynnwood-WA-98087/81367370_zpid/",
+      redfin: null,
+      realtor: null,
+    });
+  });
+
   it("ignores a page whose data is for another house, and impossible values", async () => {
     mockFetch({
       firecrawl: (body) =>
@@ -548,6 +574,35 @@ describe("run-comps", () => {
     // Redfin and Realtor.com agree on 1 bath.
     expect(out.property.baths).toBe(1);
     expect(out.adjusted).toBe(false);
+  });
+
+  it("returns the property's own history, read in the same scrape", async () => {
+    mockFetch({
+      firecrawl: (body) =>
+        json(200, {
+          success: true,
+          data: {
+            json: {
+              ...SUBJECT_PAGE,
+              priceHistory: body.url.includes("redfin")
+                ? [{ date: "4/16/2018", event: "Sold", price: 40000 }]
+                : [],
+              taxHistory: [{ year: 2025, tax: 560 }],
+            },
+          },
+        }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.history.timeline).toEqual([
+      expect.objectContaining({
+        date: "2018-04-16",
+        kind: "sold",
+        price: 40000,
+      }),
+    ]);
+    expect(out.history.taxes).toEqual([
+      { year: 2025, tax: 560, assessedValue: null },
+    ]);
   });
 
   it("goes by the public records type over the listings'", async () => {

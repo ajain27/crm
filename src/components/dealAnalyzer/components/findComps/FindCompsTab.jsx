@@ -11,11 +11,16 @@ import {
   compsStatsText,
 } from "../../../crm/components/data/comps/compsNote";
 import ResizableTable from "../../../elements/ResizableTable";
+import {
+  PriceHistory,
+  PropertyHistory,
+} from "../../../propertyHistory/PropertyHistoryViews";
+import { historyToSave } from "../../../propertyHistory/propertyHistory";
 
-// v3: comps that follow the comp rules (sold, 0.5 mi, 90 days, same
-// beds/baths, built ±5 years). Searches saved under older keys used looser
-// comps and are no longer read.
-const CACHE_KEY = "findComps_cache_v3";
+// v4: the upper-quartile ARV, distressed sales left out, and the
+// property's history. Searches saved under older keys (looser comps, the
+// median ARV, no history) are no longer read.
+const CACHE_KEY = "findComps_cache_v4";
 const MAX_CACHE = 100;
 const COMPS_PER_PAGE = 5;
 const MAX_SUGGESTIONS = 8;
@@ -38,6 +43,7 @@ function slimResult(data) {
     stats: data.stats,
     method: data.method,
     listingUrls: data.listingUrls,
+    history: data.history,
     subjectProperty: sp
       ? {
           formattedAddress: sp.formattedAddress,
@@ -84,6 +90,7 @@ export function toFindCompsResult(api, address) {
     stats: api.stats,
     method: api.method,
     listingUrls: api.listingUrls,
+    history: historyToSave(api.history),
     subjectProperty: {
       formattedAddress: api.address || address,
       propertyType: p.propertyType,
@@ -315,6 +322,8 @@ function FindCompsTab({ tab }) {
         ...toFindCompsResult(api, address.trim()),
         listingUrls: result.listingUrls,
         subjectSources: result.subjectSources,
+        // A re-run doesn't scrape, so the history carries over.
+        history: result.history,
       };
       next.subjectProperty.formattedAddress = sp.formattedAddress;
       saveToCache(address.trim(), next);
@@ -670,6 +679,21 @@ function FindCompsTab({ tab }) {
                     {comparables.length !== 1 ? "s" : ""}
                   </span>
                 </Pagination>
+              </div>
+            )}
+
+            {/* Searches cached before history was read have none
+                (undefined); null means none of the sites had any. */}
+            {result.history === null && (
+              <p className="find-comps-history find-comps-rules">
+                No price history found — Zillow, Redfin and Realtor.com had no
+                page for this property.
+              </p>
+            )}
+            {result.history && (
+              <div className="find-comps-history">
+                <PropertyHistory history={result.history} />
+                <PriceHistory history={result.history} />
               </div>
             )}
           </div>

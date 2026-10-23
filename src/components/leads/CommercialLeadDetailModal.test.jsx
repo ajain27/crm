@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import CommercialLeadDetailModal from "./CommercialLeadDetailModal";
+import { requestPropertyHistory } from "../../services/propertyHistoryService";
+
+vi.mock("../../services/propertyHistoryService", () => ({
+  requestPropertyHistory: vi.fn(),
+}));
 
 describe("CommercialLeadDetailModal", () => {
   it("links the property to Zillow next to the address", () => {
@@ -179,5 +184,31 @@ describe("CommercialLeadDetailModal photos", () => {
     );
     expect(screen.getByText("No photo yet")).toBeInTheDocument();
     expect(screen.getByText("0 of 5 photos")).toBeInTheDocument();
+  });
+});
+
+describe("CommercialLeadDetailModal history", () => {
+  it("loads the property's history in the Property History tab", async () => {
+    requestPropertyHistory.mockResolvedValue({
+      timeline: [],
+      sales: [
+        { date: "2019-05-01", price: 900000, heldYears: null, change: null },
+      ],
+      taxes: [],
+    });
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        lead={{ id: "c1", address: "500 Commerce St, Dallas, TX 75201" }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Property History" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load history" }));
+    expect(await screen.findByText("$900,000")).toBeInTheDocument();
+    expect(requestPropertyHistory).toHaveBeenCalledWith(
+      "500 Commerce St, Dallas, TX 75201",
+    );
   });
 });

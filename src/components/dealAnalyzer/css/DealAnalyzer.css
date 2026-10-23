@@ -1256,6 +1256,10 @@
     }
   }
 
+  .find-comps-history {
+    margin-top: 1.5rem;
+  }
+
   .find-comps-tip {
     @apply mt-5 rounded-[16px] border px-4 py-3 text-sm leading-6;
     background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);

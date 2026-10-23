@@ -1,4 +1,5 @@
 import { splitCompsNotes } from "../../crm/components/data/comps/compsNote";
+import { historyToSave } from "../../propertyHistory/propertyHistory";
 
 // One shape for a lead's comps, whichever way they were saved: the
 // structured result Run comps now keeps on the lead (`compsResult`, with
@@ -138,6 +139,8 @@ export function compsResultToSave(result, runAt = new Date()) {
       sqft: numberOrNull(p.sqft),
       yearBuilt: numberOrNull(p.yearBuilt),
     },
+    // The property's sales, listings and taxes, read in the same run.
+    history: historyToSave(result.history, runAt),
     topComps: (result.topComps || []).map((c) => ({
       address: c.address,
       price: numberOrNull(c.price),
