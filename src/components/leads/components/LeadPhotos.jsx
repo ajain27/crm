@@ -31,12 +31,14 @@ export function useLeadPhotos({
   };
 }
 
-// The main photo, large, beside `children` (the window's first section),
-// with `aside` (e.g. the big ARV) under it; stacked above `children` with
-// `stacked`.
+// The main photo, large, beside `children` (the window's first sections),
+// with `aside` (e.g. the big ARV) under it and, with `withGallery`, the
+// photo thumbnails under that (instead of a separate Photos section);
+// stacked above `children` with `stacked`.
 export function LeadMainPhotoRow({
   photosState,
   aside = null,
+  withGallery = false,
   stacked = false,
   children,
 }) {
@@ -56,6 +58,7 @@ export function LeadMainPhotoRow({
     <div className="main-photo-side">
       {main}
       {aside}
+      {withGallery && photosState.enabled && <PhotoGallery {...galleryProps} />}
     </div>
   );
   if (stacked) {

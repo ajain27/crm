@@ -4,7 +4,7 @@
      .main-photo-row (with .has-photo once there is one). */
   .main-photo-row.has-photo {
     display: grid;
-    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
     gap: 1rem;
     align-items: start;
   }
@@ -208,6 +208,24 @@
     flex-direction: column;
     gap: 0.75rem;
     min-width: 0;
+  }
+
+  /* The sections beside the main photo. */
+  .main-photo-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  /* Thumbnails in the narrow photo column: three across, smaller. */
+  .main-photo-side .ddm-photos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.375rem;
+  }
+
+  .main-photo-side .ddm-photos-count {
+    font-size: 0.6875rem;
   }
 
   /* ArvHighlight */
