@@ -251,6 +251,14 @@
     font-size: 12.5px;
   }
 
+  .oa-pdf-sig-script {
+    font-family: "Caveat", cursive;
+    font-size: 23px;
+    font-weight: 500;
+    line-height: 1;
+    color: #1a1a2e;
+  }
+
   .oa-pdf-sig-caption {
     margin-top: 4px;
     font-size: 10.5px;

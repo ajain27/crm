@@ -1076,6 +1076,7 @@ function DealDetailModal({
         <AssignmentPdfTemplate
           ref={assignmentRef}
           assigneeName={draft.buyerName?.trim() || ""}
+          sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
           propertyAddress={formatFullAddress(draft)}
           assignedPrice={parseCurrency(draft.assignedPrice)}
           originalAgreementDate={draft.offerDate}

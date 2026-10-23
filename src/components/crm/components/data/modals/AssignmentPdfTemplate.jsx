@@ -6,6 +6,7 @@ import {
   Field,
   Section,
   SigLine,
+  COMPANY_SIGNATURE,
 } from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
 import "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate.css";
 import "./AssignmentPdfTemplate.css";
@@ -47,7 +48,7 @@ function Blank({ children }) {
 
 // Assignment of Contract generated from an assigned deal. Reproduces the
 // uploaded You Win Estates assignment clause for clause; the Assignee is
-// the deal's buyer, the Assignment Price its Assigned Price, and the
+// the deal's buyer, the Seller the deal's seller, the Assignment Price its Assigned Price, and the
 // Assignee Deposit 10% of that. The Original Agreement is dated the deal's
 // Offer Date (today if it has none); both signature dates are today.
 // With an inspection period, a seven-day "Inspection Period" clause goes in
@@ -56,6 +57,7 @@ function Blank({ children }) {
 const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
   {
     assigneeName,
+    sellerName,
     propertyAddress,
     assignedPrice,
     originalAgreementDate,
@@ -114,6 +116,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
         <div className="oa-pdf-fields">
           <Field label="Assignor Name:" value={ASSIGNOR_NAME} />
           <Field label="Assignee Name(s):" value={assigneeName} />
+          <Field label="Seller Name(s):" value={sellerName} />
           <Field label="Property Address:" value={propertyAddress} />
         </div>
 
@@ -262,7 +265,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
             <h3>ASSIGNOR</h3>
             <SigLine label="Company" value={ASSIGNOR_NAME} />
             <SigLine label="Authorized Representative" value={ASSIGNOR_REP} />
-            <SigLine label="Signature" />
+            <SigLine label="Signature" signature={COMPANY_SIGNATURE} />
             <SigLine label="Date" value={today} />
           </div>
           <div className="oa-pdf-sig-box">

@@ -11,6 +11,15 @@ import jsPDF from "jspdf";
 // want inside our own preview modal.
 export async function renderElementToPdfAssets(element) {
   if (!element) return null;
+  // Contracts draw the company signature in a web font, which the browser
+  // only downloads once it's used — wait for it, or html2canvas captures
+  // the fallback font.
+  try {
+    await document.fonts?.load('500 23px "Caveat"');
+    await document.fonts?.ready;
+  } catch {
+    // Fonts API unavailable; capture with whatever has loaded.
+  }
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,

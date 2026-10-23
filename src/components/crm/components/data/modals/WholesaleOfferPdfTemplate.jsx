@@ -6,6 +6,7 @@ import {
   Field,
   Section,
   SigLine,
+  COMPANY_SIGNATURE,
 } from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
 import "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate.css";
 
@@ -19,18 +20,17 @@ const COMPANY = {
 const BUYER_COMPANY = "You Win Estates";
 const BUYER_REP = "Ankit Jain";
 
+const COMPANY_EMAIL = "youwinestates@gmail.com";
+
 // The two uploaded agreements differ only in assignment: the assignable one
 // names the buyer "and/or assigns" and has the Successors, Assignment &
-// Novation clause; the no-assignment one drops both and lists a different
-// contact email.
+// Novation clause; the no-assignment one drops both.
 const VARIANTS = {
   assignable: {
-    email: "ankit.jain@youwinestates.com",
     buyerName: "You Win Estates, and/or assigns",
     sigCaption: "YouWin Estates, and/or assigns",
   },
   noAssignment: {
-    email: "youwinestates@gmail.com",
     buyerName: "You Win Estates",
     sigCaption: "YouWin Estates",
   },
@@ -137,7 +137,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           </p>
           <p>
             <strong>Email: </strong>
-            {variant.email}
+            {COMPANY_EMAIL}
           </p>
           <p>
             <strong>Phone: </strong>
@@ -292,7 +292,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
             <h3>BUYER</h3>
             <SigLine label="Company" value={BUYER_COMPANY} />
             <SigLine label="Authorized Representative" value={BUYER_REP} />
-            <SigLine label="Signature" />
+            <SigLine label="Signature" signature={COMPANY_SIGNATURE} />
             <SigLine label="Date" value={today} />
             <p className="oa-pdf-sig-caption">{variant.sigCaption}</p>
           </div>

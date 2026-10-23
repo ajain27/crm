@@ -88,11 +88,21 @@ export function BrandIcon() {
   );
 }
 
-export function SigLine({ label, value }) {
+// You Win Estates' signature on its own signature lines, as on the signed
+// contract templates.
+export const COMPANY_SIGNATURE = "Ankit jain";
+
+// `signature` is drawn in a handwriting font (see pdfExport, which waits
+// for it to load before capturing).
+export function SigLine({ label, value, signature }) {
   return (
     <div className="oa-pdf-sig-line">
       <div className="oa-pdf-sig-line-rule">
-        {value && <span className="oa-pdf-sig-value">{value}</span>}
+        {signature ? (
+          <span className="oa-pdf-sig-script">{signature}</span>
+        ) : (
+          value && <span className="oa-pdf-sig-value">{value}</span>
+        )}
       </div>
       <span className="oa-pdf-sig-line-label">{label}</span>
     </div>
@@ -311,14 +321,14 @@ const OfferAgreementPdfTemplate = forwardRef(function OfferAgreementPdfTemplate(
             <h3>SELLER</h3>
             <SigLine label="Signature" />
             <SigLine label="Printed Name" />
-            <SigLine label="Date" />
+            <SigLine label="Date" value={todayFormatted()} />
           </div>
           <div className="oa-pdf-sig-box">
             <h3>BUYER</h3>
             <SigLine label="Company" value={BUYER_COMPANY} />
             <SigLine label="Authorized Representative" value={BUYER_REP} />
-            <SigLine label="Signature" />
-            <SigLine label="Date" />
+            <SigLine label="Signature" signature={COMPANY_SIGNATURE} />
+            <SigLine label="Date" value={todayFormatted()} />
             <p className="oa-pdf-sig-caption">{BUYER_NAME}</p>
           </div>
         </div>

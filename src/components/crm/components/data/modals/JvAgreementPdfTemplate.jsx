@@ -6,6 +6,7 @@ import {
   Field,
   Section,
   SigLine,
+  COMPANY_SIGNATURE,
 } from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
 import "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate.css";
 import "./JvAgreementPdfTemplate.css";
@@ -53,7 +54,14 @@ function Amount({ value }) {
 // Address come from the deal, and the disbursement table splits the
 // assignment fee. The Effective Date and both signature dates are today.
 const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
-  { partnerName, propertyAddress, contractPrice, assignedPrice, jvSplit },
+  {
+    partnerName,
+    propertyAddress,
+    titleCompany,
+    contractPrice,
+    assignedPrice,
+    jvSplit,
+  },
   ref,
 ) {
   const amounts = getJvAmounts({ contractPrice, assignedPrice, jvSplit });
@@ -107,6 +115,9 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
           <Field label="Party A Name:" value={PARTY_A_NAME} />
           <Field label="Party B Name(s):" value={partnerName} />
           <Field label="Property Address:" value={propertyAddress} />
+          {/* Section 3 instructs the Title / Escrow Company "named above";
+              blank to fill in when the deal doesn't name one. */}
+          <Field label="Title / Escrow Company:" value={titleCompany} />
           <Field label="Effective Date:" value={today} />
         </div>
 
@@ -275,7 +286,7 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
             <h3>PARTY A</h3>
             <SigLine label="Company" value={PARTY_A_NAME} />
             <SigLine label="Authorized Representative" value={PARTY_A_REP} />
-            <SigLine label="Signature" />
+            <SigLine label="Signature" signature={COMPANY_SIGNATURE} />
             <SigLine label="Date" value={today} />
           </div>
           <div className="oa-pdf-sig-box">
