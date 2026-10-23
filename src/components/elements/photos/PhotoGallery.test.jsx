@@ -147,3 +147,40 @@ describe("PhotoGallery", () => {
     expect(onChange.mock.calls[0][0].map((p) => p.id)).toEqual(["p2", "p1"]);
   });
 });
+
+describe("PhotoGallery compact", () => {
+  it("shows a slim Add photos button when there are no photos", () => {
+    render(
+      <PhotoGallery
+        ownerId="d1"
+        photos={[]}
+        photoStore={makeStore()}
+        currentUserId="u1"
+        onChange={vi.fn()}
+        compact
+      />,
+    );
+    expect(screen.getByText("Add photos")).toBeInTheDocument();
+    expect(document.querySelector(".ddm-photo-add.is-wide")).not.toBeNull();
+    expect(screen.queryByText(/of 5 photos/)).toBeNull();
+  });
+
+  it("shows photos and an icon-only add tile in a strip", async () => {
+    render(
+      <PhotoGallery
+        ownerId="d1"
+        photos={photosList(2)}
+        photoStore={makeStore()}
+        currentUserId="u1"
+        onChange={vi.fn()}
+        compact
+      />,
+    );
+    await screen.findByAltText("Photo 1");
+    expect(screen.queryByText("Add photos")).toBeNull();
+    expect(screen.getByLabelText("Add photos")).toBeInTheDocument();
+    expect(
+      document.querySelector(".photo-gallery--compact .ddm-photo-add.is-wide"),
+    ).toBeNull();
+  });
+});

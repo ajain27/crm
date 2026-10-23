@@ -58,7 +58,9 @@ export function LeadMainPhotoRow({
     <div className="main-photo-side">
       {main}
       {aside}
-      {withGallery && photosState.enabled && <PhotoGallery {...galleryProps} />}
+      {withGallery && photosState.enabled && (
+        <PhotoGallery {...galleryProps} compact />
+      )}
     </div>
   );
   if (stacked) {

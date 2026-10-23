@@ -18,13 +18,15 @@ export const MAX_PHOTOS = 5;
 // the owner keeps only `photos` — the list of { id, uploadedAt, focus } —
 // which `onChange(photos)` saves straight away. The first photo is the
 // main one (shown large by MainPhoto); drag thumbnails to reorder, or use
-// "Make main".
+// "Make main". `compact` is a strip of five small slots for a narrow
+// column under the main photo (tips in tooltips, no count line).
 export default function PhotoGallery({
   ownerId,
   photos: photoList,
   photoStore,
   currentUserId,
   onChange,
+  compact = false,
 }) {
   const photos = Array.isArray(photoList) ? photoList : [];
   const [dataById, setDataById] = useState({});
@@ -136,8 +138,15 @@ export default function PhotoGallery({
     setViewIndex((i) => (i + delta + photos.length) % photos.length);
 
   return (
-    <div className="photo-gallery">
-      <div className="ddm-photos-grid">
+    <div className={`photo-gallery${compact ? " photo-gallery--compact" : ""}`}>
+      <div
+        className="ddm-photos-grid"
+        title={
+          compact && photos.length > 1
+            ? "Drag to reorder; the first is the main photo"
+            : undefined
+        }
+      >
         {photos.map((photo, i) => (
           <div
             key={photo.id}
@@ -212,15 +221,31 @@ export default function PhotoGallery({
         ))}
         {remaining > 0 && (
           <label
-            className={`ddm-photo-add${uploading ? " is-uploading" : ""}`}
-            title={`Add photos (${remaining} left)`}
+            className={[
+              "ddm-photo-add",
+              uploading ? "is-uploading" : "",
+              compact && photos.length === 0 ? "is-wide" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            title={`Add photos (${photos.length} of ${MAX_PHOTOS} used)`}
           >
             {uploading ? (
-              <Loader2 size={20} className="spin" />
+              <Loader2 size={compact ? 16 : 20} className="spin" />
             ) : (
-              <ImagePlus size={20} />
+              <ImagePlus size={compact ? 16 : 20} />
             )}
-            <span>{uploading ? "Uploading…" : "Add photo"}</span>
+            {/* In the compact strip a "+" tile says it all once there are
+                photos; with none it's a slim "Add photos" button. */}
+            {(!compact || photos.length === 0) && (
+              <span>
+                {uploading
+                  ? "Uploading…"
+                  : compact
+                    ? "Add photos"
+                    : "Add photo"}
+              </span>
+            )}
             <input
               type="file"
               accept="image/*,.heic,.heif"
@@ -232,14 +257,16 @@ export default function PhotoGallery({
           </label>
         )}
       </div>
-      <div className="ddm-photos-count">
-        <span>
-          {photos.length} of {MAX_PHOTOS} photos
-        </span>
-        {photos.length > 1 && (
-          <span> · drag to reorder; the first is the main photo</span>
-        )}
-      </div>
+      {!compact && (
+        <div className="ddm-photos-count">
+          <span>
+            {photos.length} of {MAX_PHOTOS} photos
+          </span>
+          {photos.length > 1 && (
+            <span> · drag to reorder; the first is the main photo</span>
+          )}
+        </div>
+      )}
 
       {viewed && (
         <Modal
