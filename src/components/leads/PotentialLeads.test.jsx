@@ -33,8 +33,13 @@ describe("PotentialLeads", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders the Add Lead form", () => {
+  it("opens the Add Lead form from the Add a lead button", () => {
     render(<PotentialLeads {...baseProps()} />);
+    expect(
+      screen.queryByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
+    expect(screen.getByText("Add Residential Lead")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
     ).toBeInTheDocument();
@@ -199,6 +204,7 @@ describe("PotentialLeads", () => {
       },
     ];
     render(<PotentialLeads {...baseProps({ leads })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
     const addressInput = screen.getByPlaceholderText(
       /123 Main St, Dallas, TX 75201/i,
     );
@@ -211,6 +217,7 @@ describe("PotentialLeads", () => {
     const setLeads = vi.fn();
     render(<PotentialLeads {...baseProps({ saveLead, setLeads })} />);
     fireEvent.click(screen.getByRole("button", { name: /^Commercial$/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
 
     fireEvent.change(
       screen.getByPlaceholderText(/500 Commerce St, Dallas, TX 75201/i),

@@ -50,6 +50,10 @@ function contractsSubcollection(dealId) {
   return collection(db, "properties", dealId, "contracts");
 }
 
+function leadPhotosSubcollection(leadId) {
+  return collection(db, "leads", leadId, "photos");
+}
+
 function dealPhotosSubcollection(dealId) {
   return collection(db, "properties", dealId, "photos");
 }
@@ -489,7 +493,36 @@ export async function saveLead(lead) {
 }
 
 export async function deleteLeadById(id) {
+  // Photos are their own documents; don't leave them behind.
+  const photos = await getDocs(leadPhotosSubcollection(id)).catch(() => null);
+  await Promise.all((photos?.docs || []).map((d) => deleteDoc(d.ref)));
   await deleteDoc(doc(leadsCollection, id));
+}
+
+// Saves only the given fields of a lead, e.g. { photos } as they change.
+export async function updateLeadPatch(id, fields) {
+  await updateDoc(doc(leadsCollection, id), fields);
+}
+
+// Lead photos: one compressed JPEG data URL per document, like deal photos.
+export async function saveLeadPhoto({ id, leadId, userId, data, uploadedAt }) {
+  await setDoc(doc(leadPhotosSubcollection(leadId), id), {
+    id,
+    leadId,
+    userId,
+    data,
+    uploadedAt,
+  });
+}
+
+export async function fetchLeadPhoto(leadId, id) {
+  const snapshot = await getDoc(doc(leadPhotosSubcollection(leadId), id));
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() };
+}
+
+export async function deleteLeadPhotoById(leadId, id) {
+  await deleteDoc(doc(leadPhotosSubcollection(leadId), id));
 }
 
 const userStatsCollection = collection(db, "userStats");

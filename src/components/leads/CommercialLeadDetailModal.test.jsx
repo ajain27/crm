@@ -110,3 +110,58 @@ describe("CommercialLeadDetailModal imported details", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("CommercialLeadDetailModal photos", () => {
+  it("shows the main photo and photo grid, and keeps them on save", async () => {
+    const photos = [
+      { id: "p1", uploadedAt: "2026-10-01T00:00:00.000Z" },
+      { id: "p2", uploadedAt: "2026-10-01T00:00:00.000Z" },
+    ];
+    const photoStore = {
+      save: vi.fn(),
+      fetch: vi.fn(async (ownerId, id) => ({ id, data: `data:${id}` })),
+      remove: vi.fn(),
+    };
+    const onPhotosChange = vi.fn().mockResolvedValue(undefined);
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ id: "c9", name: "Park", photos }}
+        onSave={onSave}
+        photoStore={photoStore}
+        onPhotosChange={onPhotosChange}
+        currentUserId="u1"
+      />,
+    );
+    expect(await screen.findByAltText("Main photo")).toHaveAttribute(
+      "src",
+      "data:p1",
+    );
+    expect(screen.getByText("Photos")).toBeInTheDocument();
+
+    // Make the second photo main: saved at once and kept in the draft.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Make photo 2 the main photo" }),
+    );
+    await waitFor(() =>
+      expect(onPhotosChange).toHaveBeenCalledWith("c9", [photos[1], photos[0]]),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/ }));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0].photos).toEqual([photos[1], photos[0]]);
+  });
+
+  it("has no photos section without a photo store", () => {
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ id: "c10", name: "Park" }}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("Photos")).toBeNull();
+  });
+});

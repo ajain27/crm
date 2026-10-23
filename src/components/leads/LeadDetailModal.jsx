@@ -5,10 +5,16 @@ import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
 import { ExtraDetails, ZillowLink } from "./components/LeadTableCells";
+import {
+  LeadMainPhotoRow,
+  LeadPhotosSection,
+  useLeadPhotos,
+} from "./components/LeadPhotos";
 import { StreetViewButton } from "../elements/StreetView";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
 import { hasFormattedNotes } from "../crm/components/data/comps/notesTable";
 import { useLeadComps } from "./comps/useLeadComps";
+import ArvHighlight from "../elements/ArvHighlight";
 import {
   LeadCompsTab,
   LeadCompsTabBar,
@@ -72,8 +78,19 @@ export default function LeadDetailModal({
   onSave,
   isPpc = false,
   isPpl = false,
+  photoStore,
+  onPhotosChange,
+  currentUserId,
 }) {
   const [draft, setDraft] = useState({});
+  const photosState = useLeadPhotos({
+    lead,
+    draft,
+    setDraft,
+    photoStore,
+    onPhotosChange,
+    currentUserId,
+  });
   const [saving, setSaving] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   // Every lead except a potential rental can run comps; those get a wide
@@ -112,6 +129,7 @@ export default function LeadDetailModal({
   // sections as other residential leads; only website PPC leads stay minimal.
   const hasSellerSection = !isRental && !isPpc;
   const canRunComps = compsState.enabled;
+  const arvValue = Number(String(draft.arv || "").replace(/[^0-9.]/g, "")) || 0;
   const activeTab = compsState.tab;
 
   // PPC leads and rentals not on the market ask for the seller's first and
@@ -214,163 +232,176 @@ export default function LeadDetailModal({
 
           {activeTab === "details" && (
             <>
-              <div className="ldm-section">
-                <div className="ldm-section-label">Property</div>
-                <div className="ldm-grid">
-                  <Field label="Deal Type">
-                    <select
-                      className="ldm-input"
-                      value={draft.dealType || "Wholesale"}
-                      onChange={(e) => set("dealType", e.target.value)}
-                    >
-                      {DEAL_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Address">
-                    <input
-                      className="ldm-input ldm-wide"
-                      value={draft.address || ""}
-                      onChange={(e) => set("address", e.target.value)}
-                      placeholder="e.g. 123 Main St, Dallas, TX 75201"
+              <LeadMainPhotoRow
+                photosState={photosState}
+                aside={
+                  arvValue > 0 || compsState.comps?.arv > 0 ? (
+                    <ArvHighlight
+                      arv={arvValue}
+                      compsArv={compsState.comps?.arv}
+                      compsDate={compsState.comps?.date}
                     />
-                  </Field>
-                  <Field label="Source">
-                    {isPpc || isPpl ? (
-                      <input
-                        className="ldm-input"
-                        value={isPpc ? "PPC" : "PPL"}
-                        disabled
-                      />
-                    ) : (
+                  ) : null
+                }
+              >
+                <div className="ldm-section">
+                  <div className="ldm-section-label">Property</div>
+                  <div className="ldm-grid">
+                    <Field label="Deal Type">
                       <select
                         className="ldm-input"
-                        value={draft.source || ""}
-                        onChange={(e) => set("source", e.target.value)}
+                        value={draft.dealType || "Wholesale"}
+                        onChange={(e) => set("dealType", e.target.value)}
                       >
-                        <option value="">Select source…</option>
-                        {SOURCES.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
+                        {DEAL_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
                           </option>
                         ))}
                       </select>
-                    )}
-                  </Field>
-                  {isRental && (
-                    <Field label="On Market">
-                      <select
-                        className="ldm-input"
-                        value={draft.onMarket || "No"}
-                        onChange={(e) => set("onMarket", e.target.value)}
-                      >
-                        <option value="No">No</option>
-                        <option value="Yes">Yes</option>
-                      </select>
                     </Field>
-                  )}
-                  {(isRental ? draft.onMarket === "Yes" : isMLS) && (
-                    <>
-                      <Field label="Agent Name">
-                        <input
-                          className="ldm-input"
-                          value={draft.agentName || ""}
-                          onChange={(e) =>
-                            set(
-                              "agentName",
-                              e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
-                            )
-                          }
-                          placeholder="Agent name"
-                        />
-                      </Field>
-                      <Field label="Agent Phone">
-                        <input
-                          className="ldm-input"
-                          type="tel"
-                          value={draft.agentPhone || ""}
-                          onChange={(e) =>
-                            set("agentPhone", formatPhone(e.target.value))
-                          }
-                          placeholder="555-000-0000"
-                          maxLength={12}
-                        />
-                      </Field>
-                    </>
-                  )}
-                  {isRental && draft.onMarket === "Yes" && (
-                    <Field label="Listed Price">
-                      <CurrencyInput
-                        className="ldm-input"
-                        value={draft.listedPrice || ""}
-                        onChange={(e) => set("listedPrice", e.target.value)}
-                        placeholder="$0"
+                    <Field label="Address">
+                      <input
+                        className="ldm-input ldm-wide"
+                        value={draft.address || ""}
+                        onChange={(e) => set("address", e.target.value)}
+                        placeholder="e.g. 123 Main St, Dallas, TX 75201"
                       />
                     </Field>
-                  )}
-                  {hasNameFields &&
-                    ["firstName", "lastName"].map((field) => (
-                      <Field
-                        key={field}
-                        label={
-                          field === "firstName"
-                            ? "Seller First Name"
-                            : "Seller Last Name"
-                        }
-                      >
+                    <Field label="Source">
+                      {isPpc || isPpl ? (
                         <input
                           className="ldm-input"
-                          value={draft[field] || ""}
-                          onChange={(e) =>
-                            set(
-                              field,
-                              e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
-                            )
-                          }
-                          placeholder={
-                            field === "firstName" ? "First name" : "Last name"
-                          }
+                          value={isPpc ? "PPC" : "PPL"}
+                          disabled
+                        />
+                      ) : (
+                        <select
+                          className="ldm-input"
+                          value={draft.source || ""}
+                          onChange={(e) => set("source", e.target.value)}
+                        >
+                          <option value="">Select source…</option>
+                          {SOURCES.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </Field>
+                    {isRental && (
+                      <Field label="On Market">
+                        <select
+                          className="ldm-input"
+                          value={draft.onMarket || "No"}
+                          onChange={(e) => set("onMarket", e.target.value)}
+                        >
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </Field>
+                    )}
+                    {(isRental ? draft.onMarket === "Yes" : isMLS) && (
+                      <>
+                        <Field label="Agent Name">
+                          <input
+                            className="ldm-input"
+                            value={draft.agentName || ""}
+                            onChange={(e) =>
+                              set(
+                                "agentName",
+                                e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
+                              )
+                            }
+                            placeholder="Agent name"
+                          />
+                        </Field>
+                        <Field label="Agent Phone">
+                          <input
+                            className="ldm-input"
+                            type="tel"
+                            value={draft.agentPhone || ""}
+                            onChange={(e) =>
+                              set("agentPhone", formatPhone(e.target.value))
+                            }
+                            placeholder="555-000-0000"
+                            maxLength={12}
+                          />
+                        </Field>
+                      </>
+                    )}
+                    {isRental && draft.onMarket === "Yes" && (
+                      <Field label="Listed Price">
+                        <CurrencyInput
+                          className="ldm-input"
+                          value={draft.listedPrice || ""}
+                          onChange={(e) => set("listedPrice", e.target.value)}
+                          placeholder="$0"
                         />
                       </Field>
-                    ))}
-                  <Field label="Email">
-                    <input
-                      className="ldm-input"
-                      type="email"
-                      value={draft.email || ""}
-                      onChange={(e) => set("email", e.target.value)}
-                      placeholder="seller@email.com"
-                    />
-                  </Field>
-                  <Field label="Phone">
-                    <input
-                      className="ldm-input"
-                      type="tel"
-                      value={draft.phone || ""}
-                      onChange={(e) =>
-                        set("phone", formatPhone(e.target.value))
-                      }
-                      placeholder="555-000-0000"
-                      maxLength={12}
-                    />
-                  </Field>
-                  <Field label="Phone 2">
-                    <input
-                      className="ldm-input"
-                      type="tel"
-                      value={draft.phone2 || ""}
-                      onChange={(e) =>
-                        set("phone2", formatPhone(e.target.value))
-                      }
-                      placeholder="555-000-0000"
-                      maxLength={12}
-                    />
-                  </Field>
+                    )}
+                    {hasNameFields &&
+                      ["firstName", "lastName"].map((field) => (
+                        <Field
+                          key={field}
+                          label={
+                            field === "firstName"
+                              ? "Seller First Name"
+                              : "Seller Last Name"
+                          }
+                        >
+                          <input
+                            className="ldm-input"
+                            value={draft[field] || ""}
+                            onChange={(e) =>
+                              set(
+                                field,
+                                e.target.value.replace(/[^a-zA-Z\s'.]/g, ""),
+                              )
+                            }
+                            placeholder={
+                              field === "firstName" ? "First name" : "Last name"
+                            }
+                          />
+                        </Field>
+                      ))}
+                    <Field label="Email">
+                      <input
+                        className="ldm-input"
+                        type="email"
+                        value={draft.email || ""}
+                        onChange={(e) => set("email", e.target.value)}
+                        placeholder="seller@email.com"
+                      />
+                    </Field>
+                    <Field label="Phone">
+                      <input
+                        className="ldm-input"
+                        type="tel"
+                        value={draft.phone || ""}
+                        onChange={(e) =>
+                          set("phone", formatPhone(e.target.value))
+                        }
+                        placeholder="555-000-0000"
+                        maxLength={12}
+                      />
+                    </Field>
+                    <Field label="Phone 2">
+                      <input
+                        className="ldm-input"
+                        type="tel"
+                        value={draft.phone2 || ""}
+                        onChange={(e) =>
+                          set("phone2", formatPhone(e.target.value))
+                        }
+                        placeholder="555-000-0000"
+                        maxLength={12}
+                      />
+                    </Field>
+                  </div>
                 </div>
-              </div>
+              </LeadMainPhotoRow>
 
               {isRental ? (
                 <div className="ldm-section">
@@ -528,6 +559,7 @@ export default function LeadDetailModal({
               )}
 
               <ExtraDetails fields={draft.extraFields} />
+              <LeadPhotosSection photosState={photosState} />
 
               <div className="ldm-section">
                 <div className="ldm-section-label ldm-notes-label">

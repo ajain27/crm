@@ -18,7 +18,10 @@ import RunCompsModal from "../comps/RunCompsModal";
 import CompsNoteView from "../comps/CompsNoteView";
 import { withCompsNote } from "../comps/compsNote";
 import { hasFormattedNotes } from "../comps/notesTable";
-import DealPhotos from "./DealPhotos";
+import PhotoGallery from "../../../../elements/photos/PhotoGallery";
+import MainPhoto from "../../../../elements/photos/MainPhoto";
+import ArvHighlight from "../../../../elements/ArvHighlight";
+import { leadComps } from "../../../../leads/comps/leadComps";
 import { ZillowLink } from "../../../../leads/components/LeadTableCells";
 import { StreetViewButton } from "../../../../elements/StreetView";
 import {
@@ -257,6 +260,14 @@ function DealDetailModal({
 
   if (!deal) return null;
 
+  // Photos save on their own, straight away.
+  const savePhotos = (photos) => updateDealPatch(deal.id, { photos });
+  const hasMainPhoto =
+    Boolean(photoStore) && Array.isArray(deal.photos) && deal.photos.length > 0;
+  // The latest comps run (from the notes), for the big ARV.
+  const dealComps = leadComps({ notes: draft.notes });
+  const hasArv = parseCurrency(draft.arv) > 0 || dealComps?.arv > 0;
+  const hasSide = hasMainPhoto || hasArv;
   const offerSent = (draft.offerStatus || "Not Sent") === "Offer Sent";
   const locked = offerSent && (draft.sellerAccepted || "No") === "No";
   // Notes with a comps note or a Question / Answer table in them show laid
@@ -457,132 +468,152 @@ function DealDetailModal({
             </div>
           )}
 
-          <Section title="Property">
-            <Field label="Deal Type">
-              <select
-                disabled={locked}
-                value={draft.dealType || "Wholesale"}
-                onChange={(e) => set("dealType", e.target.value)}
-              >
-                {DEAL_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field
-              label="Address"
-              span2
-              action={
-                <>
-                  <ZillowLink address={formatFullAddress(draft)} />
-                  <StreetViewButton address={formatFullAddress(draft)} />
-                </>
-              }
-            >
-              <input
-                disabled={locked}
-                value={draft.address || ""}
-                onChange={(e) => set("address", e.target.value)}
-                placeholder="Street address"
-              />
-            </Field>
-            <Field label="City">
-              <input
-                disabled={locked}
-                value={draft.city || ""}
-                onChange={(e) => set("city", e.target.value)}
-                placeholder="City"
-              />
-            </Field>
-            <Field label="State">
-              <select
-                disabled={locked}
-                value={draft.state || ""}
-                onChange={(e) => set("state", e.target.value)}
-              >
-                {STATE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Zip Code">
-              <input
-                disabled={locked}
-                value={draft.zipCode || ""}
-                onChange={(e) => set("zipCode", e.target.value)}
-                placeholder="Zip code"
-              />
-            </Field>
-            <Field label="Property Type">
-              <select
-                disabled={locked}
-                value={draft.propertyType || "Single Family"}
-                onChange={(e) => set("propertyType", e.target.value)}
-              >
-                {PROPERTY_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Sq Ft">
-              <input
-                disabled={locked}
-                type="number"
-                value={draft.squareFootage || ""}
-                onChange={(e) => set("squareFootage", e.target.value)}
-                placeholder="0"
-              />
-            </Field>
-            {!isRental && (
-              <>
-                <Field label="Seller First Name">
-                  <input
-                    disabled={locked}
-                    value={draft.sellerFirstName || ""}
-                    onChange={(e) => set("sellerFirstName", e.target.value)}
-                    placeholder="First name"
+          {/* The main photo, large, beside the property details. */}
+          <div className={`main-photo-row${hasSide ? " has-photo" : ""}`}>
+            {hasSide && (
+              <div className="main-photo-side">
+                {hasMainPhoto && (
+                  <MainPhoto
+                    ownerId={deal.id}
+                    photos={deal.photos}
+                    photoStore={photoStore}
+                    onChange={savePhotos}
                   />
-                </Field>
-                <Field label="Seller Last Name">
-                  <input
-                    disabled={locked}
-                    value={draft.sellerLastName || ""}
-                    onChange={(e) => set("sellerLastName", e.target.value)}
-                    placeholder="Last name"
-                  />
-                </Field>
-                <Field label="Seller Phone">
-                  <input
-                    disabled={locked}
-                    value={draft.sellerPhone || ""}
-                    onChange={(e) =>
-                      set("sellerPhone", formatPhone(e.target.value))
-                    }
-                    placeholder="555-000-0000"
-                  />
-                </Field>
-                <Field label="On Market">
-                  <select
-                    disabled={locked}
-                    value={draft.onMarket || "No"}
-                    onChange={(e) => set("onMarket", e.target.value)}
-                  >
-                    {YES_NO.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </>
+                )}
+                <ArvHighlight
+                  arv={parseCurrency(draft.arv)}
+                  compsArv={dealComps?.arv}
+                  compsDate={dealComps?.date}
+                />
+              </div>
             )}
-          </Section>
+            <Section title="Property">
+              <Field label="Deal Type">
+                <select
+                  disabled={locked}
+                  value={draft.dealType || "Wholesale"}
+                  onChange={(e) => set("dealType", e.target.value)}
+                >
+                  {DEAL_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field
+                label="Address"
+                span2
+                action={
+                  <>
+                    <ZillowLink address={formatFullAddress(draft)} />
+                    <StreetViewButton address={formatFullAddress(draft)} />
+                  </>
+                }
+              >
+                <input
+                  disabled={locked}
+                  value={draft.address || ""}
+                  onChange={(e) => set("address", e.target.value)}
+                  placeholder="Street address"
+                />
+              </Field>
+              <Field label="City">
+                <input
+                  disabled={locked}
+                  value={draft.city || ""}
+                  onChange={(e) => set("city", e.target.value)}
+                  placeholder="City"
+                />
+              </Field>
+              <Field label="State">
+                <select
+                  disabled={locked}
+                  value={draft.state || ""}
+                  onChange={(e) => set("state", e.target.value)}
+                >
+                  {STATE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Zip Code">
+                <input
+                  disabled={locked}
+                  value={draft.zipCode || ""}
+                  onChange={(e) => set("zipCode", e.target.value)}
+                  placeholder="Zip code"
+                />
+              </Field>
+              <Field label="Property Type">
+                <select
+                  disabled={locked}
+                  value={draft.propertyType || "Single Family"}
+                  onChange={(e) => set("propertyType", e.target.value)}
+                >
+                  {PROPERTY_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Sq Ft">
+                <input
+                  disabled={locked}
+                  type="number"
+                  value={draft.squareFootage || ""}
+                  onChange={(e) => set("squareFootage", e.target.value)}
+                  placeholder="0"
+                />
+              </Field>
+              {!isRental && (
+                <>
+                  <Field label="Seller First Name">
+                    <input
+                      disabled={locked}
+                      value={draft.sellerFirstName || ""}
+                      onChange={(e) => set("sellerFirstName", e.target.value)}
+                      placeholder="First name"
+                    />
+                  </Field>
+                  <Field label="Seller Last Name">
+                    <input
+                      disabled={locked}
+                      value={draft.sellerLastName || ""}
+                      onChange={(e) => set("sellerLastName", e.target.value)}
+                      placeholder="Last name"
+                    />
+                  </Field>
+                  <Field label="Seller Phone">
+                    <input
+                      disabled={locked}
+                      value={draft.sellerPhone || ""}
+                      onChange={(e) =>
+                        set("sellerPhone", formatPhone(e.target.value))
+                      }
+                      placeholder="555-000-0000"
+                    />
+                  </Field>
+                  <Field label="On Market">
+                    <select
+                      disabled={locked}
+                      value={draft.onMarket || "No"}
+                      onChange={(e) => set("onMarket", e.target.value)}
+                    >
+                      {YES_NO.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </>
+              )}
+            </Section>
+          </div>
 
           {draft.onMarket === "Yes" && (
             <Section title="Listing">
@@ -851,12 +882,15 @@ function DealDetailModal({
 
           {photoStore && (
             <Section title="Photos">
-              <DealPhotos
-                deal={deal}
-                photoStore={photoStore}
-                currentUserId={currentUserId}
-                updateDealPatch={updateDealPatch}
-              />
+              <div className="ddm-edit-field-wide">
+                <PhotoGallery
+                  ownerId={deal.id}
+                  photos={deal.photos}
+                  photoStore={photoStore}
+                  currentUserId={currentUserId}
+                  onChange={savePhotos}
+                />
+              </div>
             </Section>
           )}
 

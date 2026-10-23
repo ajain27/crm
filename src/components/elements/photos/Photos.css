@@ -1,0 +1,237 @@
+@layer components {
+  /* Photo grid, viewer and main photo (PhotoGallery / MainPhoto). */
+  /* The main photo beside a window's first section: wrap both in
+     .main-photo-row (with .has-photo once there is one). */
+  .main-photo-row.has-photo {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .ddm-main-photo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    border: 1px solid var(--line);
+    background: var(--badge-bg);
+    color: var(--muted);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .ddm-main-photo:active {
+    cursor: grabbing;
+  }
+
+  .ddm-main-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .ddm-main-photo-hint {
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-size: 0.6875rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .ddm-main-photo:hover .ddm-main-photo-hint {
+    opacity: 1;
+  }
+
+  .ddm-photo[draggable="true"] {
+    cursor: grab;
+  }
+
+  .ddm-photo.is-dragging {
+    opacity: 0.4;
+  }
+
+  .ddm-photo.is-drop-target .ddm-photo-thumb {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  .ddm-photo.is-main .ddm-photo-thumb {
+    border-color: var(--blue);
+  }
+
+  .ddm-photo-main-badge,
+  .ddm-photo-make-main {
+    position: absolute;
+    left: 0.25rem;
+    bottom: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+  }
+
+  .ddm-photo-main-badge {
+    padding: 0.1rem 0.45rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .ddm-photo-make-main {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .ddm-photo-make-main:hover {
+    color: #facc15;
+  }
+
+  @media (max-width: 700px) {
+    .main-photo-row.has-photo {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .ddm-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .ddm-photo {
+    position: relative;
+    aspect-ratio: 1;
+  }
+
+  .ddm-photo-thumb,
+  .ddm-photo-add {
+    @apply flex h-full w-full items-center justify-center overflow-hidden rounded-lg border p-0 cursor-pointer;
+    border-color: var(--input-border);
+    background: color-mix(in srgb, var(--panel) 94%, var(--blue-light) 6%);
+    color: var(--muted);
+  }
+
+  .ddm-photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ddm-photo-delete {
+    @apply absolute inline-flex h-6 w-6 min-w-6 items-center justify-center rounded-full p-0 cursor-pointer;
+    top: 0.25rem;
+    right: 0.25rem;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+  }
+
+  .ddm-photo-add {
+    aspect-ratio: 1;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-style: dashed;
+    font-size: 0.75rem;
+  }
+
+  .ddm-photo-add:hover {
+    color: var(--text);
+  }
+
+  .ddm-photo-add.is-uploading {
+    cursor: progress;
+  }
+
+  .ddm-photo-add input {
+    display: none;
+  }
+
+  .ddm-photos-count {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .ddm-photo-viewer-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .ddm-photo-viewer-body img {
+    min-width: 0;
+    max-width: 100%;
+    max-height: calc(96dvh - 6rem);
+    object-fit: contain;
+    border-radius: 0.5rem;
+  }
+
+  .ddm-photo-nav {
+    @apply inline-flex flex-shrink-0 items-center justify-center rounded-full p-0 cursor-pointer;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+
+  .main-photo-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  /* ArvHighlight */
+  .arv-highlight {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--green) 8%, var(--panel) 92%);
+  }
+
+  .arv-highlight-label {
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .arv-highlight-value {
+    color: var(--text);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .arv-highlight-caption {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+}

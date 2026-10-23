@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import Modal from "../modal/Modal";
 import { ExtraDetails, ZillowLink } from "./components/LeadTableCells";
+import {
+  LeadMainPhotoRow,
+  LeadPhotosSection,
+  useLeadPhotos,
+} from "./components/LeadPhotos";
 import { StreetViewButton } from "../elements/StreetView";
 import { formatPhone } from "../../utils/utils";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
@@ -27,8 +32,19 @@ export default function CommercialLeadDetailModal({
   lead,
   onSave,
   onDelete,
+  photoStore,
+  onPhotosChange,
+  currentUserId,
 }) {
   const [draft, setDraft] = useState({});
+  const photosState = useLeadPhotos({
+    lead,
+    draft,
+    setDraft,
+    photoStore,
+    onPhotosChange,
+    currentUserId,
+  });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -102,63 +118,65 @@ export default function CommercialLeadDetailModal({
     >
       <div className="cldm-layout">
         <div className="ldm-body">
-          <div className="ldm-section">
-            <div className="ldm-section-label">Property</div>
-            <div className="ldm-grid">
-              <Field label="Name">
-                <input
-                  className="ldm-input ldm-wide"
-                  value={draft.name || ""}
-                  onChange={(e) => set("name", e.target.value)}
-                  placeholder="e.g. Office Building, Retail Strip…"
-                />
-              </Field>
-              <Field
-                label="Address"
-                action={
-                  <>
-                    <ZillowLink address={draft.address} />
-                    <StreetViewButton address={draft.address} />
-                  </>
-                }
-              >
-                <input
-                  className="ldm-input ldm-wide"
-                  value={draft.address || ""}
-                  onChange={(e) => set("address", e.target.value)}
-                  placeholder="e.g. 500 Commerce St, Dallas, TX 75201"
-                />
-              </Field>
-              <Field label="Property Type">
-                <select
-                  className="ldm-input"
-                  value={draft.propertyType || ""}
-                  onChange={(e) => set("propertyType", e.target.value)}
+          <LeadMainPhotoRow photosState={photosState} stacked>
+            <div className="ldm-section">
+              <div className="ldm-section-label">Property</div>
+              <div className="ldm-grid">
+                <Field label="Name">
+                  <input
+                    className="ldm-input ldm-wide"
+                    value={draft.name || ""}
+                    onChange={(e) => set("name", e.target.value)}
+                    placeholder="e.g. Office Building, Retail Strip…"
+                  />
+                </Field>
+                <Field
+                  label="Address"
+                  action={
+                    <>
+                      <ZillowLink address={draft.address} />
+                      <StreetViewButton address={draft.address} />
+                    </>
+                  }
                 >
-                  <option value="">Select type…</option>
-                  {COMMERCIAL_PROPERTY_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="State">
-                <select
-                  className="ldm-input"
-                  value={draft.state || ""}
-                  onChange={(e) => set("state", e.target.value)}
-                >
-                  <option value="">Select state…</option>
-                  {STATE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                  <input
+                    className="ldm-input ldm-wide"
+                    value={draft.address || ""}
+                    onChange={(e) => set("address", e.target.value)}
+                    placeholder="e.g. 500 Commerce St, Dallas, TX 75201"
+                  />
+                </Field>
+                <Field label="Property Type">
+                  <select
+                    className="ldm-input"
+                    value={draft.propertyType || ""}
+                    onChange={(e) => set("propertyType", e.target.value)}
+                  >
+                    <option value="">Select type…</option>
+                    {COMMERCIAL_PROPERTY_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="State">
+                  <select
+                    className="ldm-input"
+                    value={draft.state || ""}
+                    onChange={(e) => set("state", e.target.value)}
+                  >
+                    <option value="">Select state…</option>
+                    {STATE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
             </div>
-          </div>
+          </LeadMainPhotoRow>
 
           <div className="ldm-section">
             <div className="ldm-section-label">Source</div>
@@ -248,6 +266,7 @@ export default function CommercialLeadDetailModal({
           </div>
 
           <ExtraDetails fields={draft.extraFields} />
+          <LeadPhotosSection photosState={photosState} />
 
           <div className="ldm-section">
             <div className="ldm-section-label">Notes</div>

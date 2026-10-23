@@ -14,6 +14,10 @@ import {
   saveDealPhoto,
   fetchDealPhoto,
   deleteDealPhotoById,
+  saveLeadPhoto,
+  fetchLeadPhoto,
+  deleteLeadPhotoById,
+  updateLeadPatch,
   subscribeToLeads,
   saveLead,
   deleteLeadById,
@@ -66,10 +70,18 @@ import { useDealForm } from "./hooks/useDealForm";
 import { useProfileManager } from "./hooks/useProfileManager";
 
 // Module-level so the object is stable across renders.
+// Photo stores for PhotoGallery / MainPhoto: an owner's (deal's or
+// lead's) photos, one document each.
 const DEAL_PHOTO_STORE = {
-  save: saveDealPhoto,
+  save: ({ ownerId, ...photo }) => saveDealPhoto({ ...photo, dealId: ownerId }),
   fetch: fetchDealPhoto,
   remove: deleteDealPhotoById,
+};
+
+const LEAD_PHOTO_STORE = {
+  save: ({ ownerId, ...photo }) => saveLeadPhoto({ ...photo, leadId: ownerId }),
+  fetch: fetchLeadPhoto,
+  remove: deleteLeadPhotoById,
 };
 
 function Wholesale() {
@@ -342,6 +354,8 @@ function Wholesale() {
             saveLead={saveLead}
             deleteLeadById={deleteLeadById}
             saveLeadFile={saveLeadFile}
+            leadPhotoStore={LEAD_PHOTO_STORE}
+            updateLeadPatch={updateLeadPatch}
             fetchLeadFile={fetchLeadFile}
             deleteLeadFileById={deleteLeadFileById}
             saveDeal={saveDeal}
@@ -396,6 +410,8 @@ function Wholesale() {
             saveLead={saveLead}
             deleteLeadById={deleteLeadById}
             saveLeadFile={saveLeadFile}
+            leadPhotoStore={LEAD_PHOTO_STORE}
+            updateLeadPatch={updateLeadPatch}
             fetchLeadFile={fetchLeadFile}
             deleteLeadFileById={deleteLeadFileById}
             saveDeal={saveDeal}

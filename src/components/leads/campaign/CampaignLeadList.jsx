@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import { AccordionHeaderCell } from "../../elements/elements";
 import { formatDate } from "../../../utils/utils";
 import LeadListPanel, {
@@ -22,6 +21,7 @@ import {
 import MarkBadLeadModal from "../components/MarkBadLeadModal";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadImportButton from "../components/LeadImportButton";
+import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import { leadMatchesSearch, sellerNameOf } from "../leadUtils";
@@ -95,12 +95,7 @@ export default function CampaignLeadList({
           onDelete={onBulkDelete}
         />
       )}
-      {!readOnly && onAddLead && (
-        <button type="button" className="leads-export-btn" onClick={onAddLead}>
-          <Plus size={13} />
-          Add a lead
-        </button>
-      )}
+      {!readOnly && onAddLead && <AddLeadButton onClick={onAddLead} />}
       {!readOnly && onImport && <LeadImportButton onImport={onImport} />}
       {!readOnly && onRemoveDuplicates && (
         <LeadDedupeButton leads={leads} onRemove={onRemoveDuplicates} />

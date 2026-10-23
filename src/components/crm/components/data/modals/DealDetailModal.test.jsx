@@ -430,7 +430,7 @@ describe("DealDetailModal", () => {
     expect(screen.getByPlaceholderText("Street address")).toHaveValue(
       "2 Main St",
     );
-    expect(await screen.findByAltText("Deal photo 1")).toBeInTheDocument();
+    expect(await screen.findByAltText("Photo 1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Save Changes"));
     await waitFor(() => expect(updateDealPatch).toHaveBeenCalled());

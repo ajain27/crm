@@ -15,6 +15,7 @@ import {
   SelectCell,
 } from "../components/LeadTableCells";
 import LeadImportButton from "../components/LeadImportButton";
+import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
@@ -64,6 +65,7 @@ export default function ResidentialLeadList({
   onBulkDelete,
   onImport,
   onRemoveDuplicates,
+  onAddLead,
   onAddToCrm,
   onRunAutomation,
   onStopAutomation,
@@ -145,6 +147,7 @@ export default function ResidentialLeadList({
         listState={listState}
         onDelete={onBulkDelete}
       />
+      {onAddLead && <AddLeadButton onClick={onAddLead} />}
       {onImport && <LeadImportButton onImport={onImport} />}
       {onRemoveDuplicates && (
         <LeadDedupeButton leads={leads} onRemove={onRemoveDuplicates} />

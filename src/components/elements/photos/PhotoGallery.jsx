@@ -1,24 +1,38 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, ImagePlus, Loader2, X } from "lucide-react";
-import Modal from "../../../../modal/Modal";
-import { compressImage, isHeicFile } from "../../../../../utils/compressImage";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  Loader2,
+  Star,
+  X,
+} from "lucide-react";
+import Modal from "../../modal/Modal";
+import { compressImage, isHeicFile } from "../../../utils/compressImage";
+import { loadPhoto, photoPosition, rememberPhoto } from "./photoCache";
 
-export const MAX_DEAL_PHOTOS = 5;
+export const MAX_PHOTOS = 5;
 
-// Up to five photos per deal. Each photo's image data is its own document
-// (photoStore.save/fetch/remove); the deal keeps only `photos` — the list
-// of { id, uploadedAt } — which is saved straight away via updateDealPatch.
-export default function DealPhotos({
-  deal,
+// Up to five photos for a deal or lead (the "owner"). Each photo's image
+// data is its own document (photoStore.save/fetch/remove, by owner id);
+// the owner keeps only `photos` — the list of { id, uploadedAt, focus } —
+// which `onChange(photos)` saves straight away. The first photo is the
+// main one (shown large by MainPhoto); drag thumbnails to reorder, or use
+// "Make main".
+export default function PhotoGallery({
+  ownerId,
+  photos: photoList,
   photoStore,
   currentUserId,
-  updateDealPatch,
+  onChange,
 }) {
-  const photos = Array.isArray(deal.photos) ? deal.photos : [];
+  const photos = Array.isArray(photoList) ? photoList : [];
   const [dataById, setDataById] = useState({});
   const [uploading, setUploading] = useState(false);
   const [viewIndex, setViewIndex] = useState(null);
-  const remaining = MAX_DEAL_PHOTOS - photos.length;
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+  const remaining = MAX_PHOTOS - photos.length;
 
   const missingIds = photos
     .map((p) => p.id)
@@ -29,12 +43,11 @@ export default function DealPhotos({
     if (!missingIds) return;
     let cancelled = false;
     Promise.all(
-      missingIds.split(",").map((id) =>
-        photoStore
-          .fetch(deal.id, id)
-          .then((doc) => [id, doc?.data || ""])
-          .catch(() => [id, ""]),
-      ),
+      missingIds
+        .split(",")
+        .map((id) =>
+          loadPhoto(photoStore, ownerId, id).then((data) => [id, data]),
+        ),
     ).then((entries) => {
       if (!cancelled)
         setDataById((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
@@ -42,7 +55,7 @@ export default function DealPhotos({
     return () => {
       cancelled = true;
     };
-  }, [deal.id, missingIds, photoStore]);
+  }, [ownerId, missingIds, photoStore]);
 
   async function handleFiles(event) {
     const files = Array.from(event.target.files || []);
@@ -55,7 +68,7 @@ export default function DealPhotos({
     }
     if (files.length > remaining) {
       alert(
-        `A deal can have up to ${MAX_DEAL_PHOTOS} photos. You can add ${remaining} more.`,
+        `You can have up to ${MAX_PHOTOS} photos. You can add ${remaining} more.`,
       );
       return;
     }
@@ -71,14 +84,15 @@ export default function DealPhotos({
         };
         await photoStore.save({
           ...photo,
-          dealId: deal.id,
+          ownerId,
           userId: currentUserId,
           data,
         });
         added.push(photo);
+        rememberPhoto(ownerId, photo.id, data);
         setDataById((prev) => ({ ...prev, [photo.id]: data }));
       }
-      await updateDealPatch(deal.id, { photos: [...photos, ...added] });
+      await onChange([...photos, ...added]);
     } catch (error) {
       console.error("Failed to upload photo", error);
       alert(error?.message || "Unable to upload the photo.");
@@ -91,12 +105,30 @@ export default function DealPhotos({
     if (!window.confirm("Delete this photo?")) return;
     const next = photos.filter((p) => p.id !== photoId);
     try {
-      await photoStore.remove(deal.id, photoId);
+      await photoStore.remove(ownerId, photoId);
     } catch (error) {
       console.error("Failed to delete photo", error);
     }
-    await updateDealPatch(deal.id, { photos: next });
+    await onChange(next);
     setViewIndex(null);
+  }
+
+  // Moves the photo at `from` to `to`; the first photo is the main one.
+  async function movePhoto(from, to) {
+    if (from === to || from == null || to == null) return;
+    const next = [...photos];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    try {
+      await onChange(next);
+    } catch (error) {
+      console.error("Failed to reorder photos", error);
+    }
+  }
+
+  function endDrag() {
+    setDragIndex(null);
+    setOverIndex(null);
   }
 
   const viewed = viewIndex !== null ? photos[viewIndex] : null;
@@ -104,10 +136,39 @@ export default function DealPhotos({
     setViewIndex((i) => (i + delta + photos.length) % photos.length);
 
   return (
-    <div className="ddm-edit-field-wide">
+    <div className="photo-gallery">
       <div className="ddm-photos-grid">
         {photos.map((photo, i) => (
-          <div key={photo.id} className="ddm-photo">
+          <div
+            key={photo.id}
+            className={[
+              "ddm-photo",
+              i === 0 ? "is-main" : "",
+              dragIndex === i ? "is-dragging" : "",
+              overIndex === i && dragIndex !== i ? "is-drop-target" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            draggable
+            onDragStart={(e) => {
+              setDragIndex(i);
+              e.dataTransfer.effectAllowed = "move";
+              // Firefox only starts a drag with some data set.
+              e.dataTransfer.setData("text/plain", photo.id);
+            }}
+            onDragOver={(e) => {
+              if (dragIndex === null) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setOverIndex(i);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              movePhoto(dragIndex, i);
+              endDrag();
+            }}
+            onDragEnd={endDrag}
+          >
             <button
               type="button"
               className="ddm-photo-thumb"
@@ -115,11 +176,29 @@ export default function DealPhotos({
               aria-label={`View photo ${i + 1}`}
             >
               {dataById[photo.id] ? (
-                <img src={dataById[photo.id]} alt={`Deal photo ${i + 1}`} />
+                <img
+                  src={dataById[photo.id]}
+                  alt={`Photo ${i + 1}`}
+                  draggable={false}
+                  style={{ objectPosition: photoPosition(photo) }}
+                />
               ) : (
                 <Loader2 size={18} className="spin" />
               )}
             </button>
+            {i === 0 ? (
+              <span className="ddm-photo-main-badge">Main</span>
+            ) : (
+              <button
+                type="button"
+                className="ddm-photo-make-main"
+                onClick={() => movePhoto(i, 0)}
+                aria-label={`Make photo ${i + 1} the main photo`}
+                title="Make main photo"
+              >
+                <Star size={12} />
+              </button>
+            )}
             <button
               type="button"
               className="ddm-photo-delete"
@@ -154,7 +233,12 @@ export default function DealPhotos({
         )}
       </div>
       <div className="ddm-photos-count">
-        {photos.length} of {MAX_DEAL_PHOTOS} photos
+        <span>
+          {photos.length} of {MAX_PHOTOS} photos
+        </span>
+        {photos.length > 1 && (
+          <span> · drag to reorder; the first is the main photo</span>
+        )}
       </div>
 
       {viewed && (
@@ -181,10 +265,7 @@ export default function DealPhotos({
               </button>
             )}
             {dataById[viewed.id] ? (
-              <img
-                src={dataById[viewed.id]}
-                alt={`Deal photo ${viewIndex + 1}`}
-              />
+              <img src={dataById[viewed.id]} alt={`Photo ${viewIndex + 1}`} />
             ) : (
               <Loader2 size={24} className="spin" />
             )}

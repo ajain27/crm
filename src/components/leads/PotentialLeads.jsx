@@ -47,6 +47,13 @@ import {
 import { findAddressDuplicates } from "./leadDuplicates";
 import "./Leads.css";
 
+const ADD_LEAD_TITLES = {
+  residential: "Add Residential Lead",
+  commercial: "Add Commercial Lead",
+  ppc: "Add PPC Lead",
+  ppl: "Add PPL Lead",
+};
+
 export default function PotentialLeads({
   currentUser,
   leads,
@@ -58,12 +65,15 @@ export default function PotentialLeads({
   setDeals,
   setActiveView,
   ppcOnly = false,
+  leadPhotoStore,
+  updateLeadPatch,
 }) {
   const [activeTab, setActiveTab] = useState(ppcOnly ? "ppc" : "residential");
   const [detailLead, setDetailLead] = useState(null);
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
   const [ppcDeletedCount, setPpcDeletedCount] = useState(0);
-  // "ppc" or "ppl" while that tab's Add a lead window is open.
+  // The tab ("residential", "commercial", "ppc" or "ppl") whose Add a lead
+  // window is open.
   const [addLeadTab, setAddLeadTab] = useState(null);
 
   const residentialList = useLeadListState(RESIDENTIAL_FILTERS);
@@ -116,6 +126,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
+    onSaved: () => setAddLeadTab(null),
   });
   // Added by hand on the PPC / PPL tabs: a residential lead with the source
   // fixed, which is what files it under that tab.
@@ -148,6 +159,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
+    onSaved: () => setAddLeadTab(null),
   });
 
   // ── Shared lead actions ────────────────────────────────────────────────────
@@ -377,6 +389,22 @@ export default function PotentialLeads({
     return true;
   }
 
+  // Lead photos save on their own, as they're added, removed or moved.
+  async function handleLeadPhotosChange(leadId, photos) {
+    await updateLeadPatch(leadId, { photos });
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, photos } : l)),
+    );
+  }
+  const photoProps =
+    leadPhotoStore && updateLeadPatch
+      ? {
+          photoStore: leadPhotoStore,
+          currentUserId: currentUser.id,
+          onPhotosChange: handleLeadPhotosChange,
+        }
+      : {};
+
   async function handleLeadSave(updated) {
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
@@ -488,13 +516,13 @@ export default function PotentialLeads({
 
       {activeTab === "residential" && (
         <>
-          <ResidentialLeadForm leadForm={residentialForm} />
           <ResidentialLeadList
             leads={residentialLeads}
             listState={residentialList}
             onBulkDelete={handleBulkDelete}
             onImport={handleResidentialImport}
             onRemoveDuplicates={() => handleRemoveDuplicates(residentialLeads)}
+            onAddLead={() => setAddLeadTab("residential")}
             {...leadActions}
           />
         </>
@@ -502,13 +530,13 @@ export default function PotentialLeads({
 
       {activeTab === "commercial" && (
         <>
-          <CommercialLeadForm leadForm={commercialForm} />
           <CommercialLeadList
             leads={commercialLeads}
             listState={commercialList}
             onBulkDelete={handleBulkDelete}
             onImport={handleCommercialImport}
             onRemoveDuplicates={() => handleRemoveDuplicates(commercialLeads)}
+            onAddLead={() => setAddLeadTab("commercial")}
             onOpen={setCommercialDetailLead}
             onDelete={handleDelete}
           />
@@ -550,7 +578,7 @@ export default function PotentialLeads({
         <Modal
           isOpen={!!addLeadTab}
           onClose={() => setAddLeadTab(null)}
-          title={addLeadTab === "ppl" ? "Add PPL Lead" : "Add PPC Lead"}
+          title={ADD_LEAD_TITLES[addLeadTab]}
           className="leads-add-modal"
           style={{
             width: "min(960px, 96vw)",
@@ -558,7 +586,13 @@ export default function PotentialLeads({
             height: "auto",
           }}
         >
-          {addLeadTab && (
+          {addLeadTab === "commercial" && (
+            <CommercialLeadForm leadForm={commercialForm} inModal />
+          )}
+          {addLeadTab === "residential" && (
+            <ResidentialLeadForm leadForm={residentialForm} inModal />
+          )}
+          {(addLeadTab === "ppc" || addLeadTab === "ppl") && (
             <ResidentialLeadForm
               key={addLeadTab}
               leadForm={addLeadTab === "ppl" ? pplForm : ppcForm}
@@ -586,6 +620,7 @@ export default function PotentialLeads({
           onSave={handleLeadSave}
           isPpc={detailLead ? isPpcLead(detailLead) : false}
           isPpl={detailLead ? isPplLead(detailLead) : false}
+          {...photoProps}
         />
       )}
       <CommercialLeadDetailModal
@@ -598,6 +633,7 @@ export default function PotentialLeads({
             ? () => handleCommercialLeadDelete(commercialDetailLead.id)
             : undefined
         }
+        {...photoProps}
       />
     </>
   );
