@@ -585,7 +585,17 @@ export default function TitleCompanies({
                       {company.contact || <span className="tc-muted">—</span>}
                     </td>
                     <td className="tc-muted tc-phone" data-label="Phone">
-                      {displayPhone(company.phone) || "—"}
+                      {company.phone ? (
+                        <a
+                          href={`tel:${company.phone}`}
+                          className="tc-phone-link"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {displayPhone(company.phone)}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="acc-col-block" data-label="Emails">
                       {company.emails?.length ? (

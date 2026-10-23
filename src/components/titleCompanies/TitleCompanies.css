@@ -207,6 +207,15 @@
     min-width: 130px;
   }
 
+  .tc-phone-link {
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .tc-phone-link:hover {
+    text-decoration: underline;
+  }
+
   /* Long reviews stay readable in the table: clamp to three lines, the
      full text is in the hover title and the edit modal. */
   .tc-notes {
