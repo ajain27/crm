@@ -25,6 +25,14 @@
     user-select: none;
   }
 
+  .ddm-main-photo.is-empty {
+    flex-direction: column;
+    gap: 0.375rem;
+    border-style: dashed;
+    font-size: 0.8125rem;
+    cursor: default;
+  }
+
   .ddm-main-photo:active {
     cursor: grabbing;
   }

@@ -262,8 +262,9 @@ function DealDetailModal({
 
   // Photos save on their own, straight away.
   const savePhotos = (photos) => updateDealPatch(deal.id, { photos });
-  const hasMainPhoto =
-    Boolean(photoStore) && Array.isArray(deal.photos) && deal.photos.length > 0;
+  // The main photo frame shows whenever photos are on (empty until one is
+  // added), so the layout stays the same.
+  const hasMainPhoto = Boolean(photoStore);
   // The latest comps run (from the notes), for the big ARV.
   const dealComps = leadComps({ notes: draft.notes });
   const hasArv = parseCurrency(draft.arv) > 0 || dealComps?.arv > 0;

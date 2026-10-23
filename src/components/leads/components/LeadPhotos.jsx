@@ -21,7 +21,6 @@ export function useLeadPhotos({
   }
   return {
     enabled,
-    hasMain: enabled && photos.length > 0,
     galleryProps: {
       ownerId: lead?.id,
       photos,
@@ -41,8 +40,10 @@ export function LeadMainPhotoRow({
   stacked = false,
   children,
 }) {
-  const { hasMain, galleryProps } = photosState;
-  const main = hasMain && (
+  const { galleryProps } = photosState;
+  // With photos on, the main photo frame always shows (empty until a
+  // photo is added) so the layout stays the same.
+  const main = photosState.enabled && (
     <MainPhoto
       ownerId={galleryProps.ownerId}
       photos={galleryProps.photos}

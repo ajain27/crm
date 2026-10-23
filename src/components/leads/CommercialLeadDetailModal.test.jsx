@@ -164,4 +164,20 @@ describe("CommercialLeadDetailModal photos", () => {
     );
     expect(screen.queryByText("Photos")).toBeNull();
   });
+
+  it("keeps the main photo frame, empty, until a photo is added", () => {
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ id: "c11", name: "Park" }}
+        onSave={vi.fn()}
+        photoStore={{ save: vi.fn(), fetch: vi.fn(), remove: vi.fn() }}
+        onPhotosChange={vi.fn()}
+        currentUserId="u1"
+      />,
+    );
+    expect(screen.getByText("No photo yet")).toBeInTheDocument();
+    expect(screen.getByText("0 of 5 photos")).toBeInTheDocument();
+  });
 });

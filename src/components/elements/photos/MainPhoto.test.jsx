@@ -62,7 +62,7 @@ describe("MainPhoto", () => {
     ]);
   });
 
-  it("shows nothing without photos", () => {
+  it("shows an empty frame without photos", () => {
     const { container } = render(
       <MainPhoto
         ownerId="d2"
@@ -71,6 +71,7 @@ describe("MainPhoto", () => {
         onChange={vi.fn()}
       />,
     );
-    expect(container).toBeEmptyDOMElement();
+    expect(container.querySelector(".ddm-main-photo.is-empty")).not.toBeNull();
+    expect(screen.getByText("No photo yet")).toBeInTheDocument();
   });
 });

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Move } from "lucide-react";
+import { ImageOff, Loader2, Move } from "lucide-react";
 import { loadPhoto } from "./photoCache";
 
 const clamp = (n) => Math.min(100, Math.max(0, n));
 
-// A deal's or lead's main photo (the first in its list), large. Dragging
+// A deal's or lead's main photo (the first in its list), large — or an
+// empty frame saying there's no photo yet. Dragging
 // inside it moves which part of the photo shows in the frame; the position
 // is saved on that photo (`focus: { x, y }` in percent) with
 // `onChange(photos)` when the drag ends.
@@ -35,7 +36,16 @@ export default function MainPhoto({
   // A saved position replaces one being dragged once it's stored.
   useEffect(() => setFocus(null), [main?.id, main?.focus?.x, main?.focus?.y]);
 
-  if (!main) return null;
+  // No photos yet: the same frame, empty, so the window's layout doesn't
+  // change when the first photo is added.
+  if (!main) {
+    return (
+      <div className="ddm-main-photo is-empty">
+        <ImageOff size={24} />
+        <span>No photo yet</span>
+      </div>
+    );
+  }
   const current = focus || { x: main.focus?.x ?? 50, y: main.focus?.y ?? 50 };
 
   function handlePointerDown(e) {
