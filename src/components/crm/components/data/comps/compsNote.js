@@ -69,6 +69,9 @@ export function compsStatsText(result) {
   const across = s.acrossHighway
     ? ` ${s.acrossHighway} across a major highway ${s.acrossHighway === 1 ? "was" : "were"} left out.`
     : "";
+  const distressed = s.distressed
+    ? ` ${s.distressed} distressed ${s.distressed === 1 ? "sale was" : "sales were"} left out.`
+    : "";
   const removed = s.removedByAi?.length
     ? ` AI removed ${s.removedByAi.length} as poor comps.`
     : "";
@@ -83,7 +86,7 @@ export function compsStatsText(result) {
     `${s.nearbySales} home${s.nearbySales === 1 ? "" : "s"} sold${area}; ` +
     `${s.matched} ${s.matched === 1 ? "meets" : "meet"} every rule` +
     (excluded.length ? ` (others: ${excluded.join(", ")})` : "") +
-    `.${across}${outside}${removed}`
+    `.${across}${distressed}${outside}${removed}`
   );
 }
 

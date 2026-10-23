@@ -5,6 +5,10 @@ export const COMP_RULES = {
   soldWithinDays: 90,
   yearBuiltTolerance: 5,
   maxComps: 5,
+  // Sales under this share of the area's typical price per sq ft (or price,
+  // without a size) are taken as distressed and left out — ARV is the
+  // value after repair, so as-is shells and auction sales don't count.
+  distressedShare: 0.4,
   // Sales are gathered this far out so there are always enough to fill 5
   // comps; ones outside the rules are labeled with how they differ.
   searchRadiusMiles: 1,
@@ -27,6 +31,24 @@ export const WIDE_SEARCH = {
 
 export const isNum = (v) =>
   typeof v === "number" && Number.isFinite(v) && v > 0;
+
+// Broad type buckets so "Single Family Residential" matches "Single Family"
+// and a county's "Two Family Flat" matches Redfin's "Multi-Family (2-4 Unit)".
+export function typeBucket(type) {
+  const t = String(type || "").toLowerCase();
+  if (!t) return null;
+  if (
+    /multi|duplex|triplex|fourplex|quadplex|2-4|(two|three|four|2|3|4)[ -]?(family|unit)|income/.test(
+      t,
+    )
+  ) {
+    return "multi";
+  }
+  if (/condo|co-?op|apartment/.test(t)) return "condo";
+  if (/town/.test(t)) return "townhouse";
+  if (/single|house|residential|detached/.test(t)) return "single";
+  return t;
+}
 
 export function distanceMiles(a, b) {
   const rad = (d) => (d * Math.PI) / 180;

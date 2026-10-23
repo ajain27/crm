@@ -389,7 +389,8 @@ describe("run-comps", () => {
     expect(sent.candidates).toHaveLength(7);
     expect(sent.candidates[0].misses).toEqual([]);
     expect(sent.candidates[3].misses).toEqual(["+1 bath"]);
-    expect(out.arvEstimate).toBe(94700); // median of the 2 picked, in code
+    // Upper quartile of the 2 picked, in code.
+    expect(out.arvEstimate).toBe(107100);
   });
 
   it("uses the ranking when Claude fails or declines", async () => {
@@ -549,6 +550,51 @@ describe("run-comps", () => {
     expect(out.adjusted).toBe(false);
   });
 
+  it("goes by the public records type over the listings'", async () => {
+    mockFetch({
+      firecrawl: (body) =>
+        json(200, {
+          success: true,
+          data: {
+            json: body.url.includes("realtor")
+              ? {
+                  ...SUBJECT_PAGE,
+                  propertyType: "Townhomes",
+                  publicRecordsType: "Duplex",
+                }
+              : SUBJECT_PAGE,
+          },
+        }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.property).toMatchObject({
+      propertyType: "Multi-Family",
+      publicRecordsType: "Duplex",
+    });
+    expect(out.subjectSources.realtor.publicRecordsType).toBe("Duplex");
+  });
+
+  it("leaves the type open when the listings disagree and there are no public records", async () => {
+    mockFetch({
+      firecrawl: (body) =>
+        json(200, {
+          success: true,
+          data: {
+            json: {
+              ...SUBJECT_PAGE,
+              propertyType: body.url.includes("zillow")
+                ? "Single Family"
+                : "Townhouse",
+              annualTax: 56500, // the assessed value, misread
+            },
+          },
+        }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.property.propertyType).toBeNull();
+    expect(out.property.annualTax).toBeNull();
+  });
+
   it("re-runs with corrected facts at a known location, without searching or scraping", async () => {
     const fetchMock = mockFetch();
     const out = await runComps(ADDRESS, {}, NOW, {
@@ -697,13 +743,44 @@ describe("comp rules", () => {
         ],
         1000,
       ),
-    ).toMatchObject({ arvEstimate: 104545 });
+    ).toMatchObject({ arvEstimate: 106818 });
     expect(
       estimateArv(
         [{ price: 69900 }, { price: 119500, sqft: 1053 }, { price: 74900 }],
         1165,
       ),
-    ).toMatchObject({ arvEstimate: 74900 });
+    ).toMatchObject({ arvEstimate: 97200 });
+  });
+
+  it("leaves out distressed sales, far under the area's price per sq ft", () => {
+    const at = (street, price, sqft) => ({
+      street,
+      soldDate: "2026-09-01",
+      price,
+      sqft,
+      beds: 3,
+      lat: SUBJECT.lat,
+      lng: SUBJECT.lng,
+    });
+    const { ranked, distressed } = rankComps({
+      subject: { beds: 3 },
+      location: SUBJECT,
+      sales: [
+        at("1 A St", 100000, 1000),
+        at("2 B St", 110000, 1000),
+        at("3 C St", 95000, 1000),
+        at("4 D St", 15000, 1596), // $9/sq ft
+        { ...at("5 E St", 12000), sqft: null }, // no size: by price
+      ],
+      subjectAddress: "9 Z St",
+      now: NOW,
+    });
+    expect(ranked.map((r) => r.street).sort()).toEqual([
+      "1 A St",
+      "2 B St",
+      "3 C St",
+    ]);
+    expect(distressed).toBe(2);
   });
 });
 

@@ -1,18 +1,13 @@
 // Step 3: every nearby sale ranked against the comp rules.
 
-import { COMP_RULES, SEARCH, distanceMiles, isNum } from "./rules.js";
+import {
+  COMP_RULES,
+  SEARCH,
+  distanceMiles,
+  isNum,
+  typeBucket,
+} from "./rules.js";
 import { highwayBetween } from "./highways.js";
-
-// Broad type buckets so "Single Family Residential" matches "Single Family".
-function typeBucket(type) {
-  const t = String(type || "").toLowerCase();
-  if (!t) return null;
-  if (/condo|co-?op|apartment/.test(t)) return "condo";
-  if (/town/.test(t)) return "townhouse";
-  if (/multi|duplex|triplex|fourplex|2-4/.test(t)) return "multi";
-  if (/single|house|residential|detached/.test(t)) return "single";
-  return t;
-}
 
 const streetKey = (s) =>
   String(s || "")
@@ -34,6 +29,27 @@ const TYPE_LABELS = {
   townhouse: "townhouse",
   multi: "multi-family",
 };
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// Whether a sale went for far less than the area's typical sale: by price
+// per sq ft when it has a size, otherwise by price.
+function distressedTest(sales) {
+  const ppsf = median(
+    sales.filter((s) => isNum(s.sqft)).map((s) => s.price / s.sqft),
+  );
+  const price = median(sales.map((s) => s.price));
+  const share = COMP_RULES.distressedShare;
+  return (sale) =>
+    isNum(sale.sqft) && ppsf
+      ? sale.price / sale.sqft < ppsf * share
+      : sale.price < price * share;
+}
 
 const signed = (n) => `${n > 0 ? "+" : "−"}${Math.abs(n)}`;
 
@@ -128,7 +144,7 @@ function matchScore(sale, subject, distance, now) {
 // it doesn't meet. `excluded` counts the sales failing each rule (by the
 // first rule they fail), for explaining how many strictly qualify. Sales
 // across a major highway from the subject are dropped entirely (counted
-// in `acrossHighway`).
+// in `acrossHighway`), and so are distressed sales (`distressed`).
 export function rankComps({
   subject,
   location,
@@ -150,7 +166,7 @@ export function rankComps({
     yearBuilt: 0,
     propertyType: 0,
   };
-  const ranked = [];
+  const nearby = [];
   let acrossHighway = 0;
   for (const sale of sales) {
     if (streetKey(sale.street || sale.address) === subjectStreet) continue;
@@ -158,6 +174,16 @@ export function rankComps({
     if (distance > search.miles) continue;
     if (highwayBetween(location, sale, highways)) {
       acrossHighway += 1;
+      continue;
+    }
+    nearby.push({ sale, distance });
+  }
+  const isDistressed = distressedTest(nearby.map(({ sale }) => sale));
+  const ranked = [];
+  let distressed = 0;
+  for (const { sale, distance } of nearby) {
+    if (isDistressed(sale)) {
+      distressed += 1;
       continue;
     }
     const misses = ruleMisses(sale, subject, distance, now, search);
@@ -182,5 +208,12 @@ export function rankComps({
     return a.score - b.score;
   });
   const strictCount = ranked.filter((r) => r.misses.length === 0).length;
-  return { ranked, strictCount, excluded, acrossHighway, unknown };
+  return {
+    ranked,
+    strictCount,
+    excluded,
+    acrossHighway,
+    distressed,
+    unknown,
+  };
 }

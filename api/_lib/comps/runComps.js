@@ -1,7 +1,8 @@
 // Runs comps for a property address.
 //
 // A comp is a home that SOLD within 0.5 miles of the subject in the last
-// 90 days, with the same beds and baths, and built within 5 years of it.
+// 90 days, with the same beds and baths, built within 5 years of it, and
+// of the same type (the county's public records type when a page shows it).
 //
 //   1. The subject: Serper finds its Zillow, Redfin and Realtor.com pages
 //      and Firecrawl reads its facts (beds, baths, sq ft, year built…)
@@ -9,7 +10,8 @@
 //   2. Candidates: Redfin's sold-homes data for the last 90 days around
 //      those coordinates (sold date, beds, baths, year built, location).
 //   3. Sales across a major highway (interstate/expressway, from
-//      OpenStreetMap) from the subject are dropped. Every other sale
+//      OpenStreetMap) from the subject are dropped, and so are distressed
+//      sales (under 40% of the area's typical price per sq ft). Every other sale
 //      within 1 mile over 180 days is ranked: those meeting all
 //      the rules above first (closest, then most recent), then the rest by
 //      how closely they match. The top 5 are shown; any outside the rules
@@ -18,7 +20,8 @@
 //   4. Claude (optional) reviews the top candidates, drops bad or
 //      irrelevant comps and picks the 5 closest. It never estimates value.
 //      Without Claude, or if it fails, the ranking's top 5 are used.
-//   5. ARV is worked out in code from the final comps.
+//   5. ARV is worked out in code from the final comps: the upper quartile
+//      of their price per sq ft × the subject's size.
 //
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); ANTHROPIC_API_KEY
 // (optional — Claude's review of the candidates).
@@ -207,7 +210,8 @@ export async function runComps(
     ({ sales, highways } = await loadArea(location, search));
     ranking = rank(search);
   }
-  const { ranked, strictCount, excluded, acrossHighway, unknown } = ranking;
+  const { ranked, strictCount, excluded, acrossHighway, distressed, unknown } =
+    ranking;
 
   // The 5 best-ranked; Claude, when available, reviews the top candidates,
   // drops bad ones and picks the 5 closest (it never sets the value).
@@ -278,9 +282,16 @@ export async function runComps(
         .map(([key, src]) => [
           key,
           Object.fromEntries(
-            ["propertyType", "beds", "baths", "sqft", "yearBuilt"].map((f) => [
+            [
+              "propertyType",
+              "publicRecordsType",
+              "beds",
+              "baths",
+              "sqft",
+              "yearBuilt",
+            ].map((f) => [
               f,
-              f === "propertyType"
+              f === "propertyType" || f === "publicRecordsType"
                 ? (src.data[f] ?? null)
                 : saneValue(f, src.data[f]),
             ]),
@@ -313,6 +324,7 @@ export async function runComps(
       outsideRules,
       excluded,
       acrossHighway,
+      distressed,
       removedByAi,
     },
     topComps,

@@ -78,6 +78,10 @@ export default function SubjectAdjuster({
   }
 
   const typeSites = siteValues(sources, "propertyType");
+  // The county's type, which the comps go by when a page shows it.
+  const publicRecordsType = Object.values(sources || {}).find(
+    (values) => values?.publicRecordsType,
+  )?.publicRecordsType;
   const typeOptions = [
     ...new Set([form.propertyType, ...PROPERTY_TYPES].filter(Boolean)),
   ];
@@ -138,6 +142,9 @@ export default function SubjectAdjuster({
             ))}
           </select>
           {typeSites.text && <small>{typeSites.text}</small>}
+          {publicRecordsType && (
+            <small>Public records: {publicRecordsType}</small>
+          )}
         </label>
         {subject?.annualTax != null && (
           <div className="find-comps-adjust-field">

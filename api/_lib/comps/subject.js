@@ -2,7 +2,7 @@
 // pages and Firecrawl reads its facts from each; the facts the sites agree
 // on win.
 
-import { distanceMiles, isNum } from "./rules.js";
+import { distanceMiles, isNum, typeBucket } from "./rules.js";
 
 // Pages are scraped in parallel; this leaves time for the rest inside the
 // function's 60s limit (vercel.json).
@@ -37,7 +37,13 @@ export const SUBJECT_SCHEMA = {
     address: { type: "string" },
     propertyType: {
       type: "string",
-      description: "e.g. Single Family, Condo, Townhouse, Multi-Family",
+      description:
+        "e.g. Single Family, Condo, Townhouse, Multi-Family (a duplex or two-family flat is Multi-Family)",
+    },
+    publicRecordsType: {
+      type: "string",
+      description:
+        "The property type or land use from the page's public records / public facts / county records section (e.g. Duplex, Two Family, Single Family), not the listing's own type. Leave empty if the page has no public records.",
     },
     beds: { type: "number" },
     baths: { type: "number", description: "Total bathrooms, e.g. 2.5" },
@@ -223,7 +229,8 @@ const SANE = {
   yearBuilt: [1700, new Date().getFullYear() + 1],
   valueEstimate: [5000, 50000000],
   rentEstimate: [100, 25000],
-  annualTax: [1, 500000],
+  // Higher is almost always the assessed value misread as the tax.
+  annualTax: [1, 50000],
 };
 
 export function saneValue(field, value) {
@@ -265,16 +272,40 @@ export function pageCoordinates(sources, address) {
   return { ...agreed, matchedAddress: null };
 }
 
+const TYPE_NAMES = {
+  single: "Single Family",
+  condo: "Condo",
+  townhouse: "Townhouse",
+  multi: "Multi-Family",
+};
+
+// The county's type wins over the listings' (Zillow and Redfin often call
+// a two-family flat a single family home or a townhouse). Without it: any
+// listing saying multi-family wins; listings that disagree leave the type
+// unknown, so comps aren't held to a guessed type.
+function subjectType(publicRecordsType, listingTypes) {
+  const county = typeBucket(publicRecordsType);
+  if (county) return TYPE_NAMES[county] || publicRecordsType;
+  const buckets = new Set(listingTypes.map(typeBucket).filter(Boolean));
+  if (buckets.has("multi")) return TYPE_NAMES.multi;
+  if (buckets.size > 1) return null;
+  return agreedValue(listingTypes);
+}
+
 export function reconcileSubject(sources, address) {
   const usable = SOURCE_PRIORITY.filter((key) =>
     isSubjectData(sources[key]?.data, address),
   );
-  const pick = (field) =>
-    agreedValue(
-      usable.map((key) => saneValue(field, sources[key].data[field])),
-    );
+  const values = (field) =>
+    usable.map((key) => saneValue(field, sources[key].data[field]));
+  const pick = (field) => agreedValue(values(field));
+  const publicRecordsType = pick("publicRecordsType");
   return {
-    propertyType: pick("propertyType"),
+    propertyType: subjectType(
+      publicRecordsType,
+      values("propertyType").filter(Boolean),
+    ),
+    publicRecordsType,
     beds: pick("beds"),
     baths: pick("baths"),
     sqft: pick("sqft"),
