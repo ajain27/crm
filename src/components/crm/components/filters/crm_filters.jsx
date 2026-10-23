@@ -2,6 +2,7 @@ import { Search, Plus } from "lucide-react";
 import { Select } from "../../../elements/elements";
 import ClearFiltersButton from "../../../elements/ClearFiltersButton";
 import { useState } from "react";
+import AddLeadButton from "../../../leads/components/AddLeadButton";
 
 function Crm_filters({
   filters,
@@ -11,6 +12,7 @@ function Crm_filters({
   years,
   RefreshCw,
   setFilters,
+  onAddLead,
 }) {
   const [searchExpanded, setSearchExpanded] = useState(false);
   return (
@@ -49,6 +51,7 @@ function Crm_filters({
               />
             )}
           </div>
+          {onAddLead && <AddLeadButton onClick={onAddLead} />}
         </div>
         <div className="filters">
           <Select

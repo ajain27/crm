@@ -47,6 +47,7 @@ import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
+import Modal from "../../modal/Modal";
 import { uniqueById } from "../../leads/leadUtils";
 import InvoiceGenerator from "../../invoiceGenerator/InvoiceGenerator";
 import StatsGrid from "../../stats/StatsGrid";
@@ -167,6 +168,12 @@ function Wholesale() {
     setDeals,
     setFilters,
   });
+
+  // The dashboard's Add a lead window; it closes once the deal is saved.
+  const [addDealOpen, setAddDealOpen] = useState(false);
+  async function handleAddDeal(event) {
+    if (await addDeal(event)) setAddDealOpen(false);
+  }
 
   async function convertDealToRental(deal) {
     const rental = {
@@ -294,16 +301,29 @@ function Wholesale() {
               filters={filters}
             />
 
-            <Wholesale_form
-              addDeal={addDeal}
-              form={form}
-              formError={formError}
-              handleChange={handleChange}
-              handleBlur={handleBlur}
-              handleAddressBlur={handleAddressBlur}
-              handleContractFileChange={handleContractFileChange}
-              clearContractFile={clearContractFile}
-            />
+            <Modal
+              isOpen={addDealOpen}
+              onClose={() => setAddDealOpen(false)}
+              title="Add Property Lead"
+              className="leads-add-modal"
+              style={{
+                width: "min(960px, 96vw)",
+                maxWidth: "min(960px, 96vw)",
+                height: "auto",
+              }}
+            >
+              <Wholesale_form
+                inModal
+                addDeal={handleAddDeal}
+                form={form}
+                formError={formError}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                handleAddressBlur={handleAddressBlur}
+                handleContractFileChange={handleContractFileChange}
+                clearContractFile={clearContractFile}
+              />
+            </Modal>
 
             <Crm_filters
               filters={filters}
@@ -313,6 +333,7 @@ function Wholesale() {
               years={years}
               RefreshCw={RefreshCw}
               setFilters={setFilters}
+              onAddLead={() => setAddDealOpen(true)}
             />
             <LoadingScreen
               isLoading={isLoading || tableLoading}

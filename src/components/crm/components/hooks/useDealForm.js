@@ -477,6 +477,8 @@ export function useDealForm({
       if (newDeal.offerDate || newDeal.closedDate) {
         setFilters(createDefaultFilters());
       }
+      // Lets the Add a lead window close once the deal is saved.
+      return true;
     } catch (error) {
       console.error("Failed to save property", error);
       alert("Unable to save property. Check your database connection.");

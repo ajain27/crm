@@ -213,6 +213,29 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    /* Fills the header's free width (all of it once it wraps under the
+       title), so the action buttons can sit at its right end. */
+    flex: 1 1 auto;
+  }
+
+  /* Add a lead and the action buttons after it (Import, Export…) sit at
+     the right end of the toolbar, apart from the search and filters. */
+  .leads-filters .leads-actions-start {
+    margin-left: auto;
+  }
+
+  /* When the list shows as cards, each card is pushed 2rem right to make
+     room for its checkbox (accordion cards below); start the toolbar where
+     the cards start. The cards switch on at 1300px of the table's content
+     width — the panel's width less the table's 1.5rem side padding. */
+  .leads-list-panel {
+    container: leads-panel / inline-size;
+  }
+
+  @container leads-panel (max-width: 1348px) {
+    .leads-list-panel .leads-filters {
+      padding-left: 2rem;
+    }
   }
 
   .leads-search-wrap {

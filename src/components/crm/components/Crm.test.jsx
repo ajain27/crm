@@ -42,7 +42,14 @@ vi.mock("../../../firebase/firestoreService", () => ({
 }));
 
 vi.mock("./filters/crm_filters", () => ({
-  default: () => <div>Filters</div>,
+  default: ({ onAddLead }) => (
+    <div>
+      Filters
+      <button type="button" onClick={onAddLead}>
+        Add a lead
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("./forms/crm_form", () => ({
@@ -128,6 +135,20 @@ describe("Crm", () => {
 
     expect(screen.getByText("Sign in to your CRM")).toBeInTheDocument();
     expect(fetchDeals).not.toHaveBeenCalled();
+  });
+
+  it("opens the add-deal form from the dashboard's Add a lead button", async () => {
+    render(<Wholesale />);
+    signIn();
+    await waitFor(() => {
+      expect(fetchDeals).toHaveBeenCalledWith("u1");
+    });
+
+    // The form is no longer on the page; it opens in a window.
+    expect(screen.queryByText("Add Property Form")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Add a lead" }));
+    expect(screen.getByText("Add Property Lead")).toBeInTheDocument();
+    expect(screen.getByText("Add Property Form")).toBeInTheDocument();
   });
 
   it("shows account actions in the top-right avatar dropdown", async () => {

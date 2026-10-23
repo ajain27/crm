@@ -27,7 +27,10 @@ import {
 } from "../crmConfig";
 import CurrencyInput from "../../../elements/CurrencyInput";
 
+// The add-deal form; `inModal` gives just the form, for the dashboard's
+// Add a lead window.
 function Wholesale_form({
+  inModal = false,
   addDeal,
   form,
   formError,
@@ -109,6 +112,547 @@ function Wholesale_form({
 
   const isFormComplete = isRental ? isRentalComplete : isWholesaleComplete;
 
+  const formEl = (
+    <form className="add-form" onSubmit={addDeal}>
+      <Select
+        label="Deal Type"
+        name="dealType"
+        value={form.dealType || "Wholesale"}
+        onChange={handleChange}
+        options={DEAL_TYPES}
+        required
+      />
+      <label className="field" style={{ gridColumn: "span 2" }}>
+        <span>
+          Property Address <span className="required-marker">*</span>
+        </span>
+        {formError && (
+          <span style={{ fontSize: "0.875rem", color: "#ef4444" }}>
+            {formError}
+          </span>
+        )}
+        <input
+          ref={addressInputRef}
+          name="address"
+          value={form.address}
+          onChange={handleChange}
+          onBlur={handleAddressBlur}
+          required
+        />
+      </label>
+      <label className="field">
+        <span>
+          State
+          <span className="required-marker">*</span>
+        </span>
+        <select
+          name="state"
+          value={form.state}
+          onChange={handleChange}
+          disabled
+          required
+        >
+          {STATE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Select
+        label="Property Type"
+        name="propertyType"
+        value={form.propertyType}
+        onChange={handleChange}
+        options={["Land", "Single Family", "Multi Family"]}
+        required
+      />
+      {isRental ? (
+        <>
+          <Select
+            label="On Market"
+            name="onMarket"
+            value={form.onMarket}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+            required
+          />
+          {form.onMarket === "Yes" && (
+            <>
+              <Field
+                currency
+                label="Listed Price"
+                name="listedPrice"
+                value={form.listedPrice}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+              />
+              <Field
+                label="Agent Name"
+                name="agentName"
+                value={form.agentName}
+                onChange={handleChange}
+                placeholder="e.g. Jane Smith"
+              />
+              <Field
+                label="Agent Phone"
+                name="agentPhone"
+                type="tel"
+                value={form.agentPhone}
+                onChange={(e) =>
+                  handleChange({
+                    target: {
+                      name: "agentPhone",
+                      value: formatPhone(e.target.value),
+                    },
+                  })
+                }
+                placeholder="e.g. 512-555-0100"
+              />
+              <Field
+                label="Listing URL (Zillow / MLS)"
+                name="listingUrl"
+                type="url"
+                value={form.listingUrl}
+                onChange={handleChange}
+                placeholder="e.g. https://www.zillow.com/homedetails/..."
+              />
+            </>
+          )}
+          <label className="field">
+            <span>Source</span>
+            <select name="source" value={form.source} onChange={handleChange}>
+              <option value="">Select source…</option>
+              {SOURCES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Select
+            label="Occupied"
+            name="occupied"
+            value={form.occupied}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+            required
+          />
+          {form.occupied === "Yes" && (
+            <Field
+              currency
+              label="Rent"
+              name="rent"
+              value={form.rent}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="e.g. $1,500"
+              required
+            />
+          )}
+          <Select
+            label="Offer Status"
+            name="offerStatus"
+            value={form.offerStatus}
+            onChange={handleChange}
+            options={["Not Sent", "Offer Sent"]}
+            required
+          />
+          {form.offerStatus === "Offer Sent" && (
+            <Field
+              label="Offer Date"
+              name="offerDate"
+              type="date"
+              value={form.offerDate}
+              max={today}
+              onChange={handleChange}
+              required
+            />
+          )}
+          {form.offerStatus !== "Not Sent" && (
+            <Field
+              currency
+              label="Offer Price"
+              name="contractPrice"
+              value={form.contractPrice}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              required
+            />
+          )}
+          {form.offerStatus !== "Not Sent" && (
+            <Select
+              label="Accepted"
+              name="sellerAccepted"
+              value={form.sellerAccepted}
+              onChange={handleChange}
+              options={["No", "Waiting", "Yes"]}
+              required
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <Field
+            currency
+            label="ARV"
+            name="arv"
+            value={form.arv}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            required
+          />
+          <Field
+            label="Square Footage"
+            name="squareFootage"
+            value={form.squareFootage}
+            onChange={handleChange}
+            placeholder="e.g. 1,800"
+          />
+          <label className="field">
+            <span>Rehab Type</span>
+            <select
+              name="rehabType"
+              value={form.rehabType}
+              onChange={handleChange}
+            >
+              {REHAB_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {form.rehabType !== "no-rehab" &&
+            (autoRehabCost !== null ? (
+              <label className="field">
+                <span>
+                  Rehab Cost
+                  <span className="deal-analyzer-auto-badge">
+                    {autoRehabEstimated ? "est. avg sqft" : "auto"}
+                  </span>
+                </span>
+                <input
+                  value={`$${autoRehabCost.toLocaleString("en-US")}`}
+                  readOnly
+                  tabIndex={-1}
+                />
+              </label>
+            ) : (
+              <Field
+                currency
+                label={
+                  isManualRehab && form.rehabType && sqft > 3500
+                    ? "Rehab Cost (manual — sq ft > 3,500)"
+                    : "Rehab Cost"
+                }
+                name="rehabCost"
+                value={form.rehabCost}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required={Boolean(form.rehabType !== "no-rehab")}
+              />
+            ))}
+          {form.rehabType !== "no-rehab" && (
+            <Field
+              currency
+              label="Additional Rehab Cost"
+              name="additionalRehabCost"
+              value={form.additionalRehabCost}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="e.g. $5,000"
+            />
+          )}
+          <Field
+            currency
+            label="Desired Profit"
+            name="desiredProfit"
+            value={form.desiredProfit}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            required
+          />
+          <label className="field">
+            <span>
+              MAO
+              <span className="required-marker">*</span>
+            </span>
+            <CurrencyInput
+              required
+              id="mao"
+              name="mao"
+              value={form.mao}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder={suggestedMaoPlaceholder}
+            />
+          </label>
+          <Select
+            label="On Market"
+            name="onMarket"
+            value={form.onMarket}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+            required
+          />
+          {form.onMarket === "Yes" && (
+            <>
+              <Field
+                currency
+                label="Listed Price"
+                name="listedPrice"
+                value={form.listedPrice}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+              />
+              <Field
+                label="Agent Name"
+                name="agentName"
+                value={form.agentName}
+                onChange={handleChange}
+                placeholder="e.g. Jane Smith"
+              />
+              <Field
+                label="Agent Phone"
+                name="agentPhone"
+                type="tel"
+                value={form.agentPhone}
+                onChange={(e) =>
+                  handleChange({
+                    target: {
+                      name: "agentPhone",
+                      value: formatPhone(e.target.value),
+                    },
+                  })
+                }
+                placeholder="e.g. 512-555-0100"
+              />
+              <Field
+                label="Listing URL (Zillow / MLS)"
+                name="listingUrl"
+                type="url"
+                value={form.listingUrl}
+                onChange={handleChange}
+                placeholder="e.g. https://www.zillow.com/homedetails/..."
+              />
+            </>
+          )}
+          <Select
+            label="Offer Status"
+            name="offerStatus"
+            value={form.offerStatus}
+            onChange={handleChange}
+            options={["Not Sent", "Offer Sent"]}
+            required
+          />
+          {form.offerStatus === "Offer Sent" && (
+            <>
+              <Field
+                label="Offer Date"
+                name="offerDate"
+                type="date"
+                value={form.offerDate}
+                max={today}
+                onChange={handleChange}
+                required
+              />
+              <label className="field">
+                <span>Contract Upload</span>
+                {form.contractFileName ? (
+                  <div className="file-upload-status">
+                    <span
+                      className="file-upload-name"
+                      title={form.contractFileName}
+                    >
+                      {form.contractFileName}
+                    </span>
+                    <button
+                      type="button"
+                      className="file-upload-remove-btn"
+                      onClick={clearContractFile}
+                      title="Remove contract"
+                      aria-label="Remove contract"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="file-upload-field">
+                    <label
+                      htmlFor="contractUpload"
+                      className="secondary-btn file-upload-trigger"
+                    >
+                      Choose Contract
+                    </label>
+                    <input
+                      id="contractUpload"
+                      className="file-upload-input"
+                      type="file"
+                      accept="application/pdf,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.formula,.odt,.odf,image/*"
+                      onChange={handleContractFileChange}
+                    />
+                  </div>
+                )}
+              </label>
+            </>
+          )}
+          {form.offerStatus !== "Not Sent" && (
+            <Field
+              currency
+              label="Contract Price"
+              name="contractPrice"
+              value={form.contractPrice}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              required
+            />
+          )}
+          {form.offerStatus !== "Not Sent" && (
+            <Select
+              label="Offer Accepted"
+              name="sellerAccepted"
+              value={form.sellerAccepted}
+              onChange={handleChange}
+              options={["No", "Waiting", "Yes"]}
+              required
+            />
+          )}
+          {form.sellerAccepted !== "No" &&
+            form.sellerAccepted !== "Waiting" && (
+              <Select
+                label="Assigned"
+                name="assigned"
+                value={form.assigned}
+                onChange={handleChange}
+                options={["No", "Yes"]}
+              />
+            )}
+          {form.assigned === "Yes" && (
+            <>
+              <Field
+                currency
+                label="Assigned Price"
+                name="assignedPrice"
+                value={form.assignedPrice}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                error={
+                  isAssignedPriceTooLow(
+                    parseCurrency(form.contractPrice),
+                    parseCurrency(form.assignedPrice),
+                  ) && ASSIGNED_PRICE_ERROR
+                }
+              />
+              <Field
+                label="Buyer Name / LLC"
+                name="buyerName"
+                value={form.buyerName || ""}
+                onChange={handleChange}
+                required
+              />
+              <Field
+                label="Buyer Email"
+                name="buyerEmail"
+                type="email"
+                value={form.buyerEmail || ""}
+                onChange={handleChange}
+                required
+              />
+            </>
+          )}
+          <Select
+            label="JV Deal?"
+            name="jvDeal"
+            value={form.jvDeal}
+            onChange={handleChange}
+            options={["No", "Yes"]}
+          />
+          {form.jvDeal === "Yes" && (
+            <>
+              <Field
+                label="JV Partner Name"
+                name="jvPartnerName"
+                value={form.jvPartnerName || ""}
+                onChange={handleChange}
+                placeholder="e.g. Jane Smith"
+                required
+              />
+              <Field
+                label="JV Partner Email"
+                name="jvPartnerEmail"
+                type="email"
+                value={form.jvPartnerEmail || ""}
+                onChange={handleChange}
+                placeholder="e.g. jane@example.com"
+                required
+              />
+              <Field
+                currency
+                label="JV Split ($)"
+                name="jvSplit"
+                value={form.jvSplit || ""}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="e.g. $5,000"
+                required
+              />
+            </>
+          )}
+          {form.sellerAccepted === "Yes" && form.assigned === "Yes" && (
+            <>
+              <Select
+                label="Closed"
+                name="closed"
+                value={form.closed}
+                onChange={handleChange}
+                options={["No", "Yes"]}
+                required
+              />
+              {form.closed === "Yes" && (
+                <Field
+                  label="Closed On"
+                  name="closedDate"
+                  type="date"
+                  value={form.closedDate}
+                  onChange={handleChange}
+                  required
+                />
+              )}
+            </>
+          )}
+        </>
+      )}
+      <div className="form-row-break" aria-hidden="true" />
+      <label className="field notes-field">
+        <span>
+          Notes
+          <span className="required-marker">*</span>
+        </span>
+        <textarea
+          required
+          id="notes"
+          name="notes"
+          value={form.notes}
+          onChange={handleChange}
+          rows="4"
+        />
+      </label>
+      <button
+        className="primary-btn form-btn"
+        type="submit"
+        disabled={!isFormComplete || !!formError}
+      >
+        Save
+      </button>
+    </form>
+  );
+
+  if (inModal) return formEl;
+
   return (
     <section
       className="panel"
@@ -122,546 +666,7 @@ function Wholesale_form({
             <h2>Add Property Lead</h2>
           </div>
         </div>
-        <form className="add-form" onSubmit={addDeal}>
-          <Select
-            label="Deal Type"
-            name="dealType"
-            value={form.dealType || "Wholesale"}
-            onChange={handleChange}
-            options={DEAL_TYPES}
-            required
-          />
-          <label className="field" style={{ gridColumn: "span 2" }}>
-            <span>
-              Property Address <span className="required-marker">*</span>
-            </span>
-            {formError && (
-              <span style={{ fontSize: "0.875rem", color: "#ef4444" }}>
-                {formError}
-              </span>
-            )}
-            <input
-              ref={addressInputRef}
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              onBlur={handleAddressBlur}
-              required
-            />
-          </label>
-          <label className="field">
-            <span>
-              State
-              <span className="required-marker">*</span>
-            </span>
-            <select
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              disabled
-              required
-            >
-              {STATE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Select
-            label="Property Type"
-            name="propertyType"
-            value={form.propertyType}
-            onChange={handleChange}
-            options={["Land", "Single Family", "Multi Family"]}
-            required
-          />
-          {isRental ? (
-            <>
-              <Select
-                label="On Market"
-                name="onMarket"
-                value={form.onMarket}
-                onChange={handleChange}
-                options={["No", "Yes"]}
-                required
-              />
-              {form.onMarket === "Yes" && (
-                <>
-                  <Field
-                    currency
-                    label="Listed Price"
-                    name="listedPrice"
-                    value={form.listedPrice}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required
-                  />
-                  <Field
-                    label="Agent Name"
-                    name="agentName"
-                    value={form.agentName}
-                    onChange={handleChange}
-                    placeholder="e.g. Jane Smith"
-                  />
-                  <Field
-                    label="Agent Phone"
-                    name="agentPhone"
-                    type="tel"
-                    value={form.agentPhone}
-                    onChange={(e) =>
-                      handleChange({
-                        target: {
-                          name: "agentPhone",
-                          value: formatPhone(e.target.value),
-                        },
-                      })
-                    }
-                    placeholder="e.g. 512-555-0100"
-                  />
-                  <Field
-                    label="Listing URL (Zillow / MLS)"
-                    name="listingUrl"
-                    type="url"
-                    value={form.listingUrl}
-                    onChange={handleChange}
-                    placeholder="e.g. https://www.zillow.com/homedetails/..."
-                  />
-                </>
-              )}
-              <label className="field">
-                <span>Source</span>
-                <select
-                  name="source"
-                  value={form.source}
-                  onChange={handleChange}
-                >
-                  <option value="">Select source…</option>
-                  {SOURCES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Select
-                label="Occupied"
-                name="occupied"
-                value={form.occupied}
-                onChange={handleChange}
-                options={["No", "Yes"]}
-                required
-              />
-              {form.occupied === "Yes" && (
-                <Field
-                  currency
-                  label="Rent"
-                  name="rent"
-                  value={form.rent}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="e.g. $1,500"
-                  required
-                />
-              )}
-              <Select
-                label="Offer Status"
-                name="offerStatus"
-                value={form.offerStatus}
-                onChange={handleChange}
-                options={["Not Sent", "Offer Sent"]}
-                required
-              />
-              {form.offerStatus === "Offer Sent" && (
-                <Field
-                  label="Offer Date"
-                  name="offerDate"
-                  type="date"
-                  value={form.offerDate}
-                  max={today}
-                  onChange={handleChange}
-                  required
-                />
-              )}
-              {form.offerStatus !== "Not Sent" && (
-                <Field
-                  currency
-                  label="Offer Price"
-                  name="contractPrice"
-                  value={form.contractPrice}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  required
-                />
-              )}
-              {form.offerStatus !== "Not Sent" && (
-                <Select
-                  label="Accepted"
-                  name="sellerAccepted"
-                  value={form.sellerAccepted}
-                  onChange={handleChange}
-                  options={["No", "Waiting", "Yes"]}
-                  required
-                />
-              )}
-            </>
-          ) : (
-            <>
-              <Field
-                currency
-                label="ARV"
-                name="arv"
-                value={form.arv}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                required
-              />
-              <Field
-                label="Square Footage"
-                name="squareFootage"
-                value={form.squareFootage}
-                onChange={handleChange}
-                placeholder="e.g. 1,800"
-              />
-              <label className="field">
-                <span>Rehab Type</span>
-                <select
-                  name="rehabType"
-                  value={form.rehabType}
-                  onChange={handleChange}
-                >
-                  {REHAB_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {form.rehabType !== "no-rehab" &&
-                (autoRehabCost !== null ? (
-                  <label className="field">
-                    <span>
-                      Rehab Cost
-                      <span className="deal-analyzer-auto-badge">
-                        {autoRehabEstimated ? "est. avg sqft" : "auto"}
-                      </span>
-                    </span>
-                    <input
-                      value={`$${autoRehabCost.toLocaleString("en-US")}`}
-                      readOnly
-                      tabIndex={-1}
-                    />
-                  </label>
-                ) : (
-                  <Field
-                    currency
-                    label={
-                      isManualRehab && form.rehabType && sqft > 3500
-                        ? "Rehab Cost (manual — sq ft > 3,500)"
-                        : "Rehab Cost"
-                    }
-                    name="rehabCost"
-                    value={form.rehabCost}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required={Boolean(form.rehabType !== "no-rehab")}
-                  />
-                ))}
-              {form.rehabType !== "no-rehab" && (
-                <Field
-                  currency
-                  label="Additional Rehab Cost"
-                  name="additionalRehabCost"
-                  value={form.additionalRehabCost}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="e.g. $5,000"
-                />
-              )}
-              <Field
-                currency
-                label="Desired Profit"
-                name="desiredProfit"
-                value={form.desiredProfit}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                required
-              />
-              <label className="field">
-                <span>
-                  MAO
-                  <span className="required-marker">*</span>
-                </span>
-                <CurrencyInput
-                  required
-                  id="mao"
-                  name="mao"
-                  value={form.mao}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder={suggestedMaoPlaceholder}
-                />
-              </label>
-              <Select
-                label="On Market"
-                name="onMarket"
-                value={form.onMarket}
-                onChange={handleChange}
-                options={["No", "Yes"]}
-                required
-              />
-              {form.onMarket === "Yes" && (
-                <>
-                  <Field
-                    currency
-                    label="Listed Price"
-                    name="listedPrice"
-                    value={form.listedPrice}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required
-                  />
-                  <Field
-                    label="Agent Name"
-                    name="agentName"
-                    value={form.agentName}
-                    onChange={handleChange}
-                    placeholder="e.g. Jane Smith"
-                  />
-                  <Field
-                    label="Agent Phone"
-                    name="agentPhone"
-                    type="tel"
-                    value={form.agentPhone}
-                    onChange={(e) =>
-                      handleChange({
-                        target: {
-                          name: "agentPhone",
-                          value: formatPhone(e.target.value),
-                        },
-                      })
-                    }
-                    placeholder="e.g. 512-555-0100"
-                  />
-                  <Field
-                    label="Listing URL (Zillow / MLS)"
-                    name="listingUrl"
-                    type="url"
-                    value={form.listingUrl}
-                    onChange={handleChange}
-                    placeholder="e.g. https://www.zillow.com/homedetails/..."
-                  />
-                </>
-              )}
-              <Select
-                label="Offer Status"
-                name="offerStatus"
-                value={form.offerStatus}
-                onChange={handleChange}
-                options={["Not Sent", "Offer Sent"]}
-                required
-              />
-              {form.offerStatus === "Offer Sent" && (
-                <>
-                  <Field
-                    label="Offer Date"
-                    name="offerDate"
-                    type="date"
-                    value={form.offerDate}
-                    max={today}
-                    onChange={handleChange}
-                    required
-                  />
-                  <label className="field">
-                    <span>Contract Upload</span>
-                    {form.contractFileName ? (
-                      <div className="file-upload-status">
-                        <span
-                          className="file-upload-name"
-                          title={form.contractFileName}
-                        >
-                          {form.contractFileName}
-                        </span>
-                        <button
-                          type="button"
-                          className="file-upload-remove-btn"
-                          onClick={clearContractFile}
-                          title="Remove contract"
-                          aria-label="Remove contract"
-                        >
-                          <X size={15} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="file-upload-field">
-                        <label
-                          htmlFor="contractUpload"
-                          className="secondary-btn file-upload-trigger"
-                        >
-                          Choose Contract
-                        </label>
-                        <input
-                          id="contractUpload"
-                          className="file-upload-input"
-                          type="file"
-                          accept="application/pdf,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.formula,.odt,.odf,image/*"
-                          onChange={handleContractFileChange}
-                        />
-                      </div>
-                    )}
-                  </label>
-                </>
-              )}
-              {form.offerStatus !== "Not Sent" && (
-                <Field
-                  currency
-                  label="Contract Price"
-                  name="contractPrice"
-                  value={form.contractPrice}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  required
-                />
-              )}
-              {form.offerStatus !== "Not Sent" && (
-                <Select
-                  label="Offer Accepted"
-                  name="sellerAccepted"
-                  value={form.sellerAccepted}
-                  onChange={handleChange}
-                  options={["No", "Waiting", "Yes"]}
-                  required
-                />
-              )}
-              {form.sellerAccepted !== "No" &&
-                form.sellerAccepted !== "Waiting" && (
-                  <Select
-                    label="Assigned"
-                    name="assigned"
-                    value={form.assigned}
-                    onChange={handleChange}
-                    options={["No", "Yes"]}
-                  />
-                )}
-              {form.assigned === "Yes" && (
-                <>
-                  <Field
-                    currency
-                    label="Assigned Price"
-                    name="assignedPrice"
-                    value={form.assignedPrice}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required
-                    error={
-                      isAssignedPriceTooLow(
-                        parseCurrency(form.contractPrice),
-                        parseCurrency(form.assignedPrice),
-                      ) && ASSIGNED_PRICE_ERROR
-                    }
-                  />
-                  <Field
-                    label="Buyer Name / LLC"
-                    name="buyerName"
-                    value={form.buyerName || ""}
-                    onChange={handleChange}
-                    required
-                  />
-                  <Field
-                    label="Buyer Email"
-                    name="buyerEmail"
-                    type="email"
-                    value={form.buyerEmail || ""}
-                    onChange={handleChange}
-                    required
-                  />
-                </>
-              )}
-              <Select
-                label="JV Deal?"
-                name="jvDeal"
-                value={form.jvDeal}
-                onChange={handleChange}
-                options={["No", "Yes"]}
-              />
-              {form.jvDeal === "Yes" && (
-                <>
-                  <Field
-                    label="JV Partner Name"
-                    name="jvPartnerName"
-                    value={form.jvPartnerName || ""}
-                    onChange={handleChange}
-                    placeholder="e.g. Jane Smith"
-                    required
-                  />
-                  <Field
-                    label="JV Partner Email"
-                    name="jvPartnerEmail"
-                    type="email"
-                    value={form.jvPartnerEmail || ""}
-                    onChange={handleChange}
-                    placeholder="e.g. jane@example.com"
-                    required
-                  />
-                  <Field
-                    currency
-                    label="JV Split ($)"
-                    name="jvSplit"
-                    value={form.jvSplit || ""}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    placeholder="e.g. $5,000"
-                    required
-                  />
-                </>
-              )}
-              {form.sellerAccepted === "Yes" && form.assigned === "Yes" && (
-                <>
-                  <Select
-                    label="Closed"
-                    name="closed"
-                    value={form.closed}
-                    onChange={handleChange}
-                    options={["No", "Yes"]}
-                    required
-                  />
-                  {form.closed === "Yes" && (
-                    <Field
-                      label="Closed On"
-                      name="closedDate"
-                      type="date"
-                      value={form.closedDate}
-                      onChange={handleChange}
-                      required
-                    />
-                  )}
-                </>
-              )}
-            </>
-          )}
-          <div className="form-row-break" aria-hidden="true" />
-          <label className="field notes-field">
-            <span>
-              Notes
-              <span className="required-marker">*</span>
-            </span>
-            <textarea
-              required
-              id="notes"
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows="4"
-            />
-          </label>
-          <button
-            className="primary-btn form-btn"
-            type="submit"
-            disabled={!isFormComplete || !!formError}
-          >
-            Save
-          </button>
-        </form>
+        {formEl}
       </div>
     </section>
   );

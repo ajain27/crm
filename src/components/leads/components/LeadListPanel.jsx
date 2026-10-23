@@ -56,7 +56,7 @@ export default function LeadListPanel({
 
   return (
     <section
-      className="panel"
+      className="panel leads-list-panel"
       data-reveal="left"
       style={{ "--reveal-delay": revealDelay }}
     >
