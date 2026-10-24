@@ -2,6 +2,25 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
+// The page doesn't scroll while any modal is open. Modals can stack (e.g.
+// Run comps over a lead window), so the lock counts them: the first to
+// open saves the page's overflow and the last to close puts it back.
+let openModals = 0;
+let savedOverflow = "";
+
+function lockPageScroll() {
+  if (openModals === 0) {
+    savedOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  openModals += 1;
+}
+
+function unlockPageScroll() {
+  openModals = Math.max(0, openModals - 1);
+  if (openModals === 0) document.body.style.overflow = savedOverflow;
+}
+
 function Modal({
   isOpen,
   onClose,
@@ -28,13 +47,16 @@ function Modal({
       onClose();
     }
     document.addEventListener("keydown", handleKeyDown);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = prev;
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Only on open and close — not whenever onClose changes, which re-ran
+  // the lock and let stacked modals leave the page locked.
+  useEffect(() => {
+    if (!isOpen) return;
+    lockPageScroll();
+    return unlockPageScroll;
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

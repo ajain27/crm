@@ -83,4 +83,27 @@ describe("Modal", () => {
     );
     expect(document.body.style.overflow).not.toBe("hidden");
   });
+
+  it("unlocks body scroll once stacked modals close, even after re-renders", () => {
+    // Inline onClose handlers change on every render, as in the lead window
+    // with Run comps open over it.
+    const Stack = ({ outer, inner }) => (
+      <>
+        <Modal isOpen={outer} onClose={() => {}} title="Lead">
+          lead
+        </Modal>
+        <Modal isOpen={inner} onClose={() => {}} title="Run comps">
+          comps
+        </Modal>
+      </>
+    );
+    const { rerender } = render(<Stack outer inner={false} />);
+    rerender(<Stack outer inner />);
+    rerender(<Stack outer inner />);
+    expect(document.body.style.overflow).toBe("hidden");
+    rerender(<Stack outer inner={false} />);
+    expect(document.body.style.overflow).toBe("hidden");
+    rerender(<Stack outer={false} inner={false} />);
+    expect(document.body.style.overflow).not.toBe("hidden");
+  });
 });
