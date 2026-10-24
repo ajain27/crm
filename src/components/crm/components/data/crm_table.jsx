@@ -1,7 +1,13 @@
 import { useState } from "react";
 import Pagination from "../../../pagination/Pagination";
 import { Select } from "../../../elements/elements";
-import { getContractVersions, months } from "../crmConfig";
+import {
+  getContractVersions,
+  isDealInactive,
+  isDealRejected,
+  isDealWithdrawn,
+  months,
+} from "../crmConfig";
 import { useDealsSort } from "./hooks/useDealsSort";
 import { useDealUpdater } from "./hooks/useDealUpdater";
 import { useContractManager } from "./hooks/useContractManager";
@@ -36,13 +42,7 @@ function Wholesale_data({
     ? deals.find((d) => d.id === detailDealId) || null
     : null;
 
-  function isInactive(deal) {
-    const isRejected =
-      (deal.offerStatus || "Not Sent") === "Offer Sent" &&
-      (deal.sellerAccepted || "No") === "No";
-    const isWithdrawn = (deal.offerStatus || "Not Sent") === "Offer Withdrawn";
-    return isRejected || isWithdrawn;
-  }
+  const isInactive = isDealInactive;
 
   const isClosed = (deal) => (deal.closed || "No") === "Yes";
 
@@ -102,10 +102,18 @@ function Wholesale_data({
   }
 
   function reactivateDeal(deal) {
-    const patch = { sellerAccepted: "Waiting" };
-    if (deal.offerStatus === "Offer Withdrawn")
+    const patch = { inactive: false };
+    if (isDealRejected(deal)) patch.sellerAccepted = "Waiting";
+    if (isDealWithdrawn(deal)) {
       patch.offerStatus = "Offer Sent";
+      patch.sellerAccepted = "Waiting";
+    }
     updateDealPatch(deal.id, patch);
+  }
+
+  // Moves an active deal to the Inactive tab; Make Active brings it back.
+  function makeDealInactive(deal) {
+    updateDealPatch(deal.id, { inactive: true });
   }
 
   const selectedContractDeal = deals.find(
@@ -248,6 +256,14 @@ function Wholesale_data({
           detailDeal && isInactive(detailDeal)
             ? () => {
                 reactivateDeal(detailDeal);
+                setDetailDealId(null);
+              }
+            : undefined
+        }
+        onMakeInactive={
+          detailDeal && !isInactive(detailDeal) && !isClosed(detailDeal)
+            ? () => {
+                makeDealInactive(detailDeal);
                 setDetailDealId(null);
               }
             : undefined

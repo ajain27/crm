@@ -114,20 +114,42 @@ describe("usePMDealFiles", () => {
     expect(global.alert).toHaveBeenCalled();
   });
 
-  it("handleFileUpload rejects files over 700KB", async () => {
+  it("handleFileUpload saves a PDF over 700 KB", async () => {
+    global.alert.mockClear();
     const props = baseProps();
     const { result } = renderHook(() => usePMDealFiles(props));
-    const bigFile = new File([new Uint8Array(700 * 1024 + 10)], "big.pdf", {
+    const bigFile = new File([new Uint8Array(1024 * 1024)], "big.pdf", {
       type: "application/pdf",
     });
-    const event = {
-      target: { files: [bigFile], value: "X" },
-    };
     await act(async () => {
-      await result.current.handleFileUpload(dealWithFile, event);
+      await result.current.handleFileUpload(dealWithFile, {
+        target: { files: [bigFile], value: "X" },
+      });
+    });
+    expect(global.alert).not.toHaveBeenCalled();
+    expect(props.savePmDealFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "big.pdf",
+        data: expect.stringMatching(/^data:application\/pdf;base64,/),
+      }),
+    );
+  });
+
+  it("handleFileUpload rejects files over 15 MB", async () => {
+    const props = baseProps();
+    const { result } = renderHook(() => usePMDealFiles(props));
+    const hugeFile = new File(
+      [new Uint8Array(15 * 1024 * 1024 + 10)],
+      "huge.pdf",
+      { type: "application/pdf" },
+    );
+    await act(async () => {
+      await result.current.handleFileUpload(dealWithFile, {
+        target: { files: [hugeFile], value: "X" },
+      });
     });
     expect(global.alert).toHaveBeenCalledWith(
-      "File must be smaller than 700 KB.",
+      '"huge.pdf" is larger than 15 MB. Choose a smaller file.',
     );
     expect(props.savePmDealFile).not.toHaveBeenCalled();
   });

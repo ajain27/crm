@@ -110,6 +110,44 @@ describe("Wholesale_data", () => {
     expect(persist).toHaveBeenCalled();
   });
 
+  it("makes an active deal inactive, moving it to the Inactive tab", async () => {
+    const saveDeal = vi.fn().mockResolvedValue(undefined);
+    const props = {
+      deleteDeal: vi.fn(),
+      persist: vi.fn(),
+      saveDeal,
+    };
+    const { rerender, container } = render(
+      <Wholesale_data filteredDeals={[deal]} deals={[deal]} {...props} />,
+    );
+    fireEvent.click(screen.getAllByRole("row")[1]);
+    expect(
+      screen.queryByRole("button", { name: "Make Active" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Make Inactive" }));
+    await waitFor(() =>
+      expect(saveDeal).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "d1", inactive: true }),
+      ),
+    );
+
+    const inactive = { ...deal, inactive: true };
+    rerender(
+      <Wholesale_data
+        filteredDeals={[inactive]}
+        deals={[inactive]}
+        {...props}
+      />,
+    );
+    expect(getRenderedDealIds(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: /Inactive/ }));
+    expect(getRenderedDealIds(container)).toEqual(["d1"]);
+    fireEvent.click(screen.getAllByRole("row")[1]);
+    expect(
+      screen.getByRole("button", { name: "Make Active" }),
+    ).toBeInTheDocument();
+  });
+
   it("deletes a deal from the details modal", () => {
     const deleteDeal = vi.fn();
     vi.spyOn(window, "confirm").mockReturnValue(true);

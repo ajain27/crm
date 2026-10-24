@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { createContractVersion, getContractVersions } from "../../crmConfig";
 import {
-  MAX_CONTRACT_FILE_SIZE,
-  createContractVersion,
-  getContractVersions,
-} from "../../crmConfig";
+  MAX_ATTACHMENT_BYTES,
+  MAX_ATTACHMENT_LABEL,
+  prepareAttachment,
+} from "../../../../../utils/attachments";
 
 export function useContractManager({
   deals,
@@ -71,23 +72,9 @@ export function useContractManager({
     );
   }
 
-  function readFileAsContractVersion(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const encodedFile =
-          typeof reader.result === "string" ? reader.result : "";
-        resolve(
-          createContractVersion({
-            name: file.name,
-            type: file.type || "application/octet-stream",
-            data: encodedFile,
-          }),
-        );
-      };
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
+  // Large images are compressed; large PDFs are saved in parts.
+  async function readFileAsContractVersion(file) {
+    return createContractVersion(await prepareAttachment(file));
   }
 
   function handleContractUpload(deal, event) {
@@ -101,9 +88,15 @@ export function useContractManager({
       return;
     }
 
-    const oversized = files.find((file) => file.size > MAX_CONTRACT_FILE_SIZE);
+    // Images are compressed to fit, whatever their size.
+    const oversized = files.find(
+      (file) =>
+        !file.type.startsWith("image/") && file.size > MAX_ATTACHMENT_BYTES,
+    );
     if (oversized) {
-      alert(`"${oversized.name}" is larger than 700 KB. Choose smaller files.`);
+      alert(
+        `"${oversized.name}" is larger than ${MAX_ATTACHMENT_LABEL}. Choose smaller files.`,
+      );
       event.target.value = "";
       return;
     }

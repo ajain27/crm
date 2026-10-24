@@ -72,6 +72,67 @@ function countyRecordCompsSubcollection(importId) {
   return collection(db, "countyRecordImports", importId, "comps");
 }
 
+// Attachment documents (contracts, lead and PM deal files) hold the file
+// as a data URL. Firestore caps a document at 1 MB, so a larger file is
+// split: its document keeps the details with `chunkCount`, and the data
+// sits in sibling documents "<id>~0", "<id>~1"… in the same collection
+// (which deleting the whole collection already clears).
+const FILE_CHUNK_LENGTH = 700 * 1024;
+
+const chunkId = (id, index) => `${id}~${index}`;
+
+async function saveFileDoc(files, id, fields) {
+  const data = fields.data || "";
+  if (data.length <= FILE_CHUNK_LENGTH) {
+    await setDoc(doc(files, id), fields);
+    return;
+  }
+  const chunkCount = Math.ceil(data.length / FILE_CHUNK_LENGTH);
+  await Promise.all(
+    Array.from({ length: chunkCount }, (_, index) =>
+      setDoc(doc(files, chunkId(id, index)), {
+        ...fields,
+        id: chunkId(id, index),
+        chunkOf: id,
+        index,
+        data: data.slice(
+          index * FILE_CHUNK_LENGTH,
+          (index + 1) * FILE_CHUNK_LENGTH,
+        ),
+      }),
+    ),
+  );
+  // Written last, so the file only shows as saved once all its parts are.
+  await setDoc(doc(files, id), { ...fields, data: "", chunkCount });
+}
+
+async function fetchFileDoc(files, id) {
+  const snapshot = await getDoc(doc(files, id));
+  if (!snapshot.exists()) return null;
+  const file = { id: snapshot.id, ...snapshot.data() };
+  if (!file.chunkCount) return file;
+  const chunks = await Promise.all(
+    Array.from({ length: file.chunkCount }, (_, index) =>
+      getDoc(doc(files, chunkId(id, index))),
+    ),
+  );
+  if (chunks.some((c) => !c.exists())) {
+    throw new Error(`Part of "${file.name}" is missing.`);
+  }
+  return { ...file, data: chunks.map((c) => c.data().data).join("") };
+}
+
+async function deleteFileDoc(files, id) {
+  const snapshot = await getDoc(doc(files, id));
+  const chunkCount = snapshot.exists() ? snapshot.data().chunkCount || 0 : 0;
+  await Promise.all(
+    Array.from({ length: chunkCount }, (_, index) =>
+      deleteDoc(doc(files, chunkId(id, index))),
+    ),
+  );
+  await deleteDoc(doc(files, id));
+}
+
 function mapSnapshot(snapshot) {
   return snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
@@ -410,7 +471,7 @@ export async function saveContractVersion({
   data,
   uploadedAt,
 }) {
-  await setDoc(doc(contractsSubcollection(dealId), id), {
+  await saveFileDoc(contractsSubcollection(dealId), id, {
     id,
     dealId,
     userId,
@@ -422,13 +483,11 @@ export async function saveContractVersion({
 }
 
 export async function fetchContractVersion(dealId, id) {
-  const snapshot = await getDoc(doc(contractsSubcollection(dealId), id));
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() };
+  return fetchFileDoc(contractsSubcollection(dealId), id);
 }
 
 export async function deleteContractById(dealId, id) {
-  await deleteDoc(doc(contractsSubcollection(dealId), id));
+  await deleteFileDoc(contractsSubcollection(dealId), id);
 }
 
 // Deal photos: one compressed JPEG data URL per document, like contracts.
@@ -550,7 +609,7 @@ export async function saveLeadFile({
   data,
   uploadedAt,
 }) {
-  await setDoc(doc(leadFilesSubcollection(leadId), id), {
+  await saveFileDoc(leadFilesSubcollection(leadId), id, {
     id,
     leadId,
     userId,
@@ -562,13 +621,11 @@ export async function saveLeadFile({
 }
 
 export async function fetchLeadFile(leadId, id) {
-  const snapshot = await getDoc(doc(leadFilesSubcollection(leadId), id));
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() };
+  return fetchFileDoc(leadFilesSubcollection(leadId), id);
 }
 
 export async function deleteLeadFileById(leadId, id) {
-  await deleteDoc(doc(leadFilesSubcollection(leadId), id));
+  await deleteFileDoc(leadFilesSubcollection(leadId), id);
 }
 
 export async function fetchPmDeals(userId) {
@@ -632,7 +689,7 @@ export async function savePmDealFile({
   data,
   uploadedAt,
 }) {
-  await setDoc(doc(pmDealFilesSubcollection(pmDealId), id), {
+  await saveFileDoc(pmDealFilesSubcollection(pmDealId), id, {
     id,
     pmDealId,
     userId,
@@ -644,13 +701,11 @@ export async function savePmDealFile({
 }
 
 export async function fetchPmDealFile(pmDealId, id) {
-  const snapshot = await getDoc(doc(pmDealFilesSubcollection(pmDealId), id));
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() };
+  return fetchFileDoc(pmDealFilesSubcollection(pmDealId), id);
 }
 
 export async function deletePmDealFileById(pmDealId, id) {
-  await deleteDoc(doc(pmDealFilesSubcollection(pmDealId), id));
+  await deleteFileDoc(pmDealFilesSubcollection(pmDealId), id);
 }
 
 export async function sendPasswordResetOtp(email) {

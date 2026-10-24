@@ -132,6 +132,21 @@ describe("DealDetailModal", () => {
     }
   });
 
+  it("has a Make Inactive button when the deal can be made inactive", () => {
+    const onMakeInactive = vi.fn();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+        onMakeInactive={onMakeInactive}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Make Inactive" }));
+    expect(onMakeInactive).toHaveBeenCalled();
+  });
+
   it("clicking Save Changes invokes updateDealPatch", async () => {
     const updateDealPatch = vi.fn().mockResolvedValue(undefined);
     render(

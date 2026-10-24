@@ -5,6 +5,7 @@ import {
 } from "../../../elements/elements";
 import { currency } from "../../../../utils/utils";
 import { PhoneLink } from "../../../leads/components/LeadTableCells";
+import { isDealRejected, isDealWithdrawn } from "../crmConfig";
 
 function formatFullAddress(deal) {
   const stateZip = [deal.state, deal.zipCode].filter(Boolean).join(" ");
@@ -12,10 +13,9 @@ function formatFullAddress(deal) {
 }
 
 function DealRow({ deal, index, onRowDetailClick }) {
-  const isRejected =
-    (deal.offerStatus || "Not Sent") === "Offer Sent" &&
-    (deal.sellerAccepted || "No") === "No";
-  const isWithdrawn = (deal.offerStatus || "Not Sent") === "Offer Withdrawn";
+  const isRejected = isDealRejected(deal);
+  // Made inactive by hand: greyed out like a withdrawn offer.
+  const isWithdrawn = isDealWithdrawn(deal) || deal.inactive === true;
 
   // Expressed as a data attribute (not a className) so the row's React-controlled
   // className stays constant and never clobbers the imperatively-added

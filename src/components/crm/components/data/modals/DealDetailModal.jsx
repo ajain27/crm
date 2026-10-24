@@ -139,6 +139,7 @@ function DealDetailModal({
   handleDeleteContractVersion,
   uploadingDealId,
   onReactivate,
+  onMakeInactive,
   photoStore,
   currentUserId,
 }) {
@@ -440,6 +441,15 @@ function DealDetailModal({
                 disabled={saving || exportingOffer}
               >
                 {exportingOffer ? "Generating…" : "Generate Offer"}
+              </button>
+            )}
+            {onMakeInactive && (
+              <button
+                className="secondary-btn"
+                onClick={onMakeInactive}
+                disabled={saving}
+              >
+                Make Inactive
               </button>
             )}
             {onReactivate && (

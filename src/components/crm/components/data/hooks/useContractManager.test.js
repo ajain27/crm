@@ -82,19 +82,43 @@ describe("useContractManager", () => {
     expect(props.saveContractVersion).not.toHaveBeenCalled();
   });
 
-  it("handleContractUpload rejects files larger than 700KB", () => {
+  it("handleContractUpload saves a PDF over 700 KB", async () => {
+    global.alert.mockClear();
     const props = baseProps();
     const { result } = renderHook(() => useContractManager(props));
-    const big = new File([new Uint8Array(700 * 1024 + 100)], "big.pdf", {
+    const big = new File([new Uint8Array(1024 * 1024)], "big.pdf", {
       type: "application/pdf",
     });
-    act(() =>
+    await act(async () => {
       result.current.handleContractUpload(dealWithContract, {
         target: { files: [big], value: "x" },
+      });
+    });
+    await waitFor(() =>
+      expect(props.saveContractVersion).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "big.pdf" }),
+      ),
+    );
+    expect(global.alert).not.toHaveBeenCalled();
+  });
+
+  it("handleContractUpload rejects files larger than 15 MB", () => {
+    const props = baseProps();
+    const { result } = renderHook(() => useContractManager(props));
+    const huge = new File(
+      [new Uint8Array(15 * 1024 * 1024 + 100)],
+      "huge.pdf",
+      {
+        type: "application/pdf",
+      },
+    );
+    act(() =>
+      result.current.handleContractUpload(dealWithContract, {
+        target: { files: [huge], value: "x" },
       }),
     );
     expect(global.alert).toHaveBeenCalledWith(
-      '"big.pdf" is larger than 700 KB. Choose smaller files.',
+      '"huge.pdf" is larger than 15 MB. Choose smaller files.',
     );
     expect(props.saveContractVersion).not.toHaveBeenCalled();
   });

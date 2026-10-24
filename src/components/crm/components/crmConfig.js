@@ -6,7 +6,6 @@ import {
 
 export const SESSION_STORAGE_KEY = "crmCurrentUser";
 export const MAX_PROFILE_IMAGE_SIZE = 600 * 1024;
-export const MAX_CONTRACT_FILE_SIZE = 700 * 1024;
 export const IDLE_LOGOUT_MS = 30 * 60 * 1000;
 
 export const DEAL_TYPES = ["Wholesale", "Potential Rental"];
@@ -100,6 +99,25 @@ export function createEmptyDealForm() {
     closedDate: "",
     closedInMonth: "",
   };
+}
+
+// A deal is inactive when it was made inactive by hand, or its offer was
+// rejected or withdrawn. Inactive deals show in the dashboard's Inactive tab.
+export function isDealRejected(deal) {
+  return (
+    (deal.offerStatus || "Not Sent") === "Offer Sent" &&
+    (deal.sellerAccepted || "No") === "No"
+  );
+}
+
+export function isDealWithdrawn(deal) {
+  return (deal.offerStatus || "Not Sent") === "Offer Withdrawn";
+}
+
+export function isDealInactive(deal) {
+  return (
+    deal.inactive === true || isDealRejected(deal) || isDealWithdrawn(deal)
+  );
 }
 
 export function createContractVersion({

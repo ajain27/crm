@@ -1,6 +1,5 @@
 import { useState } from "react";
-
-const MAX_FILE_SIZE = 700 * 1024;
+import { prepareAttachment } from "../../../utils/attachments";
 
 export function usePMDealFiles({
   deals,
@@ -20,45 +19,40 @@ export function usePMDealFiles({
   async function handleFileUpload(deal, e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > MAX_FILE_SIZE) {
-      alert("File must be smaller than 700 KB.");
+    // Large images are compressed; large PDFs are saved in parts.
+    let attachment;
+    try {
+      attachment = await prepareAttachment(file);
+    } catch (error) {
+      alert(error.message || "Couldn't read that file.");
       e.target.value = "";
       return;
     }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const data = typeof reader.result === "string" ? reader.result : "";
-      const fileId = crypto.randomUUID();
-      const uploadedAt = new Date().toISOString();
-      setUploadingId(deal.id);
-      try {
-        await savePmDealFile({
-          id: fileId,
-          pmDealId: deal.id,
-          userId: currentUser?.id || "",
-          name: file.name,
-          type: file.type || "application/octet-stream",
-          data,
-          uploadedAt,
-        });
-        const newEntry = {
-          id: fileId,
-          name: file.name,
-          type: file.type || "application/octet-stream",
-          uploadedAt,
-        };
-        const updated = { ...deal, files: [...(deal.files || []), newEntry] };
-        await savePmDeal(updated);
-        setDeals((p) => p.map((d) => (d.id === deal.id ? updated : d)));
-        setFileDataCache((p) => ({ ...p, [fileId]: data }));
-      } catch {
-        alert("Failed to upload file.");
-      } finally {
-        setUploadingId(null);
-        e.target.value = "";
-      }
-    };
-    reader.readAsDataURL(file);
+    const { name, type, data } = attachment;
+    const fileId = crypto.randomUUID();
+    const uploadedAt = new Date().toISOString();
+    setUploadingId(deal.id);
+    try {
+      await savePmDealFile({
+        id: fileId,
+        pmDealId: deal.id,
+        userId: currentUser?.id || "",
+        name,
+        type,
+        data,
+        uploadedAt,
+      });
+      const newEntry = { id: fileId, name, type, uploadedAt };
+      const updated = { ...deal, files: [...(deal.files || []), newEntry] };
+      await savePmDeal(updated);
+      setDeals((p) => p.map((d) => (d.id === deal.id ? updated : d)));
+      setFileDataCache((p) => ({ ...p, [fileId]: data }));
+    } catch {
+      alert("Failed to upload file.");
+    } finally {
+      setUploadingId(null);
+      e.target.value = "";
+    }
   }
 
   async function openFile(deal) {

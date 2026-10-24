@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  MAX_CONTRACT_FILE_SIZE,
   createEmptyDealForm,
   createDefaultFilters,
   createContractVersion,
@@ -9,6 +8,7 @@ import {
   isAssignedPriceTooLow,
 } from "../crmConfig";
 import { findDuplicateByAddress } from "../../../../utils/utils";
+import { prepareAttachment } from "../../../../utils/attachments";
 
 export function useDealForm({
   deals,
@@ -29,7 +29,7 @@ export function useDealForm({
     setFormError("");
   }
 
-  function handleContractFileChange(event) {
+  async function handleContractFileChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -47,34 +47,20 @@ export function useDealForm({
       return;
     }
 
-    if (file.size > MAX_CONTRACT_FILE_SIZE) {
-      alert("Contract file must be smaller than 700 KB.");
-      event.target.value = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
+    // Large images are compressed; large PDFs are saved in parts.
+    event.target.value = "";
+    try {
+      const attachment = await prepareAttachment(file);
       setForm((prev) => ({
         ...prev,
-        contractFileName: file.name,
-        contractFileType: file.type,
-        contractFileData:
-          typeof reader.result === "string" ? reader.result : "",
-        contractVersions:
-          typeof reader.result === "string"
-            ? [
-                createContractVersion({
-                  name: file.name,
-                  type: file.type,
-                  data: reader.result,
-                }),
-              ]
-            : [],
+        contractFileName: attachment.name,
+        contractFileType: attachment.type,
+        contractFileData: attachment.data,
+        contractVersions: [createContractVersion(attachment)],
       }));
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
+    } catch (error) {
+      alert(error.message || "Couldn't read that file.");
+    }
   }
 
   function clearContractFile() {
