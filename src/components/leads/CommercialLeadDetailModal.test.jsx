@@ -188,7 +188,7 @@ describe("CommercialLeadDetailModal photos", () => {
 });
 
 describe("CommercialLeadDetailModal history", () => {
-  it("loads the property's history in the Property History tab", async () => {
+  it("looks up the property's history on open and shows it in the Property History tab", async () => {
     requestPropertyHistory.mockResolvedValue({
       timeline: [],
       sales: [
@@ -205,7 +205,6 @@ describe("CommercialLeadDetailModal history", () => {
       />,
     );
     fireEvent.click(screen.getByRole("tab", { name: "Property History" }));
-    fireEvent.click(screen.getByRole("button", { name: "Load history" }));
     expect(await screen.findByText("$900,000")).toBeInTheDocument();
     expect(requestPropertyHistory).toHaveBeenCalledWith(
       "500 Commerce St, Dallas, TX 75201",

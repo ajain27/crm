@@ -1,35 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { requestPropertyHistory } from "../../services/propertyHistoryService";
 import { historyToSave, leadHistory } from "./propertyHistory";
 import { PriceHistory, PropertyHistory } from "./PropertyHistoryViews";
 
 // The lead windows' Price History and Property History tabs. A lead's
-// history comes with its comps run; without one it can be loaded on its
-// own, onto the draft (Save Changes keeps it, like comps).
-export function useLeadHistory({ lead, draft, setDraft }) {
+// history comes with its comps run. Opening a lead that has none looks it
+// up straight away, so it's always there; `onLoaded(leadId, history)`
+// saves it to the lead right then (without it, Save Changes keeps it).
+export function useLeadHistory({ lead, draft, setDraft, onLoaded }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // The lead the window shows, so a lookup that finishes after it moved
+  // on to another lead is dropped.
+  const leadIdRef = useRef(null);
 
-  useEffect(() => {
-    setError("");
-  }, [lead]);
-
-  async function load() {
-    const address = String(draft.address || "").trim();
-    if (!address) return;
+  async function load(address = draft.address) {
+    const where = String(address || "").trim();
+    if (!where) return;
+    const leadId = lead?.id ?? null;
+    const current = () => leadIdRef.current === leadId;
     setLoading(true);
     setError("");
     try {
-      const data = await requestPropertyHistory(address);
-      setDraft((prev) => ({ ...prev, propertyHistory: historyToSave(data) }));
+      const history = historyToSave(await requestPropertyHistory(where));
+      if (!current()) return;
+      setDraft((prev) => ({ ...prev, propertyHistory: history }));
+      try {
+        await onLoaded?.(leadId, history);
+      } catch (err) {
+        // Still on the draft, so Save Changes keeps it.
+        console.warn("Couldn't save the property history:", err);
+      }
     } catch (err) {
-      setError(err.message || "Couldn't load the property history.");
+      if (current()) {
+        setError(err.message || "Couldn't load the property history.");
+      }
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   }
 
-  return { history: leadHistory(draft), loading, error, load };
+  useEffect(() => {
+    leadIdRef.current = lead?.id ?? null;
+    setError("");
+    setLoading(false);
+    if (lead && !leadHistory(lead) && String(lead.address || "").trim()) {
+      load(lead.address);
+    }
+    // Only when the window opens on a lead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead]);
+
+  return { history: leadHistory(draft), loading, error, load: () => load() };
 }
 
 const fetchedDate = (iso) =>

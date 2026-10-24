@@ -405,6 +405,15 @@ export default function PotentialLeads({
         }
       : {};
 
+  // A lead's property history saves as soon as it's looked up, so it's
+  // there the next time the lead opens.
+  async function handleLeadHistoryLoaded(leadId, propertyHistory) {
+    if (updateLeadPatch) await updateLeadPatch(leadId, { propertyHistory });
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, propertyHistory } : l)),
+    );
+  }
+
   async function handleLeadSave(updated) {
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
@@ -620,6 +629,7 @@ export default function PotentialLeads({
           onSave={handleLeadSave}
           isPpc={detailLead ? isPpcLead(detailLead) : false}
           isPpl={detailLead ? isPplLead(detailLead) : false}
+          onHistoryLoaded={handleLeadHistoryLoaded}
           {...photoProps}
         />
       )}
@@ -633,6 +643,7 @@ export default function PotentialLeads({
             ? () => handleCommercialLeadDelete(commercialDetailLead.id)
             : undefined
         }
+        onHistoryLoaded={handleLeadHistoryLoaded}
         {...photoProps}
       />
     </>

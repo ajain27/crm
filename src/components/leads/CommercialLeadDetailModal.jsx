@@ -40,6 +40,7 @@ export default function CommercialLeadDetailModal({
   photoStore,
   onPhotosChange,
   currentUserId,
+  onHistoryLoaded,
 }) {
   const [draft, setDraft] = useState({});
   const photosState = useLeadPhotos({
@@ -52,7 +53,12 @@ export default function CommercialLeadDetailModal({
   });
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState("details");
-  const historyState = useLeadHistory({ lead, draft, setDraft });
+  const historyState = useLeadHistory({
+    lead,
+    draft,
+    setDraft,
+    onLoaded: onHistoryLoaded,
+  });
 
   useEffect(() => {
     setTab("details");

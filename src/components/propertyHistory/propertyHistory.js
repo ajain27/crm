@@ -19,8 +19,13 @@ export function historyToSave(history, fetchedAt = new Date()) {
   };
 }
 
-// A lead's history: one loaded on its own (`propertyHistory`), else the
-// one its last comps run read.
+// A lead's history: the newer of the one loaded on its own
+// (`propertyHistory`) and the one its last comps run read.
 export function leadHistory(lead) {
-  return lead?.propertyHistory || lead?.compsResult?.history || null;
+  const loaded = lead?.propertyHistory;
+  const fromComps = lead?.compsResult?.history;
+  if (!loaded || !fromComps) return loaded || fromComps || null;
+  return (fromComps.fetchedAt || "") > (loaded.fetchedAt || "")
+    ? fromComps
+    : loaded;
 }

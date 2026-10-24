@@ -14,6 +14,7 @@ import {
   LeadHistoryTab,
   useLeadHistory,
 } from "../propertyHistory/LeadHistoryTab";
+import { historyToSave } from "../propertyHistory/propertyHistory";
 import ArvHighlight from "../elements/ArvHighlight";
 import {
   HISTORY_TABS,
@@ -82,6 +83,7 @@ export default function LeadDetailModal({
   photoStore,
   onPhotosChange,
   currentUserId,
+  onHistoryLoaded,
 }) {
   const [draft, setDraft] = useState({});
   const photosState = useLeadPhotos({
@@ -102,8 +104,18 @@ export default function LeadDetailModal({
     draft,
     setDraft,
     enabled: Boolean(lead) && !isRental,
+    // The history a comps run read saves to the lead right away.
+    onRunSaved: (note, result) =>
+      result?.history && onHistoryLoaded
+        ? onHistoryLoaded(lead.id, historyToSave(result.history))
+        : undefined,
   });
-  const historyState = useLeadHistory({ lead, draft, setDraft });
+  const historyState = useLeadHistory({
+    lead,
+    draft,
+    setDraft,
+    onLoaded: onHistoryLoaded,
+  });
 
   useEffect(() => {
     if (lead)

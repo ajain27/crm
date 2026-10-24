@@ -402,30 +402,49 @@ describe("LeadDetailModal PPC seller name", () => {
     expect(screen.getByText("$5,273")).toBeInTheDocument();
   });
 
-  it("loads the history for a lead without one and saves it with the lead", async () => {
+  it("looks up the history as soon as a lead without one opens, and saves it to the lead", async () => {
     requestPropertyHistory.mockResolvedValue({
       address: lead.address,
       ...HISTORY,
     });
-    const onSave = vi.fn().mockResolvedValue(undefined);
+    const onHistoryLoaded = vi.fn().mockResolvedValue(undefined);
     render(
-      <LeadDetailModal isOpen onClose={vi.fn()} lead={lead} onSave={onSave} />,
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={lead}
+        onSave={vi.fn()}
+        onHistoryLoaded={onHistoryLoaded}
+      />,
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Price History" }));
-    fireEvent.click(screen.getByRole("button", { name: "Load history" }));
-    expect(await screen.findByText("Listed for sale")).toBeInTheDocument();
     expect(requestPropertyHistory).toHaveBeenCalledWith("1 Main St");
-    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
     await waitFor(() =>
-      expect(onSave).toHaveBeenCalledWith(
+      expect(onHistoryLoaded).toHaveBeenCalledWith(
+        "l1",
         expect.objectContaining({
-          propertyHistory: expect.objectContaining({
-            timeline: HISTORY.timeline,
-            taxes: HISTORY.taxes,
-          }),
+          timeline: HISTORY.timeline,
+          taxes: HISTORY.taxes,
         }),
       ),
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Price History" }));
+    expect(screen.getByText("Listed for sale")).toBeInTheDocument();
+  });
+
+  it("doesn't look up a history the lead already has", () => {
+    requestPropertyHistory.mockClear();
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{
+          ...lead,
+          propertyHistory: { ...HISTORY, fetchedAt: "2026-10-01T00:00:00Z" },
+        }}
+        onSave={vi.fn()}
+      />,
+    );
+    expect(requestPropertyHistory).not.toHaveBeenCalled();
   });
 
   it("has the history tabs on a rental, without a Comps tab", () => {
