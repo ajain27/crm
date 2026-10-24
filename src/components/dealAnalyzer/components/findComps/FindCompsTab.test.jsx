@@ -803,9 +803,15 @@ describe("adjusting the subject property", () => {
     fireEvent.change(screen.getByLabelText("Baths"), {
       target: { value: "2.5" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Re-run comps/ }));
+    // Click only once the change has enabled the button; a click on the
+    // still-disabled button sends nothing.
+    const rerun = screen.getByRole("button", { name: /Re-run comps/ });
+    await waitFor(() => expect(rerun).toBeEnabled());
+    fireEvent.click(rerun);
 
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2), {
+      timeout: 3000,
+    });
     const body = JSON.parse(globalThis.fetch.mock.calls[1][1].body);
     expect(body).toMatchObject({
       address: MOCK_ADDRESS,
