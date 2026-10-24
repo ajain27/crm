@@ -31,11 +31,11 @@ function donutPath(cx, cy, outerR, innerR, startDeg, endDeg) {
 
 const SLICE_CONFIG = [
   { key: "purchasePrice", label: "Purchase Price", color: "#3b82f6" },
-  { key: "totalRehab",    label: "Total Rehab",    color: "#f97316" },
-  { key: "pointsCost",    label: "Points Cost",    color: "#a855f7" },
+  { key: "totalRehab", label: "Total Rehab", color: "#f97316" },
+  { key: "pointsCost", label: "Points Cost", color: "#a855f7" },
   { key: "totalInterest", label: "Total Interest", color: "#06b6d4" },
-  { key: "miscFees",      label: "Misc Fees",      color: "#f43f5e" },
-  { key: "netProfit",     label: "Net Profit",     color: "#16a34a" },
+  { key: "miscFees", label: "Misc Fees", color: "#f43f5e" },
+  { key: "netProfit", label: "Net Profit", color: "#16a34a" },
 ];
 
 function FixAndFlipPieChart({ summary }) {
@@ -47,7 +47,10 @@ function FixAndFlipPieChart({ summary }) {
   const total = rawSlices.reduce((sum, s) => sum + s.value, 0);
   if (total === 0) return null;
 
-  const cx = 120, cy = 120, outerR = 102, innerR = 60;
+  const cx = 120,
+    cy = 120,
+    outerR = 102,
+    innerR = 60;
   let deg = 0;
   const slices = rawSlices.map((s) => {
     const sweep = (s.value / total) * 360;
@@ -62,7 +65,10 @@ function FixAndFlipPieChart({ summary }) {
 
   return (
     <div className="deal-analyzer-pie-wrap">
-      <div className="deal-analyzer-section-label" style={{ padding: "0 0 0.75rem" }}>
+      <div
+        className="deal-analyzer-section-label"
+        style={{ padding: "0 0 0.75rem" }}
+      >
         Cost Breakdown
       </div>
       <div className="deal-analyzer-pie-body">
@@ -114,8 +120,12 @@ function FixAndFlipPieChart({ summary }) {
                 style={{ background: s.color }}
               />
               <span className="deal-analyzer-pie-legend-label">{s.label}</span>
-              <span className="deal-analyzer-pie-legend-pct">{pct(s.value)}%</span>
-              <strong className="deal-analyzer-pie-legend-val">{fmt(s.value)}</strong>
+              <span className="deal-analyzer-pie-legend-pct">
+                {pct(s.value)}%
+              </span>
+              <strong className="deal-analyzer-pie-legend-val">
+                {fmt(s.value)}
+              </strong>
             </li>
           ))}
         </ul>
