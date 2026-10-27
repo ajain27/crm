@@ -15,4 +15,10 @@ describe("smsHref", () => {
     expect(smsHref("")).toBe("");
     expect(smsHref(undefined)).toBe("");
   });
+
+  it("prefills the message body when given", () => {
+    expect(smsHref("214-663-0735", "Hi, 12 Main St & more?")).toBe(
+      "sms:+12146630735?&body=Hi%2C%2012%20Main%20St%20%26%20more%3F",
+    );
+  });
 });

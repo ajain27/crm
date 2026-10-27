@@ -67,11 +67,13 @@ export function EmailLink({ email }) {
 
 // "sms:+12146630735" — US numbers without a country code get +1, so the
 // Messages app matches them to the same contact as the tel: link.
-export function smsHref(phone) {
+// `body` prefills the message. "?&body=" is the form both iOS/macOS
+// (which reads "&body=") and Android (which reads "?body=") accept.
+export function smsHref(phone, body = "") {
   const digits = String(phone || "").replace(/\D/g, "");
   if (!digits) return "";
-  if (digits.length === 10) return `sms:+1${digits}`;
-  return `sms:+${digits}`;
+  const to = digits.length === 10 ? `sms:+1${digits}` : `sms:+${digits}`;
+  return body ? `${to}?&body=${encodeURIComponent(body)}` : to;
 }
 
 // Opens the device's Messages app, so the text goes out from the same

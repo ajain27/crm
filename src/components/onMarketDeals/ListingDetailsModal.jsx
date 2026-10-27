@@ -91,8 +91,14 @@ function Gallery({ photos, alt }) {
   );
 }
 
+// The text the Text button starts, about this listing.
+export function listingTextMessage(address) {
+  return `Hi, I wanted to reach out in regards to your listing for ${address}. Is it still available?`;
+}
+
 // Everyone the listing names, each with Call and Text (or Email) buttons.
-function Contacts({ contacts }) {
+// Text opens Messages with `message` already written.
+function Contacts({ contacts, message }) {
   if (!contacts.length) {
     return <p className="omd-muted">Zillow doesn't list a contact.</p>;
   }
@@ -114,7 +120,7 @@ function Contacts({ contacts }) {
                   <Phone size={14} />
                   Call
                 </a>
-                <a className="secondary-btn" href={smsHref(c.phone)}>
+                <a className="secondary-btn" href={smsHref(c.phone, message)}>
                   <MessageSquare size={14} />
                   Text
                 </a>
@@ -409,7 +415,10 @@ export default function ListingDetailsModal({
                 label="Loading the agent's details from Zillow…"
               />
             ) : details ? (
-              <Contacts contacts={details.contacts} />
+              <Contacts
+                contacts={details.contacts}
+                message={listingTextMessage(l.street || l.address)}
+              />
             ) : (
               <div className="omd-details-error">
                 <span>{error || "Couldn't load the contacts."}</span>

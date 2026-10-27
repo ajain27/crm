@@ -160,7 +160,10 @@ describe("OnMarketDeals", () => {
     ]);
     expect(dialog.getAllByRole("link", { name: /Text/ })[0]).toHaveAttribute(
       "href",
-      "sms:+12487659901",
+      "sms:+12487659901?&body=" +
+        encodeURIComponent(
+          "Hi, I wanted to reach out in regards to your listing for 372 W Columbia Ave. Is it still available?",
+        ),
     );
     expect(dialog.getByText("1 / 2")).toBeInTheDocument();
   });
