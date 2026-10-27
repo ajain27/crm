@@ -193,11 +193,12 @@ function DealSnapshot({ price, comps }) {
   );
 }
 
-// The comps run for the listing: ARV snapshot, then the comps table and
-// map (the lead windows' comps panel).
+// The comps run for the listing, once asked for with Run comps: ARV
+// snapshot, then the comps table and map (the lead windows' comps panel).
 function CompsSection({ listing: l, compsState }) {
-  const { saved, loading, error, retry } = compsState;
+  const { saved, loading, error, run } = compsState;
   let body;
+  let action = null;
   if (loading) {
     body = (
       <Spinner
@@ -208,6 +209,11 @@ function CompsSection({ listing: l, compsState }) {
     );
   } else if (saved) {
     const comps = leadComps({ address: l.address, compsResult: saved.result });
+    action = (
+      <button type="button" className="omd-open-btn" onClick={run}>
+        Run again
+      </button>
+    );
     body = (
       <>
         <DealSnapshot price={l.price} comps={comps} />
@@ -224,19 +230,34 @@ function CompsSection({ listing: l, compsState }) {
         )}
       </>
     );
-  } else {
+  } else if (error) {
     body = (
       <div className="omd-details-error">
-        <span>{error || "Couldn't run comps."}</span>
-        <button type="button" className="secondary-btn" onClick={retry}>
+        <span>{error}</span>
+        <button type="button" className="secondary-btn" onClick={run}>
           Try again
+        </button>
+      </div>
+    );
+  } else {
+    body = (
+      <div className="omd-comps-empty">
+        <span className="omd-muted">
+          Run comps to see this home's after repair value and the comparable
+          sales nearby.
+        </span>
+        <button type="button" className="primary-btn" onClick={run}>
+          Run comps
         </button>
       </div>
     );
   }
   return (
     <section className="omd-comps">
-      <h3 className="omd-modal-heading">ARV &amp; comparable sales</h3>
+      <div className="omd-comps-head">
+        <h3 className="omd-modal-heading">ARV &amp; comparable sales</h3>
+        {action}
+      </div>
       {body}
     </section>
   );
@@ -245,7 +266,7 @@ function CompsSection({ listing: l, compsState }) {
 // Everything about one listing. Its Zillow page's details (photos,
 // description, contacts) and its comps run are loaded by the page and
 // passed in `detailsState` ({ details, loading, error, retry }) and
-// `compsState` ({ saved, loading, error, retry }).
+// `compsState` ({ saved, loading, error, run }).
 export default function ListingDetailsModal({
   listing: l,
   detailsState,
@@ -333,6 +354,25 @@ export default function ListingDetailsModal({
               }
             />
           </div>
+
+          {/* Under the photos, so the two columns run about even. */}
+          <section className="omd-modal-card">
+            <h3 className="omd-modal-heading">Matched keywords</h3>
+            <div className="omd-keywords">
+              {l.keywords.map((k) => (
+                <span key={k} className="omd-keyword">
+                  {keywordLabel(k)}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {details?.description && (
+            <section className="omd-modal-card">
+              <h3 className="omd-modal-heading">Description</h3>
+              <p className="omd-description">{details.description}</p>
+            </section>
+          )}
         </div>
 
         <div className="omd-modal-info">
@@ -390,24 +430,6 @@ export default function ListingDetailsModal({
                   </div>
                 ))}
             </dl>
-          </section>
-
-          {details?.description && (
-            <section>
-              <h3 className="omd-modal-heading">Description</h3>
-              <p className="omd-description">{details.description}</p>
-            </section>
-          )}
-
-          <section>
-            <h3 className="omd-modal-heading">Matched keywords</h3>
-            <div className="omd-keywords">
-              {l.keywords.map((k) => (
-                <span key={k} className="omd-keyword">
-                  {keywordLabel(k)}
-                </span>
-              ))}
-            </div>
           </section>
         </div>
 

@@ -1,5 +1,5 @@
 // A property's history ({ timeline, sales, taxes }) as comps and
-// /api/property-history return it, and as leads keep it.
+// the property-history lookup return it, and as leads keep it.
 
 // The parts of a history worth keeping on a lead or in the Find Comps
 // cache; null when there's no history.

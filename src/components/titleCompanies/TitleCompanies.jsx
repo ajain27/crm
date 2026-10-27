@@ -9,6 +9,8 @@ import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
 import "./TitleCompanies.css";
 import ResizableTable from "../elements/ResizableTable";
 import { PAGE_SIZE } from "../pagination/usePagination";
+import PageHero from "../elements/PageHero";
+import { PAGE_HEROES } from "../crm/components/pageHeroes";
 
 function createEmptyForm() {
   return {
@@ -318,11 +320,7 @@ export default function TitleCompanies({
 
   return (
     <>
-      <header className="page-header" data-reveal="left">
-        <div>
-          <h1>Title Companies</h1>
-          <span>Manage your closing contacts by state.</span>
-        </div>
+      <PageHero {...PAGE_HEROES["title-companies"]}>
         {missingDirectoryEntries.length > 0 && (
           <button
             type="button"
@@ -336,7 +334,7 @@ export default function TitleCompanies({
               : `Import Directory (${missingDirectoryEntries.length})`}
           </button>
         )}
-      </header>
+      </PageHero>
 
       {/* ── Add form ─────────────────────────────────────── */}
       <section

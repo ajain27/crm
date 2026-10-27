@@ -1,7 +1,7 @@
 import ResizableTable from "../elements/ResizableTable";
 import "./PropertyHistory.css";
 
-// A property's history as comps and /api/property-history return it
+// A property's history as comps and the property-history lookup return it
 // ({ timeline, sales, taxes }), shown two ways: the price history (every
 // listing, price change and sale) and the property history (its sales and
 // tax years). Used by Find Comps and the lead windows.

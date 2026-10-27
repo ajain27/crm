@@ -44,6 +44,9 @@ import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import PMDealsTab from "../../pmDeals/PMDealsTab";
 import TitleCompanies from "../../titleCompanies/TitleCompanies";
 import OnMarketDeals from "../../onMarketDeals/OnMarketDeals.jsx";
+import PageHero from "../../elements/PageHero";
+import { PAGE_HEROES } from "./pageHeroes";
+
 import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
@@ -70,6 +73,9 @@ import { useDealsData } from "./hooks/useDealsData";
 import { useDealsFilter } from "./hooks/useDealsFilter";
 import { useDealForm } from "./hooks/useDealForm";
 import { useProfileManager } from "./hooks/useProfileManager";
+
+// Pages that show their headline themselves, beside their own buttons.
+const OWN_HERO_VIEWS = new Set(["title-companies", "invoice-generator"]);
 
 // Module-level so the object is stable across renders.
 // Photo stores for PhotoGallery / MainPhoto: an owner's (deal's or
@@ -257,6 +263,12 @@ function Wholesale() {
     return <AuthGate onAuthenticated={handleAuthenticated} />;
   }
 
+  // PPC users only see the dashboard and the Deal Analyzer.
+  const heroView =
+    ppcOnly && !["dashboard", "deal-analyzer"].includes(activeView)
+      ? "deal-analyzer"
+      : activeView;
+
   return (
     <div className="app-shell">
       <CrmHeader
@@ -283,6 +295,12 @@ function Wholesale() {
         <div className="app-brand-header">
           <img src={logo} alt="You Win Estates" className="app-brand-logo" />
         </div>
+
+        {/* Each page opens with its typed headline; Title Companies and
+            the Invoice Generator show theirs with their own buttons. */}
+        {PAGE_HEROES[heroView] && !OWN_HERO_VIEWS.has(heroView) && (
+          <PageHero key={heroView} {...PAGE_HEROES[heroView]} />
+        )}
 
         {activeView === "dashboard" ? (
           <>
@@ -388,12 +406,6 @@ function Wholesale() {
           />
         ) : !ppcOnly && activeView === "pm-deals" ? (
           <PMDealsTab
-            tab={{
-              eyebrow: "Private Money",
-              title: "Private money deal tracker",
-              description:
-                "Track borrower details and loan terms. Late interest accrues automatically day by day after the due date.",
-            }}
             currentUser={currentUser}
             fetchPmDeals={fetchPmDeals}
             savePmDeal={savePmDeal}

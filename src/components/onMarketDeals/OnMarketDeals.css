@@ -1,40 +1,58 @@
 @layer components {
-  /* ── Setup: markets, keywords, days ──────────────────── */
+  /* ── Setup: markets, days on market, keywords ────────── */
   .omd-setup {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    padding: var(--panel-pad, 1.25rem);
+    gap: 1.5rem;
+    padding: var(--panel-pad, 1.5rem);
   }
 
-  .omd-setup input,
-  .omd-sort select {
-    height: 2.5rem;
-    padding: 0 0.75rem;
-    border: 1px solid var(--line);
-    border-radius: 0.6rem;
-    background: var(--panel);
-    color: var(--text);
-    font: inherit;
-    font-size: 0.875rem;
+  .omd-setup-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 1.5rem;
   }
 
-  .omd-setup input:focus,
-  .omd-sort select:focus {
-    outline: none;
-    border-color: var(--blue);
+  @media (max-width: 860px) {
+    .omd-setup-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
-  .omd-field {
+  .omd-block {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.65rem;
+    min-width: 0;
   }
 
-  .omd-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
+  .omd-block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--blue);
+  }
+
+  .omd-block-head h2 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
     color: var(--text);
+  }
+
+  .omd-hint {
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .omd-block-head .omd-hint::before {
+    content: "·";
+    margin-right: 0.45rem;
+  }
+
+  .omd-block-head .omd-link-btn {
+    margin-left: auto;
   }
 
   .omd-muted {
@@ -42,23 +60,58 @@
     color: var(--muted);
   }
 
-  .omd-input {
-    position: relative;
+  .omd-link-btn {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .omd-link-btn:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  /* City tags sit inside the box, before where you type the next one. */
+  .omd-tag-input {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    max-width: 420px;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--panel);
+    cursor: text;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
   }
 
-  .omd-input svg {
-    position: absolute;
-    left: 0.75rem;
-    color: var(--muted);
-    pointer-events: none;
+  .omd-tag-input:focus-within {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
   }
 
-  .omd-input input {
-    width: 100%;
-    padding-left: 2.25rem;
+  .omd-tag-input.is-disabled {
+    opacity: 0.7;
+  }
+
+  .omd-tag-input input {
+    flex: 1;
+    min-width: 12rem;
+    height: 2rem;
+    padding: 0 0.35rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    outline: none;
   }
 
   .omd-chips {
@@ -71,22 +124,28 @@
   .omd-chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.3rem 0.4rem 0.3rem 0.75rem;
-    border: 1px solid var(--line);
+    gap: 0.3rem;
+    padding: 0.3rem 0.35rem 0.3rem 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
     border-radius: 999px;
-    background: var(--badge-bg);
+    background: color-mix(in srgb, var(--blue) 10%, transparent);
     color: var(--text);
     font-size: 0.8125rem;
     font-weight: 600;
+    white-space: nowrap;
   }
 
   .omd-chip--keyword {
+    border-color: var(--line);
+    background: var(--badge-bg);
     font-weight: 500;
   }
 
-  .omd-chip button,
-  .omd-icon-btn {
+  .omd-chip.is-static {
+    padding-right: 0.7rem;
+  }
+
+  .omd-chip button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -100,25 +159,49 @@
     cursor: pointer;
   }
 
-  .omd-chip button:hover,
-  .omd-icon-btn:hover:not(:disabled) {
+  .omd-chip button:hover:not(:disabled) {
     background: var(--line);
     color: var(--text);
   }
 
-  .omd-keyword-add {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
+  /* One-click days-on-market choice. */
+  .omd-segmented {
+    display: flex;
+    padding: 0.25rem;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--badge-bg);
   }
 
-  .omd-keyword-add input {
-    width: 13rem;
-    height: 2rem;
+  .omd-segmented button {
+    flex: 1;
+    height: 2.15rem;
+    padding: 0 0.5rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
     font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
 
-  .omd-actions {
+  .omd-segmented button:hover {
+    color: var(--text);
+  }
+
+  .omd-segmented button.active {
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  }
+
+  .omd-keyword-tools {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -126,16 +209,51 @@
     gap: 0.75rem;
   }
 
-  .omd-days-input {
-    display: inline-flex;
-    align-items: center;
+  .omd-keyword-add {
+    display: flex;
     gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text);
+    flex: 1;
+    max-width: 28rem;
   }
 
-  .omd-days-input input {
-    width: 4.5rem;
+  .omd-keyword-add button {
+    height: 2.5rem;
+    padding: 0 0.9rem;
+  }
+
+  .omd-keyword-add input {
+    flex: 1;
+    min-width: 0;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+  }
+
+  .omd-keyword-add input:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+
+  .omd-keyword-add button,
+  .omd-buttons button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .omd-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
   }
 
   .omd-buttons {
@@ -143,10 +261,15 @@
     gap: 0.5rem;
   }
 
-  .omd-buttons button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+  .omd-sort select {
+    height: 2.5rem;
+    padding: 0 2rem 0 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
   }
 
   .omd-progress {
@@ -226,10 +349,6 @@
     border-radius: 999px;
     background: var(--badge-bg);
     font-size: 0.6875rem;
-  }
-
-  .omd-sort select {
-    padding-right: 2rem;
   }
 
   .omd-sort {
@@ -378,7 +497,18 @@
   .omd-modal-media {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
+  }
+
+  .omd-modal-card {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    background: color-mix(in srgb, var(--panel) 92%, var(--text) 8%);
+  }
+
+  .omd-modal-card .omd-modal-heading {
+    margin-bottom: 0.5rem;
   }
 
   /* Under the photos, not pushed to the bottom as on a card. */
@@ -770,6 +900,33 @@
     gap: 1rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--line);
+  }
+
+  .omd-comps-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .omd-comps-head .omd-modal-heading {
+    margin: 0;
+  }
+
+  .omd-comps-head .omd-open-btn {
+    font-size: 0.8125rem;
+  }
+
+  .omd-comps-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.5rem 1rem;
+    border: 1px dashed var(--line);
+    border-radius: 0.9rem;
+    text-align: center;
+    font-size: 0.875rem;
   }
 
   .omd-comps > .spinner {

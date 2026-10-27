@@ -8,12 +8,6 @@ import {
 } from "@testing-library/react";
 import PMDealsTab from "./PMDealsTab";
 
-const tab = {
-  eyebrow: "Private Money",
-  title: "Private money deal tracker",
-  description: "Track borrower details and loan terms.",
-};
-
 const currentUser = { id: "user1" };
 
 function makeDeal(overrides = {}) {
@@ -34,7 +28,6 @@ function makeDeal(overrides = {}) {
 
 function makeProps(overrides = {}) {
   return {
-    tab,
     currentUser,
     fetchPmDeals: vi.fn().mockResolvedValue([]),
     savePmDeal: vi.fn().mockResolvedValue(undefined),
@@ -75,15 +68,6 @@ function fillForm(container, options = {}) {
 // ─── Rendering ───────────────────────────────────────────────────────────────
 
 describe("rendering", () => {
-  it("renders hero section from tab prop", async () => {
-    render(<PMDealsTab {...makeProps()} />);
-    expect(screen.getByText("Private Money")).toBeInTheDocument();
-    expect(screen.getByText("Private money deal tracker")).toBeInTheDocument();
-    expect(
-      screen.getByText("Track borrower details and loan terms."),
-    ).toBeInTheDocument();
-  });
-
   it("shows empty state when no deals are loaded", async () => {
     render(<PMDealsTab {...makeProps()} />);
     await waitFor(() =>

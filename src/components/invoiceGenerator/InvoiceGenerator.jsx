@@ -25,6 +25,8 @@ import {
 import "./InvoiceGenerator.css";
 import CurrencyInput from "../elements/CurrencyInput";
 import ResizableTable from "../elements/ResizableTable";
+import PageHero from "../elements/PageHero";
+import { PAGE_HEROES } from "../crm/components/pageHeroes";
 import Pagination from "../pagination/Pagination";
 import { usePagination } from "../pagination/usePagination";
 
@@ -559,7 +561,7 @@ export default function InvoiceGenerator({ currentUser }) {
 
   return (
     <div className="ig-root">
-      <header className="page-header" data-reveal="left">
+      <PageHero {...PAGE_HEROES["invoice-generator"]}>
         <div className="ig-header-actions">
           <button
             className="secondary-btn ig-header-print-btn"
@@ -584,7 +586,7 @@ export default function InvoiceGenerator({ currentUser }) {
             Send Invoice
           </button>
         </div>
-      </header>
+      </PageHero>
 
       {/* ─── Email modal ─── */}
       {modal.open && (

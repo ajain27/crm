@@ -1,11 +1,12 @@
-// Loads a property's sale, listing and tax history through
-// /api/property-history (Serper → Firecrawl on its Zillow, Redfin and
-// Realtor.com pages). Used by the Deal Analyzer's Property History tab.
+// Loads a property's sale, listing and tax history (Serper → Firecrawl on
+// its Zillow, Redfin and Realtor.com pages). Used by the lead windows'
+// Price History and Property History tabs. It's served by the listings
+// function, as Vercel's Hobby plan allows 12 functions.
 export async function requestPropertyHistory(address) {
-  const res = await fetch("/api/property-history", {
+  const res = await fetch("/api/market-listings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ address }),
+    body: JSON.stringify({ historyAddress: address }),
   });
   const data = await res.json().catch(() => null);
   if (res.ok && data) return data;

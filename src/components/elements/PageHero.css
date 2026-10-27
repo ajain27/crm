@@ -1,0 +1,110 @@
+@layer components {
+  /* A page's opening banner (PageHero). */
+  .page-hero {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding: 2.25rem 2rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(
+        circle at 85% 20%,
+        color-mix(in srgb, var(--blue) 22%, transparent),
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 10% 110%,
+        color-mix(in srgb, #16a34a 16%, transparent),
+        transparent 50%
+      ),
+      var(--panel);
+  }
+
+  .page-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--blue) 14%, transparent);
+    color: var(--blue);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .page-hero-title {
+    margin: 0;
+    min-height: 1.15em;
+    font-size: clamp(1.9rem, 4.2vw, 3.1rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+    color: var(--text);
+  }
+
+  .page-hero-accent {
+    background: linear-gradient(90deg, var(--blue), #16a34a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .page-hero-sub {
+    max-width: 44rem;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--muted);
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.5s ease,
+      transform 0.5s ease;
+  }
+
+  .page-hero-sub.is-shown {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-hero-sub {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .page-hero {
+      padding: 1.5rem 1.25rem;
+    }
+  }
+
+  .page-hero-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    min-width: 0;
+    flex: 1 1 28rem;
+  }
+
+  .page-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .page-hero-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+}

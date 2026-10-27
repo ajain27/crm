@@ -47,6 +47,7 @@ const home = (zpid, street, daysOnMarket, extra = {}) => ({
 beforeEach(() => {
   localStorage.clear();
   requestMarketListings.mockReset();
+  requestComps.mockReset();
   requestMarketListings.mockImplementation(async ({ keyword, redfin }) => {
     if (redfin) {
       return [
@@ -112,11 +113,9 @@ describe("OnMarketDeals", () => {
     );
   });
 
-  it("lowering the days shows newer listings too", async () => {
+  it("choosing Any days shows newer listings too", async () => {
     await searchPontiac();
-    fireEvent.change(screen.getByRole("spinbutton"), {
-      target: { value: "2" },
-    });
+    fireEvent.click(screen.getByRole("radio", { name: "Any" }));
     expect(screen.getAllByRole("article")).toHaveLength(2);
   });
 
@@ -193,7 +192,7 @@ describe("OnMarketDeals", () => {
     expect(screen.getByText("8 Oak St")).toBeInTheDocument();
   });
 
-  it("runs comps when a home opens and shows its ARV against the asking price", async () => {
+  it("runs comps when Run comps is clicked, and shows the ARV against the asking price", async () => {
     requestListingDetails.mockResolvedValue({
       contacts: [],
       photos: [],
@@ -225,6 +224,11 @@ describe("OnMarketDeals", () => {
     await searchPontiac();
     await act(async () => {
       fireEvent.click(screen.getByText("372 W Columbia Ave"));
+    });
+    // Nothing runs until asked.
+    expect(requestComps).not.toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run comps" }));
     });
     // The listing's own facts and map position, so the API doesn't scrape.
     expect(requestComps).toHaveBeenCalledWith(

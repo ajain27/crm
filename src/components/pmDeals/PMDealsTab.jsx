@@ -28,7 +28,6 @@ function normalizeDeal(deal) {
 }
 
 export default function PMDealsTab({
-  tab,
   currentUser,
   fetchPmDeals,
   savePmDeal,
@@ -97,12 +96,6 @@ export default function PMDealsTab({
 
   return (
     <>
-      <div className="deal-analyzer-hero">
-        <span className="deal-analyzer-eyebrow">{tab.eyebrow}</span>
-        <h2>{tab.title}</h2>
-        <p>{tab.description}</p>
-      </div>
-
       <PMDealAddForm
         form={add.form}
         onChange={add.handleChange}

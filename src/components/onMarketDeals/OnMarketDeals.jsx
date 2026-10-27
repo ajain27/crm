@@ -3,9 +3,11 @@ import {
   ExternalLink,
   ImageOff,
   MapPin,
+  Clock,
   Plus,
   RefreshCw,
   Search,
+  Tag,
   X,
 } from "lucide-react";
 import { useAddressAutocomplete } from "../../hooks/useAddressAutocomplete";
@@ -46,6 +48,20 @@ const RESULTS_FRESH_MS = 24 * 60 * 60 * 1000;
 // seconds Firecrawl names and tries again.
 const CONCURRENCY = 2;
 const MAX_RETRIES = 4;
+
+// The days-on-market choices (0 = any).
+const DAY_OPTIONS = [0, 20, 30, 60, 90];
+
+// "3 hours ago", for when a market was last searched.
+function timeAgo(iso) {
+  const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (!(minutes >= 1)) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -259,6 +275,7 @@ export default function OnMarketDeals() {
   const [cityFilter, setCityFilter] = useState("all");
   const [cityInput, setCityInput] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
+  const [editingKeywords, setEditingKeywords] = useState(false);
   const [progress, setProgress] = useState(null);
   const [waitingUntil, setWaitingUntil] = useState(null);
   const [error, setError] = useState("");
@@ -382,6 +399,11 @@ export default function OnMarketDeals() {
     persist({ keywords: next });
   }
 
+  function resetKeywords() {
+    setKeywords(DEFAULT_KEYWORDS);
+    persist({ keywords: DEFAULT_KEYWORDS });
+  }
+
   function removeKeyword(k) {
     const next = keywords.filter((x) => x !== k);
     setKeywords(next);
@@ -480,7 +502,7 @@ export default function OnMarketDeals() {
     setDetailsError("");
     setCompsError("");
     if (!details[listing.id]) loadDetails(listing);
-    if (!comps[listing.id]) loadComps(listing);
+    // Comps run only when asked (Run comps in the window).
   }
   const countFor = (c) =>
     visibleListings(results[cityKey(c)]?.listings || [], {
@@ -494,36 +516,31 @@ export default function OnMarketDeals() {
         `${c.city}: ${results[cityKey(c)].failed.map(keywordLabel).join(", ")}`,
     );
   const searching = progress !== null;
+  const lastSearched = shownCities
+    .map((c) => results[cityKey(c)].fetchedAt)
+    .sort()
+    .at(-1);
+  const statusLine = !cities.length
+    ? "Add a city to start. Each city takes about 1–2 minutes to search."
+    : lastSearched
+      ? `Last searched ${timeAgo(lastSearched)} · results are kept for a day`
+      : `Ready to search ${cities.length} ${cities.length === 1 ? "city" : "cities"} · about 1–2 minutes each`;
   const needsSearch = cities.some((c) => !isFresh(c));
 
   return (
     <>
-      <header className="page-header" data-reveal="left">
-        <div>
-          <h1>On Market Deals</h1>
-          <span>
-            Homes for sale whose listing reads like an investor deal, on the
-            market more than {minDays} days.
-          </span>
-        </div>
-      </header>
-
       <section className="panel omd-setup" data-reveal="left">
-        <div className="omd-field">
-          <span className="omd-label">Markets</span>
-          <div className="omd-input">
-            <MapPin size={16} />
-            <input
-              ref={cityInputRef}
-              value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
-              placeholder="Add a city, e.g. Pontiac, MI"
-              aria-label="Add a city"
-              disabled={searching}
-            />
-          </div>
-          {cities.length > 0 && (
-            <div className="omd-chips">
+        <div className="omd-setup-grid">
+          <div className="omd-block">
+            <div className="omd-block-head">
+              <MapPin size={16} />
+              <h2>Markets</h2>
+              <span className="omd-hint">Cities to search</span>
+            </div>
+            <div
+              className={`omd-tag-input${searching ? " is-disabled" : ""}`}
+              onClick={() => cityInputRef.current?.focus()}
+            >
               {cities.map((c) => (
                 <span key={cityKey(c)} className="omd-chip">
                   {c.city}, {c.state}
@@ -537,66 +554,121 @@ export default function OnMarketDeals() {
                   </button>
                 </span>
               ))}
+              <input
+                ref={cityInputRef}
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                placeholder={
+                  cities.length
+                    ? "Add another city"
+                    : "Add a city, e.g. Pontiac, MI"
+                }
+                aria-label="Add a city"
+                disabled={searching}
+              />
+            </div>
+          </div>
+
+          <div className="omd-block">
+            <div className="omd-block-head">
+              <Clock size={16} />
+              <h2>Days on market</h2>
+              <span className="omd-hint">Listed longer than</span>
+            </div>
+            <div
+              className="omd-segmented"
+              role="radiogroup"
+              aria-label="On the market more than"
+            >
+              {DAY_OPTIONS.map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  role="radio"
+                  aria-checked={minDays === days}
+                  className={minDays === days ? "active" : ""}
+                  onClick={() => {
+                    setMinDays(days);
+                    persist({ minDays: days });
+                  }}
+                >
+                  {days === 0 ? "Any" : `${days}+ days`}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="omd-block">
+          <div className="omd-block-head">
+            <Tag size={16} />
+            <h2>Listing keywords</h2>
+            <span className="omd-hint">
+              {keywords.length} searches per city · quotes match the exact
+              phrase
+            </span>
+            <button
+              type="button"
+              className="omd-link-btn"
+              onClick={() => setEditingKeywords((v) => !v)}
+              disabled={searching}
+            >
+              {editingKeywords ? "Done" : "Edit"}
+            </button>
+          </div>
+          <div className="omd-chips">
+            {keywords.map((k) => (
+              <span
+                key={k}
+                className={`omd-chip omd-chip--keyword${editingKeywords ? "" : " is-static"}`}
+              >
+                {editingKeywords ? k : keywordLabel(k)}
+                {editingKeywords && (
+                  <button
+                    type="button"
+                    onClick={() => removeKeyword(k)}
+                    aria-label={`Remove ${keywordLabel(k)}`}
+                    disabled={searching}
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+          {editingKeywords && (
+            <div className="omd-keyword-tools">
+              <form className="omd-keyword-add" onSubmit={addKeyword}>
+                <input
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  placeholder='Add a keyword, e.g. "sweat equity"'
+                  aria-label="Add a keyword"
+                  disabled={searching}
+                />
+                <button
+                  type="submit"
+                  className="secondary-btn"
+                  disabled={searching || !keywordInput.trim()}
+                >
+                  <Plus size={14} />
+                  Add
+                </button>
+              </form>
+              <button
+                type="button"
+                className="omd-link-btn"
+                onClick={resetKeywords}
+                disabled={searching}
+              >
+                Reset to defaults
+              </button>
             </div>
           )}
         </div>
 
-        <div className="omd-field">
-          <span className="omd-label">
-            Keywords in the listing{" "}
-            <span className="omd-muted">
-              (each is its own Zillow search; quotes match the exact phrase)
-            </span>
-          </span>
-          <div className="omd-chips">
-            {keywords.map((k) => (
-              <span key={k} className="omd-chip omd-chip--keyword">
-                {k}
-                <button
-                  type="button"
-                  onClick={() => removeKeyword(k)}
-                  aria-label={`Remove ${keywordLabel(k)}`}
-                  disabled={searching}
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
-            <form className="omd-keyword-add" onSubmit={addKeyword}>
-              <input
-                value={keywordInput}
-                onChange={(e) => setKeywordInput(e.target.value)}
-                placeholder='Add, e.g. "sweat equity"'
-                aria-label="Add a keyword"
-                disabled={searching}
-              />
-              <button
-                type="submit"
-                className="omd-icon-btn"
-                aria-label="Add keyword"
-                disabled={searching || !keywordInput.trim()}
-              >
-                <Plus size={14} />
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div className="omd-actions">
-          <label className="omd-days-input">
-            On the market more than
-            <input
-              type="number"
-              min="0"
-              value={minDays}
-              onChange={(e) => {
-                const v = Math.max(0, Number(e.target.value) || 0);
-                setMinDays(v);
-                persist({ minDays: v });
-              }}
-            />
-            days
-          </label>
+        <div className="omd-footer">
+          <span className="omd-hint">{statusLine}</span>
           <div className="omd-buttons">
             {shownCities.length > 0 && (
               <button
@@ -741,7 +813,7 @@ export default function OnMarketDeals() {
             saved: comps[openListing.id] || null,
             loading: compsLoadingId === openListing.id,
             error: compsError,
-            retry: () => loadComps(openListing),
+            run: () => loadComps(openListing),
           }}
           onClose={() => setOpenId(null)}
         />
