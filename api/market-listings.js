@@ -3,8 +3,13 @@
 // homes for sale there; { detailsUrl } → one home's full details from its
 // Zillow page (description, photos, agent and broker contacts). The page
 // combines them. The steps live in api/_lib/marketListings.js.
+//
+// Also { historyAddress } → a property's sale, listing and tax history (the
+// lead windows' Price / Property History; api/_lib/propertyHistory.js). It
+// shares this function because Vercel's Hobby plan allows 12 functions.
 
 import { fetchMarketListings } from "./_lib/marketListings.js";
+import { fetchPropertyHistory } from "./_lib/propertyHistory.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -13,6 +18,23 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  if (req.body?.historyAddress !== undefined) {
+    const address = String(req.body.historyAddress || "").trim();
+    if (address.length < 8 || address.length > 200) {
+      return res
+        .status(400)
+        .json({ error: "Enter the property's full address." });
+    }
+    try {
+      return res.status(200).json(await fetchPropertyHistory(address));
+    } catch (err) {
+      console.error("property-history error:", err);
+      return res.status(err.status || 502).json({
+        error: err.message || "Loading the property history failed.",
+      });
+    }
   }
 
   const city = String(req.body?.city || "").trim();
