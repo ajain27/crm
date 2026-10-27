@@ -3,8 +3,13 @@ import { loadGooglePlaces, parsePlaceAddress } from "../utils/googleMapsLoader";
 
 // Attaches Google Places autocomplete to the input `inputRef` points at.
 // Calls `onSelect({ street, city, state, zipCode, formatted })` when the
-// user picks a suggestion.
-export function useAddressAutocomplete(inputRef, onSelect) {
+// user picks a suggestion. `types` is what it suggests: addresses, or
+// ["(cities)"] for cities.
+export function useAddressAutocomplete(
+  inputRef,
+  onSelect,
+  { types = ["address"] } = {},
+) {
   const autocompleteRef = useRef(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -17,7 +22,7 @@ export function useAddressAutocomplete(inputRef, onSelect) {
       .then((places) => {
         if (cancelled || !inputRef.current) return;
         const autocomplete = new places.Autocomplete(inputRef.current, {
-          types: ["address"],
+          types,
           componentRestrictions: { country: "us" },
           fields: ["address_components", "formatted_address", "name"],
         });

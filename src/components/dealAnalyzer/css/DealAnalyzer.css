@@ -960,19 +960,6 @@
     @apply flex flex-col items-center justify-center gap-4 px-6 pb-10 pt-6;
   }
 
-  .find-comps-spinner {
-    @apply animate-spin rounded-full border-4;
-    width: 40px;
-    height: 40px;
-    border-color: color-mix(in srgb, var(--blue) 18%, transparent 82%);
-    border-top-color: var(--blue);
-  }
-
-  .find-comps-loader-msg {
-    @apply text-sm font-medium;
-    color: var(--muted);
-  }
-
   .find-comps-results {
     @apply border-t pb-8 pl-6 pr-10 pt-6;
     border-color: color-mix(in srgb, var(--line) 68%, transparent 32%);

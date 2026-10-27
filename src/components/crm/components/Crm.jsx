@@ -43,6 +43,7 @@ import Wholesale_data from "./data/crm_table";
 import DealAnalyzer from "../../dealAnalyzer/components/DealAnalyzer";
 import PMDealsTab from "../../pmDeals/PMDealsTab";
 import TitleCompanies from "../../titleCompanies/TitleCompanies";
+import OnMarketDeals from "../../onMarketDeals/OnMarketDeals.jsx";
 import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
@@ -401,6 +402,8 @@ function Wholesale() {
             fetchPmDealFile={fetchPmDealFile}
             deletePmDealFileById={deletePmDealFileById}
           />
+        ) : !ppcOnly && activeView === "on-market-deals" ? (
+          <OnMarketDeals />
         ) : !ppcOnly && activeView === "title-companies" ? (
           <TitleCompanies
             currentUser={currentUser}

@@ -1,0 +1,41 @@
+@layer components {
+  .spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--muted);
+  }
+
+  .spinner--stacked {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .spinner-ring {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-style: solid;
+    border-radius: 999px;
+    border-color: color-mix(in srgb, var(--blue) 18%, transparent);
+    border-top-color: var(--blue);
+    animation: spinner-turn 0.8s linear infinite;
+  }
+
+  .spinner-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  @keyframes spinner-turn {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner-ring {
+      animation-duration: 2.4s;
+    }
+  }
+}

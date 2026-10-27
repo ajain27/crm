@@ -2,7 +2,7 @@
 
 import { COMP_RULES, SEARCH } from "./rules.js";
 
-const BROWSER_HEADERS = {
+export const BROWSER_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36",
   Accept: "text/csv,text/plain,*/*",
@@ -108,6 +108,10 @@ export function parseRedfinSoldCsv(text) {
     sqft: col("SQUARE FEET"),
     yearBuilt: col("YEAR BUILT"),
     url: col("URL"),
+    lotSize: col("LOT SIZE"),
+    daysOnMarket: col("DAYS ON MARKET"),
+    hoa: col("HOA/MONTH"),
+    mls: col("MLS#"),
     lat: col("LATITUDE"),
     lng: col("LONGITUDE"),
   };
@@ -132,13 +136,20 @@ export function parseRedfinSoldCsv(text) {
       sqft: toNumber(r[at.sqft]),
       yearBuilt: toNumber(r[at.yearBuilt]),
       url: (r[at.url] || "").trim() || null,
+      // Used for listings for sale (On Market Deals); blank on sales.
+      city: (r[at.city] || "").trim(),
+      zip: (r[at.zip] || "").trim().slice(0, 5),
+      lotSqft: toNumber(r[at.lotSize]),
+      daysOnMarket: toNumber(r[at.daysOnMarket]),
+      hoa: toNumber(r[at.hoa]),
+      mls: (r[at.mls] || "").trim() || null,
       lat: toNumber(r[at.lat]),
       lng: toNumber(r[at.lng]),
     }))
     .filter((s) => s.lat !== null && s.lng !== null);
 }
 
-async function fetchRedfinCsv(url) {
+export async function fetchRedfinCsv(url) {
   const res = await fetch(url, { headers: BROWSER_HEADERS });
   const text = await res.text().catch(() => "");
   if (!res.ok || !/LATITUDE/.test(text)) {

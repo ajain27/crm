@@ -56,6 +56,11 @@ app.post("/api/property-history", async (req, res) => {
   await handler(req, res);
 });
 
+app.post("/api/market-listings", async (req, res) => {
+  const { default: handler } = await import("./api/market-listings.js");
+  await handler(req, res);
+});
+
 const PORT = 3001;
 app.listen(PORT, () =>
   console.log(`Dev API server running at http://localhost:${PORT}`),

@@ -11,6 +11,7 @@ import {
   compsStatsText,
 } from "../../../crm/components/data/comps/compsNote";
 import ResizableTable from "../../../elements/ResizableTable";
+import Spinner from "../../../elements/Spinner";
 import {
   PriceHistory,
   PropertyHistory,
@@ -505,11 +506,11 @@ function FindCompsTab({ tab }) {
 
         {status === "loading" && (
           <div className="find-comps-loader">
-            <div className="find-comps-spinner" />
-            <p className="find-comps-loader-msg">
-              Searching Zillow, Redfin and Realtor.com and picking the best
-              comps… this can take up to a minute.
-            </p>
+            <Spinner
+              size="lg"
+              stacked
+              label="Searching Zillow, Redfin and Realtor.com and picking the best comps… this can take up to a minute."
+            />
           </div>
         )}
 

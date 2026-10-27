@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Receipt,
   Menu,
+  Store,
 } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: Home },
   { id: "leads", label: "Leads", icon: Crosshair },
   { id: "deal-analyzer", label: "Deal Analyzer", icon: BarChart3 },
+  { id: "on-market-deals", label: "On Market Deals", icon: Store },
   { id: "pm-deals", label: "PML Deals", icon: Landmark },
   { id: "title-companies", label: "Title Companies", icon: Building2 },
   { id: "rental-management", label: "Rental Management", icon: KeyRound },
