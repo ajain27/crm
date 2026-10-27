@@ -143,9 +143,9 @@ describe("TitleCompanies", () => {
     expect(screen.getByText(`${total} companies`)).toBeInTheDocument();
   });
 
-  it("shows 10 companies per page", async () => {
+  it("shows 20 companies per page", async () => {
     const fetchTitleCompanies = vi.fn().mockResolvedValue(
-      Array.from({ length: 12 }, (_, i) => ({
+      Array.from({ length: 22 }, (_, i) => ({
         id: `c${i}`,
         name: `Company ${String(i).padStart(2, "0")}`,
         state: "TX",
@@ -154,12 +154,12 @@ describe("TitleCompanies", () => {
     );
     render(<TitleCompanies {...baseProps({ fetchTitleCompanies })} />);
     expect(await screen.findByText("Company 00")).toBeInTheDocument();
-    expect(screen.getByText("Company 09")).toBeInTheDocument();
-    expect(screen.queryByText("Company 10")).toBeNull();
-    expect(screen.getByText("Showing 1–10 of 12")).toBeInTheDocument();
+    expect(screen.getByText("Company 19")).toBeInTheDocument();
+    expect(screen.queryByText("Company 20")).toBeNull();
+    expect(screen.getByText("Showing 1–20 of 22")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText(/Next/));
-    expect(screen.getByText("Company 11")).toBeInTheDocument();
+    expect(screen.getByText("Company 21")).toBeInTheDocument();
     expect(screen.queryByText("Company 00")).toBeNull();
     expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
 

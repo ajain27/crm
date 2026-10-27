@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { PAGE_SIZE } from "../../../../pagination/usePagination";
 
 export function useDealsSort(filteredDeals) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -6,7 +7,7 @@ export function useDealsSort(filteredDeals) {
     key: "closedDate",
     direction: "desc",
   });
-  const itemsPerPage = 10;
+  const itemsPerPage = PAGE_SIZE;
 
   useEffect(() => {
     setCurrentPage(1);

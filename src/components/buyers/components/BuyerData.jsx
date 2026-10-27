@@ -4,6 +4,7 @@ import { formatPhone } from "../../../utils/utils";
 import { Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 import ResizableTable from "../../elements/ResizableTable";
+import { PAGE_SIZE } from "../../pagination/usePagination";
 
 const EMPTY_SET = new Set();
 
@@ -23,7 +24,7 @@ function BuyerData({
   const [editFieldValue, setEditFieldValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = 10;
+  const itemsPerPage = PAGE_SIZE;
   const totalPages = Math.ceil(filteredBuyers.length / itemsPerPage) || 1;
   const safePage = Math.min(currentPage, totalPages);
 

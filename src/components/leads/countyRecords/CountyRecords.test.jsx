@@ -104,7 +104,7 @@ describe("CountyRecords", () => {
     expect(fetchCountyRecordRows).not.toHaveBeenCalled();
   });
 
-  it("loads a saved import, searches all columns and pages 25 at a time", async () => {
+  it("loads a saved import, searches all columns and pages 20 at a time", async () => {
     fetchCountyRecordImports.mockResolvedValue([
       {
         id: "i1",
@@ -124,8 +124,8 @@ describe("CountyRecords", () => {
 
     expect(await findInTable("Owner 00")).toBeInTheDocument();
     expect(fetchCountyRecordRows).toHaveBeenCalledWith("i1");
-    expect(screen.queryByText("Owner 25")).toBeNull();
-    expect(screen.getByText("Showing 1–25 of 30")).toBeInTheDocument();
+    expect(screen.queryByText("Owner 20")).toBeNull();
+    expect(screen.getByText("Showing 1–20 of 30")).toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText("Search all columns…"), {
       target: { value: "memphis" },

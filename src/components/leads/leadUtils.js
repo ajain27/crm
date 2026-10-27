@@ -1,7 +1,8 @@
 import { createEmptyDealForm } from "../crm/components/crmConfig";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
+import { PAGE_SIZE } from "../pagination/usePagination";
 
-export const ITEMS_PER_PAGE = 10;
+export const ITEMS_PER_PAGE = PAGE_SIZE;
 
 export const SOURCES = [
   "MLS / Zillow",

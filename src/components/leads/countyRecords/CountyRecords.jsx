@@ -33,8 +33,8 @@ import CountyRecordModal from "./CountyRecordModal";
 import { displayPhone } from "../../../utils/utils";
 import ListNameModal from "./ListNameModal";
 import ResizableTable from "../../elements/ResizableTable";
+import { PAGE_SIZE } from "../../pagination/usePagination";
 
-const PAGE_SIZE = 25;
 const MAX_FILE_MB = 30;
 
 const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone|fax/i;

@@ -25,6 +25,8 @@ import {
 import "./InvoiceGenerator.css";
 import CurrencyInput from "../elements/CurrencyInput";
 import ResizableTable from "../elements/ResizableTable";
+import Pagination from "../pagination/Pagination";
+import { usePagination } from "../pagination/usePagination";
 
 const SELLER = {
   name: "You Win Concepts",
@@ -549,6 +551,11 @@ export default function InvoiceGenerator({ currentUser }) {
       setModal((m) => ({ ...m, status: "error", error: err.message }));
     }
   }
+
+  // Newest first, a page at a time.
+  const sentPages = usePagination(
+    [...sentInvoices].sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt)),
+  );
 
   return (
     <div className="ig-root">
@@ -1241,43 +1248,50 @@ export default function InvoiceGenerator({ currentUser }) {
                 </tr>
               </thead>
               <tbody>
-                {[...sentInvoices]
-                  .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt))
-                  .map((inv) => (
-                    <tr key={inv.id}>
-                      <td className="ig-history-num">{inv.invoiceNum}</td>
-                      <td>{inv.clientName}</td>
-                      <td className="ig-history-email">{inv.toEmail}</td>
-                      <td>{fmtDate(inv.date)}</td>
-                      <td className="ig-history-total">{fmt(inv.total)}</td>
-                      <td className="ig-history-sentat">
-                        {new Date(inv.sentAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td>
-                        <button
-                          className="ig-history-del"
-                          title="Remove from history"
-                          onClick={async () => {
-                            await deleteInvoiceById(inv.id);
-                            setSentInvoices((p) =>
-                              p.filter((i) => i.id !== inv.id),
-                            );
-                          }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                {sentPages.pageItems.map((inv) => (
+                  <tr key={inv.id}>
+                    <td className="ig-history-num">{inv.invoiceNum}</td>
+                    <td>{inv.clientName}</td>
+                    <td className="ig-history-email">{inv.toEmail}</td>
+                    <td>{fmtDate(inv.date)}</td>
+                    <td className="ig-history-total">{fmt(inv.total)}</td>
+                    <td className="ig-history-sentat">
+                      {new Date(inv.sentAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td>
+                      <button
+                        className="ig-history-del"
+                        title="Remove from history"
+                        onClick={async () => {
+                          await deleteInvoiceById(inv.id);
+                          setSentInvoices((p) =>
+                            p.filter((i) => i.id !== inv.id),
+                          );
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </ResizableTable>
           </div>
+          <Pagination
+            currentPage={sentPages.page}
+            totalPages={sentPages.totalPages}
+            setCurrentPage={sentPages.setPage}
+          >
+            <span className="table-footer-count">
+              {sentPages.from}–{sentPages.to} of {sentPages.total} sent
+            </span>
+          </Pagination>
         </section>
       )}
     </div>

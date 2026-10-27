@@ -22,6 +22,8 @@ import RentalAddForm from "./RentalAddForm";
 import RentalEditModal from "./RentalEditModal";
 import "./RentalManagement.css";
 import ResizableTable from "../elements/ResizableTable";
+import Pagination from "../pagination/Pagination";
+import { usePagination } from "../pagination/usePagination";
 
 function createEmptyForm() {
   return {
@@ -324,6 +326,9 @@ export default function RentalManagement({
       return true;
     });
   }, [rentals, filterState, filterCity, filterTenantType, search]);
+  const rentalPages = usePagination(filtered, {
+    resetOn: [filterState, filterCity, filterTenantType, search],
+  });
 
   const hasActiveFilters =
     filterState !== "All" ||
@@ -536,7 +541,7 @@ export default function RentalManagement({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((rental) => {
+                {rentalPages.pageItems.map((rental) => {
                   const cashflow =
                     parseCurrency(rental.monthlyRent) -
                     parseCurrency(rental.monthlyMortgage);
@@ -682,6 +687,18 @@ export default function RentalManagement({
               </tbody>
             </ResizableTable>
           </div>
+        )}
+        {filtered.length > 0 && (
+          <Pagination
+            currentPage={rentalPages.page}
+            totalPages={rentalPages.totalPages}
+            setCurrentPage={rentalPages.setPage}
+          >
+            <span className="table-footer-count">
+              {rentalPages.from}–{rentalPages.to} of {rentalPages.total}{" "}
+              {rentalPages.total === 1 ? "property" : "properties"}
+            </span>
+          </Pagination>
         )}
       </section>
 

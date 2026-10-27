@@ -14,10 +14,10 @@ function makeDeals(count) {
 }
 
 describe("useDealsSort", () => {
-  it("paginates 10 deals per page", () => {
-    const deals = makeDeals(25);
+  it("paginates 20 deals per page", () => {
+    const deals = makeDeals(45);
     const { result } = renderHook(() => useDealsSort(deals));
-    expect(result.current.currentDeals).toHaveLength(10);
+    expect(result.current.currentDeals).toHaveLength(20);
     expect(result.current.totalPages).toBe(3);
   });
 
@@ -35,10 +35,10 @@ describe("useDealsSort", () => {
   });
 
   it("setCurrentPage moves to a later page", () => {
-    const deals = makeDeals(25);
+    const deals = makeDeals(45);
     const { result } = renderHook(() => useDealsSort(deals));
     act(() => result.current.setCurrentPage(2));
-    expect(result.current.currentDeals).toHaveLength(10);
+    expect(result.current.currentDeals).toHaveLength(20);
     expect(result.current.currentDeals[0].id).not.toBe("d0");
   });
 

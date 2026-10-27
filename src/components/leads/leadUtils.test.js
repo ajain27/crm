@@ -11,11 +11,11 @@ import {
 
 describe("leadUtils", () => {
   it("paginates and summarizes a page of leads", () => {
-    const items = Array.from({ length: 23 }, (_, i) => ({ id: i }));
+    const items = Array.from({ length: 43 }, (_, i) => ({ id: i }));
     const result = paginate(items, 3);
     expect(result.pageItems).toHaveLength(3);
     expect(result.totalPages).toBe(3);
-    expect(result.summary).toBe("21–23 of 23 leads");
+    expect(result.summary).toBe("41–43 of 43 leads");
   });
 
   it("clamps an out-of-range page to the last page", () => {

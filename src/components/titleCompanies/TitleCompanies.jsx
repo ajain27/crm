@@ -8,6 +8,7 @@ import { displayPhone } from "../../utils/utils";
 import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
 import "./TitleCompanies.css";
 import ResizableTable from "../elements/ResizableTable";
+import { PAGE_SIZE } from "../pagination/usePagination";
 
 function createEmptyForm() {
   return {
@@ -43,8 +44,6 @@ function findDuplicateCompany(companies, name, state, excludeId = null) {
 function duplicateMessage(dup) {
   return `"${dup.name}"${dup.state ? ` (${dup.state})` : ""} is already in your list.`;
 }
-
-const PAGE_SIZE = 10;
 
 const SEARCH_FIELDS = ["name", "contact", "phone", "notes", "state"];
 
