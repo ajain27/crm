@@ -1046,4 +1046,78 @@
     margin: 0;
     font-size: 0.8125rem;
   }
+
+  /* ── Favorites ───────────────────────────────────────── */
+  .omd-fav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: 0;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+
+  .omd-fav:active {
+    transform: scale(0.9);
+  }
+
+  /* On a card: a round button on the photo. */
+  .omd-photo .omd-fav {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.6);
+    color: #fff;
+  }
+
+  .omd-photo .omd-fav:hover {
+    background: rgba(15, 23, 42, 0.8);
+  }
+
+  .omd-fav.is-fav {
+    color: #f43f5e;
+  }
+
+  .omd-photo .omd-fav.is-fav {
+    background: #fff;
+  }
+
+  /* In the window: a labeled pill next to the price. */
+  .omd-fav--label {
+    margin-left: auto;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .omd-fav--label:hover {
+    color: var(--text);
+  }
+
+  .omd-fav--label.is-fav {
+    border-color: color-mix(in srgb, #f43f5e 45%, var(--line));
+    background: color-mix(in srgb, #f43f5e 12%, transparent);
+    color: #f43f5e;
+  }
+
+  .omd-city-tabs .omd-tab-fav.active,
+  .omd-city-tabs .omd-tab-fav:hover {
+    color: #f43f5e;
+  }
+
+  .omd-city-tabs .omd-tab-fav.active {
+    border-color: #f43f5e;
+  }
 }

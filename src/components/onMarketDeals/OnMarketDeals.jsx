@@ -4,6 +4,7 @@ import {
   ImageOff,
   MapPin,
   Clock,
+  Heart,
   Plus,
   RefreshCw,
   Search,
@@ -20,6 +21,7 @@ import { compsResultToSave } from "../leads/comps/leadComps";
 import { StreetViewButton } from "../elements/StreetView";
 import Spinner from "../elements/Spinner";
 import ListingDetailsModal from "./ListingDetailsModal";
+import FavoriteButton from "./FavoriteButton";
 import Pagination from "../pagination/Pagination";
 import { usePagination } from "../pagination/usePagination";
 import {
@@ -140,7 +142,7 @@ function compsSubject(l) {
 // Clicks on the card's own links and buttons don't open the window.
 const INTERACTIVE = "a, button";
 
-function ListingCard({ listing: l, onOpen }) {
+function ListingCard({ listing: l, onOpen, favorite, onToggleFavorite }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const under = belowZestimate(l);
   const ppsf = pricePerSqft(l);
@@ -184,6 +186,10 @@ function ListingCard({ listing: l, onOpen }) {
         {l.saleType === "For sale by owner" && (
           <span className="omd-fsbo">For sale by owner</span>
         )}
+        <FavoriteButton
+          favorite={favorite}
+          onToggle={() => onToggleFavorite(l)}
+        />
       </div>
       <div className="omd-card-body">
         <div className="omd-price-row">
@@ -272,7 +278,11 @@ export default function OnMarketDeals() {
   const [minDays, setMinDays] = useState(saved.minDays ?? DEFAULT_MIN_DAYS);
   const [sort, setSort] = useState(saved.sort || "longest");
   const [results, setResults] = useState(saved.results || {});
+  // "all", a city's key, or "favorites".
   const [cityFilter, setCityFilter] = useState("all");
+  // Favorite homes, kept as they were when saved so they stay after
+  // results refresh or their city is removed: { id: listing }.
+  const [favorites, setFavorites] = useState(saved.favorites || {});
   const [cityInput, setCityInput] = useState("");
   const [keywordInput, setKeywordInput] = useState("");
   const [editingKeywords, setEditingKeywords] = useState(false);
@@ -296,6 +306,7 @@ export default function OnMarketDeals() {
       results,
       details,
       comps,
+      favorites,
       ...next,
     });
   }
@@ -483,18 +494,40 @@ export default function OnMarketDeals() {
     persist({ results: next });
   }
 
+  function toggleFavorite(listing) {
+    setFavorites((prev) => {
+      const next = { ...prev };
+      if (next[listing.id]) delete next[listing.id];
+      else {
+        next[listing.id] = {
+          ...listing,
+          favoritedAt: new Date().toISOString(),
+        };
+      }
+      persist({ favorites: next });
+      return next;
+    });
+  }
+
   const shownCities = cities.filter((c) => results[cityKey(c)]);
+  const favoriteList = Object.values(favorites);
+  const showingFavorites = cityFilter === "favorites";
   const pooled = shownCities
     .filter((c) => cityFilter === "all" || cityKey(c) === cityFilter)
     .flatMap((c) => results[cityKey(c)].listings);
-  const listings = visibleListings(pooled, { minDays, sort });
+  // Favorites show whatever their days on market.
+  const listings = showingFavorites
+    ? [...favoriteList].sort(SORTS[sort]?.compare || SORTS.longest.compare)
+    : visibleListings(pooled, { minDays, sort });
   const listingPages = usePagination(listings, {
     resetOn: [cityFilter, sort, minDays, results],
   });
   const openListing = openId
     ? shownCities
         .flatMap((c) => results[cityKey(c)].listings)
-        .find((l) => l.id === openId) || null
+        .find((l) => l.id === openId) ||
+      favorites[openId] ||
+      null
     : null;
 
   function openDetails(listing) {
@@ -719,7 +752,7 @@ export default function OnMarketDeals() {
         {error && <p className="omd-error">{error}</p>}
       </section>
 
-      {shownCities.length > 0 && (
+      {(shownCities.length > 0 || favoriteList.length > 0) && (
         <section className="panel omd-results" data-reveal="left">
           <div className="omd-toolbar">
             <div className="omd-city-tabs" role="tablist">
@@ -748,6 +781,20 @@ export default function OnMarketDeals() {
                   <span className="omd-tab-count">{countFor(c)}</span>
                 </button>
               ))}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={showingFavorites}
+                className={`omd-tab-fav${showingFavorites ? " active" : ""}`}
+                onClick={() => setCityFilter("favorites")}
+              >
+                <Heart
+                  size={13}
+                  fill={favoriteList.length ? "currentColor" : "none"}
+                />
+                Favorites
+                <span className="omd-tab-count">{favoriteList.length}</span>
+              </button>
             </div>
             <label className="omd-sort">
               Sort
@@ -778,7 +825,13 @@ export default function OnMarketDeals() {
             <>
               <div className="omd-grid">
                 {listingPages.pageItems.map((l) => (
-                  <ListingCard key={l.id} listing={l} onOpen={openDetails} />
+                  <ListingCard
+                    key={l.id}
+                    listing={l}
+                    onOpen={openDetails}
+                    favorite={Boolean(favorites[l.id])}
+                    onToggleFavorite={toggleFavorite}
+                  />
                 ))}
               </div>
               <Pagination
@@ -794,8 +847,9 @@ export default function OnMarketDeals() {
             </>
           ) : (
             <p className="omd-empty">
-              No listings with these keywords have been on the market more than{" "}
-              {minDays} days.
+              {showingFavorites
+                ? "No favorites yet — tap the heart on a home to save it here."
+                : `No listings with these keywords have been on the market more than ${minDays} days.`}
             </p>
           )}
         </section>
@@ -815,6 +869,8 @@ export default function OnMarketDeals() {
             error: compsError,
             run: () => loadComps(openListing),
           }}
+          favorite={Boolean(favorites[openListing.id])}
+          onToggleFavorite={() => toggleFavorite(openListing)}
           onClose={() => setOpenId(null)}
         />
       )}

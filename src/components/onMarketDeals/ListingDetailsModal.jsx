@@ -9,6 +9,7 @@ import {
   Phone,
 } from "lucide-react";
 import Modal from "../modal/Modal";
+import FavoriteButton from "./FavoriteButton";
 import Spinner from "../elements/Spinner";
 import { StreetViewButton } from "../elements/StreetView";
 import { smsHref } from "../leads/components/LeadTableCells";
@@ -271,6 +272,8 @@ export default function ListingDetailsModal({
   listing: l,
   detailsState,
   compsState,
+  favorite,
+  onToggleFavorite,
   onClose,
 }) {
   if (!l) return null;
@@ -379,6 +382,11 @@ export default function ListingDetailsModal({
           <div className="omd-modal-price">
             <strong>{money(l.price)}</strong>
             {saleType && <span className="omd-sale-type">{saleType}</span>}
+            <FavoriteButton
+              favorite={favorite}
+              onToggle={onToggleFavorite}
+              withLabel
+            />
           </div>
           {l.zestimate > 0 && (
             <div className="omd-zestimate">

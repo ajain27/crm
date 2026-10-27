@@ -272,4 +272,44 @@ describe("OnMarketDeals", () => {
     expect(screen.getAllByRole("article")).toHaveLength(5);
     expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
   });
+
+  it("marks a home as a favorite and keeps it under Favorites", async () => {
+    requestListingDetails.mockResolvedValue({
+      contacts: [],
+      photos: [],
+      facts: [],
+    });
+    await searchPontiac();
+    fireEvent.click(screen.getByRole("button", { name: "Add to favorites" }));
+    expect(
+      screen.getByRole("button", { name: "Remove from favorites" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: /Favorites/ }));
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByText("372 W Columbia Ave")).toBeInTheDocument();
+
+    // Still there after the city is removed.
+    fireEvent.click(screen.getByRole("button", { name: "Remove Pontiac, MI" }));
+    expect(screen.getByText("372 W Columbia Ave")).toBeInTheDocument();
+    expect(
+      JSON.parse(localStorage.getItem("onMarketDeals_v1")).favorites,
+    ).toHaveProperty("1");
+
+    // Un-favorite from its window.
+    await act(async () => {
+      fireEvent.click(screen.getByText("372 W Columbia Ave"));
+    });
+    const dialog = within(document.querySelector(".omd-modal"));
+    fireEvent.click(
+      dialog.getByRole("button", { name: "Remove from favorites" }),
+    );
+    fireEvent.click(
+      dialog
+        .getAllByRole("button")
+        .find((b) => b.className.includes("modal-close")),
+    );
+    // No city and no favorites left: nothing to show.
+    expect(screen.queryAllByRole("article")).toHaveLength(0);
+  });
 });
