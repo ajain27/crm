@@ -22,8 +22,8 @@
 //      Without Claude, or if it fails, the ranking's top 5 are used.
 //   5. The property's own history (sales, listings, taxes) comes from the
 //      same pages, read in the same scrape.
-//   6. The listing's main photo (from the same pages) is downloaded so it
-//      can be added to the lead.
+//   6. The listing's main photo (from the same pages; Street View for a
+//      home with none) is downloaded so it can be added to the lead.
 //   7. ARV is worked out in code from the final comps: the upper quartile
 //      of their price per sq ft × the subject's size.
 //
@@ -41,14 +41,13 @@ import {
 import {
   SITES,
   extractSubject,
-  lookUpSubjectPhoto,
+  findSubjectPhoto,
   pageCoordinates,
   pickListingUrls,
   reconcileSubject,
   saneValue,
   serperSearch,
   listingQueries,
-  subjectPhotoUrl,
 } from "./subject.js";
 import { fetchPhotoData } from "./photo.js";
 import { missingScraperKey } from "../scraper.js";
@@ -201,9 +200,7 @@ export async function runComps(
   }
   // Downloaded while the comps are ranked and reviewed.
   const photoData = (async () => {
-    const url =
-      subjectPhotoUrl(sources, address) ||
-      (adjust ? null : await lookUpSubjectPhoto(sources, address, env));
+    const url = adjust ? null : await findSubjectPhoto(sources, address, env);
     const data = await fetchPhotoData(url);
     return data ? { url, data } : null;
   })();

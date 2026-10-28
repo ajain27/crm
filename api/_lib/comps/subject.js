@@ -242,24 +242,41 @@ export async function extractSubject(url, env) {
   });
   if (!data) return null;
   const facts = cleanScraped(data);
-  return metadata ? { ...facts, photoUrl: listingPhotoUrl(metadata) } : facts;
+  return metadata
+    ? {
+        ...facts,
+        photoUrl: listingPhotoUrl(metadata),
+        streetViewUrl: streetViewUrl(metadata),
+      }
+    : facts;
 }
 
 // The listing's main photo: the page's share image (og:image), which
-// Firecrawl returns with every scrape (from its metadata). Only the sites' own photo servers
-// count — without photos, the share image is a logo or a map.
+// Firecrawl returns with every scrape (from its metadata). Only the sites'
+// own photo servers count; a home that isn't listed shares a Street View
+// image instead (kept separately, as the fallback), or a logo.
 const PHOTO_HOSTS = [
   /^https:\/\/photos\.zillowstatic\.com\/fp\//i,
   /^https:\/\/ssl\.cdn-redfin\.com\/photo\//i,
   /^https:\/\/ap\.rdcpix\.com\//i,
 ];
+const STREET_VIEW =
+  /^https:\/\/maps\.googleapis\.com\/maps\/api\/streetview\?/i;
 
-export function listingPhotoUrl(metadata) {
+function shareImage(metadata) {
   const og = metadata?.ogImage ?? metadata?.["og:image"];
   const url = Array.isArray(og) ? og[0] : og;
-  return typeof url === "string" && PHOTO_HOSTS.some((re) => re.test(url))
-    ? url
-    : null;
+  return typeof url === "string" ? url : null;
+}
+
+export function listingPhotoUrl(metadata) {
+  const url = shareImage(metadata);
+  return url && PHOTO_HOSTS.some((re) => re.test(url)) ? url : null;
+}
+
+export function streetViewUrl(metadata) {
+  const url = shareImage(metadata);
+  return url && STREET_VIEW.test(url) ? url : null;
 }
 
 const SOURCE_PRIORITY = ["zillow", "redfin", "realtor"];
@@ -302,29 +319,28 @@ export function isSubjectData(data, address) {
   return addressParts(data.address).number === number;
 }
 
-// The subject's photo: Zillow's, then Redfin's, then Realtor.com's.
-export function subjectPhotoUrl(sources, address) {
-  return (
-    SOURCE_PRIORITY.map((key) => sources[key]?.data)
-      .filter((data) => isSubjectData(data, address))
-      .map((data) => data.photoUrl)
-      .find(Boolean) || null
+// The subject's photo: Zillow's listing photo, then Redfin's, then
+// Realtor.com's. Pages read without their metadata (`photoUrl` left out)
+// have their HTML loaded for it, in the same order, until one has a
+// photo. A home with no listing photos gets its Street View image.
+export async function findSubjectPhoto(sources, address, env) {
+  const pages = SOURCE_PRIORITY.map((key) => sources[key]).filter((src) =>
+    isSubjectData(src?.data, address),
   );
-}
-
-// When no page's metadata had a photo to offer (the scraper didn't return
-// it), the first subject page's share image, read from its HTML.
-export async function lookUpSubjectPhoto(sources, address, env) {
-  const unread = SOURCE_PRIORITY.map((key) => sources[key])
-    .filter((src) => isSubjectData(src?.data, address))
-    .find((src) => !("photoUrl" in src.data));
-  if (!unread?.url) return null;
-  try {
-    const html = await scrapeHtml(unread.url, env);
-    return listingPhotoUrl({ ogImage: ogImageFromHtml(html) });
-  } catch {
-    return null;
+  const known = pages.map((src) => src.data.photoUrl).find(Boolean);
+  if (known) return known;
+  let streetView = pages.map((src) => src.data.streetViewUrl).find(Boolean);
+  for (const src of pages.filter((p) => p.url && !("photoUrl" in p.data))) {
+    try {
+      const ogImage = ogImageFromHtml(await scrapeHtml(src.url, env));
+      const photo = listingPhotoUrl({ ogImage });
+      if (photo) return photo;
+      streetView ||= streetViewUrl({ ogImage });
+    } catch {
+      // That page couldn't be loaded; try the next.
+    }
   }
+  return streetView || null;
 }
 
 // Coordinates from the subject's own pages (their maps), used when the

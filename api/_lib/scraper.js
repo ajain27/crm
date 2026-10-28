@@ -78,6 +78,10 @@ async function firstWithCredits(env, names, run) {
         passedOn = err;
         continue;
       }
+      // Pages read at the same time: once one finds this scraper out of
+      // credits, the others' errors from it (often "rate limited") mean
+      // the same.
+      if (outUntil[name] > Date.now()) continue;
       if (!err.outOfCredits) throw err;
       outUntil[name] = Date.now() + OUT_OF_CREDITS_MS;
     }

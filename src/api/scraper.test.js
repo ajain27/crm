@@ -114,6 +114,25 @@ describe("scraper", () => {
     ).rejects.toThrow("Crawl4AI failed (busy)");
   });
 
+  it("moves pages read at the same time on once one finds Firecrawl out of credits", async () => {
+    let calls = 0;
+    mockScrapers({
+      // The first answer says out of credits; the rest, rate limited.
+      firecrawl: async () => {
+        calls += 1;
+        if (calls === 1) return OUT_OF_CREDITS.firecrawl();
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return reply(429, { success: false, error: "Rate limit exceeded" });
+      },
+      crawl4ai: (url, body) =>
+        reply(200, { ok: true, html: `<html>${body.url}</html>` }),
+    });
+    const pages = ["https://a.test/1", "https://a.test/2", "https://a.test/3"];
+    expect(await Promise.all(pages.map((p) => scrapeHtml(p, ALL)))).toEqual(
+      pages.map((p) => `<html>${p}</html>`),
+    );
+  });
+
   it("explains when every scraper is out of credits", async () => {
     mockScrapers(OUT_OF_CREDITS);
     await expect(scrapeHtml(PAGE, ALL)).rejects.toMatchObject({

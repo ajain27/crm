@@ -200,7 +200,11 @@ function mockFetch(overrides = {}) {
     if (url.includes("nominatim.openstreetmap.org")) return handlers.osm(url);
     if (url.includes("redfin.com/stingray")) return handlers.redfin(url);
     if (url.includes("/api/interpreter")) return handlers.overpass(url);
-    if (url.includes("zillowstatic") || url.includes("cdn-redfin")) {
+    if (
+      url.includes("zillowstatic") ||
+      url.includes("cdn-redfin") ||
+      url.includes("maps.googleapis.com")
+    ) {
       return handlers.photo(url);
     }
     throw new Error(`unexpected ${url}`);
@@ -353,6 +357,61 @@ describe("run-comps", () => {
     expect(
       fetchMock.mock.calls.some(([url]) => url.includes("firecrawl")),
     ).toBe(false);
+  });
+
+  it("uses the Street View image for a home with no listing photos", async () => {
+    const STREET_VIEW =
+      "https://maps.googleapis.com/maps/api/streetview?location=5055+Belfast&size=1536x1152";
+    const fetchMock = mockFetch({
+      firecrawl: (body) =>
+        json(200, {
+          success: true,
+          data: {
+            json: SUBJECT_PAGE,
+            metadata: {
+              ogImage: body.url.includes("zillow")
+                ? STREET_VIEW
+                : "https://www.realtor.com/logo.png",
+            },
+          },
+        }),
+      photo: () => ({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "image/jpeg" }),
+        arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+      }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.photo).toEqual({
+      url: STREET_VIEW,
+      data: "data:image/jpeg;base64,AQID",
+    });
+    expect(fetchMock.mock.calls.some(([url]) => url.includes("crawl4ai"))).toBe(
+      false,
+    );
+  });
+
+  it("looks on the next site's page for a photo when Zillow has none", async () => {
+    mockFetch({
+      crawl4ai: (url, body) =>
+        url.endsWith("/extract")
+          ? json(200, { ok: true, data: [SUBJECT_PAGE] })
+          : json(200, {
+              ok: true,
+              html: body.url.includes("redfin")
+                ? '<meta property="og:image" content="https://ssl.cdn-redfin.com/photo/1/bigphoto/1.jpg">'
+                : '<meta property="og:image" content="https://maps.googleapis.com/maps/api/streetview?location=x">',
+            }),
+    });
+    const out = await runComps(
+      ADDRESS,
+      { SERPER_API_KEY: "serper", CRAWL4AI_API_KEY: "c4" },
+      NOW,
+    );
+    expect(out.photo.url).toBe(
+      "https://ssl.cdn-redfin.com/photo/1/bigphoto/1.jpg",
+    );
   });
 
   it("has no photo when the pages only share a logo", async () => {
