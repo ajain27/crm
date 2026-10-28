@@ -176,6 +176,10 @@ function mockFetch(overrides = {}) {
           ],
         },
       }),
+    crawl4ai: (url) =>
+      url.endsWith("/extract")
+        ? json(200, { ok: true, data: [SUBJECT_PAGE] })
+        : json(200, { ok: true, html: "<html></html>" }),
     redfin: () => text(200, REDFIN_CSV),
     osm: () => json(200, []),
     overpass: () => json(200, { elements: [] }),
@@ -191,6 +195,7 @@ function mockFetch(overrides = {}) {
     const body = init.body ? JSON.parse(init.body) : null;
     if (url.includes("serper")) return handlers.serper(body);
     if (url.includes("firecrawl")) return handlers.firecrawl(body);
+    if (url.includes("crawl4ai")) return handlers.crawl4ai(url, body);
     if (url.includes("geocoding.geo.census.gov")) return handlers.census(url);
     if (url.includes("nominatim.openstreetmap.org")) return handlers.osm(url);
     if (url.includes("redfin.com/stingray")) return handlers.redfin(url);
@@ -317,6 +322,37 @@ describe("run-comps", () => {
       url.includes("zillowstatic"),
     );
     expect(photoCalls).toHaveLength(1);
+  });
+
+  it("runs on Crawl4AI alone, reading the photo from the Zillow page's HTML", async () => {
+    const fetchMock = mockFetch({
+      crawl4ai: (url, body) =>
+        url.endsWith("/extract")
+          ? json(200, { ok: true, data: [SUBJECT_PAGE] })
+          : json(200, {
+              ok: true,
+              html: body.url.includes("zillow")
+                ? '<meta property="og:image" content="https://photos.zillowstatic.com/fp/z.jpg">'
+                : "",
+            }),
+    });
+    const out = await runComps(
+      ADDRESS,
+      { SERPER_API_KEY: "serper", CRAWL4AI_API_KEY: "c4" },
+      NOW,
+    );
+    expect(out.property).toMatchObject({ beds: 3, baths: 1, sqft: 1165 });
+    expect(out.photo).toEqual({
+      url: "https://photos.zillowstatic.com/fp/z.jpg",
+      data: "data:image/jpeg;base64,AQID",
+    });
+    const scrapes = fetchMock.mock.calls
+      .filter(([url]) => url === "https://api.crawl4ai.com/scrape")
+      .map(([, init]) => JSON.parse(init.body).url);
+    expect(scrapes).toEqual([LISTINGS.zillow]);
+    expect(
+      fetchMock.mock.calls.some(([url]) => url.includes("firecrawl")),
+    ).toBe(false);
   });
 
   it("has no photo when the pages only share a logo", async () => {

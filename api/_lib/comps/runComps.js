@@ -5,7 +5,7 @@
 // of the same type (the county's public records type when a page shows it).
 //
 //   1. The subject: Serper finds its Zillow, Redfin and Realtor.com pages
-//      and Firecrawl reads its facts (beds, baths, sq ft, year built…)
+//      and a scraper reads its facts (beds, baths, sq ft, year built…)
 //      from each; the US Census geocoder gives its coordinates.
 //   2. Candidates: Redfin's sold-homes data for the last 90 days around
 //      those coordinates (sold date, beds, baths, year built, location).
@@ -27,7 +27,8 @@
 //   7. ARV is worked out in code from the final comps: the upper quartile
 //      of their price per sq ft × the subject's size.
 //
-// Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); ANTHROPIC_API_KEY
+// Env: SERPER_API_KEY, FIRECRAWL_API_KEY and/or CRAWL4AI_API_KEY
+// (required); ANTHROPIC_API_KEY
 // (optional — Claude's review of the candidates).
 
 import {
@@ -39,7 +40,8 @@ import {
 } from "./rules.js";
 import {
   SITES,
-  firecrawlExtract,
+  extractSubject,
+  lookUpSubjectPhoto,
   pageCoordinates,
   pickListingUrls,
   reconcileSubject,
@@ -49,6 +51,7 @@ import {
   subjectPhotoUrl,
 } from "./subject.js";
 import { fetchPhotoData } from "./photo.js";
+import { missingScraperKey } from "../scraper.js";
 import { geocodeAddress, geocodeWithOpenStreetMap } from "./geocode.js";
 import { fetchRedfinSold } from "./sales.js";
 import { fetchMajorHighways } from "./highways.js";
@@ -69,9 +72,10 @@ async function loadArea(location, search = SEARCH) {
 // Finds the subject's pages, reads its facts from each, locates it and
 // loads the sales around it.
 async function gatherSubject(address, env) {
-  const missing = ["SERPER_API_KEY", "FIRECRAWL_API_KEY"].filter(
-    (k) => !env[k],
-  );
+  const missing = [
+    env.SERPER_API_KEY ? null : "SERPER_API_KEY",
+    missingScraperKey(env, "extract"),
+  ].filter(Boolean);
   if (missing.length) {
     throw errorWithStatus(
       `Comps aren't set up yet: missing ${missing.join(", ")}.`,
@@ -95,7 +99,7 @@ async function gatherSubject(address, env) {
         return [site.key, { url: null, data: null, error: "No page found" }];
       }
       try {
-        const data = await firecrawlExtract(url, env.FIRECRAWL_API_KEY);
+        const data = await extractSubject(url, env);
         return [site.key, { url, data, error: null }];
       } catch (err) {
         return [site.key, { url, data: null, error: err.message }];
@@ -196,8 +200,13 @@ export async function runComps(
       await gatherSubject(address, env));
   }
   // Downloaded while the comps are ranked and reviewed.
-  const photoUrl = subjectPhotoUrl(sources, address);
-  const photoData = fetchPhotoData(photoUrl);
+  const photoData = (async () => {
+    const url =
+      subjectPhotoUrl(sources, address) ||
+      (adjust ? null : await lookUpSubjectPhoto(sources, address, env));
+    const data = await fetchPhotoData(url);
+    return data ? { url, data } : null;
+  })();
 
   const rank = (search) =>
     rankComps({
@@ -272,7 +281,7 @@ export async function runComps(
   }));
   const outsideRules = topComps.filter((c) => !c.meetsRules).length;
   const { arvEstimate, arvBasis } = estimateArv(topComps, property.sqft);
-  const photoDataUrl = await photoData;
+  const photo = await photoData;
 
   return {
     address,
@@ -313,7 +322,7 @@ export async function runComps(
     history: adjust ? null : historyFromSources(sources, address),
     // The listing's main photo (none on a re-run, or when it couldn't be
     // downloaded).
-    photo: photoDataUrl ? { url: photoUrl, data: photoDataUrl } : null,
+    photo,
     criteria: {
       radiusMiles: COMP_RULES.radiusMiles,
       soldWithinDays: COMP_RULES.soldWithinDays,

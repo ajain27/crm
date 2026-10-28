@@ -1,12 +1,10 @@
 // Step 1: the subject. Serper finds its Zillow, Redfin and Realtor.com
-// pages and Firecrawl reads its facts from each; the facts the sites agree
+// pages and a scraper (Firecrawl, or Crawl4AI once Firecrawl's credits
+// run out) reads its facts from each; the facts the sites agree
 // on win.
 
 import { distanceMiles, isNum, typeBucket } from "./rules.js";
-
-// Pages are scraped in parallel; this leaves time for the rest inside the
-// function's 60s limit (vercel.json).
-const FIRECRAWL_TIMEOUT_MS = 30000;
+import { extractJson, ogImageFromHtml, scrapeHtml } from "../scraper.js";
 
 export const SITES = [
   {
@@ -30,7 +28,7 @@ export const SITES = [
   },
 ];
 
-// What Firecrawl reads about the subject from each of its pages.
+// What the scraper reads about the subject from each of its pages.
 export const SUBJECT_SCHEMA = {
   type: "object",
   properties: {
@@ -234,39 +232,21 @@ export function cleanScraped(value) {
 const SUBJECT_PROMPT =
   "Extract this property's own details (not nearby or similar homes) — its address, type, beds, total baths, square feet, year built, estimated value, estimated monthly rent and annual property tax — and every row of its price/sale history and tax history tables.";
 
-export async function firecrawlExtract(url, apiKey) {
-  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      url,
-      formats: [
-        {
-          type: "json",
-          schema: SUBJECT_SCHEMA,
-          prompt: SUBJECT_PROMPT,
-        },
-      ],
-      onlyMainContent: true,
-      timeout: FIRECRAWL_TIMEOUT_MS,
-      proxy: "auto",
-    }),
+// The subject's facts from one of its pages, with its listing photo when
+// the scraper returns the page's metadata (`photoUrl` is left out when it
+// doesn't, so the photo can be looked up another way).
+export async function extractSubject(url, env) {
+  const { data, metadata } = await extractJson(url, env, {
+    schema: SUBJECT_SCHEMA,
+    prompt: SUBJECT_PROMPT,
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || `Firecrawl failed (${res.status})`);
-  }
-  const extracted = data.data?.json;
-  if (!extracted) return null;
-  const photoUrl = listingPhotoUrl(data.data?.metadata);
-  return { ...cleanScraped(extracted), ...(photoUrl ? { photoUrl } : {}) };
+  if (!data) return null;
+  const facts = cleanScraped(data);
+  return metadata ? { ...facts, photoUrl: listingPhotoUrl(metadata) } : facts;
 }
 
 // The listing's main photo: the page's share image (og:image), which
-// Firecrawl returns with every scrape. Only the sites' own photo servers
+// Firecrawl returns with every scrape (from its metadata). Only the sites' own photo servers
 // count — without photos, the share image is a logo or a map.
 const PHOTO_HOSTS = [
   /^https:\/\/photos\.zillowstatic\.com\/fp\//i,
@@ -330,6 +310,21 @@ export function subjectPhotoUrl(sources, address) {
       .map((data) => data.photoUrl)
       .find(Boolean) || null
   );
+}
+
+// When no page's metadata had a photo to offer (the scraper didn't return
+// it), the first subject page's share image, read from its HTML.
+export async function lookUpSubjectPhoto(sources, address, env) {
+  const unread = SOURCE_PRIORITY.map((key) => sources[key])
+    .filter((src) => isSubjectData(src?.data, address))
+    .find((src) => !("photoUrl" in src.data));
+  if (!unread?.url) return null;
+  try {
+    const html = await scrapeHtml(unread.url, env);
+    return listingPhotoUrl({ ogImage: ogImageFromHtml(html) });
+  } catch {
+    return null;
+  }
 }
 
 // Coordinates from the subject's own pages (their maps), used when the

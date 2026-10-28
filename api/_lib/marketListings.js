@@ -1,7 +1,8 @@
 // On Market Deals: homes for sale in a city whose listing reads like an
 // investor deal ("investor", "as is", "TLC", "motivated seller"…).
 //
-//   - Zillow, one keyword at a time: Firecrawl loads the city's Zillow
+//   - Zillow, one keyword at a time: a scraper (Firecrawl, then Crawl4AI
+//     or Jina once credits run out) loads the city's Zillow
 //     search with that keyword (Zillow searches the listing descriptions)
 //     and the results are read from the page's own data (__NEXT_DATA__):
 //     photo, price, beds, baths, size, lot, days on Zillow, Zestimate,
@@ -9,14 +10,14 @@
 //   - Redfin, once per city: its for-sale data for the city adds what
 //     Zillow's results lack — year built, HOA, MLS# and its own link.
 //
-// Env: FIRECRAWL_API_KEY.
+// Env: FIRECRAWL_API_KEY, CRAWL4AI_API_KEY and/or JINA_API_KEY.
 
 import { errorWithStatus } from "./comps/rules.js";
 import { fetchRedfinCsv } from "./comps/sales.js";
+import { missingScraperKey, scrapeHtml } from "./scraper.js";
 
-// Firecrawl renders the page; this leaves time inside the function's 60s
-// limit (vercel.json).
-const FIRECRAWL_TIMEOUT_MS = 45000;
+// Zillow fills its results in after the page loads.
+const ZILLOW_WAIT_MS = 2000;
 // Pages of results per keyword (Zillow shows ~40 a page).
 const MAX_PAGES = 2;
 
@@ -133,44 +134,24 @@ export function parseZillowSearchHtml(html) {
   };
 }
 
-// Firecrawl's plan allows so many pages a minute; the page waits the
-// seconds it names and tries again.
-function throwIfRateLimited(res, data) {
-  if (res.status !== 429 && !/rate limit/i.test(data.error || "")) return;
-  const error = errorWithStatus(
-    "Zillow searches are coming too fast for the scraper's plan.",
-    429,
-  );
-  const seconds = Number(/retry after (\d+)s/i.exec(data.error || "")?.[1]);
-  error.retryAfter = seconds > 0 ? seconds : 30;
-  throw error;
-}
-
-async function fetchZillowPage(url, apiKey) {
-  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      url,
-      formats: ["rawHtml"],
-      onlyMainContent: false,
-      proxy: "auto",
-      waitFor: 2000,
-      timeout: FIRECRAWL_TIMEOUT_MS,
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  throwIfRateLimited(res, data);
-  if (!res.ok || !data.success) {
+// A rate limit (429, with the seconds to wait) or running out of credits
+// (503) is passed on as is; the page retries or explains. Anything else
+// is a missed load.
+async function loadZillow(url, env, what) {
+  try {
+    return await scrapeHtml(url, env, { waitFor: ZILLOW_WAIT_MS });
+  } catch (err) {
+    if ([429, 500, 503].includes(err.status)) throw err;
     throw errorWithStatus(
-      `Couldn't load Zillow (${data.error || res.status}). Try again in a minute.`,
+      `Couldn't load ${what} (${err.message}). Try again in a minute.`,
       502,
     );
   }
-  const parsed = parseZillowSearchHtml(data.data?.rawHtml);
+}
+
+async function fetchZillowPage(url, env) {
+  const html = await loadZillow(url, env, "Zillow");
+  const parsed = parseZillowSearchHtml(html);
   if (!parsed) {
     throw errorWithStatus(
       "Zillow didn't return its results this time. Try again in a minute.",
@@ -181,14 +162,14 @@ async function fetchZillowPage(url, apiKey) {
 }
 
 // Zillow listings in the city whose description has `keyword`.
-export async function fetchZillowKeyword(city, state, keyword, apiKey) {
+export async function fetchZillowKeyword(city, state, keyword, env) {
   const first = await fetchZillowPage(
     zillowSearchUrl(city, state, keyword),
-    apiKey,
+    env,
   );
   const more = await Promise.all(
     Array.from({ length: Math.min(first.totalPages, MAX_PAGES) - 1 }, (_, i) =>
-      fetchZillowPage(zillowSearchUrl(city, state, keyword, i + 2), apiKey)
+      fetchZillowPage(zillowSearchUrl(city, state, keyword, i + 2), env)
         .then((p) => p.listings)
         .catch((err) => {
           // A rate limit retries the whole keyword; other misses on a
@@ -318,7 +299,7 @@ export function parseZillowDetailsHtml(html) {
 }
 
 // The full details from a home's Zillow page.
-export async function fetchZillowDetails(url, apiKey) {
+export async function fetchZillowDetails(url, env) {
   let page;
   try {
     page = new URL(url);
@@ -332,30 +313,8 @@ export async function fetchZillowDetails(url, apiKey) {
   ) {
     throw errorWithStatus("That isn't a Zillow home page.", 400);
   }
-  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      url: page.href,
-      formats: ["rawHtml"],
-      onlyMainContent: false,
-      proxy: "auto",
-      waitFor: 2000,
-      timeout: FIRECRAWL_TIMEOUT_MS,
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  throwIfRateLimited(res, data);
-  if (!res.ok || !data.success) {
-    throw errorWithStatus(
-      `Couldn't load the Zillow page (${data.error || res.status}). Try again in a minute.`,
-      502,
-    );
-  }
-  const details = parseZillowDetailsHtml(data.data?.rawHtml);
+  const html = await loadZillow(page.href, env, "the Zillow page");
+  const details = parseZillowDetailsHtml(html);
   if (!details) {
     throw errorWithStatus(
       "Zillow didn't return this home's details this time. Try again in a minute.",
@@ -421,23 +380,19 @@ export async function fetchMarketListings(
   env = process.env,
 ) {
   if (redfin) return { listings: await fetchRedfinForSale(city, state) };
-  if (!env.FIRECRAWL_API_KEY) {
+  const missing = missingScraperKey(env, "html");
+  if (missing) {
     throw errorWithStatus(
-      "On Market Deals isn't set up yet: missing FIRECRAWL_API_KEY.",
+      `On Market Deals isn't set up yet: missing ${missing}.`,
       500,
     );
   }
   if (detailsUrl) {
     return {
-      details: await fetchZillowDetails(detailsUrl, env.FIRECRAWL_API_KEY),
+      details: await fetchZillowDetails(detailsUrl, env),
     };
   }
   return {
-    listings: await fetchZillowKeyword(
-      city,
-      state,
-      keyword,
-      env.FIRECRAWL_API_KEY,
-    ),
+    listings: await fetchZillowKeyword(city, state, keyword, env),
   };
 }

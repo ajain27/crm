@@ -3,12 +3,13 @@
 // same pages and the same scrape comps use — SUBJECT_SCHEMA includes the
 // history tables) and merged into one timeline.
 //
-// Env: SERPER_API_KEY, FIRECRAWL_API_KEY.
+// Env: SERPER_API_KEY, FIRECRAWL_API_KEY and/or CRAWL4AI_API_KEY.
 
 import { errorWithStatus } from "./comps/rules.js";
+import { missingScraperKey } from "./scraper.js";
 import {
   SITES,
-  firecrawlExtract,
+  extractSubject,
   isSubjectData,
   pickListingUrls,
   reconcileSubject,
@@ -135,9 +136,10 @@ export function historyFromSources(sources, address) {
 }
 
 export async function fetchPropertyHistory(address, env = process.env) {
-  const missing = ["SERPER_API_KEY", "FIRECRAWL_API_KEY"].filter(
-    (k) => !env[k],
-  );
+  const missing = [
+    env.SERPER_API_KEY ? null : "SERPER_API_KEY",
+    missingScraperKey(env, "extract"),
+  ].filter(Boolean);
   if (missing.length) {
     throw errorWithStatus(
       `Property history isn't set up yet: missing ${missing.join(", ")}.`,
@@ -163,7 +165,7 @@ export async function fetchPropertyHistory(address, env = process.env) {
         if (!url)
           return [key, { url: null, data: null, error: "No page found" }];
         try {
-          const data = await firecrawlExtract(url, env.FIRECRAWL_API_KEY);
+          const data = await extractSubject(url, env);
           return [key, { url, data, error: null }];
         } catch (err) {
           return [key, { url, data: null, error: err.message }];
