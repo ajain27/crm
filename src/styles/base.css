@@ -459,14 +459,14 @@
     border-color: color-mix(in srgb, var(--blue) 30%, var(--line) 70%);
   }
 
-  /* Profile dropdown — opens above the user card */
+  /* Profile dropdown — fixed over the page (left, bottom and width set
+     from the user card), so the sidebar's edge doesn't cut it off */
   .sb-profile-menu {
-    position: absolute !important;
-    bottom: calc(100% + 8px) !important;
+    position: fixed !important;
     top: auto !important;
-    left: 0;
-    right: 0;
+    right: auto;
     min-width: unset;
+    z-index: 200;
   }
 
   /* ── Mobile bar ──────────────────────────────────── */

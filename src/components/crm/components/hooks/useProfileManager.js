@@ -24,7 +24,11 @@ export function useProfileManager({
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (!profileMenuRef.current?.contains(event.target)) {
+      // The menu itself is rendered outside the card (over the page).
+      if (
+        !profileMenuRef.current?.contains(event.target) &&
+        !event.target.closest?.(".sb-profile-menu")
+      ) {
         setIsProfileMenuOpen(false);
       }
     }

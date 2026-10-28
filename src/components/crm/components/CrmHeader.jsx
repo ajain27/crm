@@ -14,6 +14,8 @@ import {
   Menu,
   Store,
 } from "lucide-react";
+import { useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import logo from "../../../assets/logo.png";
 import { usePrimeRate } from "../../../hooks/usePrimeRate";
 
@@ -51,6 +53,29 @@ function buildProfileInitial(currentUser) {
     .toUpperCase();
 }
 
+// Where the profile menu floats (fixed, over the page, so the sidebar
+// doesn't clip it): above the user card in the full sidebar, beside the
+// avatar in the icon-only rail.
+function profileMenuPosition(card, sidebarOpen) {
+  if (!card) return null;
+  const rect = card.getBoundingClientRect();
+  const fromBottom = window.innerHeight - rect.bottom;
+  const rail = !sidebarOpen && window.innerWidth > 900;
+  return rail
+    ? {
+        left:
+          (card.closest(".app-sidebar") || card).getBoundingClientRect().right +
+          10,
+        bottom: Math.max(8, fromBottom),
+        width: 240,
+      }
+    : {
+        left: rect.left,
+        bottom: window.innerHeight - rect.top + 8,
+        width: rect.width,
+      };
+}
+
 function CrmHeader({
   currentUser,
   activeView,
@@ -83,6 +108,18 @@ function CrmHeader({
           : ""
       }`
     : "US prime rate";
+
+  const [menuPosition, setMenuPosition] = useState(null);
+  useLayoutEffect(() => {
+    if (!isProfileMenuOpen) return undefined;
+    const place = () =>
+      setMenuPosition(
+        profileMenuPosition(profileMenuRef?.current, isSidebarOpen),
+      );
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [isProfileMenuOpen, isSidebarOpen, profileMenuRef]);
 
   function handleNav(id) {
     setActiveView(id);
@@ -157,29 +194,34 @@ function CrmHeader({
         <div className="sb-bottom">
           {/* User card */}
           <div className="sb-user-wrap" ref={profileMenuRef}>
-            {/* Profile dropdown — floats above the card */}
-            {isProfileMenuOpen && (
-              <div className="profile-menu-dropdown sb-profile-menu">
-                <div className="profile-menu-header">
-                  <strong>{displayName}</strong>
-                  <span>{currentUser?.email}</span>
-                </div>
-                <button
-                  type="button"
-                  className="profile-menu-item"
-                  onClick={onEditProfile}
+            {/* Profile dropdown — floats over the page, beside the card */}
+            {isProfileMenuOpen &&
+              createPortal(
+                <div
+                  className="profile-menu-dropdown sb-profile-menu"
+                  style={menuPosition || undefined}
                 >
-                  Edit Profile
-                </button>
-                <button
-                  type="button"
-                  className="profile-menu-item danger"
-                  onClick={onSignOut}
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
+                  <div className="profile-menu-header">
+                    <strong>{displayName}</strong>
+                    <span>{currentUser?.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="profile-menu-item"
+                    onClick={onEditProfile}
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-menu-item danger"
+                    onClick={onSignOut}
+                  >
+                    Sign Out
+                  </button>
+                </div>,
+                document.body,
+              )}
 
             <div className="sb-user-row">
               {/* Avatar + name (triggers profile menu) */}
