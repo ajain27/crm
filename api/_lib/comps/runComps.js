@@ -22,7 +22,9 @@
 //      Without Claude, or if it fails, the ranking's top 5 are used.
 //   5. The property's own history (sales, listings, taxes) comes from the
 //      same pages, read in the same scrape.
-//   6. ARV is worked out in code from the final comps: the upper quartile
+//   6. The listing's main photo (from the same pages) is downloaded so it
+//      can be added to the lead.
+//   7. ARV is worked out in code from the final comps: the upper quartile
 //      of their price per sq ft × the subject's size.
 //
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY (required); ANTHROPIC_API_KEY
@@ -44,7 +46,9 @@ import {
   saneValue,
   serperSearch,
   listingQueries,
+  subjectPhotoUrl,
 } from "./subject.js";
+import { fetchPhotoData } from "./photo.js";
 import { geocodeAddress, geocodeWithOpenStreetMap } from "./geocode.js";
 import { fetchRedfinSold } from "./sales.js";
 import { fetchMajorHighways } from "./highways.js";
@@ -191,6 +195,9 @@ export async function runComps(
     ({ location, sales, highways, sources, listingUrls, property } =
       await gatherSubject(address, env));
   }
+  // Downloaded while the comps are ranked and reviewed.
+  const photoUrl = subjectPhotoUrl(sources, address);
+  const photoData = fetchPhotoData(photoUrl);
 
   const rank = (search) =>
     rankComps({
@@ -265,6 +272,7 @@ export async function runComps(
   }));
   const outsideRules = topComps.filter((c) => !c.meetsRules).length;
   const { arvEstimate, arvBasis } = estimateArv(topComps, property.sqft);
+  const photoDataUrl = await photoData;
 
   return {
     address,
@@ -303,6 +311,9 @@ export async function runComps(
     // The property's sales, listings and taxes, from the same pages (none
     // on a re-run, which doesn't scrape).
     history: adjust ? null : historyFromSources(sources, address),
+    // The listing's main photo (none on a re-run, or when it couldn't be
+    // downloaded).
+    photo: photoDataUrl ? { url: photoUrl, data: photoDataUrl } : null,
     criteria: {
       radiusMiles: COMP_RULES.radiusMiles,
       soldWithinDays: COMP_RULES.soldWithinDays,

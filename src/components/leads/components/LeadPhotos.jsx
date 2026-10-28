@@ -1,5 +1,17 @@
-import PhotoGallery from "../../elements/photos/PhotoGallery";
+import PhotoGallery, { MAX_PHOTOS } from "../../elements/photos/PhotoGallery";
 import MainPhoto from "../../elements/photos/MainPhoto";
+import { rememberPhoto } from "../../elements/photos/photoCache";
+import {
+  MAX_PHOTO_DATA_URL_LENGTH,
+  compressImage,
+} from "../../../utils/compressImage";
+
+// A downloaded photo (a data URL) small enough to store as one document.
+async function storablePhoto(data) {
+  if (data.length <= MAX_PHOTO_DATA_URL_LENGTH) return data;
+  const blob = await (await fetch(data)).blob();
+  return compressImage(new File([blob], "listing.jpg", { type: blob.type }));
+}
 
 // Photos in a lead window. Changes save straight away through
 // `onPhotosChange(leadId, photos)` and are mirrored into the window's
@@ -19,8 +31,37 @@ export function useLeadPhotos({
     await onPhotosChange(lead.id, next);
     setDraft((prev) => ({ ...prev, photos: next }));
   }
+
+  // Adds the listing photo a comps run found ({ url, data }) — the main
+  // photo when the lead has none. Skipped if the lead already has it or
+  // is full.
+  async function addListingPhoto(listingPhoto) {
+    if (!enabled || !listingPhoto?.data) return;
+    if (photos.length >= MAX_PHOTOS) return;
+    if (photos.some((p) => p.sourceUrl === listingPhoto.url)) return;
+    try {
+      const data = await storablePhoto(listingPhoto.data);
+      const photo = {
+        id: crypto.randomUUID(),
+        uploadedAt: new Date().toISOString(),
+        sourceUrl: listingPhoto.url,
+      };
+      await photoStore.save({
+        ...photo,
+        ownerId: lead.id,
+        userId: currentUserId,
+        data,
+      });
+      rememberPhoto(lead.id, photo.id, data);
+      await save([...photos, photo]);
+    } catch (error) {
+      console.error("Failed to add the listing photo", error);
+    }
+  }
+
   return {
     enabled,
+    addListingPhoto,
     galleryProps: {
       ownerId: lead?.id,
       photos,

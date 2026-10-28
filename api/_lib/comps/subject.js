@@ -260,7 +260,26 @@ export async function firecrawlExtract(url, apiKey) {
     throw new Error(data.error || `Firecrawl failed (${res.status})`);
   }
   const extracted = data.data?.json;
-  return extracted ? cleanScraped(extracted) : null;
+  if (!extracted) return null;
+  const photoUrl = listingPhotoUrl(data.data?.metadata);
+  return { ...cleanScraped(extracted), ...(photoUrl ? { photoUrl } : {}) };
+}
+
+// The listing's main photo: the page's share image (og:image), which
+// Firecrawl returns with every scrape. Only the sites' own photo servers
+// count — without photos, the share image is a logo or a map.
+const PHOTO_HOSTS = [
+  /^https:\/\/photos\.zillowstatic\.com\/fp\//i,
+  /^https:\/\/ssl\.cdn-redfin\.com\/photo\//i,
+  /^https:\/\/ap\.rdcpix\.com\//i,
+];
+
+export function listingPhotoUrl(metadata) {
+  const og = metadata?.ogImage ?? metadata?.["og:image"];
+  const url = Array.isArray(og) ? og[0] : og;
+  return typeof url === "string" && PHOTO_HOSTS.some((re) => re.test(url))
+    ? url
+    : null;
 }
 
 const SOURCE_PRIORITY = ["zillow", "redfin", "realtor"];
@@ -301,6 +320,16 @@ export function isSubjectData(data, address) {
   const { number } = addressParts(address);
   if (!number || !data.address) return true;
   return addressParts(data.address).number === number;
+}
+
+// The subject's photo: Zillow's, then Redfin's, then Realtor.com's.
+export function subjectPhotoUrl(sources, address) {
+  return (
+    SOURCE_PRIORITY.map((key) => sources[key]?.data)
+      .filter((data) => isSubjectData(data, address))
+      .map((data) => data.photoUrl)
+      .find(Boolean) || null
+  );
 }
 
 // Coordinates from the subject's own pages (their maps), used when the

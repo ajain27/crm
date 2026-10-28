@@ -228,6 +228,71 @@ describe("LeadDetailModal", () => {
     expect(saved.notes).toContain("9 Oak St");
   });
 
+  describe("the listing photo a comps run finds", () => {
+    const PHOTO = {
+      url: "https://photos.zillowstatic.com/fp/abc-cc_ft_960.jpg",
+      data: "data:image/jpeg;base64,AQID",
+    };
+    const renderWithPhotos = (photos) => {
+      requestComps.mockResolvedValue({
+        property: { beds: 3, baths: 2, sqft: 1400 },
+        arvEstimate: 160000,
+        topComps: [],
+        listingUrls: {},
+        sourceErrors: {},
+        photo: PHOTO,
+      });
+      const photoStore = {
+        save: vi.fn(async () => {}),
+        fetch: vi.fn(async () => ({ data: PHOTO.data })),
+      };
+      const onPhotosChange = vi.fn(async () => {});
+      render(
+        <LeadDetailModal
+          isOpen={true}
+          onClose={vi.fn()}
+          lead={{ ...lead, photos }}
+          onSave={vi.fn()}
+          isPpl={true}
+          photoStore={photoStore}
+          onPhotosChange={onPhotosChange}
+          currentUserId="u1"
+        />,
+      );
+      fireEvent.click(screen.getByText("Run comps"));
+      return { photoStore, onPhotosChange };
+    };
+
+    it("is added to the lead as its main photo", async () => {
+      const { photoStore, onPhotosChange } = renderWithPhotos([]);
+      await waitFor(() => expect(onPhotosChange).toHaveBeenCalled());
+      expect(photoStore.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ownerId: "l1",
+          userId: "u1",
+          data: PHOTO.data,
+          sourceUrl: PHOTO.url,
+        }),
+      );
+      const [leadId, photos] = onPhotosChange.mock.calls[0];
+      expect(leadId).toBe("l1");
+      expect(photos).toEqual([
+        expect.objectContaining({ sourceUrl: PHOTO.url }),
+      ]);
+    });
+
+    it("isn't added again when the lead already has it", async () => {
+      const { photoStore, onPhotosChange } = renderWithPhotos([
+        { id: "p1", sourceUrl: PHOTO.url },
+      ]);
+      expect(
+        await screen.findByText(/Added to the lead's notes/),
+      ).toBeInTheDocument();
+      expect(photoStore.save).not.toHaveBeenCalled();
+      expect(onPhotosChange).not.toHaveBeenCalled();
+    });
+  });
+
   it("runs comps on a PPC lead without offering Use ARV", async () => {
     requestComps.mockResolvedValue({
       property: { sqft: 1400 },

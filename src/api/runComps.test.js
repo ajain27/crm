@@ -179,6 +179,12 @@ function mockFetch(overrides = {}) {
     redfin: () => text(200, REDFIN_CSV),
     osm: () => json(200, []),
     overpass: () => json(200, { elements: [] }),
+    photo: () => ({
+      ok: true,
+      status: 200,
+      headers: new Headers({ "content-type": "image/jpeg" }),
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    }),
     ...overrides,
   };
   const fn = vi.fn(async (url, init = {}) => {
@@ -189,6 +195,9 @@ function mockFetch(overrides = {}) {
     if (url.includes("nominatim.openstreetmap.org")) return handlers.osm(url);
     if (url.includes("redfin.com/stingray")) return handlers.redfin(url);
     if (url.includes("/api/interpreter")) return handlers.overpass(url);
+    if (url.includes("zillowstatic") || url.includes("cdn-redfin")) {
+      return handlers.photo(url);
+    }
     throw new Error(`unexpected ${url}`);
   });
   vi.stubGlobal("fetch", fn);
@@ -279,6 +288,49 @@ describe("run-comps", () => {
       baths: 1,
       rentEstimate: 939,
     });
+  });
+
+  it("downloads the listing's main photo, Zillow's first, skipping logos", async () => {
+    const ZILLOW_PHOTO = "https://photos.zillowstatic.com/fp/abc-cc_ft_960.jpg";
+    const fetchMock = mockFetch({
+      firecrawl: (body) =>
+        json(200, {
+          success: true,
+          data: {
+            json: SUBJECT_PAGE,
+            metadata: {
+              ogImage: body.url.includes("zillow")
+                ? ZILLOW_PHOTO
+                : body.url.includes("redfin")
+                  ? "https://ssl.cdn-redfin.com/photo/1/bigphoto/1.jpg"
+                  : "https://www.realtor.com/logo.png",
+            },
+          },
+        }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.photo).toEqual({
+      url: ZILLOW_PHOTO,
+      data: "data:image/jpeg;base64,AQID",
+    });
+    const photoCalls = fetchMock.mock.calls.filter(([url]) =>
+      url.includes("zillowstatic"),
+    );
+    expect(photoCalls).toHaveLength(1);
+  });
+
+  it("has no photo when the pages only share a logo", async () => {
+    mockFetch({
+      firecrawl: () =>
+        json(200, {
+          success: true,
+          data: {
+            json: SUBJECT_PAGE,
+            metadata: { "og:image": "https://www.zillow.com/logo.png" },
+          },
+        }),
+    });
+    expect((await runComps(ADDRESS, ENV, NOW)).photo).toBeNull();
   });
 
   it("returns the 5 best matches: those meeting every rule first, then the closest others, labeled", async () => {

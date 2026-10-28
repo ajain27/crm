@@ -104,11 +104,14 @@ export default function LeadDetailModal({
     draft,
     setDraft,
     enabled: Boolean(lead) && !isRental,
-    // The history a comps run read saves to the lead right away.
-    onRunSaved: (note, result) =>
-      result?.history && onHistoryLoaded
-        ? onHistoryLoaded(lead.id, historyToSave(result.history))
-        : undefined,
+    // The history and listing photo a comps run read save to the lead
+    // right away.
+    onRunSaved: async (note, result) => {
+      await photosState.addListingPhoto(result?.photo);
+      if (result?.history && onHistoryLoaded) {
+        await onHistoryLoaded(lead.id, historyToSave(result.history));
+      }
+    },
   });
   const historyState = useLeadHistory({
     lead,
