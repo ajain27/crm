@@ -55,9 +55,10 @@ describe("csvToPplLeads", () => {
       "Name,Email,Phone,Address",
       "A,a@x.com,111-222-3333,1 First St",
       "B,dup@x.com,999-888-7777,2 Second St", // email matches existing
-      "C,c@x.com,111.222.3333,3 Third St", // phone matches row A
+      "C,c@x.com,111.222.3333,3 Third St", // A's phone, another property
       'D,d@x.com,,"1 First St, Dallas"', // street matches row A
       "E,e@x.com,444-555-6666,5 Fifth St",
+      "F,,111-222-3333,", // A's phone, no address: A again
       ",,,",
     ].join("\n");
     // The existing lead already has everything row B has, so B is skipped.
@@ -70,9 +71,28 @@ describe("csvToPplLeads", () => {
       address: "2 Second St",
     };
     const result = csvToPplLeads(csv, { existingLeads: [existing], now: NOW });
-    expect(result.leads.map((l) => l.sellerName)).toEqual(["A", "E"]);
+    // A seller with several properties is a lead per property.
+    expect(result.leads.map((l) => l.sellerName)).toEqual(["A", "C", "E"]);
     expect(result.skippedDuplicates).toBe(3);
     expect(result.skippedEmpty).toBe(0);
+  });
+
+  it("leaves out notes in the email column, and doesn't match leads on them", () => {
+    const csv = [
+      "Seller Name,E-mail Address,Phone Number,Property Address",
+      "Ann,No Answer,206-555-0101,1 First St",
+      "Bob,No Email Address,206-555-0102,2 Second St",
+      "Cy,no answer,206-555-0103,3 Third St",
+      "Di,di@x.com,206-555-0104,4 Fourth St",
+    ].join("\n");
+    const result = csvToPplLeads(csv, { now: NOW });
+    expect(result.leads.map((l) => [l.sellerName, l.email])).toEqual([
+      ["Ann", ""],
+      ["Bob", ""],
+      ["Cy", ""],
+      ["Di", "di@x.com"],
+    ]);
+    expect(result.skippedDuplicates).toBe(0);
   });
 
   it("counts rows with no name, email, phone or address as skipped", () => {

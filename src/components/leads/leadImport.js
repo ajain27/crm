@@ -58,13 +58,18 @@ const FIELD_HEADERS = {
   dealType: ["dealtype"],
   askingPrice: ["askingprice", "price"],
   arv: ["arv"],
-  occupant: ["whoslivingintheproperty", "occupant", "occupancy"],
-  sellingUrgency: ["sellingurgency", "urgency", "timeline"],
+  occupant: [
+    "whoslivingintheproperty",
+    "occupant",
+    "occupancy",
+    "occupancystatus",
+  ],
+  sellingUrgency: ["sellingurgency", "urgency", "timeline", "closingtimeline"],
   sellerMotivation: ["sellermotivation", "motivation", "reasonforselling"],
   url: ["listingwebsiteurl", "url", "listingurl"],
   followUpDate: ["followupdate"],
   dateAdded: ["dateadded", "date", "createdat", "leaddate"],
-  notes: ["notes", "note", "comments", "description"],
+  notes: ["notes", "note", "comments", "description", "additionalnotes"],
 };
 
 // Columns of the app's own export, normalized like file headers below.
@@ -115,20 +120,52 @@ const addressKey = (v) =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
-// Phone, email and street address each identify a lead; a row matching an
-// existing lead (or an earlier row) on any of them is a duplicate.
+// An email column often holds notes instead ("No Answer", "No email");
+// only an actual address is kept.
+function cleanEmail(value) {
+  const email = String(value || "").trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+
+// Phone, email and street address each identify a lead.
 function identityKeys(lead) {
   const phone = digitsOf(lead.phone).slice(-10);
   // Commercial leads keep their email in `sellerEmail`.
-  const email = String(lead.email || lead.sellerEmail || "")
-    .trim()
-    .toLowerCase();
+  const email = cleanEmail(lead.email || lead.sellerEmail).toLowerCase();
   const street = addressKey(lead.address);
   return [
     phone.length === 10 && `phone:${phone}`,
     email && `email:${email}`,
     street.length > 4 && `address:${street}`,
   ].filter(Boolean);
+}
+
+// Two records are the same lead when their street addresses match. When
+// either has no address, a shared phone or email is enough — a seller
+// with several properties is a lead per property.
+function sameLead(a, b) {
+  const streetA = addressKey(a.address);
+  const streetB = addressKey(b.address);
+  if (streetA.length > 4 && streetB.length > 4) return streetA === streetB;
+  const keys = new Set(identityKeys(a));
+  return identityKeys(b).some((k) => keys.has(k));
+}
+
+// Leads indexed by identity key, to find the one a row matches.
+function leadIndex(leads = []) {
+  const byKey = new Map();
+  const add = (lead) =>
+    identityKeys(lead).forEach((k) =>
+      byKey.set(k, [...(byKey.get(k) || []), lead]),
+    );
+  leads.forEach(add);
+  return {
+    add,
+    find: (lead) =>
+      identityKeys(lead)
+        .flatMap((k) => byKey.get(k) || [])
+        .find((other) => sameLead(lead, other)),
+  };
 }
 
 // Reads the header row and returns each data row as { field: value } for
@@ -233,18 +270,13 @@ export function fillBlanks(target, source) {
 }
 
 // Builds a lead per row with `toLead`, skipping rows `isEmpty` rejects and
-// rows that match an earlier row. A row matching a lead already in the
+// rows that match an earlier row (see sameLead). A row matching a lead already in the
 // list isn't added again; instead its values fill in that lead's blank
 // fields (nothing already entered is overwritten) — returned as
 // `updates`, each the existing lead with the new values.
 function importRows(rows, existingLeads, toLead, isEmpty) {
-  const existingByKey = new Map();
-  existingLeads.forEach((lead) =>
-    identityKeys(lead).forEach((k) => {
-      if (!existingByKey.has(k)) existingByKey.set(k, lead);
-    }),
-  );
-  const seen = new Set();
+  const existing = leadIndex(existingLeads);
+  const earlierRows = leadIndex();
   const leads = [];
   const updated = new Map();
   let skippedEmpty = 0;
@@ -257,24 +289,22 @@ function importRows(rows, existingLeads, toLead, isEmpty) {
       if (!blank) skippedEmpty += 1;
       return;
     }
-    const keys = identityKeys(lead);
-    const existingKey = keys.find((k) => existingByKey.has(k));
-    if (existingKey) {
-      const existing = existingByKey.get(existingKey);
-      const current = updated.get(existing.id) || existing;
+    const match = existing.find(lead);
+    if (match) {
+      const current = updated.get(match.id) || match;
       const fills = blankFills(current, lead);
       if (Object.keys(fills).length) {
-        updated.set(existing.id, { ...current, ...fills });
+        updated.set(match.id, { ...current, ...fills });
       } else {
         skippedDuplicates += 1;
       }
       return;
     }
-    if (keys.some((k) => seen.has(k))) {
+    if (earlierRows.find(lead)) {
       skippedDuplicates += 1;
       return;
     }
-    keys.forEach((k) => seen.add(k));
+    earlierRows.add(lead);
     leads.push(lead);
   });
 
@@ -327,7 +357,7 @@ function csvToSellerLeads(
           ...names,
           sellerName:
             values.sellerName || joinName(names.firstName, names.lastName),
-          email: values.email,
+          email: cleanEmail(values.email),
           phone: values.phone ? cleanPhone(values.phone) : "",
           phone2: values.phone2 ? cleanPhone(values.phone2) : "",
           address: fullAddress(values),
@@ -436,7 +466,7 @@ export function csvToCommercialLeads(
           : splitName(values.sellerName)),
         sellerName:
           values.sellerName || joinName(values.firstName, values.lastName),
-        sellerEmail: values.sellerEmail,
+        sellerEmail: cleanEmail(values.sellerEmail),
         phone: values.phone ? cleanPhone(values.phone) : "",
         phone2: values.phone2 ? cleanPhone(values.phone2) : "",
         address: fullAddress(values),
