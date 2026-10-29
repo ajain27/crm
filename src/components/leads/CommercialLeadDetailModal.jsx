@@ -267,7 +267,6 @@ export default function CommercialLeadDetailModal({
                     value={draft.phone || ""}
                     onChange={(e) => set("phone", formatPhone(e.target.value))}
                     placeholder="555-000-0000"
-                    maxLength={12}
                   />
                 </Field>
                 <Field label="Phone 2">
@@ -277,7 +276,6 @@ export default function CommercialLeadDetailModal({
                     value={draft.phone2 || ""}
                     onChange={(e) => set("phone2", formatPhone(e.target.value))}
                     placeholder="555-000-0000"
-                    maxLength={12}
                   />
                 </Field>
                 <Field label="Website">

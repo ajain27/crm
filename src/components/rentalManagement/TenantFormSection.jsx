@@ -189,7 +189,6 @@ export default function TenantFormSection({
             value={currentTenant.phone}
             onChange={onChange}
             placeholder="555-867-5309"
-            maxLength={12}
             data-tenant-id={currentTenant.id}
           />
           <Field
@@ -284,7 +283,6 @@ export default function TenantFormSection({
             value={draft.phone}
             onChange={handleDraftChange}
             placeholder="555-867-5309"
-            maxLength={12}
           />
           <Field
             label="Tenant Email"

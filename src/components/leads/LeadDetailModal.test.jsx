@@ -130,6 +130,24 @@ describe("LeadDetailModal", () => {
     expect(phoneInput).toHaveValue("555-123-4567");
   });
 
+  it("takes a whole pasted phone number, however it's written", () => {
+    render(
+      <LeadDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        lead={lead}
+        onSave={vi.fn()}
+        isPpl={true}
+      />,
+    );
+    const [phone] = screen.getAllByPlaceholderText("555-000-0000");
+    // No character limit: the browser would cut "(404) 826-3246" short
+    // before it's formatted.
+    expect(phone).not.toHaveAttribute("maxlength");
+    fireEvent.change(phone, { target: { value: "+1 (404) 826-3246" } });
+    expect(phone).toHaveValue("404-826-3246");
+  });
+
   it("locks Source to PPL and shows editable email/phone for a PPL lead", () => {
     const pplLead = {
       ...lead,

@@ -355,7 +355,6 @@ export default function LeadDetailModal({
                                 set("agentPhone", formatPhone(e.target.value))
                               }
                               placeholder="555-000-0000"
-                              maxLength={12}
                             />
                           </Field>
                         </>
@@ -415,7 +414,6 @@ export default function LeadDetailModal({
                             set("phone", formatPhone(e.target.value))
                           }
                           placeholder="555-000-0000"
-                          maxLength={12}
                         />
                       </Field>
                       <Field label="Phone 2">
@@ -427,7 +425,6 @@ export default function LeadDetailModal({
                             set("phone2", formatPhone(e.target.value))
                           }
                           placeholder="555-000-0000"
-                          maxLength={12}
                         />
                       </Field>
                     </div>

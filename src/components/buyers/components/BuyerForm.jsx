@@ -75,7 +75,6 @@ function BuyerForm({
           value={form.phone}
           onChange={handlePhoneChange}
           placeholder="555-867-5309"
-          maxLength="12"
         />
 
         {/* Row 3 – City | State */}

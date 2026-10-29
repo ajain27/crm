@@ -109,7 +109,6 @@ export default function RentalAddForm({
           value={form.tenantPhone}
           onChange={onChange}
           placeholder="555-867-5309"
-          maxLength={12}
         />
         <Field
           label="Tenant Email"
@@ -167,7 +166,6 @@ export default function RentalAddForm({
           value={form.pmContactPhone}
           onChange={onChange}
           placeholder="555-867-5309"
-          maxLength={12}
         />
         <Field
           label="PM Contact Email"

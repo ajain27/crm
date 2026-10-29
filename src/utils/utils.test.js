@@ -126,6 +126,11 @@ describe("formatPhone", () => {
     expect(formatPhone("(555) 867-5309abc")).toBe("555-867-5309");
   });
 
+  it("formats a pasted number with a country code, spaces or brackets", () => {
+    expect(formatPhone("+1 (404) 826-3246")).toBe("404-826-3246");
+    expect(formatPhone("404 826 3246")).toBe("404-826-3246");
+  });
+
   it("trims to 10 digits max", () => {
     expect(formatPhone("12345678901234")).toBe("123-456-7890");
   });

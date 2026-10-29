@@ -94,7 +94,6 @@ export function PhoneField({ label = "Phone", name, value, onChange }) {
         value={value || ""}
         onChange={onChange}
         placeholder="555-000-0000"
-        maxLength={12}
       />
     </LeadField>
   );

@@ -118,7 +118,6 @@ function BuyerDetailModal({ buyer, onClose, onSave, propertyTypes = [] }) {
             })
           }
           placeholder="555-867-5309"
-          maxLength="12"
         />
         <Field
           label="City (They buy in)"

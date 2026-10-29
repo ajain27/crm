@@ -266,7 +266,6 @@ function BuyerData({
                         onChange={(e) =>
                           setEditFieldValue(formatPhone(e.target.value))
                         }
-                        maxLength={12}
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === "Enter") saveField(buyer.id);
