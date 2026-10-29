@@ -13,6 +13,7 @@ import CommercialLeadList from "./commercial/CommercialLeadList";
 import CampaignLeadList from "./campaign/CampaignLeadList";
 import CountyRecords from "./countyRecords/CountyRecords";
 import {
+  csvToColdCallLeads,
   csvToCommercialLeads,
   csvToPplLeads,
   csvToResidentialLeads,
@@ -26,6 +27,7 @@ import {
   createEmptyCommercialForm,
   createEmptyResidentialForm,
   dedupeLeads,
+  isColdCallLead,
   isCommercialLead,
   isPpcLead,
   isPplLead,
@@ -52,6 +54,7 @@ const ADD_LEAD_TITLES = {
   commercial: "Add Commercial Lead",
   ppc: "Add PPC Lead",
   ppl: "Add PPL Lead",
+  coldcall: "Add Cold Calling Lead",
 };
 
 export default function PotentialLeads({
@@ -72,14 +75,15 @@ export default function PotentialLeads({
   const [detailLead, setDetailLead] = useState(null);
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
   const [ppcDeletedCount, setPpcDeletedCount] = useState(0);
-  // The tab ("residential", "commercial", "ppc" or "ppl") whose Add a lead
-  // window is open.
+  // The tab ("residential", "commercial", "ppc", "ppl" or "coldcall")
+  // whose Add a lead window is open.
   const [addLeadTab, setAddLeadTab] = useState(null);
 
   const residentialList = useLeadListState(RESIDENTIAL_FILTERS);
   const commercialList = useLeadListState();
   const ppcList = useLeadListState();
   const pplList = useLeadListState();
+  const coldCallList = useLeadListState();
 
   const wpSync = useWordPressLeadSync({
     currentUser,
@@ -115,6 +119,7 @@ export default function PotentialLeads({
   ];
   const ppcLeads = sortNewestFirst(dedupeLeads(visibleLeads.filter(isPpcLead)));
   const pplLeads = sortNewestFirst(dedupeLeads(visibleLeads.filter(isPplLead)));
+  const coldCallLeads = sortNewestFirst(leads.filter(isColdCallLead));
   const residentialLeads = leads.filter(isResidentialLead);
   const commercialLeads = leads.filter(isCommercialLead);
 
@@ -150,6 +155,20 @@ export default function PotentialLeads({
     setLeads,
     onSaved: () => setAddLeadTab(null),
   });
+  const coldCallForm = useLeadForm({
+    createEmpty: () => ({
+      ...createEmptyResidentialForm(),
+      source: "Cold Call",
+    }),
+    leadType: "residential",
+    existingLeads: coldCallLeads,
+    duplicateMessage: (address) =>
+      `"${address}" is already in your cold calling leads.`,
+    currentUser,
+    saveLead,
+    setLeads,
+    onSaved: () => setAddLeadTab(null),
+  });
   const commercialForm = useLeadForm({
     createEmpty: createEmptyCommercialForm,
     leadType: "commercial",
@@ -178,8 +197,8 @@ export default function PotentialLeads({
     wpSync.setFetchedLeads((prev) => prev.filter((l) => !matches(l)));
 
     const removedIds = [...ids, ...matchingLocalLeads.map((l) => l.id)];
-    [residentialList, commercialList, ppcList, pplList].forEach((list) =>
-      list.setManySelected(removedIds, false),
+    [residentialList, commercialList, ppcList, pplList, coldCallList].forEach(
+      (list) => list.setManySelected(removedIds, false),
     );
   }
 
@@ -339,8 +358,8 @@ export default function PotentialLeads({
     setLeads((prev) =>
       prev.filter((l) => !removed.has(l.id)).map((l) => byId.get(l.id) || l),
     );
-    [residentialList, commercialList, ppcList, pplList].forEach((list) =>
-      list.setManySelected(removedIds, false),
+    [residentialList, commercialList, ppcList, pplList, coldCallList].forEach(
+      (list) => list.setManySelected(removedIds, false),
     );
 
     alert(
@@ -359,6 +378,16 @@ export default function PotentialLeads({
     return importCsvLeads(
       csvToPplLeads(text, { existingLeads: leads, userId: currentUser.id }),
       pplLeads,
+    );
+  }
+
+  function handleColdCallImport(text) {
+    return importCsvLeads(
+      csvToColdCallLeads(text, {
+        existingLeads: leads,
+        userId: currentUser.id,
+      }),
+      coldCallLeads,
     );
   }
 
@@ -507,7 +536,16 @@ export default function PotentialLeads({
         ]),
     { id: "ppc", label: "PPC Leads", count: ppcLeads.length },
     { id: "ppl", label: "PPL Leads", count: pplLeads.length },
-    ...(ppcOnly ? [] : [{ id: "county", label: "County Records" }]),
+    ...(ppcOnly
+      ? []
+      : [
+          {
+            id: "coldcall",
+            label: "Cold Calling",
+            count: coldCallLeads.length,
+          },
+          { id: "county", label: "County Records" },
+        ]),
   ];
 
   return (
@@ -583,6 +621,21 @@ export default function PotentialLeads({
         />
       )}
 
+      {activeTab === "coldcall" && !ppcOnly && (
+        <CampaignLeadList
+          title="Cold Calling"
+          leads={coldCallLeads}
+          listState={coldCallList}
+          noLeadsSubtitle="No cold calling leads yet."
+          noLeadsMessage="Import a CSV of your call list, or add a lead."
+          onBulkDelete={handleBulkDelete}
+          onImport={handleColdCallImport}
+          onRemoveDuplicates={() => handleRemoveDuplicates(coldCallLeads)}
+          onAddLead={() => setAddLeadTab("coldcall")}
+          {...leadActions}
+        />
+      )}
+
       {!ppcOnly && (
         <Modal
           isOpen={!!addLeadTab}
@@ -601,10 +654,14 @@ export default function PotentialLeads({
           {addLeadTab === "residential" && (
             <ResidentialLeadForm leadForm={residentialForm} inModal />
           )}
-          {(addLeadTab === "ppc" || addLeadTab === "ppl") && (
+          {["ppc", "ppl", "coldcall"].includes(addLeadTab) && (
             <ResidentialLeadForm
               key={addLeadTab}
-              leadForm={addLeadTab === "ppl" ? pplForm : ppcForm}
+              leadForm={
+                { ppc: ppcForm, ppl: pplForm, coldcall: coldCallForm }[
+                  addLeadTab
+                ]
+              }
               fixedSource
               inModal
             />

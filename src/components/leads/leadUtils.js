@@ -43,11 +43,20 @@ export function isPplLead(lead) {
   return PPL_SOURCE_TERMS.some((term) => source.includes(term));
 }
 
+// Residential leads whose source is "Cold Call" get their own tab
+// (PPC and PPL take precedence). Changing the source moves them.
+export function isColdCallLead(lead) {
+  if (lead?.leadType === "commercial") return false;
+  if (isPpcLead(lead) || isPplLead(lead)) return false;
+  return /cold ?call/i.test(String(lead?.source || ""));
+}
+
 export function isResidentialLead(lead) {
   return (
     (!lead.leadType || lead.leadType === "residential") &&
     !isPpcLead(lead) &&
-    !isPplLead(lead)
+    !isPplLead(lead) &&
+    !isColdCallLead(lead)
   );
 }
 

@@ -3,18 +3,30 @@ import { joinName, splitName, todayStr } from "./leadUtils";
 import { fmtCurrencyInput } from "../../utils/utils";
 import { leadsToRows } from "./leadExport";
 
-// Turns an uploaded CSV into PPL or commercial leads. Columns are matched by header name
+// Turns an uploaded CSV into residential, PPL, cold calling or commercial
+// leads. Columns are matched by header name
 // (case, spaces and punctuation ignored), so the app's own export and most
 // lead vendors' files import as they are. Unknown columns are ignored.
 
 const FIELD_HEADERS = {
-  sellerName: ["name", "fullname", "sellername", "ownername", "contactname"],
-  firstName: ["firstname", "first"],
-  lastName: ["lastname", "last"],
+  sellerName: [
+    "name",
+    "fullname",
+    "sellername",
+    "ownername",
+    "contactname",
+    // List and skip-trace exports number the owners.
+    "owner1name",
+    "owner1fullname",
+  ],
+  firstName: ["firstname", "first", "owner1firstname"],
+  lastName: ["lastname", "last", "owner1lastname"],
   email: ["email", "emailaddress", "selleremail"],
   phone: [
     "phone",
+    "phone1",
     "phonenumber",
+    "phonenumber1",
     "mobile",
     "mobilephone",
     "cell",
@@ -33,10 +45,16 @@ const FIELD_HEADERS = {
     "mobile2",
     "cell2",
   ],
-  address: ["address", "propertyaddress", "streetaddress", "street"],
+  address: [
+    "address",
+    "propertyaddress",
+    "propertystreetaddress",
+    "streetaddress",
+    "street",
+  ],
   city: ["city", "propertycity"],
   state: ["state", "propertystate"],
-  zip: ["zip", "zipcode", "postalcode", "propertyzip"],
+  zip: ["zip", "zipcode", "postalcode", "propertyzip", "propertyzipcode"],
   dealType: ["dealtype"],
   askingPrice: ["askingprice", "price"],
   arv: ["arv"],
@@ -341,6 +359,15 @@ export function csvToPplLeads(text, options = {}) {
   return csvToSellerLeads(text, options, FIELD_HEADERS, () => ({
     source: "PPL",
     pplSource: true,
+  }));
+}
+
+// Same as csvToPplLeads, for the Cold Calling list (source "Cold Call").
+// Columns past the first two phones (Phone 3, Phone 4…) are kept on the
+// lead with the file's other extra columns.
+export function csvToColdCallLeads(text, options = {}) {
+  return csvToSellerLeads(text, options, FIELD_HEADERS, () => ({
+    source: "Cold Call",
   }));
 }
 

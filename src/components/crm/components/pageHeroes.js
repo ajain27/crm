@@ -36,7 +36,7 @@ export const PAGE_HEROES = {
     Crosshair,
     "Leads",
     ["Turn leads into ", "closed deals."],
-    "Residential, commercial, PPC and PPL leads in one place — follow up, run comps and move the best ones into your pipeline.",
+    "Residential, commercial, PPC, PPL and cold calling leads in one place — follow up, run comps and move the best ones into your pipeline.",
   ),
   "deal-analyzer": hero(
     BarChart3,

@@ -47,7 +47,7 @@ function rowClassName(lead, clickable, showQuality) {
   return `${clickable ? "clickable-row" : ""}${quality}`;
 }
 
-// Paid-campaign lead list, shared by the PPC and PPL tabs. `readOnly` (for
+// Campaign lead list, shared by the PPC, PPL and Cold Calling tabs. `readOnly` (for
 // PPC-only users) hides selection, quality, delete, CRM and automation, and
 // stops rows from opening the detail modal. Leads marked bad don't open
 // either. The quality column only shows when `onSetQuality` is passed.

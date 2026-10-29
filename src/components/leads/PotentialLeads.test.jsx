@@ -240,6 +240,7 @@ describe("PotentialLeads", () => {
   it.each([
     ["PPC Leads", "Add PPC Lead", "PPC"],
     ["PPL Leads", "Add PPL Lead", "PPL"],
+    ["Cold Calling", "Add Cold Calling Lead", "Cold Call"],
   ])(
     "adds a lead from the %s tab with that source",
     async (tab, heading, source) => {
@@ -341,6 +342,51 @@ describe("PotentialLeads", () => {
       );
     });
     expect(screen.queryByText(/Mark Lead as Bad/i)).toBeNull();
+  });
+
+  it("lists cold calling leads in their own tab, not Residential", () => {
+    const leads = [
+      { id: "c1", source: "Cold Call", sellerName: "Cal Caller" },
+      { id: "r1", source: "Propwire", sellerName: "Rita Res" },
+    ];
+    render(<PotentialLeads {...baseProps({ leads })} />);
+    expect(screen.getByText("Rita Res")).toBeInTheDocument();
+    expect(screen.queryByText("Cal Caller")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /Cold Calling/ }));
+    expect(screen.getByText("Cal Caller")).toBeInTheDocument();
+    expect(screen.queryByText("Rita Res")).toBeNull();
+  });
+
+  it("imports a cold calling list from a CSV", async () => {
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    render(<PotentialLeads {...baseProps({ saveLead })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cold Calling/ }));
+
+    const csv = [
+      "Owner 1 First Name,Owner 1 Last Name,Phone 1,Phone 2,Phone 3,Property Address,Property City,Property State,Property Zip Code",
+      "Ann,Lee,(404) 826-3246,404-555-0101,404-555-0102,898 Kings Grant Dr NW,Atlanta,GA,30318",
+    ].join("\n");
+    fireEvent.change(screen.getByLabelText("Import CSV"), {
+      target: { files: [new File([csv], "calls.csv", { type: "text/csv" })] },
+    });
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalled());
+    expect(saveLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstName: "Ann",
+        lastName: "Lee",
+        sellerName: "Ann Lee",
+        phone: "404-826-3246",
+        phone2: "404-555-0101",
+        address: "898 Kings Grant Dr NW, Atlanta, GA 30318",
+        source: "Cold Call",
+        leadType: "residential",
+        userId: "u1",
+      }),
+    );
+    expect(window.alert.mock.calls[0][0]).toMatch(/^Imported 1 lead\./);
   });
 
   it("imports PPL leads from a CSV, filling in ones already there", async () => {
@@ -488,7 +534,7 @@ describe("PotentialLeads", () => {
       {
         id: "l1",
         address: "1 Main St, Dallas, TX 75201",
-        source: "Cold Call",
+        source: "Propwire",
         sellerName: "Jane",
       },
     ];
