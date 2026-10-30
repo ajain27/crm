@@ -170,14 +170,18 @@ export function PhoneCell({ phone, phone2 }) {
 
 // Columns from an imported file the app has no field for, shown as
 // label / value rows (read-only).
-export function ExtraDetails({ fields }) {
+export function ExtraDetails({
+  fields,
+  className = "ldm-section",
+  labelClassName = "ldm-section-label",
+}) {
   const entries = Object.entries(fields || {}).filter(([, v]) =>
     String(v ?? "").trim(),
   );
   if (!entries.length) return null;
   return (
-    <div className="ldm-section">
-      <div className="ldm-section-label">More details</div>
+    <div className={className}>
+      <div className={labelClassName}>More details</div>
       <dl className="notes-qa-table ldm-extra-details">
         {entries.map(([label, value]) => (
           <div key={label} className="notes-qa-row">

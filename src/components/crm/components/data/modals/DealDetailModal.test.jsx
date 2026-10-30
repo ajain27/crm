@@ -182,6 +182,38 @@ describe("DealDetailModal", () => {
     expect(onMakeInactive).toHaveBeenCalled();
   });
 
+  it("shows a lead's seller details, from its notes on older deals", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          source: "PPL",
+          notes: [
+            "Source: PPL",
+            "Email: info@example.com",
+            "Asking Price: $120,000",
+            "Living in Property: Vacant",
+            "Selling Urgency: ASAP",
+            "Seller Motivation: Financial Hardship",
+          ].join("\n"),
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByDisplayValue("info@example.com")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("$120,000")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Vacant")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("ASAP")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Financial Hardship")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("PPL")).toBeInTheDocument();
+    // Filled in from the lead, so nothing to save yet.
+    expect(
+      screen.getByRole("button", { name: /Save Changes/i }),
+    ).toBeDisabled();
+  });
+
   it("clicking Save Changes invokes updateDealPatch", async () => {
     const updateDealPatch = vi.fn().mockResolvedValue(undefined);
     render(

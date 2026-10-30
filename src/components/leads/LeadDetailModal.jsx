@@ -23,43 +23,11 @@ import {
   LeadRunCompsModal,
   RunCompsButton,
 } from "./comps/LeadCompsTabs";
-import {
-  OCCUPANT_OPTIONS,
-  SELLER_MOTIVATION_OPTIONS,
-  SELLING_URGENCY_OPTIONS,
-} from "./leadsConfig";
+import { LEAD_SOURCES } from "./leadsConfig";
+import SellerDetailsFields, {
+  OptionSelect,
+} from "./components/SellerDetailsFields";
 import CurrencyInput from "../elements/CurrencyInput";
-
-const SOURCES = [
-  "Driving for Dollars",
-  "MLS / Zillow",
-  "Facebook / Instagram",
-  "Direct Mail",
-  "Cold Call",
-  "Referral",
-  "PropStream",
-  "Propwire",
-  "Auction.com",
-  "PPL",
-  "Other",
-];
-
-function OptionSelect({ value, onChange, options }) {
-  return (
-    <select
-      className="ldm-input"
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      <option value="">Select…</option>
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
-  );
-}
 
 function Field({ label, action, children }) {
   return (
@@ -305,18 +273,13 @@ export default function LeadDetailModal({
                             disabled
                           />
                         ) : (
-                          <select
+                          <OptionSelect
                             className="ldm-input"
-                            value={draft.source || ""}
-                            onChange={(e) => set("source", e.target.value)}
-                          >
-                            <option value="">Select source…</option>
-                            {SOURCES.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
+                            value={draft.source}
+                            onChange={(v) => set("source", v)}
+                            options={LEAD_SOURCES}
+                            placeholder="Select source…"
+                          />
                         )}
                       </Field>
                       {isRental && (
@@ -526,16 +489,6 @@ export default function LeadDetailModal({
                                 />
                               </Field>
                             ))}
-                            <Field label="Asking Price">
-                              <CurrencyInput
-                                className="ldm-input"
-                                value={draft.askingPrice || ""}
-                                onChange={(e) =>
-                                  set("askingPrice", e.target.value)
-                                }
-                                placeholder="$0"
-                              />
-                            </Field>
                             {hasSellerSection && (
                               <Field label="ARV">
                                 <CurrencyInput
@@ -548,27 +501,12 @@ export default function LeadDetailModal({
                                 />
                               </Field>
                             )}
-                            <Field label="Who's Living in the Property">
-                              <OptionSelect
-                                value={draft.occupant}
-                                onChange={(v) => set("occupant", v)}
-                                options={OCCUPANT_OPTIONS}
-                              />
-                            </Field>
-                            <Field label="Selling Urgency">
-                              <OptionSelect
-                                value={draft.sellingUrgency}
-                                onChange={(v) => set("sellingUrgency", v)}
-                                options={SELLING_URGENCY_OPTIONS}
-                              />
-                            </Field>
-                            <Field label="Seller Motivation">
-                              <OptionSelect
-                                value={draft.sellerMotivation}
-                                onChange={(v) => set("sellerMotivation", v)}
-                                options={SELLER_MOTIVATION_OPTIONS}
-                              />
-                            </Field>
+                            <SellerDetailsFields
+                              values={draft}
+                              onChange={set}
+                              Field={Field}
+                              inputClassName="ldm-input"
+                            />
                           </div>
                         </div>
                       )}

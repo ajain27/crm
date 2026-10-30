@@ -402,6 +402,11 @@ export function buildDealFromLead(lead, userId) {
     sellerPhone: lead.phone || "",
     sellerPhones: lead.phone2 ? [lead.phone2] : [],
     sellerEmail: lead.email || lead.sellerEmail || "",
+    askingPrice: lead.askingPrice || "",
+    occupant: lead.occupant || "",
+    sellingUrgency: lead.sellingUrgency || "",
+    sellerMotivation: lead.sellerMotivation || "",
+    followUpDate: lead.followUpDate || "",
     // PPL leads collect an ARV; carry it over so the deal's MAO calculates.
     arv:
       Math.round(parseFloat(String(lead.arv || "").replace(/[^0-9.]/g, ""))) ||
@@ -413,6 +418,15 @@ export function buildDealFromLead(lead, userId) {
     notes: dealNotesFromLead(lead),
   };
 }
+
+// Seller details a lead and its CRM deal both keep, under the same name.
+const SHARED_LEAD_FIELDS = [
+  "askingPrice",
+  "occupant",
+  "sellingUrgency",
+  "sellerMotivation",
+  "followUpDate",
+];
 
 // { [field]: value } when value is set on the deal and differs from the
 // lead's (blank and missing count as the same), else {}.
@@ -451,6 +465,13 @@ export function buildLeadFromDeal(deal, userId) {
         lead.leadType === "commercial" ? "sellerEmail" : "email",
         deal.sellerEmail,
       ),
+      ...SHARED_LEAD_FIELDS.reduce(
+        (changed, field) => ({
+          ...changed,
+          ...changedField(lead, field, deal[field]),
+        }),
+        {},
+      ),
       notes: notesNow,
     };
   }
@@ -466,6 +487,9 @@ export function buildLeadFromDeal(deal, userId) {
     phone: deal.sellerPhone || "",
     phone2: deal.sellerPhones?.[0] || "",
     email: deal.sellerEmail || "",
+    ...Object.fromEntries(
+      SHARED_LEAD_FIELDS.map((field) => [field, deal[field] || ""]),
+    ),
     address: [
       deal.address,
       deal.city,

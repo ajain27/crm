@@ -8,6 +8,20 @@ export const COMMERCIAL_PROPERTY_TYPES = [
   "Laundromat",
 ];
 
+export const LEAD_SOURCES = [
+  "Driving for Dollars",
+  "MLS / Zillow",
+  "Facebook / Instagram",
+  "Direct Mail",
+  "Cold Call",
+  "Referral",
+  "PropStream",
+  "Propwire",
+  "Auction.com",
+  "PPL",
+  "Other",
+];
+
 export const OCCUPANT_OPTIONS = ["Owner", "Tenant", "Family Member", "Vacant"];
 
 export const SELLING_URGENCY_OPTIONS = [

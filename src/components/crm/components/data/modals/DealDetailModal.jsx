@@ -27,7 +27,14 @@ import PhotoGallery from "../../../../elements/photos/PhotoGallery";
 import MainPhoto from "../../../../elements/photos/MainPhoto";
 import ArvHighlight from "../../../../elements/ArvHighlight";
 import { leadComps } from "../../../../leads/comps/leadComps";
-import { ZillowLink } from "../../../../leads/components/LeadTableCells";
+import {
+  ExtraDetails,
+  ZillowLink,
+} from "../../../../leads/components/LeadTableCells";
+import { LEAD_SOURCES } from "../../../../leads/leadsConfig";
+import SellerDetailsFields, {
+  OptionSelect,
+} from "../../../../leads/components/SellerDetailsFields";
 import { StreetViewButton } from "../../../../elements/StreetView";
 import {
   getSuggestedWholesaleMao,
@@ -78,12 +85,26 @@ function sellerNameFromNotes(notes) {
   return splitName(match ? match[1] : "");
 }
 
-// Deals added from leads before the email field existed have it on the
-// lead they came from, or as an "Email: …" line in their notes.
-function sellerEmailFromDeal(deal) {
-  const fromLead = deal.fromLead?.email || deal.fromLead?.sellerEmail;
-  if (fromLead) return fromLead;
-  const match = String(deal.notes || "").match(/^Email:\s*(\S+)\s*$/m);
+// The lead details a deal shows, as [deal field, the lead's field(s), the
+// line the deal's notes have it on]. Deals added from leads before these
+// fields existed have them on the lead they came from, or in their notes.
+const LEAD_DETAILS = [
+  ["sellerEmail", ["email", "sellerEmail"], "Email"],
+  ["askingPrice", ["askingPrice"], "Asking Price"],
+  ["occupant", ["occupant"], "Living in Property"],
+  ["sellingUrgency", ["sellingUrgency"], "Selling Urgency"],
+  ["sellerMotivation", ["sellerMotivation"], "Seller Motivation"],
+  ["followUpDate", ["followUpDate"], null],
+];
+
+function leadDetailFromDeal(deal, leadFields, notesLabel) {
+  for (const field of leadFields) {
+    if (deal.fromLead?.[field]) return deal.fromLead[field];
+  }
+  if (!notesLabel) return "";
+  const match = String(deal.notes || "").match(
+    new RegExp(`^${notesLabel}:[ \\t]*(.+?)[ \\t]*$`, "m"),
+  );
   return match ? match[1] : "";
 }
 
@@ -94,7 +115,11 @@ function initDraft(deal) {
     d.sellerFirstName = firstName;
     d.sellerLastName = lastName;
   }
-  if (d.sellerEmail === undefined) d.sellerEmail = sellerEmailFromDeal(d);
+  LEAD_DETAILS.forEach(([field, leadFields, notesLabel]) => {
+    if (d[field] === undefined) {
+      d[field] = leadDetailFromDeal(d, leadFields, notesLabel);
+    }
+  });
   // Phones past the first; older deals may have a second on their lead.
   if (!Array.isArray(d.sellerPhones)) {
     d.sellerPhones = d.fromLead?.phone2 ? [d.fromLead.phone2] : [];
@@ -646,6 +671,14 @@ function DealDetailModal({
                   placeholder="0"
                 />
               </Field>
+              <Field label="Source">
+                <OptionSelect
+                  disabled={locked}
+                  value={draft.source}
+                  onChange={(v) => set("source", v)}
+                  options={LEAD_SOURCES}
+                />
+              </Field>
               {!isRental && (
                 <>
                   <Field label="Seller First Name">
@@ -822,6 +855,32 @@ function DealDetailModal({
               </Field>
             </Section>
           )}
+
+          {!isRental && (
+            <Section title="Seller Details">
+              <SellerDetailsFields
+                values={draft}
+                onChange={set}
+                Field={Field}
+                disabled={locked}
+              />
+              <Field label="Follow-Up Date">
+                <input
+                  disabled={locked}
+                  type="date"
+                  value={draft.followUpDate || ""}
+                  onChange={(e) => set("followUpDate", e.target.value)}
+                />
+              </Field>
+            </Section>
+          )}
+
+          {/* Extra columns the lead was imported with. */}
+          <ExtraDetails
+            fields={deal.fromLead?.extraFields}
+            className="ddm-section"
+            labelClassName="ddm-section-label"
+          />
 
           {!isRental && (
             <Section title="Deal Numbers">
