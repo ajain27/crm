@@ -69,6 +69,7 @@ export default function PotentialLeads({
   setActiveView,
   ppcOnly = false,
   initialTab = null,
+  onTabChange,
   leadPhotoStore,
   updateLeadPatch,
 }) {
@@ -105,6 +106,17 @@ export default function PotentialLeads({
   useEffect(() => {
     if (ppcOnly && activeTab !== "ppc") setActiveTab("ppc");
   }, [ppcOnly, activeTab]);
+
+  // The tab follows `initialTab` when it changes (Back to an earlier tab, or
+  // a deal moved back to Leads), and reports the tab shown.
+  useEffect(() => {
+    if (initialTab && !ppcOnly) setActiveTab(initialTab);
+  }, [initialTab, ppcOnly]);
+
+  useEffect(() => {
+    onTabChange?.(activeTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // ── Split leads by type ────────────────────────────────────────────────────
   // WordPress leads show in the PPC list straight from the sync, even before

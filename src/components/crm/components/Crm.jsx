@@ -51,6 +51,7 @@ import RentalManagement from "../../rentalManagement/RentalManagement";
 import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
+import { pathForRoute, routeFromPath } from "./viewRoute";
 import Modal from "../../modal/Modal";
 import {
   buildLeadFromDeal,
@@ -110,9 +111,16 @@ function Wholesale() {
       return null;
     }
   });
-  const [activeView, setActiveView] = useState("dashboard");
-  // The Leads tab to open on (after a deal is moved back to Leads).
-  const [leadsTab, setLeadsTab] = useState(null);
+  // The page (and Leads tab) start as the address bar says, so a refresh
+  // stays on the same page.
+  const [activeView, setActiveView] = useState(
+    () => routeFromPath(window.location.pathname).view,
+  );
+  // The Leads tab: the one in the address bar, the one a deal moved back to
+  // Leads came from, or the one picked on the page.
+  const [leadsTab, setLeadsTab] = useState(
+    () => routeFromPath(window.location.pathname).leadsTab,
+  );
   // "ppc" is the role self-signup creates — despite the name, it no longer
   // grants PPC leads access; it's locked to Dashboard + Deal Analyzer only.
   const ppcOnly = currentUser?.role === "ppc";
@@ -253,6 +261,28 @@ function Wholesale() {
   });
 
   useScrollReveal([activeView, isLoading, tableLoading, deals.length]);
+
+  // Keeps the address bar on the page shown. Going to another page adds a
+  // history entry (so Back returns to it); switching Leads tabs doesn't.
+  useEffect(() => {
+    const path = pathForRoute(activeView, leadsTab);
+    if (path === window.location.pathname) return;
+    const samePage =
+      routeFromPath(window.location.pathname).view === activeView;
+    if (samePage) window.history.replaceState(null, "", path);
+    else window.history.pushState(null, "", path);
+  }, [activeView, leadsTab]);
+
+  // Back and Forward.
+  useEffect(() => {
+    function handlePopState() {
+      const route = routeFromPath(window.location.pathname);
+      setActiveView(route.view);
+      setLeadsTab(route.leadsTab);
+    }
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -434,6 +464,7 @@ function Wholesale() {
             setActiveView={setActiveView}
             ppcOnly={ppcOnly}
             initialTab={leadsTab}
+            onTabChange={setLeadsTab}
           />
         ) : !ppcOnly && activeView === "pm-deals" ? (
           <PMDealsTab
