@@ -3,6 +3,8 @@ import {
   uniqueById,
   sellerNameOf,
   buildDealFromLead,
+  buildLeadFromDeal,
+  dealLeadTab,
   dedupeLeads,
   leadMatchesSearch,
   paginate,
@@ -68,6 +70,56 @@ describe("leadUtils", () => {
       city: "Austin",
       onMarket: "Yes",
       notes: "Source: MLS / Zillow\nSeller: Jo",
+    });
+  });
+
+  it("moves a CRM deal back to the lead it came from, with CRM notes", () => {
+    const lead = {
+      id: "l1",
+      address: "9 Elm St, Austin, TX 78701",
+      sellerName: "Jo",
+      phone: "512-555-0100",
+      source: "PPL",
+      notes: "Roof leaks",
+      photos: [{ id: "p1" }],
+    };
+    const deal = buildDealFromLead(lead, "u1");
+    expect(dealLeadTab(deal)).toBe("ppl");
+    expect(buildLeadFromDeal(deal, "u1")).toEqual({ ...lead, photos: [] });
+
+    const edited = {
+      ...deal,
+      sellerPhone: "512-555-0199",
+      notes: `${deal.notes}\nOffered 90k`,
+    };
+    expect(buildLeadFromDeal(edited, "u1")).toMatchObject({
+      id: "l1",
+      phone: "512-555-0199",
+      notes: "Roof leaks\n\nOffered 90k",
+    });
+  });
+
+  it("builds a lead for a deal that wasn't made from one", () => {
+    const deal = {
+      address: "1 Main St",
+      city: "Austin",
+      state: "TX",
+      zipCode: "78701",
+      sellerFirstName: "Al",
+      sellerLastName: "Bo",
+      sellerPhone: "512-555-0100",
+      source: "Cold Call",
+      notes: "Call back",
+    };
+    expect(dealLeadTab(deal)).toBe("coldcall");
+    expect(buildLeadFromDeal(deal, "u1")).toMatchObject({
+      userId: "u1",
+      leadType: "residential",
+      sellerName: "Al Bo",
+      phone: "512-555-0100",
+      address: "1 Main St, Austin, TX 78701",
+      source: "Cold Call",
+      notes: "Call back",
     });
   });
 

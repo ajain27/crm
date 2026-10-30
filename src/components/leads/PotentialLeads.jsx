@@ -68,10 +68,13 @@ export default function PotentialLeads({
   setDeals,
   setActiveView,
   ppcOnly = false,
+  initialTab = null,
   leadPhotoStore,
   updateLeadPatch,
 }) {
-  const [activeTab, setActiveTab] = useState(ppcOnly ? "ppc" : "residential");
+  const [activeTab, setActiveTab] = useState(
+    ppcOnly ? "ppc" : initialTab || "residential",
+  );
   const [detailLead, setDetailLead] = useState(null);
   const [commercialDetailLead, setCommercialDetailLead] = useState(null);
   const [ppcDeletedCount, setPpcDeletedCount] = useState(0);

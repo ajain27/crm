@@ -560,6 +560,17 @@ export default function CountyRecords({
               Delete ({selectedRows.size})
             </button>
           )}
+          {selectedRows.size > 0 && (
+            <button
+              type="button"
+              className="leads-export-btn"
+              onClick={() => setSelectedRows(new Set())}
+              disabled={importing}
+            >
+              <X size={13} />
+              Cancel
+            </button>
+          )}
           {selected && (
             <button
               type="button"

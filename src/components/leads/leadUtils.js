@@ -64,6 +64,29 @@ export function isCommercialLead(lead) {
   return lead.leadType === "commercial";
 }
 
+// The Leads tab a lead is listed under, and its name.
+const LEAD_TABS = {
+  residential: "Residential Leads",
+  commercial: "Commercial Leads",
+  ppc: "PPC Leads",
+  ppl: "PPL Leads",
+  coldcall: "Cold Calling",
+};
+
+export function leadTabOf(lead) {
+  if (isCommercialLead(lead)) return "commercial";
+  if (isPpcLead(lead)) return "ppc";
+  if (isPplLead(lead)) return "ppl";
+  if (isColdCallLead(lead)) return "coldcall";
+  return "residential";
+}
+
+export const leadTabLabel = (tab) => LEAD_TABS[tab] || LEAD_TABS.residential;
+
+// The tab a CRM deal goes back to (see buildLeadFromDeal).
+export const dealLeadTab = (deal) =>
+  leadTabOf(deal?.fromLead || { source: deal?.source || "" });
+
 // Prefer the full submission timestamp so same-day leads still sort by
 // time added; fall back to the day-only date for leads saved before
 // dateAddedAt existed.
@@ -328,6 +351,24 @@ export function paginate(items, page) {
   return { pageItems, totalPages, page: safePage, summary };
 }
 
+// A new deal's notes: the lead's details, then its own notes.
+function dealNotesFromLead(lead) {
+  return [
+    lead.source ? `Source: ${lead.source}` : "Source: Website",
+    lead.sellerName ? `Seller: ${lead.sellerName}` : "",
+    lead.email ? `Email: ${lead.email}` : "",
+    lead.phone ? `Phone: ${lead.phone}` : "",
+    lead.askingPrice ? `Asking Price: ${lead.askingPrice}` : "",
+    lead.arv ? `ARV: ${lead.arv}` : "",
+    lead.occupant ? `Living in Property: ${lead.occupant}` : "",
+    lead.sellingUrgency ? `Selling Urgency: ${lead.sellingUrgency}` : "",
+    lead.sellerMotivation ? `Seller Motivation: ${lead.sellerMotivation}` : "",
+    lead.notes || "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 // Builds a CRM deal from a lead, or returns null when the lead has no usable
 // property address to put on the deal.
 export function buildDealFromLead(lead, userId) {
@@ -364,22 +405,61 @@ export function buildDealFromLead(lead, userId) {
       Math.round(parseFloat(String(lead.arv || "").replace(/[^0-9.]/g, ""))) ||
       "",
     source: lead.source || "Website",
-    notes: [
-      lead.source ? `Source: ${lead.source}` : "Source: Website",
-      lead.sellerName ? `Seller: ${lead.sellerName}` : "",
-      lead.email ? `Email: ${lead.email}` : "",
-      lead.phone ? `Phone: ${lead.phone}` : "",
-      lead.askingPrice ? `Asking Price: ${lead.askingPrice}` : "",
-      lead.arv ? `ARV: ${lead.arv}` : "",
-      lead.occupant ? `Living in Property: ${lead.occupant}` : "",
-      lead.sellingUrgency ? `Selling Urgency: ${lead.sellingUrgency}` : "",
-      lead.sellerMotivation
-        ? `Seller Motivation: ${lead.sellerMotivation}`
-        : "",
-      lead.notes || "",
+    // The lead as it was, so the deal can be moved back to Leads. Its
+    // photos are deleted with it, so they don't come back.
+    fromLead: JSON.parse(JSON.stringify({ ...lead, photos: [] })),
+    notes: dealNotesFromLead(lead),
+  };
+}
+
+// The lead a CRM deal goes back to Leads as: the lead it was made from
+// or, for a deal that wasn't, one built from its seller and property.
+export function buildLeadFromDeal(deal, userId) {
+  const lead = deal.fromLead;
+  if (lead) {
+    // Notes added in the CRM come back with it.
+    const original = dealNotesFromLead(lead);
+    const notes = deal.notes || "";
+    const notesNow =
+      notes === original
+        ? lead.notes || ""
+        : notes.startsWith(original)
+          ? [lead.notes, notes.slice(original.length).trim()]
+              .filter(Boolean)
+              .join("\n\n")
+          : notes;
+    return {
+      ...lead,
+      phone: deal.sellerPhone || lead.phone || "",
+      notes: notesNow,
+    };
+  }
+  const sellerName = joinName(deal.sellerFirstName, deal.sellerLastName);
+  return {
+    ...createEmptyResidentialForm(),
+    id: crypto.randomUUID(),
+    userId,
+    leadType: "residential",
+    sellerName,
+    firstName: deal.sellerFirstName || "",
+    lastName: deal.sellerLastName || "",
+    phone: deal.sellerPhone || "",
+    address: [
+      deal.address,
+      deal.city,
+      [deal.state, deal.zipCode].filter(Boolean).join(" "),
     ]
       .filter(Boolean)
-      .join("\n"),
+      .join(", "),
+    url: deal.listingUrl || "",
+    agentName: deal.agentName || "",
+    agentPhone: deal.agentPhone || "",
+    listedPrice: deal.listedPrice || "",
+    arv: deal.arv ? String(deal.arv) : "",
+    source: deal.source || "",
+    notes: deal.notes || "",
+    dateAdded: todayStr(),
+    dateAddedAt: new Date().toISOString(),
   };
 }
 

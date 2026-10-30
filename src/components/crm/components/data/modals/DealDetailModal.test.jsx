@@ -45,6 +45,25 @@ describe("DealDetailModal", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  it("moves the deal back to the Leads tab it came from", async () => {
+    const moveDealToLeads = vi.fn().mockResolvedValue(true);
+    const onClose = vi.fn();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={onClose}
+        deal={{ ...deal, fromLead: { id: "l1", source: "PPL" } }}
+        updateDealPatch={vi.fn()}
+        moveDealToLeads={moveDealToLeads}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Move to PPL Leads" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(moveDealToLeads).toHaveBeenCalledWith(
+      expect.objectContaining({ id: deal.id }),
+    );
+  });
+
   it("renders title with deal address when open", () => {
     render(
       <DealDetailModal

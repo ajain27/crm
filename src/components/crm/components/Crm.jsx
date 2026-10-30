@@ -52,7 +52,12 @@ import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
 import Modal from "../../modal/Modal";
-import { uniqueById } from "../../leads/leadUtils";
+import {
+  buildLeadFromDeal,
+  dealLeadTab,
+  leadTabLabel,
+  uniqueById,
+} from "../../leads/leadUtils";
 import InvoiceGenerator from "../../invoiceGenerator/InvoiceGenerator";
 import StatsGrid from "../../stats/StatsGrid";
 import LoadingScreen from "../../loader/LoadingScreen";
@@ -106,6 +111,8 @@ function Wholesale() {
     }
   });
   const [activeView, setActiveView] = useState("dashboard");
+  // The Leads tab to open on (after a deal is moved back to Leads).
+  const [leadsTab, setLeadsTab] = useState(null);
   // "ppc" is the role self-signup creates — despite the name, it no longer
   // grants PPC leads access; it's locked to Dashboard + Deal Analyzer only.
   const ppcOnly = currentUser?.role === "ppc";
@@ -209,6 +216,26 @@ function Wholesale() {
     setActiveView("rental-management");
   }
 
+  // Puts a deal back in Leads, under the tab its lead came from, and takes
+  // it off the CRM.
+  async function moveDealToLeads(deal) {
+    const lead = buildLeadFromDeal(deal, currentUser?.id || "");
+    const tab = dealLeadTab(deal);
+    if (
+      !window.confirm(
+        `Move ${deal.address || "this deal"} back to ${leadTabLabel(tab)}? It will be removed from the CRM, with its contracts and photos.`,
+      )
+    )
+      return false;
+    await saveLead(lead);
+    await deleteDealById(deal.id);
+    setLeads((prev) => [lead, ...prev]);
+    setDeals((prev) => prev.filter((d) => d.id !== deal.id));
+    setLeadsTab(tab);
+    setActiveView("leads");
+    return true;
+  }
+
   const {
     profileForm,
     setProfileForm,
@@ -229,6 +256,8 @@ function Wholesale() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    // Leads opens on its usual tab next time.
+    if (activeView !== "leads") setLeadsTab(null);
   }, [activeView]);
 
   function handleAuthenticated(user) {
@@ -381,6 +410,7 @@ function Wholesale() {
                 photoStore={DEAL_PHOTO_STORE}
                 currentUserId={currentUser.id}
                 convertDealToRental={convertDealToRental}
+                moveDealToLeads={ppcOnly ? undefined : moveDealToLeads}
               />
             </LoadingScreen>
           </>
@@ -403,6 +433,7 @@ function Wholesale() {
             setDeals={setDeals}
             setActiveView={setActiveView}
             ppcOnly={ppcOnly}
+            initialTab={leadsTab}
           />
         ) : !ppcOnly && activeView === "pm-deals" ? (
           <PMDealsTab

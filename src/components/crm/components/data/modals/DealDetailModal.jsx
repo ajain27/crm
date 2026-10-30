@@ -3,7 +3,12 @@ import { Upload, Loader2, Trash2, FileText } from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
-import { joinName, splitName } from "../../../../leads/leadUtils";
+import {
+  dealLeadTab,
+  joinName,
+  leadTabLabel,
+  splitName,
+} from "../../../../leads/leadUtils";
 import { formatPhone } from "../../../../../utils/utils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
@@ -134,6 +139,7 @@ function DealDetailModal({
   updateDealPatch,
   deleteDeal,
   convertDealToRental,
+  moveDealToLeads,
   openContract,
   handleContractUpload,
   handleDeleteContractVersion,
@@ -290,6 +296,10 @@ function DealDetailModal({
     if (deleted) onClose();
   }
 
+  async function handleMoveToLeads() {
+    if (await moveDealToLeads(deal)) onClose();
+  }
+
   function set(field, value) {
     if (CURRENCY_FIELDS.includes(field)) {
       setDraft((prev) => ({ ...prev, [field]: fmtCurrency(value) }));
@@ -415,6 +425,16 @@ function DealDetailModal({
                 disabled={saving}
               >
                 Delete
+              </button>
+            )}
+            {moveDealToLeads && (
+              <button
+                className="secondary-btn"
+                onClick={handleMoveToLeads}
+                disabled={saving}
+                title="Take this deal off the CRM and put it back in Leads"
+              >
+                Move to {leadTabLabel(dealLeadTab(deal))}
               </button>
             )}
             <button

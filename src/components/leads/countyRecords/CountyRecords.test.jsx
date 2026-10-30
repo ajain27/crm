@@ -739,6 +739,9 @@ describe("CountyRecords", () => {
     await findInTable("Ann");
     fireEvent.click(screen.getByLabelText("Select all on this page"));
     expect(screen.getByText("Delete (2)")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText("Delete (2)")).not.toBeInTheDocument();
   });
 
   describe("lists as tabs", () => {

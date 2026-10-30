@@ -33,6 +33,7 @@ function Wholesale_data({
   currentUserId,
   photoStore,
   convertDealToRental,
+  moveDealToLeads,
 }) {
   const [tab, setTab] = useState("active");
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -246,6 +247,7 @@ function Wholesale_data({
         updateDealPatch={updateDealPatch}
         deleteDeal={deleteDeal}
         convertDealToRental={convertDealToRental}
+        moveDealToLeads={moveDealToLeads}
         openContract={openContract}
         handleContractUpload={handleContractUpload}
         handleDeleteContractVersion={handleDeleteContractVersion}

@@ -560,6 +560,27 @@ describe("PotentialLeads", () => {
     expect(deleteLeadById).toHaveBeenCalledWith("l1");
   });
 
+  it("unselects the selected leads on Cancel", () => {
+    const leads = [
+      { id: "l1", address: "1 Main St, Dallas, TX 75201", sellerName: "Ann" },
+      { id: "l2", address: "2 Oak Ave, Dallas, TX 75201", sellerName: "Ben" },
+    ];
+    render(<PotentialLeads {...baseProps({ leads })} />);
+    const rowCheckbox = (name) =>
+      screen
+        .getByText(name)
+        .closest("tr")
+        .querySelector("td.buyer-checkbox-cell input");
+    fireEvent.click(rowCheckbox("Ann"));
+    fireEvent.click(rowCheckbox("Ben"));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByText("Delete (2)")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(rowCheckbox("Ann").checked).toBe(false);
+    expect(rowCheckbox("Ben").checked).toBe(false);
+  });
+
   it("deletes the selected residential leads together", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteLeadById = vi.fn().mockResolvedValue(undefined);
