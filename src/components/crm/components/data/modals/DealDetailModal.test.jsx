@@ -216,6 +216,9 @@ describe("DealDetailModal", () => {
     expect(text.split(today)).toHaveLength(4);
     expect(text).toContain("You Win Estates, and/or assigns");
     expect(text).toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
+    expect(text).toContain("8. LIENS, TAXES & ENCUMBRANCES");
+    expect(text).toContain("paid in full at closing from Seller's proceeds");
+    expect(text).toContain("9. OFFER EXPIRATION & ACCEPTANCE");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
 
@@ -248,7 +251,8 @@ describe("DealDetailModal", () => {
     expect(text).not.toContain("and/or assigns");
     expect(text).not.toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
     expect(text).toContain("6. ENTIRE AGREEMENT");
-    expect(text).toContain("7. OFFER EXPIRATION & ACCEPTANCE");
+    expect(text).toContain("7. LIENS, TAXES & ENCUMBRANCES");
+    expect(text).toContain("8. OFFER EXPIRATION & ACCEPTANCE");
   });
 
   it("won't generate an offer without an EMD or inspection period", () => {

@@ -261,8 +261,26 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           </p>
         </Section>
 
+        <Section number={afterRemedies + 1} title="LIENS, TAXES & ENCUMBRANCES">
+          <p>
+            Seller shall convey title to the Property free and clear of all
+            liens, encumbrances, and monetary obligations. Any and all
+            mortgages, deeds of trust, tax liens, unpaid or delinquent property
+            taxes, special assessments, HOA dues, utility charges, judgments,
+            mechanic's liens, code violation fines, or any other amounts owed by
+            Seller or recorded against the Property as of the closing date shall
+            be paid in full at closing from Seller's proceeds and deducted from
+            the total amount payable to Seller. Buyer shall not be responsible
+            for paying, assuming, or satisfying any such liens, back taxes, or
+            other obligations against the Property. If the total of such amounts
+            exceeds Seller's proceeds, Seller shall pay the shortfall at or
+            before closing; otherwise Buyer may terminate this Agreement and the
+            Earnest Money Deposit shall be refunded to Buyer in full.
+          </p>
+        </Section>
+
         <Section
-          number={afterRemedies + 1}
+          number={afterRemedies + 2}
           title="OFFER EXPIRATION & ACCEPTANCE"
         >
           <p>
