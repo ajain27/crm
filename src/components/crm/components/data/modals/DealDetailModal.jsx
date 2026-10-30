@@ -6,9 +6,11 @@ import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
 import {
   dealLeadTab,
   joinName,
+  LEAD_TAB_IDS,
   leadTabLabel,
   splitName,
 } from "../../../../leads/leadUtils";
+import MenuButton from "../../../../elements/MenuButton";
 import { formatPhone } from "../../../../../utils/utils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
@@ -415,8 +417,8 @@ function DealDetailModal({
     if (deleted) onClose();
   }
 
-  async function handleMoveToLeads() {
-    if (await moveDealToLeads(deal)) onClose();
+  async function handleMoveToLeads(tab) {
+    if (await moveDealToLeads(deal, tab)) onClose();
   }
 
   function set(field, value) {
@@ -556,14 +558,18 @@ function DealDetailModal({
               </button>
             )}
             {moveDealToLeads && (
-              <button
-                className="secondary-btn"
-                onClick={handleMoveToLeads}
+              <MenuButton
+                label="Move to Leads"
+                placement="top"
                 disabled={saving}
-                title="Take this deal off the CRM and put it back in Leads"
-              >
-                Move to {leadTabLabel(dealLeadTab(deal))}
-              </button>
+                title="Take this deal off the CRM and put it in a Leads tab"
+                items={LEAD_TAB_IDS.map((tab) => ({
+                  id: tab,
+                  label: leadTabLabel(tab),
+                  hint: tab === dealLeadTab(deal) ? "Came from" : undefined,
+                }))}
+                onSelect={handleMoveToLeads}
+              />
             )}
             <button
               className="secondary-btn"

@@ -45,7 +45,7 @@ describe("DealDetailModal", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("moves the deal back to the Leads tab it came from", async () => {
+  it("moves the deal to the Leads tab picked, marking the one it came from", async () => {
     const moveDealToLeads = vi.fn().mockResolvedValue(true);
     const onClose = vi.fn();
     render(
@@ -57,10 +57,21 @@ describe("DealDetailModal", () => {
         moveDealToLeads={moveDealToLeads}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Move to PPL Leads" }));
+    fireEvent.click(screen.getByRole("button", { name: /Move to Leads/ }));
+    const items = screen.getAllByRole("menuitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Residential Leads",
+      "Commercial Leads",
+      "PPC Leads",
+      "PPL LeadsCame from",
+      "Cold Calling",
+    ]);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Cold Calling" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(moveDealToLeads).toHaveBeenCalledWith(
       expect.objectContaining({ id: deal.id }),
+      "coldcall",
     );
   });
 

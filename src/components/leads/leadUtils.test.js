@@ -9,6 +9,9 @@ import {
   leadMatchesSearch,
   paginate,
   parseAddress,
+  leadForTab,
+  leadTabOf,
+  LEAD_TAB_IDS,
 } from "./leadUtils";
 
 describe("leadUtils", () => {
@@ -208,6 +211,44 @@ describe("parseAddress state", () => {
     expect(parseAddress("1 Main St, Dallas")).toMatchObject({
       city: "Dallas",
       state: "",
+    });
+  });
+});
+
+describe("leadForTab", () => {
+  const ppl = {
+    id: "l1",
+    leadType: "residential",
+    source: "PPL",
+    pplSource: true,
+    email: "ann@x.com",
+    address: "1 Main St",
+  };
+
+  it("lists the lead under whichever tab it's moved to", () => {
+    for (const tab of LEAD_TAB_IDS) {
+      expect(leadTabOf(leadForTab(ppl, tab))).toBe(tab);
+    }
+  });
+
+  it("sets a source that matches the tab, keeping one that already does", () => {
+    expect(leadForTab(ppl, "coldcall").source).toBe("Cold Call");
+    expect(leadForTab(ppl, "ppc").source).toBe("PPC");
+    expect(leadForTab(ppl, "residential").source).toBe("");
+    expect(
+      leadForTab({ ...ppl, source: "Driving for Dollars" }, "residential")
+        .source,
+    ).toBe("Driving for Dollars");
+    expect(leadForTab({ ...ppl, source: "Facebook Ads" }, "ppc").source).toBe(
+      "Facebook Ads",
+    );
+  });
+
+  it("gives a lead moved to Commercial a name and its seller email", () => {
+    expect(leadForTab(ppl, "commercial")).toMatchObject({
+      leadType: "commercial",
+      name: "1 Main St",
+      sellerEmail: "ann@x.com",
     });
   });
 });

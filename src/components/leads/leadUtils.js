@@ -83,6 +83,46 @@ export function leadTabOf(lead) {
 
 export const leadTabLabel = (tab) => LEAD_TABS[tab] || LEAD_TABS.residential;
 
+// The tabs a lead can be moved to, in the Leads page's order.
+export const LEAD_TAB_IDS = Object.keys(LEAD_TABS);
+
+// The lead as it should be to list under `tab`: its type, the PPC / PPL
+// flags and, where the tab goes by it, its source. Anything else is kept.
+export function leadForTab(lead, tab) {
+  const residential = {
+    ...lead,
+    leadType: "residential",
+    ppcSource: false,
+    pplSource: false,
+  };
+  // Keeps the lead's own source when that alone (without the flags) lists
+  // it under `tab`, e.g. "Facebook Ads" for PPC; otherwise `source`.
+  const withSource = (moved, source) =>
+    leadTabOf({ ...moved, ppcSource: false, pplSource: false }) === tab
+      ? moved
+      : { ...moved, source };
+
+  switch (tab) {
+    case "commercial":
+      return {
+        ...residential,
+        leadType: "commercial",
+        // Commercial leads go by a business name and keep the seller's
+        // email in `sellerEmail`.
+        name: lead.name || lead.address || "",
+        sellerEmail: lead.sellerEmail || lead.email || "",
+      };
+    case "ppc":
+      return withSource({ ...residential, ppcSource: true }, "PPC");
+    case "ppl":
+      return withSource({ ...residential, pplSource: true }, "PPL");
+    case "coldcall":
+      return withSource(residential, "Cold Call");
+    default:
+      return withSource(residential, "");
+  }
+}
+
 // The tab a CRM deal goes back to (see buildLeadFromDeal).
 export const dealLeadTab = (deal) =>
   leadTabOf(deal?.fromLead || { source: deal?.source || "" });

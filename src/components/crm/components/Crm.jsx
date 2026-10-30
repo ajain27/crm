@@ -56,6 +56,7 @@ import Modal from "../../modal/Modal";
 import {
   buildLeadFromDeal,
   dealLeadTab,
+  leadForTab,
   leadTabLabel,
   uniqueById,
 } from "../../leads/leadUtils";
@@ -224,14 +225,16 @@ function Wholesale() {
     setActiveView("rental-management");
   }
 
-  // Puts a deal back in Leads, under the tab its lead came from, and takes
-  // it off the CRM.
-  async function moveDealToLeads(deal) {
-    const lead = buildLeadFromDeal(deal, currentUser?.id || "");
-    const tab = dealLeadTab(deal);
+  // Puts a deal back in Leads, under `tab` (by default the tab its lead
+  // came from), and takes it off the CRM.
+  async function moveDealToLeads(deal, tab = dealLeadTab(deal)) {
+    const lead = leadForTab(
+      buildLeadFromDeal(deal, currentUser?.id || ""),
+      tab,
+    );
     if (
       !window.confirm(
-        `Move ${deal.address || "this deal"} back to ${leadTabLabel(tab)}? It will be removed from the CRM, with its contracts and photos.`,
+        `Move ${deal.address || "this deal"} to ${leadTabLabel(tab)}? It will be removed from the CRM, with its contracts and photos.`,
       )
     )
       return false;
