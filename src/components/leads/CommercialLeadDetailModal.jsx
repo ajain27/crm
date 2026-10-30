@@ -79,10 +79,12 @@ export default function CommercialLeadDetailModal({
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      const saved = await onSave({
         ...draft,
         sellerName: joinName(draft.firstName, draft.lastName),
       });
+      // A refused save (e.g. an address already in use) keeps it open.
+      if (saved === false) return;
       onClose();
     } catch (error) {
       console.error("Failed to save lead", error);

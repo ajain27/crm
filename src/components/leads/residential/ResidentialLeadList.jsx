@@ -19,17 +19,11 @@ import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import {
-  followUpStatus,
-  leadMatchesSearch,
-  parseAddress,
-  sellerNameOf,
-} from "../leadUtils";
+import { leadMatchesSearch, parseAddress, sellerNameOf } from "../leadUtils";
 
 export const RESIDENTIAL_FILTERS = {
   source: "",
   state: "",
-  followUpStatus: "",
 };
 
 const SEARCH_FIELDS = [
@@ -38,12 +32,6 @@ const SEARCH_FIELDS = [
   "agentPhone",
   "sellerName",
   "agentName",
-];
-
-const FOLLOW_UP_STATUSES = [
-  { status: "overdue", label: "Overdue" },
-  { status: "today", label: "Today" },
-  { status: "upcoming", label: "Upcoming" },
 ];
 
 function unique(values) {
@@ -78,9 +66,7 @@ export default function ResidentialLeadList({
       (l) =>
         leadMatchesSearch(l, search, SEARCH_FIELDS) &&
         (!filters.source || l.source === filters.source) &&
-        (!filters.state || parseAddress(l.address).state === filters.state) &&
-        (!filters.followUpStatus ||
-          followUpStatus(l.followUpDate) === filters.followUpStatus),
+        (!filters.state || parseAddress(l.address).state === filters.state),
     )
     .sort(byFollowUpDate);
 
@@ -120,27 +106,6 @@ export default function ResidentialLeadList({
           </option>
         ))}
       </select>
-      <div
-        className="leads-status-filter"
-        role="group"
-        aria-label="Filter by follow-up status"
-      >
-        {FOLLOW_UP_STATUSES.map(({ status, label }) => {
-          const active = filters.followUpStatus === status;
-          return (
-            <button
-              key={status}
-              type="button"
-              title={label}
-              aria-pressed={active}
-              className={`leads-status-dot leads-status-dot-${status}${
-                active ? " leads-status-dot--active" : ""
-              }`}
-              onClick={() => setFilter("followUpStatus", active ? "" : status)}
-            />
-          );
-        })}
-      </div>
       <LeadClearFilters listState={listState} />
       <LeadBulkDeleteButton
         selectedLeads={selectedLeads}

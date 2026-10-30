@@ -428,6 +428,9 @@ export default function CountyRecords({
       comps,
     });
     if (!deal) throw new Error("This record has no property address.");
+    if (crmKeys.has(propertyKey(deal))) {
+      throw new Error("This property is already in the CRM.");
+    }
     await saveDeal(deal);
     setDeals((prev) => [deal, ...prev]);
   }

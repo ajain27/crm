@@ -7,11 +7,16 @@ import {
   ASSIGNED_PRICE_ERROR,
   isAssignedPriceTooLow,
 } from "../crmConfig";
-import { findDuplicateByAddress } from "../../../../utils/utils";
+import {
+  addressConflictMessage,
+  dealAddress,
+  findAddressConflict,
+} from "../../../leads/leadDuplicates";
 import { prepareAttachment } from "../../../../utils/attachments";
 
 export function useDealForm({
   deals,
+  leads = [],
   currentUser,
   saveDeal,
   saveBuyer,
@@ -277,11 +282,20 @@ export function useDealForm({
     checkDuplicateAddress(cleaned);
   }
 
-  function checkDuplicateAddress(address) {
-    if (!address.trim()) return;
-    const existingDeal = findDuplicateByAddress(deals, address);
-    if (existingDeal) {
-      setFormError(`"${existingDeal.address}" is already in your pipeline.`);
+  // Flags an address already in the CRM or any lead list (true when it
+  // is); a deal already in the CRM is also found in the table.
+  function checkDuplicateAddress(address, values = form) {
+    if (!address.trim()) return false;
+    const fullAddress = dealAddress({ ...values, address });
+    const conflict = findAddressConflict({
+      address: fullAddress,
+      deals,
+      leads,
+    });
+    if (!conflict) return false;
+    setFormError(addressConflictMessage(fullAddress, conflict));
+    if (conflict.where === "the CRM") {
+      const existingDeal = conflict.record;
       setFilters((prevFilters) => ({
         ...prevFilters,
         search: existingDeal.address,
@@ -295,6 +309,7 @@ export function useDealForm({
         }
       }, 100);
     }
+    return true;
   }
 
   async function addDeal(event) {
@@ -305,23 +320,7 @@ export function useDealForm({
       return;
     }
 
-    const existingDeal = findDuplicateByAddress(deals, form.address);
-    if (existingDeal) {
-      setFormError(`"${existingDeal.address}" is already in your pipeline.`);
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        search: existingDeal.address,
-      }));
-      setTimeout(() => {
-        const rowElement = document.querySelector(
-          `[data-deal-id="${existingDeal.id}"]`,
-        );
-        if (rowElement) {
-          rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 100);
-      return;
-    }
+    if (checkDuplicateAddress(form.address)) return;
 
     const parseNumber = (val) => Number(String(val).replace(/[^0-9]/g, ""));
 

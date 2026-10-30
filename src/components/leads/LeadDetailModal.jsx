@@ -124,7 +124,7 @@ export default function LeadDetailModal({
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave(
+      const saved = await onSave(
         hasSellerSection || hasNameFields
           ? {
               ...draft,
@@ -132,6 +132,8 @@ export default function LeadDetailModal({
             }
           : { ...draft },
       );
+      // A refused save (e.g. an address already in use) keeps it open.
+      if (saved === false) return;
       onClose();
     } catch (error) {
       console.error("Failed to save lead", error);

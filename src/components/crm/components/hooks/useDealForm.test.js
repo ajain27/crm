@@ -165,7 +165,31 @@ describe("useDealForm", () => {
     await act(async () => {
       await result.current.addDeal({ preventDefault: vi.fn() });
     });
-    expect(result.current.formError).toMatch(/already in your pipeline/);
+    expect(result.current.formError).toMatch(/already in the CRM/);
+    expect(props.saveDeal).not.toHaveBeenCalled();
+  });
+
+  it("addDeal refuses an address already in Leads", async () => {
+    const props = baseProps({
+      deals: [],
+      leads: [{ id: "l1", address: "1 main st., Austin, TX", source: "PPL" }],
+    });
+    const { result } = renderHook(() => useDealForm(props));
+    act(() => {
+      for (const [name, value] of [
+        ["address", "1 Main St"],
+        ["city", "Austin"],
+        ["state", "TX"],
+      ]) {
+        result.current.handleChange({ target: { name, value } });
+      }
+    });
+    await act(async () => {
+      await result.current.addDeal({ preventDefault: vi.fn() });
+    });
+    expect(result.current.formError).toBe(
+      '"1 Main St, Austin, TX" is already in PPL Leads.',
+    );
     expect(props.saveDeal).not.toHaveBeenCalled();
   });
 

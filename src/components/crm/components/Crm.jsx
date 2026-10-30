@@ -52,6 +52,22 @@ import MortgageCalculator from "../../mortgageCalculator/MortgageCalculator";
 import Buyers from "../../buyers/components/Buyers";
 import PotentialLeads from "../../leads/PotentialLeads";
 import { pathForRoute, routeFromPath } from "./viewRoute";
+import {
+  addressConflictMessage,
+  dealAddress,
+  findAddressConflict,
+  findAddressDuplicates,
+} from "../../leads/leadDuplicates";
+
+// A deal's own file fields (contracts and photos are stored with it), never
+// copied from a duplicate being removed.
+const DEAL_FILE_FIELDS = [
+  "photos",
+  "contractVersions",
+  "contractFileName",
+  "contractFileData",
+  "contractFileType",
+];
 import Modal from "../../modal/Modal";
 import {
   buildLeadFromDeal,
@@ -183,6 +199,7 @@ function Wholesale() {
     addDeal,
   } = useDealForm({
     deals,
+    leads,
     currentUser,
     saveDeal,
     saveBuyer,
@@ -232,6 +249,13 @@ function Wholesale() {
       buildLeadFromDeal(deal, currentUser?.id || ""),
       tab,
     );
+    const conflict = findAddressConflict({ address: lead.address, leads });
+    if (conflict) {
+      alert(
+        `${addressConflictMessage(lead.address, conflict)} The deal stays in the CRM.`,
+      );
+      return false;
+    }
     if (
       !window.confirm(
         `Move ${deal.address || "this deal"} to ${leadTabLabel(tab)}? It will be removed from the CRM, with its contracts and photos.`,
@@ -245,6 +269,72 @@ function Wholesale() {
     setLeadsTab(tab);
     setActiveView("leads");
     return true;
+  }
+
+  // Removes deals that share an address, keeping the one with the most
+  // details for each, with any details only the others had copied to it.
+  // Contracts and photos live with each deal (and go with a deleted one),
+  // so the kept deal keeps its own file fields.
+  async function removeDuplicateDeals() {
+    const groups = findAddressDuplicates(deals, dealAddress);
+    const count = groups.reduce((n, g) => n + g.duplicates.length, 0);
+    if (count === 0) {
+      alert("No deals share an address.");
+      return;
+    }
+    const plural = (n) => (n === 1 ? "deal" : "deals");
+    if (
+      !window.confirm(
+        `Remove ${count} duplicate ${plural(count)}?\n\n` +
+          `${groups.length} ${groups.length === 1 ? "address has" : "addresses have"} more than one deal. ` +
+          "The deal with the most details is kept for each, and any details only the others had are copied to it. " +
+          "The others are deleted, with their contracts and photos.",
+      )
+    )
+      return;
+
+    const saved = new Map();
+    const removed = new Set();
+    let failed = 0;
+    for (const { keep, duplicates } of groups) {
+      const original = deals.find((d) => d.id === keep.id);
+      const merged = { ...keep };
+      DEAL_FILE_FIELDS.forEach((field) => {
+        if (field in original) merged[field] = original[field];
+        else delete merged[field];
+      });
+      if (Object.keys(merged).some((key) => merged[key] !== original[key])) {
+        try {
+          saved.set(merged.id, (await saveDeal(merged)) || merged);
+        } catch {
+          // The merged details didn't save: keep the duplicates, so
+          // nothing is lost.
+          failed += duplicates.length;
+          continue;
+        }
+      }
+      const others = duplicates.filter((d) => d.id !== keep.id);
+      const results = await Promise.allSettled(
+        others.map((d) => deleteDealById(d.id)),
+      );
+      others.forEach((d, i) => {
+        if (results[i].status === "fulfilled") removed.add(d.id);
+        else failed += 1;
+      });
+    }
+    setDeals((prev) =>
+      prev.filter((d) => !removed.has(d.id)).map((d) => saved.get(d.id) || d),
+    );
+    alert(
+      [
+        `Removed ${removed.size} duplicate ${plural(removed.size)}.`,
+        saved.size &&
+          `Copied missing details to ${saved.size} ${plural(saved.size)}.`,
+        failed && `${failed} couldn't be removed — try again.`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
   }
 
   const {
@@ -444,6 +534,8 @@ function Wholesale() {
                 currentUserId={currentUser.id}
                 convertDealToRental={convertDealToRental}
                 moveDealToLeads={ppcOnly ? undefined : moveDealToLeads}
+                leads={leads}
+                onRemoveDuplicates={ppcOnly ? undefined : removeDuplicateDeals}
               />
             </LoadingScreen>
           </>

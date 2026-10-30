@@ -75,6 +75,33 @@ describe("DealDetailModal", () => {
     );
   });
 
+  it("won't save an address already in the CRM or Leads", () => {
+    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+    const updateDealPatch = vi.fn();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={updateDealPatch}
+        existingDeals={[
+          deal,
+          { id: "d2", address: "9 Oak St", city: "Austin" },
+        ]}
+        existingLeads={[]}
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("Street address"), {
+      target: { value: "9 oak st." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    expect(alertSpy).toHaveBeenCalledWith(
+      '"9 oak st., Austin, TX 78701" is already in the CRM.',
+    );
+    expect(updateDealPatch).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
+
   it("renders title with deal address when open", () => {
     render(
       <DealDetailModal

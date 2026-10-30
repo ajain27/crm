@@ -15,6 +15,8 @@ import DealRow from "./DealRow";
 import NotesModal from "./modals/NotesModal";
 import ContractPreviewModal from "./modals/ContractPreviewModal";
 import DealDetailModal from "./modals/DealDetailModal";
+import LeadDedupeButton from "../../../leads/components/LeadDedupeButton";
+import { dealAddress } from "../../../leads/leadDuplicates";
 import AccordionTable from "../../../elements/AccordionTable";
 
 function Wholesale_data({
@@ -34,6 +36,8 @@ function Wholesale_data({
   photoStore,
   convertDealToRental,
   moveDealToLeads,
+  leads = [],
+  onRemoveDuplicates,
 }) {
   const [tab, setTab] = useState("active");
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -187,6 +191,15 @@ function Wholesale_data({
           </button>
         </div>
 
+        {onRemoveDuplicates && (
+          <LeadDedupeButton
+            leads={deals}
+            addressOf={dealAddress}
+            noun="deals"
+            onRemove={onRemoveDuplicates}
+          />
+        )}
+
         {tab === "closed" && (
           <div style={{ minWidth: "200px" }}>
             <Select
@@ -252,6 +265,8 @@ function Wholesale_data({
         deleteDeal={deleteDeal}
         convertDealToRental={convertDealToRental}
         moveDealToLeads={moveDealToLeads}
+        existingDeals={deals}
+        existingLeads={leads}
         openContract={openContract}
         handleContractUpload={handleContractUpload}
         handleDeleteContractVersion={handleDeleteContractVersion}

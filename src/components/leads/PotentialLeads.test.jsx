@@ -210,7 +210,37 @@ describe("PotentialLeads", () => {
     );
     fireEvent.change(addressInput, { target: { value: "1 Main St" } });
     fireEvent.blur(addressInput);
-    expect(screen.getByText(/already in your lead list/i)).toBeInTheDocument();
+    expect(
+      screen.getByText('"1 Main St" is already in Residential Leads.'),
+    ).toBeInTheDocument();
+  });
+
+  it("won't add a lead whose address is in another tab or the CRM", () => {
+    render(
+      <PotentialLeads
+        {...baseProps({
+          leads: [
+            { id: "l1", address: "2 Oak Ave, Dallas, TX", source: "PPL" },
+          ],
+          deals: [{ id: "d1", address: "3 Elm St", city: "Dallas" }],
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
+    const addressInput = screen.getByPlaceholderText(
+      /123 Main St, Dallas, TX 75201/i,
+    );
+    fireEvent.change(addressInput, {
+      target: { value: "2 oak ave., Dallas, TX 75201" },
+    });
+    fireEvent.blur(addressInput);
+    expect(screen.getByText(/is already in PPL Leads\./)).toBeInTheDocument();
+
+    fireEvent.change(addressInput, {
+      target: { value: "3 Elm St, Dallas, TX 75201" },
+    });
+    fireEvent.blur(addressInput);
+    expect(screen.getByText(/is already in the CRM\./)).toBeInTheDocument();
   });
   it("adds a commercial lead from the Commercial tab", async () => {
     const saveLead = vi.fn().mockResolvedValue(undefined);

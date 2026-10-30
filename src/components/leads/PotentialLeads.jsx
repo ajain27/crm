@@ -46,7 +46,13 @@ import {
   startEmailSequence,
   stopEmailSequence,
 } from "../../constants/emailSequence";
-import { findAddressDuplicates } from "./leadDuplicates";
+import {
+  addressConflictMessage,
+  dealAddress,
+  findAddressConflict,
+  findAddressDuplicates,
+  sameAddress,
+} from "./leadDuplicates";
 import "./Leads.css";
 
 const ADD_LEAD_TITLES = {
@@ -64,7 +70,7 @@ export default function PotentialLeads({
   saveLead,
   deleteLeadById,
   saveDeal,
-  deals,
+  deals = [],
   setDeals,
   setActiveView,
   ppcOnly = false,
@@ -141,8 +147,8 @@ export default function PotentialLeads({
   const residentialForm = useLeadForm({
     createEmpty: createEmptyResidentialForm,
     leadType: "residential",
-    existingLeads: residentialLeads,
-    duplicateMessage: (address) => `"${address}" is already in your lead list.`,
+    existingLeads: leads,
+    existingDeals: deals,
     currentUser,
     saveLead,
     setLeads,
@@ -153,8 +159,8 @@ export default function PotentialLeads({
   const ppcForm = useLeadForm({
     createEmpty: () => ({ ...createEmptyResidentialForm(), source: "PPC" }),
     leadType: "residential",
-    existingLeads: ppcLeads,
-    duplicateMessage: (address) => `"${address}" is already in your PPC leads.`,
+    existingLeads: leads,
+    existingDeals: deals,
     currentUser,
     saveLead,
     setLeads,
@@ -163,8 +169,8 @@ export default function PotentialLeads({
   const pplForm = useLeadForm({
     createEmpty: () => ({ ...createEmptyResidentialForm(), source: "PPL" }),
     leadType: "residential",
-    existingLeads: pplLeads,
-    duplicateMessage: (address) => `"${address}" is already in your PPL leads.`,
+    existingLeads: leads,
+    existingDeals: deals,
     currentUser,
     saveLead,
     setLeads,
@@ -176,9 +182,8 @@ export default function PotentialLeads({
       source: "Cold Call",
     }),
     leadType: "residential",
-    existingLeads: coldCallLeads,
-    duplicateMessage: (address) =>
-      `"${address}" is already in your cold calling leads.`,
+    existingLeads: leads,
+    existingDeals: deals,
     currentUser,
     saveLead,
     setLeads,
@@ -187,9 +192,8 @@ export default function PotentialLeads({
   const commercialForm = useLeadForm({
     createEmpty: createEmptyCommercialForm,
     leadType: "commercial",
-    existingLeads: commercialLeads,
-    duplicateMessage: (address) =>
-      `"${address}" is already in your commercial lead list.`,
+    existingLeads: leads,
+    existingDeals: deals,
     currentUser,
     saveLead,
     setLeads,
@@ -262,12 +266,13 @@ export default function PotentialLeads({
       alert(result.error);
       return;
     }
-    const {
-      leads: imported,
-      updates = [],
-      skippedEmpty,
-      skippedDuplicates,
-    } = result;
+    const { leads: parsed, updates = [], skippedEmpty } = result;
+    // Properties already in the CRM aren't added to Leads again.
+    const imported = parsed.filter(
+      (lead) => !deals.some((d) => sameAddress(dealAddress(d), lead.address)),
+    );
+    const inCrm = parsed.length - imported.length;
+    const skippedDuplicates = (result.skippedDuplicates || 0) + inCrm;
 
     // Saved a few at a time so a large file doesn't flood Firestore.
     async function saveAll(list) {
@@ -313,7 +318,7 @@ export default function PotentialLeads({
         savedUpdates.length &&
           `Filled in missing details on ${savedUpdates.length} ${pluralizeLeads(savedUpdates.length)} already in your list.`,
         skippedDuplicates &&
-          `Skipped ${skippedDuplicates} already in your leads (same phone, email or address).`,
+          `Skipped ${skippedDuplicates} already in your leads or the CRM (same phone, email or address).`,
         skippedEmpty &&
           `Skipped ${skippedEmpty} ${skippedEmpty === 1 ? "row" : "rows"} with no name, email, phone or address.`,
         failed && `${failed} couldn't be saved — try importing again.`,
@@ -458,9 +463,25 @@ export default function PotentialLeads({
     );
   }
 
+  // Returns false (without saving) when the lead's address was changed to
+  // one already in Leads or the CRM.
   async function handleLeadSave(updated) {
+    const before = leads.find((l) => l.id === updated.id);
+    if (!sameAddress(before?.address, updated.address)) {
+      const conflict = findAddressConflict({
+        address: updated.address,
+        leads,
+        deals,
+        excludeId: updated.id,
+      });
+      if (conflict) {
+        alert(addressConflictMessage(updated.address, conflict));
+        return false;
+      }
+    }
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+    return true;
   }
 
   async function handleSetQuality(lead, quality, reason = "") {
@@ -504,6 +525,13 @@ export default function PotentialLeads({
     if (!deal) {
       alert(
         "This lead does not have a property address, so it was not added to CRM.",
+      );
+      return;
+    }
+    const conflict = findAddressConflict({ address: lead.address, deals });
+    if (conflict) {
+      alert(
+        `${addressConflictMessage(lead.address, conflict)} It wasn't added again.`,
       );
       return;
     }

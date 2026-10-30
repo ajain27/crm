@@ -43,6 +43,40 @@ function getRenderedDealIds(container) {
 }
 
 describe("Wholesale_data", () => {
+  it("offers to remove deals that share an address", async () => {
+    const onRemoveDuplicates = vi.fn().mockResolvedValue(undefined);
+    const copy = { ...deal, id: "d-copy", address: "123 main st." };
+    const { rerender } = render(
+      <Wholesale_data
+        filteredDeals={[deal]}
+        deals={[deal]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+        onRemoveDuplicates={onRemoveDuplicates}
+      />,
+    );
+    // No duplicates, no button.
+    expect(
+      screen.queryByRole("button", { name: /Remove duplicates/ }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <Wholesale_data
+        filteredDeals={[deal, copy]}
+        deals={[deal, copy]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+        onRemoveDuplicates={onRemoveDuplicates}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove duplicates (1)" }),
+    );
+    await waitFor(() => expect(onRemoveDuplicates).toHaveBeenCalled());
+  });
+
   it("renders only the simplified columns", () => {
     render(
       <Wholesale_data

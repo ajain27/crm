@@ -11,6 +11,11 @@ import {
   splitName,
 } from "../../../../leads/leadUtils";
 import MenuButton from "../../../../elements/MenuButton";
+import {
+  addressConflictMessage,
+  findAddressConflict,
+  sameAddress,
+} from "../../../../leads/leadDuplicates";
 import { formatPhone } from "../../../../../utils/utils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
@@ -209,6 +214,8 @@ function DealDetailModal({
   onMakeInactive,
   photoStore,
   currentUserId,
+  existingDeals = [],
+  existingLeads = [],
 }) {
   const [draft, setDraft] = useState({});
   // The form as the deal was opened (or last saved), for Save Changes.
@@ -448,6 +455,21 @@ function DealDetailModal({
 
   async function handleSave() {
     const closing = draft.closed === "Yes" && deal.closed !== "Yes";
+
+    // A changed address can't be one already in the CRM or Leads.
+    const newAddress = formatFullAddress(draft);
+    if (!sameAddress(formatFullAddress(deal), newAddress)) {
+      const conflict = findAddressConflict({
+        address: newAddress,
+        deals: existingDeals,
+        leads: existingLeads,
+        excludeId: deal.id,
+      });
+      if (conflict) {
+        alert(addressConflictMessage(newAddress, conflict));
+        return;
+      }
+    }
 
     if (!isRental && closing) {
       if (draft.sellerAccepted !== "Yes" || draft.assigned !== "Yes") {

@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { addressMatchKey, findAddressDuplicates } from "./leadDuplicates";
+import {
+  addressMatchKey,
+  findAddressDuplicates,
+  findAddressConflict,
+  sameAddress,
+  dealAddress,
+} from "./leadDuplicates";
 
 describe("addressMatchKey", () => {
   it("matches the same street and city however it's written", () => {
@@ -84,5 +90,52 @@ describe("findAddressDuplicates with the same lead listed twice", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].keep.id).toBe("a");
     expect(groups[0].duplicates.map((l) => l.id)).toEqual(["b"]);
+  });
+});
+
+describe("sameAddress", () => {
+  it("matches the street and city, ignoring case, punctuation and ZIP", () => {
+    expect(
+      sameAddress("1 Main St, Dallas, TX 75201", "1 main st., dallas"),
+    ).toBe(true);
+    expect(sameAddress("1 Main St, Dallas", "1 Main St, Austin")).toBe(false);
+    expect(sameAddress("1 Main St, Dallas", "2 Main St, Dallas")).toBe(false);
+  });
+
+  it("goes by the street alone when one has no city", () => {
+    expect(sameAddress("1 Main St", "1 Main St, Dallas, TX")).toBe(true);
+  });
+});
+
+describe("findAddressConflict", () => {
+  const leads = [{ id: "l1", address: "2 Oak Ave, Dallas, TX", source: "PPL" }];
+  const deals = [
+    { id: "d1", address: "3 Elm St", city: "Dallas", state: "TX" },
+  ];
+
+  it("finds a deal or a lead already at the address, and where it is", () => {
+    expect(
+      findAddressConflict({ address: "3 elm st, Dallas", leads, deals }),
+    ).toEqual({ record: deals[0], where: "the CRM" });
+    expect(
+      findAddressConflict({ address: "2 Oak Ave, Dallas", leads, deals }),
+    ).toEqual({ record: leads[0], where: "PPL Leads" });
+    expect(
+      findAddressConflict({ address: "9 Pine Rd, Dallas", leads, deals }),
+    ).toBeNull();
+  });
+
+  it("ignores the record being edited", () => {
+    expect(
+      findAddressConflict({
+        address: "3 Elm St, Dallas",
+        deals,
+        excludeId: "d1",
+      }),
+    ).toBeNull();
+  });
+
+  it("reads a deal's split address", () => {
+    expect(dealAddress(deals[0])).toBe("3 Elm St, Dallas, TX");
   });
 });

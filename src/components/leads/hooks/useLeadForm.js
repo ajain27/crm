@@ -1,19 +1,17 @@
 import { useState } from "react";
-import {
-  findDuplicateByAddress,
-  formatPhone,
-  trimFieldOnBlur,
-} from "../../../utils/utils";
+import { formatPhone, trimFieldOnBlur } from "../../../utils/utils";
 import { joinName, todayStr } from "../leadUtils";
+import { addressConflictMessage, findAddressConflict } from "../leadDuplicates";
 
 // State + handlers for an "Add Lead" form (residential and commercial share
-// this). Rejects addresses already in `existingLeads`, and on submit saves a
-// new lead of `leadType` and prepends it to the list, then calls `onSaved`.
+// this). Rejects an address already in any lead list (`existingLeads`) or
+// the CRM (`existingDeals`), and on submit saves a new lead of `leadType`
+// and prepends it to the list, then calls `onSaved`.
 export function useLeadForm({
   createEmpty,
   leadType,
   existingLeads,
-  duplicateMessage,
+  existingDeals = [],
   currentUser,
   saveLead,
   setLeads,
@@ -44,9 +42,13 @@ export function useLeadForm({
   }
 
   function checkDuplicate(address) {
-    const duplicate = findDuplicateByAddress(existingLeads, address);
-    if (duplicate) setError(duplicateMessage(duplicate.address));
-    return Boolean(duplicate);
+    const conflict = findAddressConflict({
+      address,
+      leads: existingLeads,
+      deals: existingDeals,
+    });
+    if (conflict) setError(addressConflictMessage(address, conflict));
+    return Boolean(conflict);
   }
 
   function handleAddressBlur(e) {

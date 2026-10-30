@@ -352,14 +352,6 @@ export function parseAddress(full) {
   return { address: full, city: "", state: "", zipCode: "" };
 }
 
-export function followUpStatus(dateStr) {
-  if (!dateStr) return null;
-  const today = todayStr();
-  if (dateStr < today) return "overdue";
-  if (dateStr === today) return "today";
-  return "upcoming";
-}
-
 // Case-insensitive "does any of these fields contain the query" check used
 // by every lead list's search box.
 export function leadMatchesSearch(lead, query, fields) {
