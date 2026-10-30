@@ -67,6 +67,8 @@ export function createEmptyDealForm() {
     sellerFirstName: "",
     sellerLastName: "",
     sellerPhone: "",
+    sellerPhones: [],
+    sellerEmail: "",
     listingUrl: "",
     rent: "",
     occupied: "No",

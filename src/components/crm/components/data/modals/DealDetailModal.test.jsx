@@ -119,7 +119,7 @@ describe("DealDetailModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("Save Changes button is enabled by default", () => {
+  it("Save Changes is disabled until something in the form changes", () => {
     render(
       <DealDetailModal
         isOpen={true}
@@ -128,9 +128,25 @@ describe("DealDetailModal", () => {
         updateDealPatch={vi.fn()}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: /Save Changes/i }),
-    ).not.toBeDisabled();
+    const save = screen.getByRole("button", { name: /Save Changes/i });
+    expect(save).toBeDisabled();
+
+    const address = screen.getByDisplayValue("1 Main St");
+    fireEvent.change(address, { target: { value: "2 Main St" } });
+    expect(save).not.toBeDisabled();
+
+    // Changing it back leaves nothing to save.
+    fireEvent.change(address, { target: { value: "1 Main St" } });
+    expect(save).toBeDisabled();
+
+    // A blank extra phone isn't saved, so it isn't a change either.
+    fireEvent.click(screen.getByRole("button", { name: /Add phone/i }));
+    expect(save).toBeDisabled();
+    const phones = screen.getAllByPlaceholderText("555-000-0000");
+    fireEvent.change(phones[phones.length - 1], {
+      target: { value: "5125550100" },
+    });
+    expect(save).not.toBeDisabled();
   });
 
   it("renders Reactivate button when onReactivate provided", () => {
@@ -176,6 +192,9 @@ describe("DealDetailModal", () => {
         updateDealPatch={updateDealPatch}
       />,
     );
+    fireEvent.change(screen.getByDisplayValue("1 Main St"), {
+      target: { value: "2 Main St" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
     expect(updateDealPatch).toHaveBeenCalled();
   });
@@ -651,6 +670,9 @@ describe("DealDetailModal", () => {
       />,
     );
 
+    fireEvent.change(screen.getByDisplayValue("$190,000"), {
+      target: { value: "195000" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
 
     expect(alertSpy).toHaveBeenCalledWith(

@@ -400,6 +400,8 @@ export function buildDealFromLead(lead, userId) {
     sellerFirstName: firstName,
     sellerLastName: lastName,
     sellerPhone: lead.phone || "",
+    sellerPhones: lead.phone2 ? [lead.phone2] : [],
+    sellerEmail: lead.email || lead.sellerEmail || "",
     // PPL leads collect an ARV; carry it over so the deal's MAO calculates.
     arv:
       Math.round(parseFloat(String(lead.arv || "").replace(/[^0-9.]/g, ""))) ||
@@ -410,6 +412,13 @@ export function buildDealFromLead(lead, userId) {
     fromLead: JSON.parse(JSON.stringify({ ...lead, photos: [] })),
     notes: dealNotesFromLead(lead),
   };
+}
+
+// { [field]: value } when value is set on the deal and differs from the
+// lead's (blank and missing count as the same), else {}.
+function changedField(lead, field, value) {
+  if (value === undefined || (value || "") === (lead[field] || "")) return {};
+  return { [field]: value };
 }
 
 // The lead a CRM deal goes back to Leads as: the lead it was made from
@@ -431,6 +440,17 @@ export function buildLeadFromDeal(deal, userId) {
     return {
       ...lead,
       phone: deal.sellerPhone || lead.phone || "",
+      // Phone 2 and email come back only when they were changed on the deal.
+      ...changedField(
+        lead,
+        "phone2",
+        deal.sellerPhones && (deal.sellerPhones[0] || ""),
+      ),
+      ...changedField(
+        lead,
+        lead.leadType === "commercial" ? "sellerEmail" : "email",
+        deal.sellerEmail,
+      ),
       notes: notesNow,
     };
   }
@@ -444,6 +464,8 @@ export function buildLeadFromDeal(deal, userId) {
     firstName: deal.sellerFirstName || "",
     lastName: deal.sellerLastName || "",
     phone: deal.sellerPhone || "",
+    phone2: deal.sellerPhones?.[0] || "",
+    email: deal.sellerEmail || "",
     address: [
       deal.address,
       deal.city,

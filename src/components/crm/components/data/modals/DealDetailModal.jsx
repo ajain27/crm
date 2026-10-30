@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Upload, Loader2, Trash2, FileText } from "lucide-react";
+import { Upload, Loader2, Trash2, FileText, Plus, X } from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
@@ -78,6 +78,15 @@ function sellerNameFromNotes(notes) {
   return splitName(match ? match[1] : "");
 }
 
+// Deals added from leads before the email field existed have it on the
+// lead they came from, or as an "Email: …" line in their notes.
+function sellerEmailFromDeal(deal) {
+  const fromLead = deal.fromLead?.email || deal.fromLead?.sellerEmail;
+  if (fromLead) return fromLead;
+  const match = String(deal.notes || "").match(/^Email:\s*(\S+)\s*$/m);
+  return match ? match[1] : "";
+}
+
 function initDraft(deal) {
   const d = { ...deal };
   if (!d.sellerFirstName && !d.sellerLastName) {
@@ -85,10 +94,39 @@ function initDraft(deal) {
     d.sellerFirstName = firstName;
     d.sellerLastName = lastName;
   }
+  if (d.sellerEmail === undefined) d.sellerEmail = sellerEmailFromDeal(d);
+  // Phones past the first; older deals may have a second on their lead.
+  if (!Array.isArray(d.sellerPhones)) {
+    d.sellerPhones = d.fromLead?.phone2 ? [d.fromLead.phone2] : [];
+  }
   CURRENCY_FIELDS.forEach((f) => {
     d[f] = d[f] ? fmtCurrency(String(d[f])) : "";
   });
+  // The MAO as the form will calculate it, so opening a deal doesn't count
+  // as a change.
+  if (parseCurrency(d.arv) > 0) {
+    const mao = getSuggestedWholesaleMao(d);
+    d.mao = mao > 0 ? fmtCurrency(String(mao)) : "";
+  }
   return d;
+}
+
+// A field's value for comparing the form with the saved deal: blank and
+// missing are the same, and blank extra phones aren't saved.
+function comparable(key, value) {
+  if (key === "sellerPhones") return (value || []).filter((p) => p.trim());
+  return value ?? "";
+}
+
+// Whether the form differs from the deal as it was opened. Photos save on
+// their own, so they don't count.
+function isDraftChanged(draft, saved) {
+  return Object.keys({ ...draft, ...saved }).some((key) => {
+    if (key === "photos") return false;
+    const a = comparable(key, draft[key]);
+    const b = comparable(key, saved[key]);
+    return a !== b && JSON.stringify(a) !== JSON.stringify(b);
+  });
 }
 
 function Section({ title, children }) {
@@ -150,6 +188,8 @@ function DealDetailModal({
   currentUserId,
 }) {
   const [draft, setDraft] = useState({});
+  // The form as the deal was opened (or last saved), for Save Changes.
+  const [savedDraft, setSavedDraft] = useState({});
   const [saving, setSaving] = useState(false);
   const {
     printRef: offerRef,
@@ -242,9 +282,12 @@ function DealDetailModal({
     pendingCompsNotes.current = null;
     if (isCompsNoteUpdate) {
       setDraft((prev) => ({ ...prev, notes: deal.notes }));
+      setSavedDraft((prev) => ({ ...prev, notes: deal.notes }));
       return;
     }
-    setDraft(initDraft(deal));
+    const initial = initDraft(deal);
+    setDraft(initial);
+    setSavedDraft(initial);
     if (previous?.id !== deal.id) setEditingNotes(false);
   }, [deal]);
 
@@ -286,6 +329,8 @@ function DealDetailModal({
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
+  const sellerPhones = draft.sellerPhones || [];
+  const hasChanges = isDraftChanged(draft, savedDraft);
   const assignedPriceTooLow = isAssignedPriceTooLow(
     parseCurrency(draft.contractPrice),
     parseCurrency(draft.assignedPrice),
@@ -385,6 +430,7 @@ function DealDetailModal({
       await updateDealPatch(deal.id, {
         ...rest,
         ...numeric,
+        sellerPhones: (rest.sellerPhones || []).filter((p) => p.trim()),
         closedDate,
         closedInMonth,
       });
@@ -484,7 +530,7 @@ function DealDetailModal({
             <button
               className="primary-btn"
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !hasChanges}
             >
               {saving ? "Saving…" : "Save Changes"}
             </button>
@@ -618,14 +664,79 @@ function DealDetailModal({
                       placeholder="Last name"
                     />
                   </Field>
-                  <Field label="Seller Phone">
+                  <Field
+                    label="Seller Phone"
+                    action={
+                      !locked && (
+                        <button
+                          type="button"
+                          className="leads-mls-link ddm-doc-link"
+                          onClick={() =>
+                            set("sellerPhones", [...sellerPhones, ""])
+                          }
+                        >
+                          <Plus size={12} />
+                          Add phone
+                        </button>
+                      )
+                    }
+                  >
                     <input
                       disabled={locked}
+                      type="tel"
                       value={draft.sellerPhone || ""}
                       onChange={(e) =>
                         set("sellerPhone", formatPhone(e.target.value))
                       }
                       placeholder="555-000-0000"
+                    />
+                  </Field>
+                  {sellerPhones.map((phone, i) => (
+                    <Field
+                      key={i}
+                      label={`Seller Phone ${i + 2}`}
+                      action={
+                        !locked && (
+                          <button
+                            type="button"
+                            className="leads-mls-link ddm-doc-link"
+                            onClick={() =>
+                              set(
+                                "sellerPhones",
+                                sellerPhones.filter((_, j) => j !== i),
+                              )
+                            }
+                          >
+                            <X size={12} />
+                            Remove
+                          </button>
+                        )
+                      }
+                    >
+                      <input
+                        disabled={locked}
+                        type="tel"
+                        value={phone}
+                        onChange={(e) =>
+                          set(
+                            "sellerPhones",
+                            sellerPhones.map((p, j) =>
+                              j === i ? formatPhone(e.target.value) : p,
+                            ),
+                          )
+                        }
+                        placeholder="555-000-0000"
+                      />
+                    </Field>
+                  ))}
+                  <Field label="Seller Email">
+                    <input
+                      disabled={locked}
+                      type="email"
+                      value={draft.sellerEmail || ""}
+                      onChange={(e) => set("sellerEmail", e.target.value)}
+                      onBlur={(e) => set("sellerEmail", e.target.value.trim())}
+                      placeholder="seller@email.com"
                     />
                   </Field>
                   <Field label="On Market">
