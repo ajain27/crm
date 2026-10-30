@@ -17,6 +17,10 @@
      - `acc-col-block`        stack a cell's content vertically instead of
                                label/value side-by-side (e.g. multi-line
                                buyer info).
+     - `acc-col-card-only`    only in the card (hidden on the table), e.g.
+                               details the table has no column for. A
+                               hidden cell takes no column, so it can sit
+                               anywhere in the row.
      - `acc-col-hide-mobile`  always hidden on mobile regardless of expand
                                state (e.g. a bulk-select checkbox column —
                                pass the card's checkbox as
@@ -90,6 +94,12 @@
 
   /* `leading` header content only appears in card view. */
   .acc-header-leading {
+    display: none;
+  }
+
+  /* Card-only cells (acc-col-card-only) stay off the table; the card
+     queries below show them like any other cell once a card opens. */
+  .acc-card-container .acc-card .acc-col-card-only {
     display: none;
   }
 

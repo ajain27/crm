@@ -227,3 +227,39 @@ export function getSuggestedWholesaleMao(form) {
 
   return Math.round(suggestedMao);
 }
+
+// The lead details a deal shows, as [deal field, the lead's field(s), the
+// line the deal's notes have it on]. Deals added from leads before these
+// fields existed have them on the lead they came from, or in their notes.
+const LEAD_DETAIL_SOURCES = [
+  ["sellerEmail", ["email", "sellerEmail"], "Email"],
+  ["askingPrice", ["askingPrice"], "Asking Price"],
+  ["occupant", ["occupant"], "Living in Property"],
+  ["sellingUrgency", ["sellingUrgency"], "Selling Urgency"],
+  ["sellerMotivation", ["sellerMotivation"], "Seller Motivation"],
+  ["followUpDate", ["followUpDate"], null],
+];
+
+function leadDetailFromLead(deal, leadFields, notesLabel) {
+  for (const field of leadFields) {
+    if (deal.fromLead?.[field]) return deal.fromLead[field];
+  }
+  if (!notesLabel) return "";
+  const match = String(deal.notes || "").match(
+    new RegExp(`^${notesLabel}:[ \\t]*(.+?)[ \\t]*$`, "m"),
+  );
+  return match ? match[1] : "";
+}
+
+export const DEAL_LEAD_DETAILS = LEAD_DETAIL_SOURCES.map(([field]) => field);
+
+// A deal's `field` (one of DEAL_LEAD_DETAILS): its own value, else the one
+// on the lead it came from or in its notes.
+export function dealLeadDetail(deal, field) {
+  if (deal?.[field] !== undefined) return deal[field];
+  const [, leadFields, notesLabel] =
+    LEAD_DETAIL_SOURCES.find(([f]) => f === field) || [];
+  return leadFields
+    ? leadDetailFromLead(deal || {}, leadFields, notesLabel)
+    : "";
+}

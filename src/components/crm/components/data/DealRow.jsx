@@ -4,8 +4,12 @@ import {
   Badge,
 } from "../../../elements/elements";
 import { currency } from "../../../../utils/utils";
-import { PhoneLink } from "../../../leads/components/LeadTableCells";
-import { isDealRejected, isDealWithdrawn } from "../crmConfig";
+import {
+  EmailCell,
+  NotesCell,
+  PhoneCell,
+} from "../../../leads/components/LeadTableCells";
+import { dealLeadDetail, isDealRejected, isDealWithdrawn } from "../crmConfig";
 
 function formatFullAddress(deal) {
   const stateZip = [deal.state, deal.zipCode].filter(Boolean).join(" ");
@@ -66,14 +70,28 @@ function DealRow({ deal, index, onRowDetailClick }) {
       <td data-label="Offer Sent">
         <Badge value={deal.offerStatus || "Not Sent"} />
       </td>
-      <ReadOnlyCell value={sellerName || "—"} label="Seller" />
-      <td
-        data-label="Phone"
-        className="dt-col-action"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <PhoneLink phone={deal.sellerPhone || deal.agentPhone} />
+      {/* The seller heads the card, so only the table shows this. */}
+      <td className="acc-col-hide-mobile" data-label="Seller">
+        <span className="readonly-input">{sellerName || "—"}</span>
       </td>
+      {/* Card-only, like the address and notes below. */}
+      <EmailCell
+        className="acc-col-card-only dt-card-contact"
+        email={dealLeadDetail(deal, "sellerEmail")}
+      />
+      <PhoneCell
+        className="dt-card-contact"
+        phones={[
+          deal.sellerPhone || deal.agentPhone,
+          ...(deal.sellerPhones || []),
+        ]}
+      />
+      {/* Card-only (an open card reads like a lead's): the address and the
+          full notes. */}
+      <td className="acc-col-card-only dt-card-contact" data-label="Address">
+        {formatFullAddress(deal) || "—"}
+      </td>
+      <NotesCell className="acc-col-card-only" notes={deal.notes} />
     </tr>
   );
 }

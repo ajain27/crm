@@ -53,6 +53,8 @@ import {
   DEAL_TYPES,
   ASSIGNED_PRICE_ERROR,
   isAssignedPriceTooLow,
+  DEAL_LEAD_DETAILS,
+  dealLeadDetail,
 } from "../../crmConfig";
 import CurrencyInput from "../../../../elements/CurrencyInput";
 
@@ -96,29 +98,6 @@ function sellerNameFromNotes(notes) {
   return splitName(match ? match[1] : "");
 }
 
-// The lead details a deal shows, as [deal field, the lead's field(s), the
-// line the deal's notes have it on]. Deals added from leads before these
-// fields existed have them on the lead they came from, or in their notes.
-const LEAD_DETAILS = [
-  ["sellerEmail", ["email", "sellerEmail"], "Email"],
-  ["askingPrice", ["askingPrice"], "Asking Price"],
-  ["occupant", ["occupant"], "Living in Property"],
-  ["sellingUrgency", ["sellingUrgency"], "Selling Urgency"],
-  ["sellerMotivation", ["sellerMotivation"], "Seller Motivation"],
-  ["followUpDate", ["followUpDate"], null],
-];
-
-function leadDetailFromDeal(deal, leadFields, notesLabel) {
-  for (const field of leadFields) {
-    if (deal.fromLead?.[field]) return deal.fromLead[field];
-  }
-  if (!notesLabel) return "";
-  const match = String(deal.notes || "").match(
-    new RegExp(`^${notesLabel}:[ \\t]*(.+?)[ \\t]*$`, "m"),
-  );
-  return match ? match[1] : "";
-}
-
 function initDraft(deal) {
   const d = { ...deal };
   if (!d.sellerFirstName && !d.sellerLastName) {
@@ -126,10 +105,8 @@ function initDraft(deal) {
     d.sellerFirstName = firstName;
     d.sellerLastName = lastName;
   }
-  LEAD_DETAILS.forEach(([field, leadFields, notesLabel]) => {
-    if (d[field] === undefined) {
-      d[field] = leadDetailFromDeal(d, leadFields, notesLabel);
-    }
+  DEAL_LEAD_DETAILS.forEach((field) => {
+    d[field] = dealLeadDetail(d, field);
   });
   // The comps and history of the lead a deal was made from show on the
   // deal until it has its own.

@@ -66,6 +66,31 @@ describe("DealRow", () => {
     ).toHaveTextContent("1 Main St, Austin, TX 78701");
   });
 
+  it("opens its card to a lead's details: email, phones, address and notes", () => {
+    const { container } = renderRow({
+      deal: {
+        ...deal,
+        sellerPhone: "512-555-0100",
+        sellerPhones: ["512-555-0101"],
+        notes: "Seller owes 53k.",
+        // An older deal: the email is only on the lead it came from.
+        fromLead: { email: "jane@example.com" },
+      },
+    });
+    const cardOnly = [...container.querySelectorAll(".acc-col-card-only")];
+    expect(cardOnly.map((td) => td.dataset.label)).toEqual([
+      "Email",
+      "Address",
+      "Notes",
+    ]);
+    expect(cardOnly[0]).toHaveTextContent("jane@example.com");
+    expect(cardOnly[1]).toHaveTextContent("1 Main St, Austin, TX 78701");
+    expect(cardOnly[2]).toHaveTextContent("Seller owes 53k.");
+    // Every number, in the table and the card.
+    expect(screen.getByText("512-555-0100")).toBeInTheDocument();
+    expect(screen.getByText("512-555-0101")).toBeInTheDocument();
+  });
+
   it("renders the offer status badge", () => {
     renderRow();
     expect(screen.getByText("Not Sent")).toBeInTheDocument();

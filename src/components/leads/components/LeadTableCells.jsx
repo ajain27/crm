@@ -144,25 +144,28 @@ export function PhoneLink({ phone }) {
   );
 }
 
-export function EmailCell({ email }) {
+export function EmailCell({ email, className }) {
   return (
-    <ActionCell data-label="Email">
+    <ActionCell className={className} data-label="Email">
       <EmailLink email={email} />
     </ActionCell>
   );
 }
 
-// A second number (`phone2`, e.g. from an import) shows under the first.
-export function PhoneCell({ phone, phone2 }) {
+// A second number (`phone2`, e.g. from an import) shows under the first;
+// `phones` lists any number of them instead.
+export function PhoneCell({ phone, phone2, phones, className }) {
+  const all = (phones || [phone, phone2]).filter(Boolean);
   return (
-    <ActionCell data-label="Phone">
-      {phone2 ? (
+    <ActionCell className={className} data-label="Phone">
+      {all.length > 1 ? (
         <span className="leads-phone-stack">
-          <PhoneLink phone={phone} />
-          <PhoneLink phone={phone2} />
+          {all.map((p, i) => (
+            <PhoneLink key={i} phone={p} />
+          ))}
         </span>
       ) : (
-        <PhoneLink phone={phone} />
+        <PhoneLink phone={all[0]} />
       )}
     </ActionCell>
   );
@@ -210,9 +213,12 @@ export function SourceCell({ source }) {
   );
 }
 
-export function NotesCell({ notes }) {
+export function NotesCell({ notes, className = "" }) {
   return (
-    <td className="leads-notes-cell acc-col-block" data-label="Notes">
+    <td
+      className={`leads-notes-cell acc-col-block ${className}`.trim()}
+      data-label="Notes"
+    >
       {notes ? (
         <>
           <span className="leads-notes-preview" title={notes}>

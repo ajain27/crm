@@ -2,12 +2,20 @@ import "@testing-library/jest-dom";
 import { configure } from "@testing-library/react";
 import { vi } from "vitest";
 
-// An accordion card's summary (AccordionHeaderCell `card`) repeats the
-// row's seller name and address for the small-screen card view; CSS hides
-// it on the table, but jsdom applies no CSS. Text queries skip it, as the
-// screen does — tests that want it look it up by its class.
+// Accordion cards repeat some of a row's details for the small-screen
+// card view — the summary (AccordionHeaderCell `card`) and card-only cells
+// (acc-col-card-only) — which CSS hides on the table, but jsdom applies no
+// CSS. Text queries skip them, as the screen does; tests that want them
+// look them up by class.
 configure({
-  defaultIgnore: "script, style, .acc-card-summary, .acc-card-summary *",
+  defaultIgnore: [
+    "script",
+    "style",
+    ".acc-card-summary",
+    ".acc-card-summary *",
+    ".acc-col-card-only",
+    ".acc-col-card-only *",
+  ].join(", "),
 });
 
 vi.mock("./hooks/useCountUp", () => ({

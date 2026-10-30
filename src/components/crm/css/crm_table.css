@@ -1095,13 +1095,14 @@
      table's own deltas live here. Like the Leads tables, it collapses at
      the wide breakpoint (acc-card-container--wide). */
   @container acc-wide (max-width: 1300px) {
-    .dt-table.acc-card .dt-col-action {
-      padding: 0.35rem 1rem;
-      justify-content: flex-end;
+    /* An open card reads like a lead's: contact details first (email,
+       phone, address), then the deal's numbers, then the notes. */
+    .dt-table.acc-card .acc-col-header {
+      order: -2;
     }
 
-    .dt-table.acc-card .dt-col-action::before {
-      content: none;
+    .dt-table.acc-card .dt-card-contact {
+      order: -1;
     }
   }
 
