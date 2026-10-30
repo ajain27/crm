@@ -204,7 +204,9 @@ function Wholesale_data({
         )}
       </div>
 
+      {/* Collapses into cards at the same width as the Leads tables. */}
       <AccordionTable
+        wide
         resizeKey="deals"
         className="dt-table"
         wrapClassName="dt-table-container"

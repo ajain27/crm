@@ -1092,8 +1092,9 @@
   /* The base card-stacking + accordion behavior lives in
      src/styles/accordionCard.css (enabled via the `acc-card-container` /
      `acc-card` classes) and is shared with other tables. Only this
-     table's own deltas live here. */
-  @container (max-width: 900px) {
+     table's own deltas live here. Like the Leads tables, it collapses at
+     the wide breakpoint (acc-card-container--wide). */
+  @container acc-wide (max-width: 1300px) {
     .dt-table.acc-card .dt-col-action {
       padding: 0.35rem 1rem;
       justify-content: flex-end;

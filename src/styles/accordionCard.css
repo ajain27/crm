@@ -5,7 +5,7 @@
    and renders each `data-label`'d cell as a label/value line, all under
    900px of container width. No other per-table CSS is required.
 
-   Tables with many columns (leads) don't fit at 900px on a
+   Tables with many columns (leads, CRM deals) don't fit at 900px on a
    laptop; `acc-card-container--wide` collapses them at 1300px instead.
    The AccordionTable component (src/components/elements/AccordionTable.jsx)
    sets all of this up: <AccordionTable wide> for the wide breakpoint.

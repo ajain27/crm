@@ -6,7 +6,7 @@ import ResizableTable from "./ResizableTable";
 // src/styles/accordionCard.css.
 //
 // Cards replace the table below 900px of table width, or below 1300px with
-// `wide` (for tables with many columns, e.g. leads). Columns
+// `wide` (for tables with many columns, e.g. leads and CRM deals). Columns
 // can be resized by dragging, remembered under `resizeKey`. `footer` (e.g.
 // pagination) goes under the table, inside its wrapper.
 export default function AccordionTable({
