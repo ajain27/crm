@@ -308,6 +308,13 @@ describe("DealDetailModal", () => {
     expect(text).toContain("8. LIENS, TAXES & ENCUMBRANCES");
     expect(text).toContain("paid in full at closing from Seller's proceeds");
     expect(text).toContain("9. OFFER EXPIRATION & ACCEPTANCE");
+    expect(text).toContain("10. CLOSING COSTS");
+    expect(text).toContain(
+      "paid by Buyer or, if this Agreement is assigned or novated, by the End Buyer (Assignee/New Buyer) at the time of closing",
+    );
+    expect(text).toContain(
+      "Seller's obligations under Section 8 are unchanged.",
+    );
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
 
@@ -342,6 +349,13 @@ describe("DealDetailModal", () => {
     expect(text).toContain("6. ENTIRE AGREEMENT");
     expect(text).toContain("7. LIENS, TAXES & ENCUMBRANCES");
     expect(text).toContain("8. OFFER EXPIRATION & ACCEPTANCE");
+    // Closing costs fall to the Buyer alone, and point at Liens' number.
+    expect(text).toContain("9. CLOSING COSTS");
+    expect(text).toContain("paid by Buyer at the time of closing");
+    expect(text).not.toContain("End Buyer");
+    expect(text).toContain(
+      "Seller's obligations under Section 7 are unchanged.",
+    );
   });
 
   it("won't generate an offer without an EMD or inspection period", () => {

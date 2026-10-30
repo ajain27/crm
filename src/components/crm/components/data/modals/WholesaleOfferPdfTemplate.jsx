@@ -293,6 +293,20 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           </p>
         </Section>
 
+        <Section number={afterRemedies + 3} title="CLOSING COSTS">
+          <p>
+            All closing costs associated with this transaction shall be paid by
+            Buyer
+            {allowAssignment &&
+              " or, if this Agreement is assigned or novated, by the End Buyer (Assignee/New Buyer)"}{" "}
+            at the time of closing, including title insurance, escrow and
+            settlement fees, recording fees, State and County transfer taxes,
+            and document preparation fees. Seller shall not pay any closing
+            costs, and Seller's proceeds shall not be reduced by them. Seller's
+            obligations under Section {afterRemedies + 1} are unchanged.
+          </p>
+        </Section>
+
         <div className="oa-pdf-warning">
           THIS IS INTENDED TO BE A LEGALLY BINDING CONTRACT. IF YOU DO NOT
           UNDERSTAND THE LEGAL EFFECT OF ANY PART OF THIS AGREEMENT, SEEK
