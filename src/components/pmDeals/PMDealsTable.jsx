@@ -3,7 +3,7 @@ import { fmt, formatDate, parseCurrency } from "../../utils/utils";
 import ClearFiltersButton from "../elements/ClearFiltersButton";
 import { AccordionHeaderCell } from "../elements/elements";
 import "./PMDealsTable.css";
-import ResizableTable from "../elements/ResizableTable";
+import AccordionTable from "../elements/AccordionTable";
 
 // When a borrower has more than one deal, number them "Deal 1", "Deal 2"…
 // (earliest lendDate first) so the accordion heading can tell them apart.
@@ -287,81 +287,77 @@ export default function PMDealsTable({
           <p>No deals match your filters.</p>
         </div>
       ) : (
-        <div className="table-wrap acc-card-container">
-          <ResizableTable
-            resizeKey="pm-deals"
-            className="compact-table acc-card pm-deals-table"
-          >
-            <thead>
-              <tr>
-                <th>Borrower Name</th>
-                <th>Company</th>
-                <th className="pm-col-extra">Property Address</th>
-                <th>Amount Lent</th>
-                <th className="pm-col-extra">Rate</th>
-                <th>Term</th>
-                <th className="pm-col-extra">Lend Date</th>
-                <th className="pm-col-extra">Due Date</th>
-                <th className="pm-col-extra">Days Late</th>
-                <th className="pm-col-extra">Interest</th>
-                <th className="pm-col-extra">Late Fee</th>
-                <th className="pm-col-extra">Total Payout</th>
-                <th className="acc-col-hide-mobile">Details</th>
-              </tr>
-            </thead>
-            {groupedDeals.map((group) =>
-              group.deals.length > 1 ? (
-                <tbody className="acc-group" key={group.key}>
-                  <tr className="acc-group-header-row">
-                    <AccordionHeaderCell
-                      id={`group-${group.key}`}
-                      label="Borrower Name"
-                      value={`${group.borrowerName} · ${group.deals.length} deals`}
-                      colSpan={2}
-                    />
-                    <td data-label="Amount Lent">
-                      {fmt(
-                        group.deals.reduce(
-                          (sum, d) => sum + parseCurrency(d.amountLent),
-                          0,
-                        ),
-                      )}
-                    </td>
-                    <td colSpan={PM_VISIBLE_COLUMN_COUNT - 3} />
-                  </tr>
-                  {group.deals.map((deal) =>
-                    renderDealRow(deal, { isGroupMember: true }),
-                  )}
-                </tbody>
-              ) : (
-                <tbody key={group.key}>{renderDealRow(group.deals[0])}</tbody>
-              ),
-            )}
-            <tfoot>
-              <tr
-                style={{ fontWeight: 700, borderTop: "2px solid var(--line)" }}
+        <AccordionTable
+          resizeKey="pm-deals"
+          className="compact-table pm-deals-table"
+        >
+          <thead>
+            <tr>
+              <th>Borrower Name</th>
+              <th>Company</th>
+              <th className="pm-col-extra">Property Address</th>
+              <th>Amount Lent</th>
+              <th className="pm-col-extra">Rate</th>
+              <th>Term</th>
+              <th className="pm-col-extra">Lend Date</th>
+              <th className="pm-col-extra">Due Date</th>
+              <th className="pm-col-extra">Days Late</th>
+              <th className="pm-col-extra">Interest</th>
+              <th className="pm-col-extra">Late Fee</th>
+              <th className="pm-col-extra">Total Payout</th>
+              <th className="acc-col-hide-mobile">Details</th>
+            </tr>
+          </thead>
+          {groupedDeals.map((group) =>
+            group.deals.length > 1 ? (
+              <tbody className="acc-group" key={group.key}>
+                <tr className="acc-group-header-row">
+                  <AccordionHeaderCell
+                    id={`group-${group.key}`}
+                    label="Borrower Name"
+                    value={`${group.borrowerName} · ${group.deals.length} deals`}
+                    colSpan={2}
+                  />
+                  <td data-label="Amount Lent">
+                    {fmt(
+                      group.deals.reduce(
+                        (sum, d) => sum + parseCurrency(d.amountLent),
+                        0,
+                      ),
+                    )}
+                  </td>
+                  <td colSpan={PM_VISIBLE_COLUMN_COUNT - 3} />
+                </tr>
+                {group.deals.map((deal) =>
+                  renderDealRow(deal, { isGroupMember: true }),
+                )}
+              </tbody>
+            ) : (
+              <tbody key={group.key}>{renderDealRow(group.deals[0])}</tbody>
+            ),
+          )}
+          <tfoot>
+            <tr style={{ fontWeight: 700, borderTop: "2px solid var(--line)" }}>
+              <td
+                colSpan={2}
+                style={{
+                  color: "var(--muted)",
+                  fontSize: "0.8rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
               >
-                <td
-                  colSpan={2}
-                  style={{
-                    color: "var(--muted)",
-                    fontSize: "0.8rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Totals ({filteredDeals.length})
-                  <div className="pm-totals-breakdown">
-                    Interest {fmt(totals.interest)} · Late Fee{" "}
-                    {fmt(totals.lateFee)} · Payout {fmt(totals.totalPayout)}
-                  </div>
-                </td>
-                <td>{fmt(totals.principal)}</td>
-                <td colSpan={2} />
-              </tr>
-            </tfoot>
-          </ResizableTable>
-        </div>
+                Totals ({filteredDeals.length})
+                <div className="pm-totals-breakdown">
+                  Interest {fmt(totals.interest)} · Late Fee{" "}
+                  {fmt(totals.lateFee)} · Payout {fmt(totals.totalPayout)}
+                </div>
+              </td>
+              <td>{fmt(totals.principal)}</td>
+              <td colSpan={2} />
+            </tr>
+          </tfoot>
+        </AccordionTable>
       )}
     </section>
   );

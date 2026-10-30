@@ -28,8 +28,8 @@ describe("BuyerData", () => {
         />,
       );
       const checkboxes = screen.getAllByRole("checkbox");
-      // header checkbox + 1 row checkbox
-      expect(checkboxes).toHaveLength(2);
+      // header checkbox + the row's checkbox, in the table and on its card
+      expect(checkboxes).toHaveLength(3);
     });
 
     it("calls onToggleSelect when a row checkbox is clicked", () => {

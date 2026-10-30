@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { ReadOnlyCell } from "../../elements/elements";
+import { AccordionHeaderCell, ReadOnlyCell } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
 import { Edit2, Check } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
-import ResizableTable from "../../elements/ResizableTable";
+import AccordionTable from "../../elements/AccordionTable";
 import { PAGE_SIZE } from "../../pagination/usePagination";
 
 const EMPTY_SET = new Set();
@@ -59,298 +59,307 @@ function BuyerData({
 
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
-      <div className="table-wrap">
-        <ResizableTable resizeKey="buyers" className="compact-table">
+      <AccordionTable resizeKey="buyers" className="compact-table">
+        <thead>
+          <tr>
+            <th className="buyer-checkbox-cell">
+              <input
+                type="checkbox"
+                className="buyer-checkbox"
+                checked={allPageSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = somePageSelected;
+                }}
+                onChange={() => onSelectAll(paginatedBuyers, allPageSelected)}
+                title="Select all on this page"
+              />
+            </th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>State</th>
+            <th>City</th>
+            <th>Buys</th>
+            <th>Phone Number</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        {allPageSelected && filteredBuyers.length > paginatedBuyers.length && (
           <thead>
             <tr>
-              <th className="buyer-checkbox-cell">
+              <td colSpan={8} className="buyer-select-all-banner">
+                {selectedIds.size === filteredBuyers.length ? (
+                  <>
+                    All <strong>{filteredBuyers.length}</strong> buyers are
+                    selected.{" "}
+                    <button
+                      className="buyer-select-all-link"
+                      onClick={() => onSelectAllFiltered(false)}
+                    >
+                      Clear selection
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    All <strong>{paginatedBuyers.length}</strong> buyers on this
+                    page are selected.{" "}
+                    <button
+                      className="buyer-select-all-link"
+                      onClick={() => onSelectAllFiltered(true)}
+                    >
+                      Select all {filteredBuyers.length} buyers
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {paginatedBuyers.length === 0 && (
+            <tr>
+              <td
+                colSpan={9}
+                style={{
+                  textAlign: "center",
+                  padding: "2rem",
+                  color: "var(--muted)",
+                }}
+              >
+                No buyers found.
+              </td>
+            </tr>
+          )}
+          {paginatedBuyers.map((buyer, index) => (
+            <tr
+              key={buyer.id}
+              className="clickable-row"
+              onClick={(e) => {
+                // The checkboxes and inline edits keep their own clicks
+                // (the name's accordion label still opens the buyer).
+                if (
+                  e.target.closest(
+                    "button, input, textarea, .buyer-type-option, .buyer-checkbox-cell",
+                  )
+                ) {
+                  return;
+                }
+                onOpenBuyer(buyer.id);
+              }}
+              data-reveal
+              data-selected={selectedIds.has(buyer.id) ? "true" : undefined}
+              style={{ "--reveal-delay": `${index * 35}ms` }}
+            >
+              <td className="buyer-checkbox-cell acc-col-hide-mobile">
                 <input
                   type="checkbox"
                   className="buyer-checkbox"
-                  checked={allPageSelected}
-                  ref={(el) => {
-                    if (el) el.indeterminate = somePageSelected;
-                  }}
-                  onChange={() => onSelectAll(paginatedBuyers, allPageSelected)}
-                  title="Select all on this page"
+                  checked={selectedIds.has(buyer.id)}
+                  onChange={() => onToggleSelect(buyer.id)}
                 />
-              </th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>State</th>
-              <th>City</th>
-              <th>Buys</th>
-              <th>Phone Number</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          {allPageSelected &&
-            filteredBuyers.length > paginatedBuyers.length && (
-              <thead>
-                <tr>
-                  <td colSpan={8} className="buyer-select-all-banner">
-                    {selectedIds.size === filteredBuyers.length ? (
-                      <>
-                        All <strong>{filteredBuyers.length}</strong> buyers are
-                        selected.{" "}
-                        <button
-                          className="buyer-select-all-link"
-                          onClick={() => onSelectAllFiltered(false)}
-                        >
-                          Clear selection
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        All <strong>{paginatedBuyers.length}</strong> buyers on
-                        this page are selected.{" "}
-                        <button
-                          className="buyer-select-all-link"
-                          onClick={() => onSelectAllFiltered(true)}
-                        >
-                          Select all {filteredBuyers.length} buyers
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              </thead>
-            )}
-          <tbody>
-            {paginatedBuyers.length === 0 && (
-              <tr>
-                <td
-                  colSpan={9}
-                  style={{
-                    textAlign: "center",
-                    padding: "2rem",
-                    color: "var(--muted)",
-                  }}
-                >
-                  No buyers found.
-                </td>
-              </tr>
-            )}
-            {paginatedBuyers.map((buyer, index) => (
-              <tr
-                key={buyer.id}
-                className="clickable-row"
-                onClick={(e) => {
-                  // The checkbox and inline edits keep their own clicks.
-                  if (
-                    e.target.closest(
-                      "button, input, textarea, label, .buyer-checkbox-cell",
-                    )
-                  ) {
-                    return;
-                  }
-                  onOpenBuyer(buyer.id);
-                }}
-                data-reveal
-                data-selected={selectedIds.has(buyer.id) ? "true" : undefined}
-                style={{ "--reveal-delay": `${index * 35}ms` }}
-              >
-                <td className="buyer-checkbox-cell">
+              </td>
+              {/* On smaller screens each buyer is a card headed by their
+                    name, with the select checkbox beside it. */}
+              <AccordionHeaderCell
+                id={buyer.id}
+                label="Name"
+                value={buyer.fullName || "—"}
+                valueClassName="readonly-input wide"
+                leading={
                   <input
                     type="checkbox"
                     className="buyer-checkbox"
                     checked={selectedIds.has(buyer.id)}
                     onChange={() => onToggleSelect(buyer.id)}
+                    aria-label="Select buyer"
                   />
-                </td>
-                <ReadOnlyCell value={buyer.fullName} wide />
-                <td>
-                  {editingBuyerId === buyer.id && editingField === "email" ? (
-                    <div className="inline-edit-row">
-                      <input
-                        id={`edit-email-${buyer.id}`}
-                        className="editable-input wide"
-                        value={editFieldValue}
-                        onChange={(e) => setEditFieldValue(e.target.value)}
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveField(buyer.id);
-                          if (e.key === "Escape") {
-                            setEditingBuyerId(null);
-                            setEditingField(null);
-                          }
-                        }}
-                      />
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => saveField(buyer.id)}
-                        title="Save"
-                      >
-                        <Check size={16} color="var(--green)" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="field-with-action">
-                      <span className="table-text">{buyer.email || "—"}</span>
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => startEditingField(buyer, "email")}
-                        title="Edit Email"
-                      >
-                        <Edit2 size={16} color="var(--muted)" />
-                      </button>
-                    </div>
-                  )}
-                </td>
-                <ReadOnlyCell value={buyer.state} small />
-                <ReadOnlyCell value={buyer.city} />
-                <td>
-                  {editingBuyerId === buyer.id &&
-                  editingField === "realEstateType" ? (
-                    <div className="buyer-type-edit">
-                      {propertyTypes.map((type) => (
-                        <label key={type} className="buyer-type-option">
-                          <input
-                            type="checkbox"
-                            className="buyer-checkbox"
-                            checked={
-                              Array.isArray(editFieldValue) &&
-                              editFieldValue.includes(type)
-                            }
-                            onChange={() =>
-                              setEditFieldValue((prev) =>
-                                Array.isArray(prev) && prev.includes(type)
-                                  ? prev.filter((t) => t !== type)
-                                  : [
-                                      ...(Array.isArray(prev) ? prev : []),
-                                      type,
-                                    ],
-                              )
-                            }
-                          />
-                          <span>{type}</span>
-                        </label>
-                      ))}
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => saveField(buyer.id)}
-                        title="Save"
-                      >
-                        <Check size={16} color="var(--green)" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="field-with-action">
-                      <span className="table-text">
-                        {(Array.isArray(buyer.realEstateType)
-                          ? buyer.realEstateType
-                          : buyer.realEstateType
-                            ? [buyer.realEstateType]
-                            : []
-                        ).join(", ") || "—"}
-                      </span>
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() =>
-                          startEditingField(buyer, "realEstateType")
+                }
+              />
+              <td data-label="Email">
+                {editingBuyerId === buyer.id && editingField === "email" ? (
+                  <div className="inline-edit-row">
+                    <input
+                      id={`edit-email-${buyer.id}`}
+                      className="editable-input wide"
+                      value={editFieldValue}
+                      onChange={(e) => setEditFieldValue(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveField(buyer.id);
+                        if (e.key === "Escape") {
+                          setEditingBuyerId(null);
+                          setEditingField(null);
                         }
-                        title="Edit Types"
-                      >
-                        <Edit2 size={16} color="var(--muted)" />
-                      </button>
-                    </div>
-                  )}
-                </td>
-                <td>
-                  {editingBuyerId === buyer.id && editingField === "phone" ? (
-                    <div className="inline-edit-row">
-                      <input
-                        id={`edit-phone-${buyer.id}`}
-                        className="editable-input narrow"
-                        value={editFieldValue}
-                        onChange={(e) =>
-                          setEditFieldValue(formatPhone(e.target.value))
+                      }}
+                    />
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => saveField(buyer.id)}
+                      title="Save"
+                    >
+                      <Check size={16} color="var(--green)" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="field-with-action">
+                    <span className="table-text">{buyer.email || "—"}</span>
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => startEditingField(buyer, "email")}
+                      title="Edit Email"
+                    >
+                      <Edit2 size={16} color="var(--muted)" />
+                    </button>
+                  </div>
+                )}
+              </td>
+              <ReadOnlyCell value={buyer.state} small label="State" />
+              <ReadOnlyCell value={buyer.city} label="City" />
+              <td data-label="Buys">
+                {editingBuyerId === buyer.id &&
+                editingField === "realEstateType" ? (
+                  <div className="buyer-type-edit">
+                    {propertyTypes.map((type) => (
+                      <label key={type} className="buyer-type-option">
+                        <input
+                          type="checkbox"
+                          className="buyer-checkbox"
+                          checked={
+                            Array.isArray(editFieldValue) &&
+                            editFieldValue.includes(type)
+                          }
+                          onChange={() =>
+                            setEditFieldValue((prev) =>
+                              Array.isArray(prev) && prev.includes(type)
+                                ? prev.filter((t) => t !== type)
+                                : [...(Array.isArray(prev) ? prev : []), type],
+                            )
+                          }
+                        />
+                        <span>{type}</span>
+                      </label>
+                    ))}
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => saveField(buyer.id)}
+                      title="Save"
+                    >
+                      <Check size={16} color="var(--green)" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="field-with-action">
+                    <span className="table-text">
+                      {(Array.isArray(buyer.realEstateType)
+                        ? buyer.realEstateType
+                        : buyer.realEstateType
+                          ? [buyer.realEstateType]
+                          : []
+                      ).join(", ") || "—"}
+                    </span>
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => startEditingField(buyer, "realEstateType")}
+                      title="Edit Types"
+                    >
+                      <Edit2 size={16} color="var(--muted)" />
+                    </button>
+                  </div>
+                )}
+              </td>
+              <td data-label="Phone Number">
+                {editingBuyerId === buyer.id && editingField === "phone" ? (
+                  <div className="inline-edit-row">
+                    <input
+                      id={`edit-phone-${buyer.id}`}
+                      className="editable-input narrow"
+                      value={editFieldValue}
+                      onChange={(e) =>
+                        setEditFieldValue(formatPhone(e.target.value))
+                      }
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveField(buyer.id);
+                        if (e.key === "Escape") {
+                          setEditingBuyerId(null);
+                          setEditingField(null);
                         }
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveField(buyer.id);
-                          if (e.key === "Escape") {
-                            setEditingBuyerId(null);
-                            setEditingField(null);
-                          }
-                        }}
-                      />
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => saveField(buyer.id)}
-                        title="Save"
-                      >
-                        <Check size={16} color="var(--green)" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="field-with-action">
-                      <span className="table-text">
-                        {buyer.phone ? formatPhone(buyer.phone) : "—"}
-                      </span>
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => startEditingField(buyer, "phone")}
-                        title="Edit Phone"
-                      >
-                        <Edit2 size={16} color="var(--muted)" />
-                      </button>
-                    </div>
-                  )}
-                </td>
-                <td>
-                  {editingBuyerId === buyer.id && editingField === "notes" ? (
-                    <div className="inline-edit-row">
-                      <textarea
-                        id={`edit-notes-${buyer.id}`}
-                        className="editable-input wide"
-                        value={editFieldValue}
-                        onChange={(e) => setEditFieldValue(e.target.value)}
-                        autoFocus
-                        rows={3}
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") {
-                            setEditingBuyerId(null);
-                            setEditingField(null);
-                          }
-                        }}
-                      />
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => saveField(buyer.id)}
-                        title="Save"
-                      >
-                        <Check size={16} color="var(--green)" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="field-with-action">
-                      <span
-                        className="table-text"
-                        style={{
-                          maxWidth: "120px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "block",
-                        }}
-                      >
-                        {buyer.notes || "—"}
-                      </span>
-                      <button
-                        className="ghost-btn icon-button"
-                        onClick={() => startEditingField(buyer, "notes")}
-                        title="Edit Notes"
-                      >
-                        <Edit2 size={16} color="var(--muted)" />
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </ResizableTable>
-      </div>
+                      }}
+                    />
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => saveField(buyer.id)}
+                      title="Save"
+                    >
+                      <Check size={16} color="var(--green)" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="field-with-action">
+                    <span className="table-text">
+                      {buyer.phone ? formatPhone(buyer.phone) : "—"}
+                    </span>
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => startEditingField(buyer, "phone")}
+                      title="Edit Phone"
+                    >
+                      <Edit2 size={16} color="var(--muted)" />
+                    </button>
+                  </div>
+                )}
+              </td>
+              <td data-label="Notes">
+                {editingBuyerId === buyer.id && editingField === "notes" ? (
+                  <div className="inline-edit-row">
+                    <textarea
+                      id={`edit-notes-${buyer.id}`}
+                      className="editable-input wide"
+                      value={editFieldValue}
+                      onChange={(e) => setEditFieldValue(e.target.value)}
+                      autoFocus
+                      rows={3}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setEditingBuyerId(null);
+                          setEditingField(null);
+                        }
+                      }}
+                    />
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => saveField(buyer.id)}
+                      title="Save"
+                    >
+                      <Check size={16} color="var(--green)" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="field-with-action">
+                    <span
+                      className="table-text"
+                      style={{
+                        maxWidth: "120px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                    >
+                      {buyer.notes || "—"}
+                    </span>
+                    <button
+                      className="ghost-btn icon-button"
+                      onClick={() => startEditingField(buyer, "notes")}
+                      title="Edit Notes"
+                    >
+                      <Edit2 size={16} color="var(--muted)" />
+                    </button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </AccordionTable>
 
       <Pagination
         currentPage={safePage}

@@ -305,7 +305,9 @@ describe("Buyers component", () => {
       fetchBuyers.mockResolvedValue(BUYERS);
       render(<Buyers theme="light" setTheme={vi.fn()} />);
       const row = (await screen.findByText("Jane Doe")).closest("tr");
-      fireEvent.click(within(row).getByRole("checkbox"));
+      for (const checkbox of within(row).getAllByRole("checkbox")) {
+        fireEvent.click(checkbox);
+      }
       expect(document.querySelector(".buyer-detail-modal")).toBeNull();
     });
   });

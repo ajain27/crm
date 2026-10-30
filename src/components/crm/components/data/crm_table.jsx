@@ -15,7 +15,7 @@ import DealRow from "./DealRow";
 import NotesModal from "./modals/NotesModal";
 import ContractPreviewModal from "./modals/ContractPreviewModal";
 import DealDetailModal from "./modals/DealDetailModal";
-import ResizableTable from "../../../elements/ResizableTable";
+import AccordionTable from "../../../elements/AccordionTable";
 
 function Wholesale_data({
   filteredDeals,
@@ -204,31 +204,33 @@ function Wholesale_data({
         )}
       </div>
 
-      <div className="table-wrap dt-table-container acc-card-container">
-        <ResizableTable resizeKey="deals" className="dt-table acc-card">
-          <thead>
-            <tr>
-              <th>Address</th>
-              {renderSortableHeader("ARV", "arv")}
-              {renderSortableHeader("MAO", "mao")}
-              {renderSortableHeader("Rehab", "rehabCost")}
-              <th>Offer Sent</th>
-              <th>Seller</th>
-              <th>Phone</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentDeals.map((deal, index) => (
-              <DealRow
-                key={deal.id}
-                deal={deal}
-                index={index}
-                onRowDetailClick={(d) => setDetailDealId(d.id)}
-              />
-            ))}
-          </tbody>
-        </ResizableTable>
-      </div>
+      <AccordionTable
+        resizeKey="deals"
+        className="dt-table"
+        wrapClassName="dt-table-container"
+      >
+        <thead>
+          <tr>
+            <th>Address</th>
+            {renderSortableHeader("ARV", "arv")}
+            {renderSortableHeader("MAO", "mao")}
+            {renderSortableHeader("Rehab", "rehabCost")}
+            <th>Offer Sent</th>
+            <th>Seller</th>
+            <th>Phone</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentDeals.map((deal, index) => (
+            <DealRow
+              key={deal.id}
+              deal={deal}
+              index={index}
+              onRowDetailClick={(d) => setDetailDealId(d.id)}
+            />
+          ))}
+        </tbody>
+      </AccordionTable>
 
       <Pagination
         currentPage={currentPage}

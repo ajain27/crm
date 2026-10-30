@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import ClearFiltersButton from "../../elements/ClearFiltersButton";
 import Pagination from "../../pagination/Pagination";
 import { paginate, pluralizeLeads } from "../leadUtils";
-import ResizableTable from "../../elements/ResizableTable";
+import AccordionTable from "../../elements/AccordionTable";
 
 export function LeadSearchInput({ value, onChange, placeholder }) {
   return (
@@ -83,17 +83,15 @@ export default function LeadListPanel({
         </div>
       ) : (
         <>
-          <div
-            className="table-wrap leads-table-wrap acc-card-container"
-            style={{ overflowX: "auto" }}
+          <AccordionTable
+            wide
+            resizeKey={resizeKey || title}
+            className="compact-table leads-table"
+            wrapClassName="leads-table-wrap"
+            wrapStyle={{ overflowX: "auto" }}
           >
-            <ResizableTable
-              resizeKey={resizeKey || title}
-              className="compact-table leads-table acc-card"
-            >
-              {children(pageItems)}
-            </ResizableTable>
-          </div>
+            {children(pageItems)}
+          </AccordionTable>
           <Pagination
             currentPage={page}
             totalPages={totalPages}

@@ -7,7 +7,7 @@ import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { displayPhone } from "../../utils/utils";
 import { TITLE_COMPANY_DIRECTORY } from "./titleCompanyDirectory";
 import "./TitleCompanies.css";
-import ResizableTable from "../elements/ResizableTable";
+import AccordionTable from "../elements/AccordionTable";
 import { PAGE_SIZE } from "../pagination/usePagination";
 import PageHero from "../elements/PageHero";
 import { PAGE_HEROES } from "../crm/components/pageHeroes";
@@ -544,106 +544,106 @@ export default function TitleCompanies({
             <p>No companies match your filters.</p>
           </div>
         ) : (
-          <div className="table-wrap acc-card-container">
-            <ResizableTable
-              resizeKey="title-companies"
-              className="compact-table acc-card"
-            >
-              <thead>
-                <tr>
-                  <th>Company Name</th>
-                  <th>State</th>
-                  <th>Point of Contact</th>
-                  <th>Phone</th>
-                  <th>Emails</th>
-                  <th>Notes</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageCompanies.map((company) => (
-                  <tr
-                    key={company.id}
-                    className="tc-row"
-                    onClick={() => openEdit(company)}
-                  >
-                    <AccordionHeaderCell
-                      id={company.id}
-                      label="Company Name"
-                      value={company.name}
-                      className="tc-name"
-                    />
-                    <td data-label="State">
-                      <span className="tc-state-badge">
-                        {company.state || "—"}
-                      </span>
-                    </td>
-                    <td data-label="Point of Contact">
-                      {company.contact || <span className="tc-muted">—</span>}
-                    </td>
-                    <td className="tc-muted tc-phone" data-label="Phone">
-                      {company.phone ? (
-                        <a
-                          href={`tel:${company.phone}`}
-                          className="tc-phone-link"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {displayPhone(company.phone)}
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="acc-col-block" data-label="Emails">
-                      {company.emails?.length ? (
-                        <div className="tc-email-chips tc-email-chips--table">
-                          {company.emails.map((email) => (
-                            <span key={email} className="tc-email-chip">
-                              {email}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="tc-muted">—</span>
-                      )}
-                    </td>
-                    <td className="acc-col-block" data-label="Notes">
-                      {company.notes ? (
-                        <span className="tc-notes" title={company.notes}>
-                          {company.notes}
-                        </span>
-                      ) : (
-                        <span className="tc-muted">—</span>
-                      )}
-                    </td>
-                    <td
-                      className="acc-col-action-mobile"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        className="leads-delete-btn acc-delete-btn"
-                        title="Delete company"
-                        onClick={() => handleDelete(company.id)}
+          <AccordionTable
+            resizeKey="title-companies"
+            className="compact-table"
+            footer={
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                setCurrentPage={setPage}
+              >
+                <span className="pagination-summary">
+                  Showing {pageStart + 1}–{pageStart + pageCompanies.length} of{" "}
+                  {filtered.length}
+                </span>
+              </Pagination>
+            }
+          >
+            <thead>
+              <tr>
+                <th>Company Name</th>
+                <th>State</th>
+                <th>Point of Contact</th>
+                <th>Phone</th>
+                <th>Emails</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageCompanies.map((company) => (
+                <tr
+                  key={company.id}
+                  className="tc-row"
+                  onClick={() => openEdit(company)}
+                >
+                  <AccordionHeaderCell
+                    id={company.id}
+                    label="Company Name"
+                    value={company.name}
+                    className="tc-name"
+                  />
+                  <td data-label="State">
+                    <span className="tc-state-badge">
+                      {company.state || "—"}
+                    </span>
+                  </td>
+                  <td data-label="Point of Contact">
+                    {company.contact || <span className="tc-muted">—</span>}
+                  </td>
+                  <td className="tc-muted tc-phone" data-label="Phone">
+                    {company.phone ? (
+                      <a
+                        href={`tel:${company.phone}`}
+                        className="tc-phone-link"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Trash2 size={14} />
-                        <span className="acc-delete-label">Delete</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </ResizableTable>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              setCurrentPage={setPage}
-            >
-              <span className="pagination-summary">
-                Showing {pageStart + 1}–{pageStart + pageCompanies.length} of{" "}
-                {filtered.length}
-              </span>
-            </Pagination>
-          </div>
+                        {displayPhone(company.phone)}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="acc-col-block" data-label="Emails">
+                    {company.emails?.length ? (
+                      <div className="tc-email-chips tc-email-chips--table">
+                        {company.emails.map((email) => (
+                          <span key={email} className="tc-email-chip">
+                            {email}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="tc-muted">—</span>
+                    )}
+                  </td>
+                  <td className="acc-col-block" data-label="Notes">
+                    {company.notes ? (
+                      <span className="tc-notes" title={company.notes}>
+                        {company.notes}
+                      </span>
+                    ) : (
+                      <span className="tc-muted">—</span>
+                    )}
+                  </td>
+                  <td
+                    className="acc-col-action-mobile"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="leads-delete-btn acc-delete-btn"
+                      title="Delete company"
+                      onClick={() => handleDelete(company.id)}
+                    >
+                      <Trash2 size={14} />
+                      <span className="acc-delete-label">Delete</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </AccordionTable>
         )}
       </section>
 

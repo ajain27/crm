@@ -21,7 +21,7 @@ import RentalStatsGrid from "./RentalStatsGrid";
 import RentalAddForm from "./RentalAddForm";
 import RentalEditModal from "./RentalEditModal";
 import "./RentalManagement.css";
-import ResizableTable from "../elements/ResizableTable";
+import AccordionTable from "../elements/AccordionTable";
 import Pagination from "../pagination/Pagination";
 import { usePagination } from "../pagination/usePagination";
 
@@ -519,174 +519,167 @@ export default function RentalManagement({
             <p>No properties match your filters.</p>
           </div>
         ) : (
-          <div className="table-wrap rm-table-container acc-card-container">
-            <ResizableTable
-              resizeKey="rentals"
-              className="compact-table rm-properties-table acc-card"
-            >
-              <thead>
-                <tr>
-                  <th className="rm-name rm-col-sticky">Address</th>
-                  <th>City, State</th>
-                  <th className="rm-col-extra">Phone</th>
-                  <th className="rm-col-extra">Email</th>
-                  <th className="rm-col-extra">Type</th>
-                  <th>Rent</th>
-                  <th>Mortgage</th>
-                  <th>Cashflow</th>
-                  <th className="rm-col-extra">Accumulated Rent</th>
-                  <th className="rm-col-extra">Management Details</th>
-                  <th className="rm-col-extra">Appliance Insured</th>
-                  <th className="acc-col-hide-mobile">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rentalPages.pageItems.map((rental) => {
-                  const cashflow =
-                    parseCurrency(rental.monthlyRent) -
-                    parseCurrency(rental.monthlyMortgage);
-                  const currentTenant = getCurrentTenant(rental.tenants);
-                  const hasMultipleTenants = (rental.tenants || []).length > 1;
-                  const propertyAccumulatedRent = (rental.tenants || []).reduce(
-                    (sum, tenant) => {
-                      return (
-                        sum +
-                        calculateTenantTotalRent(tenant, rental.monthlyRent)
-                      );
-                    },
-                    0,
-                  );
-                  return (
-                    <tr
-                      key={rental.id}
-                      className="rm-row"
-                      onClick={() => openEdit(rental)}
-                      data-status={hasMultipleTenants ? "multiple-tenants" : ""}
+          <AccordionTable
+            resizeKey="rentals"
+            className="compact-table rm-properties-table"
+            wrapClassName="rm-table-container"
+          >
+            <thead>
+              <tr>
+                <th className="rm-name rm-col-sticky">Address</th>
+                <th>City, State</th>
+                <th className="rm-col-extra">Phone</th>
+                <th className="rm-col-extra">Email</th>
+                <th className="rm-col-extra">Type</th>
+                <th>Rent</th>
+                <th>Mortgage</th>
+                <th>Cashflow</th>
+                <th className="rm-col-extra">Accumulated Rent</th>
+                <th className="rm-col-extra">Management Details</th>
+                <th className="rm-col-extra">Appliance Insured</th>
+                <th className="acc-col-hide-mobile">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rentalPages.pageItems.map((rental) => {
+                const cashflow =
+                  parseCurrency(rental.monthlyRent) -
+                  parseCurrency(rental.monthlyMortgage);
+                const currentTenant = getCurrentTenant(rental.tenants);
+                const hasMultipleTenants = (rental.tenants || []).length > 1;
+                const propertyAccumulatedRent = (rental.tenants || []).reduce(
+                  (sum, tenant) => {
+                    return (
+                      sum + calculateTenantTotalRent(tenant, rental.monthlyRent)
+                    );
+                  },
+                  0,
+                );
+                return (
+                  <tr
+                    key={rental.id}
+                    className="rm-row"
+                    onClick={() => openEdit(rental)}
+                    data-status={hasMultipleTenants ? "multiple-tenants" : ""}
+                  >
+                    <AccordionHeaderCell
+                      id={rental.id}
+                      label="Address"
+                      value={rental.address}
+                      className="rm-name rm-col-sticky"
+                    />
+                    <td className="rm-muted" data-label="City, State">
+                      {rental.city && rental.state
+                        ? `${rental.city}, ${rental.state}`
+                        : rental.city || rental.state || "—"}
+                    </td>
+                    <td className="rm-muted rm-col-extra" data-label="Phone">
+                      {displayPhone(currentTenant?.phone) || "—"}
+                    </td>
+                    <td className="rm-muted rm-col-extra" data-label="Email">
+                      {currentTenant?.email || "—"}
+                    </td>
+                    <td className="rm-col-extra" data-label="Type">
+                      <span
+                        className={`rm-type-badge${
+                          currentTenant?.type === "Section 8"
+                            ? " rm-type-badge--section8"
+                            : ""
+                        }`}
+                      >
+                        {currentTenant?.type || "Regular"}
+                      </span>
+                    </td>
+                    <td data-label="Rent">
+                      {currency(parseCurrency(rental.monthlyRent))}
+                    </td>
+                    <td data-label="Mortgage">
+                      {currency(parseCurrency(rental.monthlyMortgage))}
+                    </td>
+                    <td
+                      className={cashflow < 0 ? "rm-negative" : "rm-positive"}
+                      data-label="Cashflow"
                     >
-                      <AccordionHeaderCell
-                        id={rental.id}
-                        label="Address"
-                        value={rental.address}
-                        className="rm-name rm-col-sticky"
-                      />
-                      <td className="rm-muted" data-label="City, State">
-                        {rental.city && rental.state
-                          ? `${rental.city}, ${rental.state}`
-                          : rental.city || rental.state || "—"}
-                      </td>
-                      <td className="rm-muted rm-col-extra" data-label="Phone">
-                        {displayPhone(currentTenant?.phone) || "—"}
-                      </td>
-                      <td className="rm-muted rm-col-extra" data-label="Email">
-                        {currentTenant?.email || "—"}
-                      </td>
-                      <td className="rm-col-extra" data-label="Type">
-                        <span
-                          className={`rm-type-badge${
-                            currentTenant?.type === "Section 8"
-                              ? " rm-type-badge--section8"
-                              : ""
-                          }`}
-                        >
-                          {currentTenant?.type || "Regular"}
-                        </span>
-                      </td>
-                      <td data-label="Rent">
-                        {currency(parseCurrency(rental.monthlyRent))}
-                      </td>
-                      <td data-label="Mortgage">
-                        {currency(parseCurrency(rental.monthlyMortgage))}
-                      </td>
-                      <td
-                        className={cashflow < 0 ? "rm-negative" : "rm-positive"}
-                        data-label="Cashflow"
+                      {currency(cashflow)}
+                    </td>
+                    <td
+                      className="rm-positive rm-col-extra"
+                      data-label="Accumulated Rent"
+                    >
+                      {currency(propertyAccumulatedRent)}
+                    </td>
+                    <td
+                      className="acc-col-block rm-col-extra"
+                      data-label="Management Details"
+                    >
+                      {rental.pmCompanyName ||
+                      rental.pmAgentName ||
+                      rental.pmContactPhone ||
+                      rental.pmContactEmail ? (
+                        <div className="rm-pm-display">
+                          {rental.pmCompanyName && (
+                            <span className="rm-pm-company">
+                              {rental.pmCompanyName}
+                            </span>
+                          )}
+                          {rental.pmAgentName && (
+                            <span>{rental.pmAgentName}</span>
+                          )}
+                          {rental.pmContactPhone && (
+                            <a
+                              href={`tel:${rental.pmContactPhone}`}
+                              className="rm-pm-link"
+                            >
+                              {rental.pmContactPhone}
+                            </a>
+                          )}
+                          {rental.pmContactEmail && (
+                            <a
+                              href={`mailto:${rental.pmContactEmail}`}
+                              className="rm-pm-link"
+                            >
+                              {rental.pmContactEmail}
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td
+                      className="rm-col-extra"
+                      data-label="Appliance Insured"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <select
+                        className="rm-inline-select"
+                        value={
+                          rental.hasApplianceInsurance === "Yes" ? "Yes" : "No"
+                        }
+                        onChange={(e) =>
+                          handleApplianceInsuranceChange(rental, e.target.value)
+                        }
                       >
-                        {currency(cashflow)}
-                      </td>
-                      <td
-                        className="rm-positive rm-col-extra"
-                        data-label="Accumulated Rent"
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                      </select>
+                    </td>
+                    <td
+                      className="acc-col-hide-mobile"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        className="rm-details-link"
+                        onClick={() => openEdit(rental)}
                       >
-                        {currency(propertyAccumulatedRent)}
-                      </td>
-                      <td
-                        className="acc-col-block rm-col-extra"
-                        data-label="Management Details"
-                      >
-                        {rental.pmCompanyName ||
-                        rental.pmAgentName ||
-                        rental.pmContactPhone ||
-                        rental.pmContactEmail ? (
-                          <div className="rm-pm-display">
-                            {rental.pmCompanyName && (
-                              <span className="rm-pm-company">
-                                {rental.pmCompanyName}
-                              </span>
-                            )}
-                            {rental.pmAgentName && (
-                              <span>{rental.pmAgentName}</span>
-                            )}
-                            {rental.pmContactPhone && (
-                              <a
-                                href={`tel:${rental.pmContactPhone}`}
-                                className="rm-pm-link"
-                              >
-                                {rental.pmContactPhone}
-                              </a>
-                            )}
-                            {rental.pmContactEmail && (
-                              <a
-                                href={`mailto:${rental.pmContactEmail}`}
-                                className="rm-pm-link"
-                              >
-                                {rental.pmContactEmail}
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td
-                        className="rm-col-extra"
-                        data-label="Appliance Insured"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <select
-                          className="rm-inline-select"
-                          value={
-                            rental.hasApplianceInsurance === "Yes"
-                              ? "Yes"
-                              : "No"
-                          }
-                          onChange={(e) =>
-                            handleApplianceInsuranceChange(
-                              rental,
-                              e.target.value,
-                            )
-                          }
-                        >
-                          <option value="No">No</option>
-                          <option value="Yes">Yes</option>
-                        </select>
-                      </td>
-                      <td
-                        className="acc-col-hide-mobile"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          className="rm-details-link"
-                          onClick={() => openEdit(rental)}
-                        >
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </ResizableTable>
-          </div>
+                        Details
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </AccordionTable>
         )}
         {filtered.length > 0 && (
           <Pagination

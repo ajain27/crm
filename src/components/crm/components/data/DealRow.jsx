@@ -33,6 +33,8 @@ function DealRow({ deal, index, onRowDetailClick }) {
     .filter(Boolean)
     .join(" ");
 
+  // On smaller screens the address heads a card that opens to show the
+  // rest; a click anywhere else (or on the table row) opens the deal.
   function handleTrClick(e) {
     const tag = e.target.tagName.toLowerCase();
     if (["button", "svg", "path"].includes(tag)) return;
@@ -53,7 +55,6 @@ function DealRow({ deal, index, onRowDetailClick }) {
         label="Address"
         value={formatFullAddress(deal)}
         valueClassName="readonly-input addr-cell"
-        onHeaderClick={() => onRowDetailClick(deal)}
       />
       <ReadOnlyCell value={deal.arv ? currency(deal.arv) : "—"} label="ARV" />
       <ReadOnlyCell value={deal.mao ? currency(deal.mao) : "—"} label="MAO" />
