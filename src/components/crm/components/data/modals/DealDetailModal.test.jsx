@@ -436,15 +436,23 @@ describe("DealDetailModal", () => {
     expect(patch.notes).toMatch(/^Called seller\.\n\nComps \(/);
     expect(patch.notes).toContain("9 Oak St — $154,000");
 
+    // The result is saved too, for the Comps tab, which now shows.
+    expect(patch.compsResult.topComps[0].address).toBe("9 Oak St");
+    expect(screen.getByRole("tab", { name: /Comps/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
     // The parent passes the saved deal back; the unsaved address stays.
     rerender(
       <DealDetailModal
         isOpen={true}
         onClose={vi.fn()}
-        deal={{ ...baseDeal, notes: patch.notes }}
+        deal={{ ...baseDeal, ...patch }}
         updateDealPatch={updateDealPatch}
       />,
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Details" }));
     expect(screen.getByPlaceholderText("Street address")).toHaveValue(
       "2 Main St",
     );
@@ -465,6 +473,41 @@ describe("DealDetailModal", () => {
     ).toHaveValue(patch.notes);
     fireEvent.click(screen.getByText("Show formatted"));
     expect(screen.getByText("9 Oak St")).toBeInTheDocument();
+  });
+
+  it("opens on the Comps tab with the comps of the lead it came from", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          fromLead: {
+            compsResult: {
+              runAt: "2026-10-27T12:00:00.000Z",
+              address: "1 Main St, Austin, TX 78701",
+              arvEstimate: 277000,
+              topComps: [{ address: "799 Kings Grant Dr NW", price: 239000 }],
+            },
+          },
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    for (const name of ["Details", "Price History", "Property History"]) {
+      expect(screen.getByRole("tab", { name })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("tab", { name: /Comps/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getAllByText("799 Kings Grant Dr NW").length).toBeGreaterThan(
+      0,
+    );
+    // Nothing to save just for opening it.
+    expect(
+      screen.getByRole("button", { name: /Save Changes/i }),
+    ).toBeDisabled();
   });
 
   it("shows the error when comps can't run", async () => {
