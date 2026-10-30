@@ -508,6 +508,12 @@
     background: var(--blue-light);
   }
 
+  .leads-copy-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
   .leads-url-btn {
     display: inline-flex;
     align-items: center;

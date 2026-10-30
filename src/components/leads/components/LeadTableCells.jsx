@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import {
+  Check,
   CheckCheck,
+  Copy,
   ExternalLink,
   MessageSquare,
   ThumbsDown,
@@ -55,11 +58,46 @@ export function ZillowLink({ address }) {
   ) : null;
 }
 
+// Copies `text` to the clipboard; a check shows for a moment once it has.
+export function CopyButton({ text, label }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return undefined;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  async function handleClick(e) {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      // No clipboard access (e.g. not a secure page): nothing to show.
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className="leads-text-link leads-copy-btn"
+      onClick={handleClick}
+      title={copied ? "Copied" : label}
+      aria-label={copied ? "Copied" : label}
+    >
+      {copied ? <Check size={14} /> : <Copy size={14} />}
+    </button>
+  );
+}
+
 export function EmailLink({ email }) {
   return email ? (
-    <a href={`mailto:${email}`} className="leads-contact-link">
-      {email}
-    </a>
+    <span className="leads-phone">
+      <a href={`mailto:${email}`} className="leads-contact-link">
+        {email}
+      </a>
+      <CopyButton text={email} label={`Copy ${email}`} />
+    </span>
   ) : (
     EMPTY
   );
@@ -108,9 +146,9 @@ export function PhoneLink({ phone }) {
 
 export function EmailCell({ email }) {
   return (
-    <td data-label="Email">
+    <ActionCell data-label="Email">
       <EmailLink email={email} />
-    </td>
+    </ActionCell>
   );
 }
 
