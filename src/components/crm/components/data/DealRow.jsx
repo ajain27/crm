@@ -55,6 +55,7 @@ function DealRow({ deal, index, onRowDetailClick }) {
         label="Address"
         value={formatFullAddress(deal)}
         valueClassName="readonly-input addr-cell"
+        card={{ title: sellerName, subtitle: formatFullAddress(deal) }}
       />
       <ReadOnlyCell value={deal.arv ? currency(deal.arv) : "—"} label="ARV" />
       <ReadOnlyCell value={deal.mao ? currency(deal.mao) : "—"} label="MAO" />

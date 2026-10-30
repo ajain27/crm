@@ -127,6 +127,10 @@ export default function CommercialLeadList({
                   id={lead.id}
                   label="Name"
                   value={lead.name || "—"}
+                  card={{
+                    title: sellerNameOf(lead) || lead.name,
+                    subtitle: lead.address,
+                  }}
                 />
                 <td data-label="Seller Name">{sellerNameOf(lead) || "—"}</td>
                 <td className="leads-address-cell" data-label="Address">

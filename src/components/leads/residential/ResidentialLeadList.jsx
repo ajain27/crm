@@ -214,6 +214,10 @@ export default function ResidentialLeadList({
                     id={lead.id}
                     label="Address"
                     value={lead.address}
+                    card={{
+                      title: sellerNameOf(lead),
+                      subtitle: lead.address,
+                    }}
                     className="leads-address-cell"
                   />
                   <td data-label="Seller">{sellerNameOf(lead) || "—"}</td>

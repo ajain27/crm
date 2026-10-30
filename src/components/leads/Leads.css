@@ -1491,12 +1491,6 @@
       text-align: left;
     }
 
-    .leads-accordion-name-stack {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
     .leads-accordion-date {
       display: inline-flex;
       align-items: center;

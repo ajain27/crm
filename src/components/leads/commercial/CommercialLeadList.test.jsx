@@ -63,6 +63,35 @@ describe("CommercialLeadList", () => {
     expect(screen.getByText("Old Combined")).toBeInTheDocument();
   });
 
+  it("heads each small-screen card with the seller's name over the address", () => {
+    const { container } = render(
+      <CommercialLeadList
+        leads={[
+          {
+            id: "a",
+            name: "Park A",
+            firstName: "Ann",
+            lastName: "Bell",
+            address: "1 Lake Rd, Ocala, FL",
+          },
+          // No seller name: the business name heads the card.
+          { id: "b", name: "Park B", address: "2 Lake Rd, Ocala, FL" },
+        ]}
+        listState={listState}
+        onOpen={vi.fn()}
+        onDelete={vi.fn()}
+        onBulkDelete={vi.fn()}
+      />,
+    );
+    const cards = [...container.querySelectorAll(".acc-card-summary")].map(
+      (summary) => summary.textContent,
+    );
+    expect(cards).toEqual([
+      "Ann Bell1 Lake Rd, Ocala, FL",
+      "Park B2 Lake Rd, Ocala, FL",
+    ]);
+  });
+
   it("resizes a column by dragging its header edge and remembers it", () => {
     localStorage.clear();
     const { container, unmount } = render(

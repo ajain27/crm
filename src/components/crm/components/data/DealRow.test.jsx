@@ -53,6 +53,19 @@ describe("DealRow", () => {
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
   });
 
+  it("heads its small-screen card with the seller's name over the address", () => {
+    const { container } = renderRow({
+      deal: { ...deal, sellerFirstName: "Jane", sellerLastName: "Doe" },
+    });
+    const summary = container.querySelector(".acc-card-summary");
+    expect(summary.querySelector(".acc-card-summary-title")).toHaveTextContent(
+      "Jane Doe",
+    );
+    expect(
+      summary.querySelector(".acc-card-summary-subtitle"),
+    ).toHaveTextContent("1 Main St, Austin, TX 78701");
+  });
+
   it("renders the offer status badge", () => {
     renderRow();
     expect(screen.getByText("Not Sent")).toBeInTheDocument();

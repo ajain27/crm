@@ -182,14 +182,16 @@ export default function CampaignLeadList({
                       }
                       id={lead.id}
                       label="Seller Name"
-                      value={
-                        <span className="leads-accordion-name-stack">
-                          <span>{sellerNameOf(lead) || "—"}</span>
+                      value={sellerNameOf(lead) || "—"}
+                      card={{
+                        title: sellerNameOf(lead),
+                        subtitle: lead.address,
+                        aside: (
                           <span className="leads-accordion-date">
                             {formatDate(lead.dateAdded)}
                           </span>
-                        </span>
-                      }
+                        ),
+                      }}
                     />
                     <EmailCell email={lead.email} />
                     <PhoneCell phone={lead.phone} phone2={lead.phone2} />

@@ -93,6 +93,12 @@
     display: none;
   }
 
+  /* AccordionHeaderCell's `card` summary (e.g. seller name over address)
+     only appears in card view, in place of the column's value. */
+  .acc-card-summary {
+    display: none;
+  }
+
   @container (max-width: 900px) {
     .acc-card-container .acc-card thead,
     .acc-card-container .acc-card tfoot {
@@ -593,6 +599,111 @@
 
     .acc-card-container .acc-card .acc-col-action-mobile .acc-delete-label {
       display: inline;
+    }
+  }
+
+  /* ── Card summaries (both breakpoints) ── */
+  @container (max-width: 900px) {
+    /* AccordionHeaderCell's `card` summary: the title (e.g. the seller's
+       name) over a subtitle (e.g. the address), left-aligned, with an
+       optional badge before the chevron. It replaces the column's value
+       and label, so every collapsed card reads the same way. */
+    .acc-card-container .acc-card .acc-col-header--summary::before {
+      content: none;
+    }
+
+    .acc-card-container
+      .acc-card
+      .acc-col-header--summary
+      .acc-accordion-address {
+      display: none;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-text {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 0.125rem;
+      min-width: 0;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-title {
+      font-weight: 600;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-subtitle {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-aside {
+      display: flex;
+      flex-shrink: 0;
+    }
+  }
+
+  @container acc-wide (max-width: 1300px) {
+    /* AccordionHeaderCell's `card` summary: the title (e.g. the seller's
+       name) over a subtitle (e.g. the address), left-aligned, with an
+       optional badge before the chevron. It replaces the column's value
+       and label, so every collapsed card reads the same way. */
+    .acc-card-container .acc-card .acc-col-header--summary::before {
+      content: none;
+    }
+
+    .acc-card-container
+      .acc-card
+      .acc-col-header--summary
+      .acc-accordion-address {
+      display: none;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-text {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 0.125rem;
+      min-width: 0;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-title {
+      font-weight: 600;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-subtitle {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .acc-card-container .acc-card .acc-card-summary-aside {
+      display: flex;
+      flex-shrink: 0;
     }
   }
 }

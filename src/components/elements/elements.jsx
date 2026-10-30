@@ -172,12 +172,17 @@ function Select({ label, required, options, ...props }) {
 }
 
 // Collapsed/expanded heading cell for the mobile "accordion card" table
-// layout (see src/styles/accordionCard.css). Tag the `<table>` with
-// `acc-card` and its scroll wrapper with `acc-card-container` to enable it.
+// layout (see src/styles/accordionCard.css; AccordionTable sets it up).
+//
+// `card` ({ title, subtitle, aside }) is what a card shows in place of
+// `value` and its label — e.g. the seller's name over the address, with a
+// date badge — so collapsed cards say whose and which property they are.
+// The table still shows `value` in its column.
 function AccordionHeaderCell({
   id,
   label,
   value,
+  card,
   className = "",
   valueClassName = "",
   colSpan,
@@ -187,7 +192,9 @@ function AccordionHeaderCell({
   const toggleId = `acc-toggle-${id}`;
   return (
     <td
-      className={`acc-col-header ${className}`.trim()}
+      className={`acc-col-header ${card ? "acc-col-header--summary" : ""} ${className}`
+        .replace(/\s+/g, " ")
+        .trim()}
       data-label={label}
       colSpan={colSpan}
       onClick={(e) => {
@@ -221,6 +228,23 @@ function AccordionHeaderCell({
         <span className={`acc-accordion-address ${valueClassName}`.trim()}>
           {value}
         </span>
+        {card && (
+          <span className="acc-card-summary">
+            <span className="acc-card-summary-text">
+              <span className="acc-card-summary-title">
+                {card.title || "—"}
+              </span>
+              {card.subtitle && (
+                <span className="acc-card-summary-subtitle">
+                  {card.subtitle}
+                </span>
+              )}
+            </span>
+            {card.aside && (
+              <span className="acc-card-summary-aside">{card.aside}</span>
+            )}
+          </span>
+        )}
         <ChevronDown size={16} className="acc-accordion-chevron" />
       </label>
     </td>
