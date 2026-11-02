@@ -36,6 +36,7 @@ function fromResult(result, address) {
       : "",
     arv: numberOrNull(result.arvEstimate),
     rent: numberOrNull(result.rentEstimate),
+    estimates: result.valueEstimates || null,
     subject: {
       address: result.address || address,
       price: null,
@@ -133,6 +134,14 @@ export function compsResultToSave(result, runAt = new Date()) {
       : null,
     arvEstimate: numberOrNull(result.arvEstimate),
     rentEstimate: numberOrNull(result.rentEstimate),
+    // The Zestimate, Redfin Estimate and their average.
+    valueEstimates: result.valueEstimates
+      ? {
+          zestimate: numberOrNull(result.valueEstimates.zestimate),
+          redfinEstimate: numberOrNull(result.valueEstimates.redfinEstimate),
+          average: numberOrNull(result.valueEstimates.average),
+        }
+      : null,
     property: {
       beds: numberOrNull(p.beds),
       baths: numberOrNull(p.baths),

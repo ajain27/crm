@@ -52,7 +52,7 @@ export const SUBJECT_SCHEMA = {
     valueEstimate: {
       type: "number",
       description:
-        "The site's own estimated value of this home (Zestimate, Redfin Estimate, etc.)",
+        "The site's own estimated value of this home: the Zestimate on Zillow, the Redfin Estimate on Redfin, the estimate on Realtor.com. Not a list or sold price.",
     },
     rentEstimate: { type: "number", description: "Estimated monthly rent" },
     annualTax: {
@@ -365,6 +365,16 @@ export function pageCoordinates(sources, address) {
       points.some((q) => q !== p && distanceMiles(p, q) <= 0.05),
     ) || points[0];
   return { ...agreed, matchedAddress: null };
+}
+
+// Each site's own estimate of the home's value: the Zestimate (Zillow) and
+// the Redfin Estimate. Null where the page had none, or isn't this house.
+export function siteEstimates(sources, address) {
+  const from = (key) =>
+    isSubjectData(sources[key]?.data, address)
+      ? saneValue("valueEstimate", sources[key].data.valueEstimate)
+      : null;
+  return { zestimate: from("zillow"), redfinEstimate: from("redfin") };
 }
 
 const TYPE_NAMES = {

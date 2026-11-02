@@ -45,6 +45,12 @@ function CompsNote({ comps }) {
           <span>ARV estimate</span>
           <strong>{comps.arv}</strong>
         </div>
+        {comps.estimates && (
+          <div>
+            <span>Zestimate · Redfin · average</span>
+            <strong>{comps.estimates}</strong>
+          </div>
+        )}
         <div>
           <span>Rent estimate</span>
           <strong>{comps.rent}/mo</strong>

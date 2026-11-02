@@ -1,5 +1,6 @@
 // POST { address } → comps for that address; with { subject, location }
-// too, re-runs them with corrected subject facts. The steps live in
+// (and the first run's `estimates`) too, re-runs them with corrected
+// subject facts. The steps live in
 // api/_lib/comps/ (the "_" keeps Vercel from serving them as endpoints).
 
 import { runComps } from "./_lib/comps/runComps.js";
@@ -21,8 +22,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { subject, location } = req.body || {};
-    const adjust = subject && location ? { subject, location } : null;
+    const { subject, location, estimates } = req.body || {};
+    const adjust =
+      subject && location ? { subject, location, estimates } : null;
     return res
       .status(200)
       .json(await runComps(address, process.env, Date.now(), adjust));

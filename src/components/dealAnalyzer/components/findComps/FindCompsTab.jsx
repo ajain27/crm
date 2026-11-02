@@ -36,6 +36,7 @@ function slimResult(data) {
     price: data.price,
     rentEstimate: data.rentEstimate,
     valueEstimate: data.valueEstimate,
+    valueEstimates: data.valueEstimates,
     summary: data.summary,
     criteria: data.criteria,
     location: data.location,
@@ -83,6 +84,7 @@ export function toFindCompsResult(api, address) {
     price: api.arvEstimate,
     rentEstimate: api.rentEstimate ?? p.rentEstimate,
     valueEstimate: p.valueEstimate,
+    valueEstimates: api.valueEstimates,
     summary: api.summary,
     criteria: api.criteria,
     location: api.location,
@@ -312,6 +314,8 @@ function FindCompsTab({ tab }) {
       const sp = result.subjectProperty || {};
       const api = await requestComps(address.trim(), {
         location: result.location,
+        // A re-run doesn't read the sites, so their estimates carry over.
+        estimates: result.valueEstimates,
         subject: {
           ...facts,
           valueEstimate: result.valueEstimate,

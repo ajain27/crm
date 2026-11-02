@@ -7,6 +7,14 @@
   }
 
   /* Headline figures */
+  .lcp-stat-note {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
   .lcp-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

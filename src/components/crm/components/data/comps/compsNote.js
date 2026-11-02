@@ -110,6 +110,12 @@ export function formatCompsNote(result, date = new Date()) {
     `ARV estimate: ${money(result.arvEstimate)} · Rent estimate: ${money(result.rentEstimate)}/mo`,
     `Property: ${num(p.beds)} bd · ${num(p.baths)} ba · ${num(p.sqft, " sq ft")} · built ${p.yearBuilt ?? "—"} · tax ${money(p.annualTax)}/yr`,
   ];
+  const est = result.valueEstimates;
+  if (est?.average != null) {
+    lines.push(
+      `Estimates: Zestimate ${money(est.zestimate)} · Redfin Estimate ${money(est.redfinEstimate)} · average ${money(est.average)}`,
+    );
+  }
   if (result.criteria) lines.push(`Rules: ${compsCriteriaText(result)}`);
   if (result.stats) lines.push(compsStatsText(result));
   (result.topComps || []).forEach((comp, i) => {
@@ -154,6 +160,7 @@ function parseCompsBlock(lines) {
     arv: est[1],
     rent: est[2],
     property: "",
+    estimates: "",
     rules: "",
     stats: "",
     comps: [],
@@ -165,6 +172,8 @@ function parseCompsBlock(lines) {
     const comp = line.match(COMP_LINE);
     if (line.startsWith("Property: ")) {
       note.property = line.slice("Property: ".length);
+    } else if (line.startsWith("Estimates: ")) {
+      note.estimates = line.slice("Estimates: ".length);
     } else if (line.startsWith("Rules: ")) {
       note.rules = line.slice("Rules: ".length);
     } else if (/ every rule\b/.test(line) && !note.stats) {

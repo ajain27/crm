@@ -28,7 +28,12 @@ const CLAUDE_REVIEW = {
 import { rankComps } from "../../api/_lib/comps/rank.js";
 import { cleanScraped, pickListingUrls } from "../../api/_lib/comps/subject.js";
 import { distanceMiles } from "../../api/_lib/comps/rules.js";
-import { estimateArv } from "../../api/_lib/comps/arv.js";
+import {
+  blendArv,
+  estimateArv,
+  stateFromAddress,
+  valueEstimates,
+} from "../../api/_lib/comps/arv.js";
 import { highwayBetween } from "../../api/_lib/comps/highways.js";
 import { parseRedfinSoldCsv } from "../../api/_lib/comps/sales.js";
 import { runComps } from "../../api/_lib/comps/runComps.js";
@@ -825,6 +830,50 @@ describe("run-comps", () => {
     expect(out.listingUrls).toBeNull();
   });
 
+  it("reads the Zestimate and Redfin Estimate apart and averages them", async () => {
+    mockFetch({
+      firecrawl: (body) =>
+        json(200, {
+          success: true,
+          data: {
+            json: {
+              ...SUBJECT_PAGE,
+              valueEstimate: body.url.includes("zillow")
+                ? 120000
+                : body.url.includes("redfin")
+                  ? 110000
+                  : 90000,
+            },
+          },
+        }),
+    });
+    const out = await runComps(ADDRESS, ENV, NOW);
+    expect(out.valueEstimates).toEqual({
+      zestimate: 120000,
+      redfinEstimate: 110000,
+      average: 115000,
+    });
+    expect(out.property.valueEstimate).toBe(115000);
+    // Tennessee publishes sale prices: the ARV stays the comps'.
+    expect(out.nonDisclosureState).toBeNull();
+    expect(out.arvEstimate).toBe(out.compsArv);
+  });
+
+  it("averages the comps' ARV with the estimates in Texas, carrying them over on a re-run", async () => {
+    mockFetch();
+    const out = await runComps("11916 Canoe Rd, Frisco, TX 75035", {}, NOW, {
+      location: SUBJECT,
+      subject: { beds: 3, baths: 2, sqft: 1165, yearBuilt: 1972 },
+      estimates: { zestimate: 500000, redfinEstimate: 480000 },
+    });
+    expect(out.nonDisclosureState).toBe("TX");
+    expect(out.valueEstimates.average).toBe(490000);
+    expect(out.arvEstimate).toBe(Math.round((out.compsArv + 490000) / 2));
+    expect(out.summary).toContain(
+      "Texas doesn't publish sale prices, so comps can be off",
+    );
+  });
+
   it("needs a location to re-run with corrected facts", async () => {
     mockFetch();
     await expect(
@@ -991,5 +1040,44 @@ describe("cleanScraped", () => {
     expect(
       cleanScraped({ beds: 3, sqft: 0, yearBuilt: "N/A", propertyType: " — " }),
     ).toEqual({ beds: 3 });
+  });
+});
+
+describe("ARV and the sites' estimates", () => {
+  it("reads the state from the address", () => {
+    expect(stateFromAddress("11916 Canoe Rd, Frisco, TX 75035")).toBe("TX");
+    expect(stateFromAddress("1 Main St, Austin, tx")).toBe("TX");
+    expect(stateFromAddress("1 Main St, Memphis, TN 38127, USA")).toBe("TN");
+    expect(stateFromAddress("1 Main St")).toBeNull();
+  });
+
+  it("averages whichever estimates there are", () => {
+    expect(valueEstimates(500000, 480000).average).toBe(490000);
+    expect(valueEstimates(null, 480000)).toEqual({
+      zestimate: null,
+      redfinEstimate: 480000,
+      average: 480000,
+    });
+    expect(valueEstimates(null, null).average).toBeNull();
+  });
+
+  it("blends in non-disclosure states, and only notes a gap elsewhere", () => {
+    const estimates = valueEstimates(500000, 480000);
+    expect(
+      blendArv({ compsArv: 410180, estimates, state: "TX" }).arvEstimate,
+    ).toBe(450090);
+    expect(
+      blendArv({ compsArv: null, estimates, state: "TX" }).arvEstimate,
+    ).toBe(490000);
+
+    const elsewhere = blendArv({ compsArv: 410180, estimates, state: "TN" });
+    expect(elsewhere.arvEstimate).toBe(410180);
+    expect(elsewhere.note).toBe(
+      "The comps ARV is 16% under the Zestimate/Redfin Estimate average ($490,000).",
+    );
+    // Within 10%: nothing to point out.
+    expect(
+      blendArv({ compsArv: 470000, estimates, state: "TN" }).note,
+    ).toBeNull();
   });
 });

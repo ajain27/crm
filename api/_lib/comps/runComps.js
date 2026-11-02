@@ -25,7 +25,10 @@
 //   6. The listing's main photo (from the same pages; Street View for a
 //      home with none) is downloaded so it can be added to the lead.
 //   7. ARV is worked out in code from the final comps: the upper quartile
-//      of their price per sq ft × the subject's size.
+//      of their price per sq ft × the subject's size. The Zestimate and
+//      Redfin Estimate (from the same pages) are averaged; in states that
+//      don't publish sale prices (Texas…), where comps can be well off, the
+//      ARV is the average of the comps' ARV and that estimate.
 //
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY and/or CRAWL4AI_API_KEY
 // (required); ANTHROPIC_API_KEY
@@ -47,6 +50,7 @@ import {
   reconcileSubject,
   saneValue,
   serperSearch,
+  siteEstimates,
   listingQueries,
 } from "./subject.js";
 import { fetchPhotoData } from "./photo.js";
@@ -56,7 +60,15 @@ import { fetchRedfinSold } from "./sales.js";
 import { fetchMajorHighways } from "./highways.js";
 import { rankComps } from "./rank.js";
 import { claudeReview } from "./review.js";
-import { estimateArv, plural, ruleReason } from "./arv.js";
+import {
+  NON_DISCLOSURE_STATES,
+  blendArv,
+  estimateArv,
+  plural,
+  ruleReason,
+  stateFromAddress,
+  valueEstimates,
+} from "./arv.js";
 import { historyFromSources } from "../propertyHistory.js";
 
 // The sales and major highways around a location, loaded together.
@@ -167,6 +179,8 @@ export function sanitizeSubject(subject = {}) {
 
 // `adjust` re-runs comps with the user's corrected subject facts at a known
 // location — no searching or scraping, so it's quick and costs no credits.
+// Its `estimates` ({ zestimate, redfinEstimate }) carry over from the first
+// run, as there are no pages to read them from.
 export async function runComps(
   address,
   env = process.env,
@@ -198,6 +212,23 @@ export async function runComps(
     ({ location, sales, highways, sources, listingUrls, property } =
       await gatherSubject(address, env));
   }
+  const fromSites = adjust
+    ? {
+        zestimate: saneValue("valueEstimate", adjust.estimates?.zestimate),
+        redfinEstimate: saneValue(
+          "valueEstimate",
+          adjust.estimates?.redfinEstimate,
+        ),
+      }
+    : siteEstimates(sources, address);
+  const estimates = valueEstimates(
+    fromSites.zestimate,
+    fromSites.redfinEstimate,
+  );
+  if (estimates.average !== null) {
+    property = { ...property, valueEstimate: estimates.average };
+  }
+  const state = stateFromAddress(address);
   // Downloaded while the comps are ranked and reviewed.
   const photoData = (async () => {
     const url = adjust ? null : await findSubjectPhoto(sources, address, env);
@@ -277,7 +308,15 @@ export async function runComps(
     reason: c.reason,
   }));
   const outsideRules = topComps.filter((c) => !c.meetsRules).length;
-  const { arvEstimate, arvBasis } = estimateArv(topComps, property.sqft);
+  const { arvEstimate: compsArv, arvBasis } = estimateArv(
+    topComps,
+    property.sqft,
+  );
+  const { arvEstimate, note: estimateNote } = blendArv({
+    compsArv,
+    estimates,
+    state,
+  });
   const photo = await photoData;
 
   return {
@@ -350,18 +389,22 @@ export async function runComps(
     },
     topComps,
     arvEstimate,
+    // The ARV from the comps alone, and the sites' own estimates.
+    compsArv,
+    valueEstimates: estimates,
+    nonDisclosureState: NON_DISCLOSURE_STATES[state] ? state : null,
     rentEstimate: property.rentEstimate,
-    summary:
+    summary: [
       topComps.length === 0
         ? `No homes sold within ${search.miles} mi in the last ${Math.round(search.days / 30.4)} months.`
-        : [
-            arvBasis,
-            outsideRules > 0
-              ? `${plural(outsideRules, "comp")} ${outsideRules === 1 ? "falls" : "fall"} outside the comp rules — see how each differs.`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(" "),
+        : arvBasis,
+      estimateNote,
+      outsideRules > 0
+        ? `${plural(outsideRules, "comp")} ${outsideRules === 1 ? "falls" : "fall"} outside the comp rules — see how each differs.`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" "),
     method,
     ...(aiError ? { aiError } : {}),
   };

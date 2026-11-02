@@ -121,6 +121,15 @@ export default function RunCompsModal({
                 <span>ARV estimate</span>
                 <strong>{money(result.arvEstimate)}</strong>
               </div>
+              {result.valueEstimates?.average != null && (
+                <div>
+                  <span>Zestimate · Redfin Estimate</span>
+                  <strong>
+                    {money(result.valueEstimates.zestimate)} ·{" "}
+                    {money(result.valueEstimates.redfinEstimate)}
+                  </strong>
+                </div>
+              )}
               <div>
                 <span>Rent estimate</span>
                 <strong>{money(result.rentEstimate)}/mo</strong>

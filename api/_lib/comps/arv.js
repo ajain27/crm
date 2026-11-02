@@ -50,3 +50,93 @@ export function ruleReason(comp) {
     .filter(Boolean)
     .join(", ");
 }
+
+// States that don't make sale prices public: the "sold" prices sites show
+// there are often missing, list prices or estimates, so comps alone can be
+// well off.
+export const NON_DISCLOSURE_STATES = {
+  AK: "Alaska",
+  ID: "Idaho",
+  KS: "Kansas",
+  LA: "Louisiana",
+  MS: "Mississippi",
+  MT: "Montana",
+  NM: "New Mexico",
+  ND: "North Dakota",
+  TX: "Texas",
+  UT: "Utah",
+  WY: "Wyoming",
+};
+
+// "11916 Canoe Rd, Frisco, TX 75035" → "TX" (the last two-letter part
+// after the street), or null.
+export function stateFromAddress(address) {
+  const parts = String(address || "")
+    .split(",")
+    .slice(1)
+    .reverse();
+  for (const part of parts) {
+    const code = part.trim().match(/^([A-Za-z]{2})(?:\s+\d{5}(?:-\d{4})?)?$/);
+    if (code) return code[1].toUpperCase();
+  }
+  return null;
+}
+
+// The Zestimate and Redfin Estimate, and their average (either alone when
+// only one site has one).
+export function valueEstimates(zestimate, redfinEstimate) {
+  const present = [zestimate, redfinEstimate].filter(isNum);
+  return {
+    zestimate: isNum(zestimate) ? zestimate : null,
+    redfinEstimate: isNum(redfinEstimate) ? redfinEstimate : null,
+    average: present.length
+      ? Math.round(present.reduce((a, b) => a + b, 0) / present.length)
+      : null,
+  };
+}
+
+// The ARV given the comps' ARV and the sites' estimates. In a
+// non-disclosure state it's the average of the two (either alone when the
+// other is missing); elsewhere it's the comps' ARV, with how far it is
+// from the estimates noted.
+export function blendArv({ compsArv, estimates, state }) {
+  const stateName = NON_DISCLOSURE_STATES[state] || null;
+  const average = estimates?.average ?? null;
+  const names = [
+    isNum(estimates?.zestimate) && "Zestimate",
+    isNum(estimates?.redfinEstimate) && "Redfin Estimate",
+  ].filter(Boolean);
+  const estimateName =
+    names.length === 2 ? "Zestimate/Redfin Estimate average" : names[0];
+
+  if (stateName && isNum(average)) {
+    if (!isNum(compsArv)) {
+      return {
+        arvEstimate: average,
+        note: `${stateName} doesn't publish sale prices and there were no comps, so the ARV is the ${estimateName} (${fmtMoney(average)}).`,
+      };
+    }
+    const arvEstimate = Math.round((compsArv + average) / 2);
+    return {
+      arvEstimate,
+      note: `${stateName} doesn't publish sale prices, so comps can be off: the ARV is the average of the comps (${fmtMoney(compsArv)}) and the ${estimateName} (${fmtMoney(average)}).`,
+    };
+  }
+  if (stateName) {
+    return {
+      arvEstimate: compsArv,
+      note: `${stateName} doesn't publish sale prices, so comps can be off — and neither Zillow nor Redfin had an estimate to check against.`,
+    };
+  }
+  if (isNum(compsArv) && isNum(average)) {
+    const gap = Math.round(((compsArv - average) / average) * 100);
+    return {
+      arvEstimate: compsArv,
+      note:
+        Math.abs(gap) >= 10
+          ? `The comps ARV is ${Math.abs(gap)}% ${gap < 0 ? "under" : "over"} the ${estimateName} (${fmtMoney(average)}).`
+          : null,
+    };
+  }
+  return { arvEstimate: compsArv, note: null };
+}

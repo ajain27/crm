@@ -31,7 +31,7 @@ function shortDate(date) {
   return m ? `${Number(m[2])}/${Number(m[3])}/${m[1].slice(2)}` : date || "";
 }
 
-function Stat({ label, value, suffix }) {
+function Stat({ label, value, suffix, note }) {
   return (
     <div className="lcp-stat">
       <span>{label}</span>
@@ -39,6 +39,7 @@ function Stat({ label, value, suffix }) {
         {value}
         {suffix && value !== "—" && <small>{suffix}</small>}
       </strong>
+      {note && <small className="lcp-stat-note">{note}</small>}
     </div>
   );
 }
@@ -121,6 +122,11 @@ export default function LeadCompsPanel({ comps, lead }) {
         <Stat
           label="After repair value"
           value={money(parseMoney(lead.arv) ?? comps.arv)}
+          note={
+            comps.estimates?.average != null
+              ? `Zestimate ${money(comps.estimates.zestimate)} · Redfin ${money(comps.estimates.redfinEstimate)}`
+              : null
+          }
         />
         <Stat
           label="Asking price"

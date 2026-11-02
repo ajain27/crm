@@ -133,6 +133,7 @@ describe("splitCompsNotes", () => {
       arv: "$376,182",
       rent: "$2,514",
       property: "3 bd · 2 ba · 1,174 sq ft · built 1976 · tax $4,123/yr",
+      estimates: "",
       rules: "Sold within 0.5 mi in the last 90 days · 3 bd · 2 ba",
       stats:
         "128 homes sold within 1 mi in the last 6 months; 1 meets every rule.",
@@ -193,5 +194,33 @@ describe("withCompsNote", () => {
     expect(withCompsNote(undefined, note("10/15/2026"))).toBe(
       note("10/15/2026"),
     );
+  });
+});
+
+describe("comps note estimates", () => {
+  it("writes the Zestimate, Redfin Estimate and average, and reads them back", () => {
+    const note = formatCompsNote(
+      {
+        arvEstimate: 450090,
+        rentEstimate: 2761,
+        property: { beds: 3, baths: 2, sqft: 1743, yearBuilt: 1996 },
+        valueEstimates: {
+          zestimate: 500000,
+          redfinEstimate: 480000,
+          average: 490000,
+        },
+        topComps: [],
+      },
+      new Date("2026-11-02T12:00:00"),
+    );
+    expect(note).toContain(
+      "Estimates: Zestimate $500,000 · Redfin Estimate $480,000 · average $490,000",
+    );
+    const [segment] = splitCompsNotes(note);
+    expect(segment.comps.estimates).toBe(
+      "Zestimate $500,000 · Redfin Estimate $480,000 · average $490,000",
+    );
+    // Not mistaken for part of the summary.
+    expect(segment.comps.summary).not.toContain("Estimates");
   });
 });
