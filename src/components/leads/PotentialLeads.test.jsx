@@ -33,6 +33,39 @@ describe("PotentialLeads", () => {
     vi.restoreAllMocks();
   });
 
+  it("records calls and thumbs up / down on a lead, saving just those fields", async () => {
+    const updateLeadPatch = vi.fn().mockResolvedValue(undefined);
+    const setLeads = vi.fn();
+    const lead = {
+      id: "l1",
+      leadType: "residential",
+      address: "1 Main St, Dallas, TX",
+      firstName: "Ann",
+      callCount: 2,
+    };
+    render(
+      <PotentialLeads
+        {...baseProps({ leads: [lead], updateLeadPatch, setLeads })}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "One more call" }));
+    await waitFor(() =>
+      expect(updateLeadPatch).toHaveBeenCalledWith(
+        "l1",
+        expect.objectContaining({
+          callCount: 3,
+          lastCalledAt: expect.any(String),
+        }),
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Mark as good lead" }));
+    await waitFor(() =>
+      expect(updateLeadPatch).toHaveBeenCalledWith("l1", { quality: "good" }),
+    );
+    // Shown straight away, before the save finishes.
+    expect(setLeads).toHaveBeenCalled();
+  });
+
   it("opens the Add Lead form from the Add a lead button", () => {
     render(<PotentialLeads {...baseProps()} />);
     expect(

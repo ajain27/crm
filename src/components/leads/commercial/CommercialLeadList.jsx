@@ -5,9 +5,12 @@ import LeadListPanel, {
   LeadSearchInput,
 } from "../components/LeadListPanel";
 import {
+  CallCell,
   DeleteCell,
   EmailCell,
   PhoneCell,
+  QualityCell,
+  qualityRowClass,
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
@@ -41,6 +44,8 @@ export default function CommercialLeadList({
   onOpen,
   onDelete,
   onBulkDelete,
+  onSetCalls,
+  onSetLeadQuality,
 }) {
   const { selectedIds } = listState;
   const filtered = leads.filter((l) =>
@@ -103,12 +108,15 @@ export default function CommercialLeadList({
               <th>Website</th>
               <th>Email</th>
               <th>Phone</th>
+              <th>Called</th>
+              <th>Quality</th>
             </tr>
           </thead>
           <tbody>
             {pageLeads.map((lead) => (
               <tr
                 key={lead.id}
+                className={qualityRowClass(lead.quality).trim() || undefined}
                 onClick={() => onOpen(lead)}
                 style={{ cursor: "pointer" }}
               >
@@ -158,6 +166,16 @@ export default function CommercialLeadList({
                 </td>
                 <EmailCell email={lead.sellerEmail || lead.email} />
                 <PhoneCell phone={lead.phone} phone2={lead.phone2} />
+                <CallCell
+                  count={lead.callCount}
+                  onChange={(count) => onSetCalls(lead, count)}
+                />
+                <QualityCell
+                  quality={lead.quality}
+                  onMarkGood={() => onSetLeadQuality(lead, "good")}
+                  onMarkBad={() => onSetLeadQuality(lead, "bad")}
+                  onClear={() => onSetLeadQuality(lead, "")}
+                />
               </tr>
             ))}
           </tbody>

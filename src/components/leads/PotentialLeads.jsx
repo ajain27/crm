@@ -493,6 +493,42 @@ export default function PotentialLeads({
     });
   }
 
+  // Saves a few fields of a lead, showing them straight away (so quick
+  // clicks, like + + on calls, each count) and undoing them if the save
+  // fails.
+  async function patchLead(lead, patch) {
+    if (ppcOnly) return;
+    setLeads((prev) =>
+      prev.map((l) => (l.id === lead.id ? { ...l, ...patch } : l)),
+    );
+    try {
+      if (updateLeadPatch) await updateLeadPatch(lead.id, patch);
+      else await saveLead({ ...lead, ...patch });
+    } catch (err) {
+      console.error("Failed to save lead", err);
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? lead : l)));
+      alert("Couldn't save that change. Please try again.");
+    }
+  }
+
+  // How many times the seller has been called (0 = not called), and when
+  // last.
+  function handleSetCalls(lead, count) {
+    const callCount = Math.max(0, count);
+    return patchLead(lead, {
+      callCount,
+      ...(callCount > (lead.callCount || 0)
+        ? { lastCalledAt: new Date().toISOString() }
+        : {}),
+    });
+  }
+
+  // Thumbs up / down on any lead ("good", "bad" or "" to clear). PPC leads
+  // keep their own rating (ppcQuality, with a reason when bad).
+  function handleSetLeadQuality(lead, quality) {
+    return patchLead(lead, { quality });
+  }
+
   async function handleRunAutomation(lead) {
     const senderName = [currentUser?.firstName, currentUser?.lastName]
       .filter(Boolean)
@@ -566,6 +602,8 @@ export default function PotentialLeads({
     onOpen: setDetailLead,
     onDelete: handleDelete,
     onAddToCrm: handleAddToCrm,
+    onSetCalls: handleSetCalls,
+    onSetLeadQuality: handleSetLeadQuality,
     onRunAutomation: handleRunAutomation,
     onStopAutomation: handleStopAutomation,
   };
@@ -629,6 +667,8 @@ export default function PotentialLeads({
             onAddLead={() => setAddLeadTab("commercial")}
             onOpen={setCommercialDetailLead}
             onDelete={handleDelete}
+            onSetCalls={handleSetCalls}
+            onSetLeadQuality={handleSetLeadQuality}
           />
         </>
       )}

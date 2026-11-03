@@ -5,6 +5,8 @@ import {
   Copy,
   ExternalLink,
   MessageSquare,
+  PhoneCall,
+  PhoneOff,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -344,6 +346,58 @@ export function QualityCell({ quality, onMarkGood, onMarkBad, onClear }) {
           <ThumbsDown size={13} />
         </button>
       </div>
+    </ActionCell>
+  );
+}
+
+// A row tinted by its lead's good / bad rating.
+export function qualityRowClass(quality) {
+  return quality === "bad"
+    ? " ppc-row-bad"
+    : quality === "good"
+      ? " ppc-row-good"
+      : "";
+}
+
+// Whether the seller has been called, and how many times: "Not called"
+// until the first call, then − / + to change the count (back to 0 is
+// "Not called" again). `onChange(count)` saves it.
+export function CallCell({ count, onChange }) {
+  const calls = Number(count) || 0;
+  return (
+    <ActionCell className="lead-call-cell" data-label="Called" guardWholeCell>
+      {calls === 0 ? (
+        <button
+          type="button"
+          className="lead-call-btn"
+          onClick={() => onChange(1)}
+          title="Mark as called"
+        >
+          <PhoneOff size={13} />
+          Not called
+        </button>
+      ) : (
+        <span className="lead-call-stepper" role="group" aria-label="Calls">
+          <button
+            type="button"
+            onClick={() => onChange(calls - 1)}
+            aria-label="One call fewer"
+          >
+            −
+          </button>
+          <span className="lead-call-count">
+            <PhoneCall size={13} />
+            Called {calls}×
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(calls + 1)}
+            aria-label="One more call"
+          >
+            +
+          </button>
+        </span>
+      )}
     </ActionCell>
   );
 }

@@ -13,7 +13,9 @@ import {
   EmailCell,
   NotesCell,
   PhoneCell,
+  CallCell,
   QualityCell,
+  qualityRowClass,
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
@@ -36,21 +38,19 @@ const SEARCH_FIELDS = [
   "phone2",
 ];
 
-function rowClassName(lead, clickable, showQuality) {
-  const quality = !showQuality
+// PPC leads are tinted by their PPC rating, the others by their own.
+function rowClassName(lead, clickable, isPpc, readOnly) {
+  const quality = readOnly
     ? ""
-    : lead.ppcQuality === "bad"
-      ? " ppc-row-bad"
-      : lead.ppcQuality === "good"
-        ? " ppc-row-good"
-        : "";
+    : qualityRowClass(isPpc ? lead.ppcQuality : lead.quality);
   return `${clickable ? "clickable-row" : ""}${quality}`;
 }
 
 // Campaign lead list, shared by the PPC, PPL and Cold Calling tabs. `readOnly` (for
 // PPC-only users) hides selection, quality, delete, CRM and automation, and
-// stops rows from opening the detail modal. Leads marked bad don't open
-// either. The quality column only shows when `onSetQuality` is passed.
+// stops rows from opening the detail modal. On the PPC tab
+// (`onSetQuality`), leads are rated with a reason when bad, and bad ones
+// don't open; on the others the thumbs (`onSetLeadQuality`) just mark them.
 export default function CampaignLeadList({
   title,
   leads,
@@ -63,6 +63,8 @@ export default function CampaignLeadList({
   onDelete,
   onBulkDelete,
   onSetQuality,
+  onSetLeadQuality,
+  onSetCalls,
   onAddToCrm,
   onRunAutomation,
   onStopAutomation,
@@ -72,7 +74,9 @@ export default function CampaignLeadList({
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
   const { selectedIds } = listState;
-  const showQuality = !readOnly && Boolean(onSetQuality);
+  const isPpc = Boolean(onSetQuality);
+  const showQuality = !readOnly && (isPpc || Boolean(onSetLeadQuality));
+  const showCalls = !readOnly && Boolean(onSetCalls);
 
   const filtered = leads.filter((l) =>
     leadMatchesSearch(l, listState.search, SEARCH_FIELDS),
@@ -145,6 +149,7 @@ export default function CampaignLeadList({
                 <th>Added</th>
                 {!readOnly && (
                   <>
+                    {showCalls && <th>Called</th>}
                     {showQuality && <th>Quality</th>}
                     <th></th>
                     <th></th>
@@ -154,13 +159,13 @@ export default function CampaignLeadList({
             </thead>
             <tbody>
               {pageLeads.map((lead) => {
-                const isBad = showQuality && lead.ppcQuality === "bad";
+                const isBad = isPpc && !readOnly && lead.ppcQuality === "bad";
                 const clickable = !readOnly && !isBad;
                 return (
                   <tr
                     key={lead.id}
                     onClick={clickable ? () => onOpen(lead) : undefined}
-                    className={rowClassName(lead, clickable, showQuality)}
+                    className={rowClassName(lead, clickable, isPpc, readOnly)}
                   >
                     {!readOnly && (
                       <>
@@ -202,14 +207,28 @@ export default function CampaignLeadList({
                     <DateAddedCell date={lead.dateAdded} />
                     {!readOnly && (
                       <>
-                        {showQuality && (
-                          <QualityCell
-                            quality={lead.ppcQuality}
-                            onMarkGood={() => onSetQuality(lead, "good")}
-                            onMarkBad={() => setBadModalLead(lead)}
-                            onClear={() => onSetQuality(lead, "")}
+                        {showCalls && (
+                          <CallCell
+                            count={lead.callCount}
+                            onChange={(count) => onSetCalls(lead, count)}
                           />
                         )}
+                        {showQuality &&
+                          (isPpc ? (
+                            <QualityCell
+                              quality={lead.ppcQuality}
+                              onMarkGood={() => onSetQuality(lead, "good")}
+                              onMarkBad={() => setBadModalLead(lead)}
+                              onClear={() => onSetQuality(lead, "")}
+                            />
+                          ) : (
+                            <QualityCell
+                              quality={lead.quality}
+                              onMarkGood={() => onSetLeadQuality(lead, "good")}
+                              onMarkBad={() => onSetLeadQuality(lead, "bad")}
+                              onClear={() => onSetLeadQuality(lead, "")}
+                            />
+                          ))}
                         <CrmCell
                           isBad={isBad}
                           onAdd={() => onAddToCrm(lead.id)}

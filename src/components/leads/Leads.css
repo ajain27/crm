@@ -1312,6 +1312,61 @@
     border-color: color-mix(in srgb, #dc2626 40%, transparent 60%);
   }
 
+  /* Called / not called, with the number of calls */
+  .lead-call-cell {
+    white-space: nowrap;
+  }
+
+  .lead-call-btn,
+  .lead-call-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 28px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .lead-call-btn {
+    padding: 0 0.6rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .lead-call-btn:hover {
+    color: var(--text);
+  }
+
+  .lead-call-stepper {
+    border-color: color-mix(in srgb, #16a34a 40%, transparent 60%);
+    background: color-mix(in srgb, #16a34a 10%, var(--panel) 90%);
+    color: #16a34a;
+  }
+
+  .lead-call-stepper button {
+    width: 26px;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .lead-call-stepper button:hover {
+    background: color-mix(in srgb, #16a34a 12%, transparent 88%);
+  }
+
+  .lead-call-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
   /* Bad lead popup */
   .ppc-bad-overlay {
     position: fixed;

@@ -5,11 +5,14 @@ import LeadListPanel, {
 } from "../components/LeadListPanel";
 import {
   AutomationCell,
+  CallCell,
   CrmCell,
   DeleteCell,
   EmailCell,
   NotesCell,
   PhoneCell,
+  QualityCell,
+  qualityRowClass,
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
@@ -55,6 +58,8 @@ export default function ResidentialLeadList({
   onRemoveDuplicates,
   onAddLead,
   onAddToCrm,
+  onSetCalls,
+  onSetLeadQuality,
   onRunAutomation,
   onStopAutomation,
 }) {
@@ -151,6 +156,8 @@ export default function ResidentialLeadList({
               <th>Email</th>
               <th>Phone</th>
               <th>Notes</th>
+              <th>Called</th>
+              <th>Quality</th>
               <th></th>
               <th></th>
             </tr>
@@ -161,7 +168,7 @@ export default function ResidentialLeadList({
               return (
                 <tr
                   key={lead.id}
-                  className="clickable-row"
+                  className={`clickable-row${qualityRowClass(lead.quality)}`}
                   onClick={() => onOpen(lead)}
                 >
                   <SelectCell
@@ -190,6 +197,16 @@ export default function ResidentialLeadList({
                   <EmailCell email={isMls ? "" : lead.email} />
                   <PhoneCell phone={lead.phone} phone2={lead.phone2} />
                   <NotesCell notes={lead.notes} />
+                  <CallCell
+                    count={lead.callCount}
+                    onChange={(count) => onSetCalls(lead, count)}
+                  />
+                  <QualityCell
+                    quality={lead.quality}
+                    onMarkGood={() => onSetLeadQuality(lead, "good")}
+                    onMarkBad={() => onSetLeadQuality(lead, "bad")}
+                    onClear={() => onSetLeadQuality(lead, "")}
+                  />
                   <CrmCell onAdd={() => onAddToCrm(lead.id)} />
                   <AutomationCell
                     lead={lead}
