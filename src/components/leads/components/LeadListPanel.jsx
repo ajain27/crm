@@ -19,6 +19,22 @@ export function LeadSearchInput({ value, onChange, placeholder }) {
   );
 }
 
+// Called / Not called filter, stored as `filters.called`.
+export function LeadCallFilter({ listState }) {
+  return (
+    <select
+      value={listState.filters.called || ""}
+      onChange={(e) => listState.setFilter("called", e.target.value)}
+      className="leads-filter-select"
+      aria-label="Filter by called"
+    >
+      <option value="">Called or not</option>
+      <option value="called">Called</option>
+      <option value="notCalled">Not called</option>
+    </select>
+  );
+}
+
 export function LeadClearFilters({ listState }) {
   return (
     <ClearFiltersButton

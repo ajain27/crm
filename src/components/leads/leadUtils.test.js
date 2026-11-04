@@ -13,9 +13,21 @@ import {
   leadTabOf,
   LEAD_TAB_IDS,
   cashOfferText,
+  matchesCallFilter,
 } from "./leadUtils";
 
 describe("leadUtils", () => {
+  it("matches leads against the Called filter", () => {
+    const called = { callCount: 2 };
+    const notCalled = {};
+    expect(matchesCallFilter(called, "")).toBe(true);
+    expect(matchesCallFilter(notCalled, "")).toBe(true);
+    expect(matchesCallFilter(called, "called")).toBe(true);
+    expect(matchesCallFilter(notCalled, "called")).toBe(false);
+    expect(matchesCallFilter(called, "notCalled")).toBe(false);
+    expect(matchesCallFilter(notCalled, "notCalled")).toBe(true);
+  });
+
   it("paginates and summarizes a page of leads", () => {
     const items = Array.from({ length: 43 }, (_, i) => ({ id: i }));
     const result = paginate(items, 3);

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AccordionHeaderCell } from "../../elements/elements";
 import { formatDate } from "../../../utils/utils";
 import LeadListPanel, {
+  LeadCallFilter,
   LeadClearFilters,
   LeadSearchInput,
 } from "../components/LeadListPanel";
@@ -26,7 +27,12 @@ import LeadImportButton from "../components/LeadImportButton";
 import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { cashOfferText, leadMatchesSearch, sellerNameOf } from "../leadUtils";
+import {
+  cashOfferText,
+  leadMatchesSearch,
+  matchesCallFilter,
+  sellerNameOf,
+} from "../leadUtils";
 
 const SEARCH_FIELDS = [
   "address",
@@ -78,8 +84,10 @@ export default function CampaignLeadList({
   const showQuality = !readOnly && (isPpc || Boolean(onSetLeadQuality));
   const showCalls = !readOnly && Boolean(onSetCalls);
 
-  const filtered = leads.filter((l) =>
-    leadMatchesSearch(l, listState.search, SEARCH_FIELDS),
+  const filtered = leads.filter(
+    (l) =>
+      leadMatchesSearch(l, listState.search, SEARCH_FIELDS) &&
+      (!showCalls || matchesCallFilter(l, listState.filters.called)),
   );
 
   const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
@@ -91,6 +99,7 @@ export default function CampaignLeadList({
         onChange={listState.setSearch}
         placeholder="Search name, email, phone or address…"
       />
+      {showCalls && <LeadCallFilter listState={listState} />}
       <LeadClearFilters listState={listState} />
       {!readOnly && (
         <LeadBulkDeleteButton

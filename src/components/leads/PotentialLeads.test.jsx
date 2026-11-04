@@ -93,6 +93,26 @@ describe("PotentialLeads", () => {
     );
   });
 
+  it("filters leads by called and not called", () => {
+    const leads = [
+      {
+        id: "l1",
+        leadType: "residential",
+        address: "1 Main St, Dallas, TX",
+        callCount: 2,
+      },
+      { id: "l2", leadType: "residential", address: "2 Oak Ave, Dallas, TX" },
+    ];
+    render(<PotentialLeads {...baseProps({ leads })} />);
+    const filter = screen.getByRole("combobox", { name: "Filter by called" });
+    fireEvent.change(filter, { target: { value: "called" } });
+    expect(screen.getByText("1 Main St, Dallas, TX")).toBeInTheDocument();
+    expect(screen.queryByText("2 Oak Ave, Dallas, TX")).toBeNull();
+    fireEvent.change(filter, { target: { value: "notCalled" } });
+    expect(screen.queryByText("1 Main St, Dallas, TX")).toBeNull();
+    expect(screen.getByText("2 Oak Ave, Dallas, TX")).toBeInTheDocument();
+  });
+
   it("rates a lead with thumbs up / down, saving just that", async () => {
     const updateLeadPatch = vi.fn().mockResolvedValue(undefined);
     const lead = {

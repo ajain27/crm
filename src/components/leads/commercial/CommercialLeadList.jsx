@@ -1,6 +1,7 @@
 import { Globe } from "lucide-react";
 import { AccordionHeaderCell } from "../../elements/elements";
 import LeadListPanel, {
+  LeadCallFilter,
   LeadClearFilters,
   LeadSearchInput,
 } from "../components/LeadListPanel";
@@ -21,7 +22,11 @@ import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { leadMatchesSearch, sellerNameOf } from "../leadUtils";
+import {
+  leadMatchesSearch,
+  matchesCallFilter,
+  sellerNameOf,
+} from "../leadUtils";
 
 const SEARCH_FIELDS = [
   "name",
@@ -48,8 +53,10 @@ export default function CommercialLeadList({
   onSetLeadQuality,
 }) {
   const { selectedIds } = listState;
-  const filtered = leads.filter((l) =>
-    leadMatchesSearch(l, listState.search, SEARCH_FIELDS),
+  const filtered = leads.filter(
+    (l) =>
+      leadMatchesSearch(l, listState.search, SEARCH_FIELDS) &&
+      matchesCallFilter(l, listState.filters.called),
   );
   const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
 
@@ -60,6 +67,7 @@ export default function CommercialLeadList({
         onChange={listState.setSearch}
         placeholder="Search name, seller, address or phone…"
       />
+      <LeadCallFilter listState={listState} />
       <LeadClearFilters listState={listState} />
       <LeadBulkDeleteButton
         selectedLeads={selectedLeads}

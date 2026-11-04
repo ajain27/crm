@@ -377,6 +377,14 @@ export function leadMatchesSearch(lead, query, fields) {
   );
 }
 
+// The Called filter: "called" keeps leads called at least once,
+// "notCalled" the rest; empty keeps everything.
+export function matchesCallFilter(lead, value) {
+  if (!value) return true;
+  const called = (Number(lead.callCount) || 0) > 0;
+  return value === "called" ? called : !called;
+}
+
 export function pluralizeLeads(count) {
   return `lead${count !== 1 ? "s" : ""}`;
 }

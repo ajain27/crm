@@ -1,5 +1,6 @@
 import { AccordionHeaderCell } from "../../elements/elements";
 import LeadListPanel, {
+  LeadCallFilter,
   LeadClearFilters,
   LeadSearchInput,
 } from "../components/LeadListPanel";
@@ -22,11 +23,17 @@ import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadExportButton from "../components/LeadExportButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { leadMatchesSearch, parseAddress, sellerNameOf } from "../leadUtils";
+import {
+  leadMatchesSearch,
+  matchesCallFilter,
+  parseAddress,
+  sellerNameOf,
+} from "../leadUtils";
 
 export const RESIDENTIAL_FILTERS = {
   source: "",
   state: "",
+  called: "",
 };
 
 const SEARCH_FIELDS = [
@@ -71,7 +78,8 @@ export default function ResidentialLeadList({
       (l) =>
         leadMatchesSearch(l, search, SEARCH_FIELDS) &&
         (!filters.source || l.source === filters.source) &&
-        (!filters.state || parseAddress(l.address).state === filters.state),
+        (!filters.state || parseAddress(l.address).state === filters.state) &&
+        matchesCallFilter(l, filters.called),
     )
     .sort(byFollowUpDate);
 
@@ -111,6 +119,7 @@ export default function ResidentialLeadList({
           </option>
         ))}
       </select>
+      <LeadCallFilter listState={listState} />
       <LeadClearFilters listState={listState} />
       <LeadBulkDeleteButton
         selectedLeads={selectedLeads}
