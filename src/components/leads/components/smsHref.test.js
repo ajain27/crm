@@ -16,9 +16,23 @@ describe("smsHref", () => {
     expect(smsHref(undefined)).toBe("");
   });
 
-  it("prefills the message body when given", () => {
-    expect(smsHref("214-663-0735", "Hi, 12 Main St & more?")).toBe(
-      "sms:+12146630735?&body=Hi%2C%2012%20Main%20St%20%26%20more%3F",
+  it("prefills the message the way Apple's Messages reads it", () => {
+    const iPhone =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15";
+    const mac =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15";
+    for (const ua of [iPhone, mac]) {
+      expect(smsHref("214-663-0735", "Hi, 12 Main St & more?", ua)).toBe(
+        "sms:+12146630735&body=Hi%2C%2012%20Main%20St%20%26%20more%3F",
+      );
+    }
+  });
+
+  it("prefills the message the way Android reads it", () => {
+    const android =
+      "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0";
+    expect(smsHref("214-663-0735", "Hi there", android)).toBe(
+      "sms:+12146630735?body=Hi%20there",
     );
   });
 });

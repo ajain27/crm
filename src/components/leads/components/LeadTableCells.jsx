@@ -105,33 +105,70 @@ export function EmailLink({ email }) {
   );
 }
 
+const currentUserAgent = () =>
+  typeof navigator === "undefined" ? "" : navigator.userAgent || "";
+
 // "sms:+12146630735" — US numbers without a country code get +1, so the
 // Messages app matches them to the same contact as the tel: link.
-// `body` prefills the message. "?&body=" is the form both iOS/macOS
-// (which reads "&body=") and Android (which reads "?body=") accept.
-export function smsHref(phone, body = "") {
+// `body` prefills the message, written the way the device reads it: Apple's
+// Messages (iPhone, iPad and Mac) wants "&body=" and drops the text with
+// anything else; Android wants "?body=".
+export function smsHref(phone, body = "", userAgent = currentUserAgent()) {
   const digits = String(phone || "").replace(/\D/g, "");
   if (!digits) return "";
   const to = digits.length === 10 ? `sms:+1${digits}` : `sms:+${digits}`;
-  return body ? `${to}?&body=${encodeURIComponent(body)}` : to;
+  if (!body) return to;
+  const apple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(userAgent);
+  return `${to}${apple ? "&" : "?"}body=${encodeURIComponent(body)}`;
 }
 
 // Opens the device's Messages app, so the text goes out from the same
 // number that tel: links call from.
-// `body` (optional) is written into the message.
+// `body` (optional) is written into the message, and copied too: a
+// Messages app that leaves it out (some versions do) can have it pasted.
 export function TextLink({ phone, body = "" }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return undefined;
+    const timer = setTimeout(() => setCopied(false), 2500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   const href = smsHref(phone, body);
-  return href ? (
-    <a
-      href={href}
-      className="leads-text-link"
-      title={`Text ${phone}`}
-      aria-label={`Text ${phone}`}
-      onClick={stopPropagation}
-    >
-      <MessageSquare size={14} />
-    </a>
-  ) : null;
+  if (!href) return null;
+
+  function handleClick(e) {
+    e.stopPropagation();
+    if (!body) return;
+    navigator.clipboard
+      ?.writeText(body)
+      .then(() => setCopied(true))
+      .catch(() => {
+        // No clipboard access (e.g. not a secure page): the link still
+        // carries the message.
+      });
+  }
+
+  return (
+    <span className="leads-text-link-wrap">
+      <a
+        href={href}
+        className="leads-text-link"
+        title={
+          body ? `Text ${phone} (the message is copied too)` : `Text ${phone}`
+        }
+        aria-label={`Text ${phone}`}
+        onClick={handleClick}
+      >
+        <MessageSquare size={14} />
+      </a>
+      {copied && (
+        <span className="leads-text-copied" role="status">
+          Message copied
+        </span>
+      )}
+    </span>
+  );
 }
 
 export function PhoneLink({ phone, textBody }) {

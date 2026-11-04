@@ -49,7 +49,27 @@ describe("PhoneCell", () => {
       screen.getByRole("link", { name: "Text 716-665-1501" }),
     ).toHaveAttribute(
       "href",
-      `sms:+17166651501?&body=${encodeURIComponent("Hi Ann, cash offer?")}`,
+      // jsdom isn't an Apple device: Android's form.
+      `sms:+17166651501?body=${encodeURIComponent("Hi Ann, cash offer?")}`,
     );
+  });
+
+  it("also copies the message, in case Messages leaves it out", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    const onRowClick = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <tr onClick={onRowClick}>
+            <PhoneCell phone="716-665-1501" textBody="Hi Ann, cash offer?" />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Text 716-665-1501" }));
+    expect(writeText).toHaveBeenCalledWith("Hi Ann, cash offer?");
+    expect(await screen.findByText("Message copied")).toBeInTheDocument();
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 });
