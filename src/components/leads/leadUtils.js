@@ -352,6 +352,23 @@ export function parseAddress(full) {
   return { address: full, city: "", state: "", zipCode: "" };
 }
 
+// The text the Text button writes to a seller: a polite note asking
+// whether they'd consider a cash offer on the property. Signed with
+// `senderName` when the user has one.
+export function cashOfferText(lead, senderName = "") {
+  const first =
+    String(lead?.firstName || "").trim() ||
+    splitName(lead?.sellerName).firstName;
+  const address = String(lead?.address || "").trim();
+  const from = String(senderName || "").trim();
+  return [
+    `Hi${first ? ` ${first}` : ""}, this is ${from ? `${from} with ` : ""}You Win Estates.`,
+    `I'm reaching out about your property${address ? ` at ${address}` : ""}.`,
+    "Would you be open to a cash offer on it? We buy as-is and can close on your timeline.",
+    "No pressure at all — thank you for your time!",
+  ].join(" ");
+}
+
 // Case-insensitive "does any of these fields contain the query" check used
 // by every lead list's search box.
 export function leadMatchesSearch(lead, query, fields) {

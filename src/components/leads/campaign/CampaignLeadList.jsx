@@ -26,7 +26,7 @@ import LeadImportButton from "../components/LeadImportButton";
 import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
-import { leadMatchesSearch, sellerNameOf } from "../leadUtils";
+import { cashOfferText, leadMatchesSearch, sellerNameOf } from "../leadUtils";
 
 const SEARCH_FIELDS = [
   "address",
@@ -71,6 +71,7 @@ export default function CampaignLeadList({
   onImport,
   onRemoveDuplicates,
   onAddLead,
+  senderName = "",
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
   const { selectedIds } = listState;
@@ -199,7 +200,11 @@ export default function CampaignLeadList({
                       }}
                     />
                     <EmailCell email={lead.email} />
-                    <PhoneCell phone={lead.phone} phone2={lead.phone2} />
+                    <PhoneCell
+                      phone={lead.phone}
+                      phone2={lead.phone2}
+                      textBody={cashOfferText(lead, senderName)}
+                    />
                     <td className="leads-address-cell" data-label="Address">
                       {lead.address || "—"}
                     </td>

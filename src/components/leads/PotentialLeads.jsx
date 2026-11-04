@@ -200,6 +200,11 @@ export default function PotentialLeads({
     onSaved: () => setAddLeadTab(null),
   });
 
+  // The user's name, for signing texts and automated emails.
+  const senderName = [currentUser?.firstName, currentUser?.lastName]
+    .filter(Boolean)
+    .join(" ");
+
   // ── Shared lead actions ────────────────────────────────────────────────────
   // Deletes every local copy of the given leads (same id, or the same lead
   // under another id — see leadIdentityKeys) and drops them from all lists.
@@ -530,9 +535,6 @@ export default function PotentialLeads({
   }
 
   async function handleRunAutomation(lead) {
-    const senderName = [currentUser?.firstName, currentUser?.lastName]
-      .filter(Boolean)
-      .join(" ");
     await handleLeadSave({
       ...lead,
       emailSequence: startEmailSequence(senderName),
@@ -675,6 +677,7 @@ export default function PotentialLeads({
 
       {activeTab === "ppc" && (
         <CampaignLeadList
+          senderName={senderName}
           title="PPC Leads"
           leads={ppcLeads}
           listState={ppcList}
@@ -691,6 +694,7 @@ export default function PotentialLeads({
 
       {activeTab === "ppl" && (
         <CampaignLeadList
+          senderName={senderName}
           title="PPL Leads"
           leads={pplLeads}
           listState={pplList}
@@ -706,6 +710,7 @@ export default function PotentialLeads({
 
       {activeTab === "coldcall" && !ppcOnly && (
         <CampaignLeadList
+          senderName={senderName}
           title="Cold Calling"
           leads={coldCallLeads}
           listState={coldCallList}

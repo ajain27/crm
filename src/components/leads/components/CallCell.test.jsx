@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { CallCell } from "./LeadTableCells";
+import { CallCell, PhoneCell } from "./LeadTableCells";
 
 function renderCell(count, onChange = vi.fn(), onRowClick = vi.fn()) {
   render(
@@ -31,5 +31,25 @@ describe("CallCell", () => {
     expect(onChange).toHaveBeenLastCalledWith(3);
     fireEvent.click(screen.getByRole("button", { name: "One call fewer" }));
     expect(onChange).toHaveBeenLastCalledWith(1);
+  });
+});
+
+describe("PhoneCell", () => {
+  it("opens Messages with the text already written", () => {
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <PhoneCell phone="716-665-1501" textBody="Hi Ann, cash offer?" />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    expect(
+      screen.getByRole("link", { name: "Text 716-665-1501" }),
+    ).toHaveAttribute(
+      "href",
+      `sms:+17166651501?&body=${encodeURIComponent("Hi Ann, cash offer?")}`,
+    );
   });
 });

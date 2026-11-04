@@ -12,6 +12,7 @@ import {
   leadForTab,
   leadTabOf,
   LEAD_TAB_IDS,
+  cashOfferText,
 } from "./leadUtils";
 
 describe("leadUtils", () => {
@@ -250,5 +251,25 @@ describe("leadForTab", () => {
       name: "1 Main St",
       sellerEmail: "ann@x.com",
     });
+  });
+});
+
+describe("cashOfferText", () => {
+  it("politely asks about a cash offer on the property, signed by the user", () => {
+    expect(
+      cashOfferText(
+        { firstName: "Rosario", address: "590 Ridgewood St, Buffalo, NY" },
+        "Ankit Jain",
+      ),
+    ).toBe(
+      "Hi Rosario, this is Ankit Jain with You Win Estates. I'm reaching out about your property at 590 Ridgewood St, Buffalo, NY. Would you be open to a cash offer on it? We buy as-is and can close on your timeline. No pressure at all — thank you for your time!",
+    );
+  });
+
+  it("reads well without a name, sender or address", () => {
+    expect(cashOfferText({ sellerName: "Ann Bell" })).toMatch(
+      /^Hi Ann, this is You Win Estates\. I'm reaching out about your property\. /,
+    );
+    expect(cashOfferText({})).toMatch(/^Hi, this is You Win Estates\./);
   });
 });

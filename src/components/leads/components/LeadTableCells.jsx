@@ -118,8 +118,9 @@ export function smsHref(phone, body = "") {
 
 // Opens the device's Messages app, so the text goes out from the same
 // number that tel: links call from.
-export function TextLink({ phone }) {
-  const href = smsHref(phone);
+// `body` (optional) is written into the message.
+export function TextLink({ phone, body = "" }) {
+  const href = smsHref(phone, body);
   return href ? (
     <a
       href={href}
@@ -133,13 +134,13 @@ export function TextLink({ phone }) {
   ) : null;
 }
 
-export function PhoneLink({ phone }) {
+export function PhoneLink({ phone, textBody }) {
   return phone ? (
     <span className="leads-phone">
       <a href={`tel:${phone}`} className="leads-contact-link">
         {displayPhone(phone)}
       </a>
-      <TextLink phone={phone} />
+      <TextLink phone={phone} body={textBody} />
     </span>
   ) : (
     EMPTY
@@ -155,19 +156,20 @@ export function EmailCell({ email, className }) {
 }
 
 // A second number (`phone2`, e.g. from an import) shows under the first;
-// `phones` lists any number of them instead.
-export function PhoneCell({ phone, phone2, phones, className }) {
+// `phones` lists any number of them instead. `textBody` prefills the text
+// each number's Text button opens.
+export function PhoneCell({ phone, phone2, phones, className, textBody }) {
   const all = (phones || [phone, phone2]).filter(Boolean);
   return (
     <ActionCell className={className} data-label="Phone">
       {all.length > 1 ? (
         <span className="leads-phone-stack">
           {all.map((p, i) => (
-            <PhoneLink key={i} phone={p} />
+            <PhoneLink key={i} phone={p} textBody={textBody} />
           ))}
         </span>
       ) : (
-        <PhoneLink phone={all[0]} />
+        <PhoneLink phone={all[0]} textBody={textBody} />
       )}
     </ActionCell>
   );
