@@ -4,7 +4,12 @@ export const COMP_RULES = {
   radiusMiles: 0.5,
   soldWithinDays: 90,
   yearBuiltTolerance: 5,
+  // A comp's size within this share of the subject's (±25%). Bigger homes
+  // sell for less per sq ft, so far-off sizes skew a $/sq ft ARV.
+  sqftTolerance: 0.25,
   maxComps: 5,
+  // The ARV never goes more than this share over the highest comp sale.
+  arvOverTopSale: 0.1,
   // Sales under this share of the area's typical price per sq ft (or price,
   // without a size) are taken as distressed and left out — ARV is the
   // value after repair, so as-is shells and auction sales don't count.

@@ -373,6 +373,12 @@ export async function runComps(
       yearBuiltTo: isNum(property.yearBuilt)
         ? property.yearBuilt + COMP_RULES.yearBuiltTolerance
         : null,
+      sqftFrom: isNum(property.sqft)
+        ? Math.round(property.sqft * (1 - COMP_RULES.sqftTolerance))
+        : null,
+      sqftTo: isNum(property.sqft)
+        ? Math.round(property.sqft * (1 + COMP_RULES.sqftTolerance))
+        : null,
       // False when OpenStreetMap couldn't be reached, so sales across a
       // highway weren't screened out.
       highwayCheck: highways !== null,
@@ -399,6 +405,11 @@ export async function runComps(
         ? `No homes sold within ${search.miles} mi in the last ${Math.round(search.days / 30.4)} months.`
         : arvBasis,
       estimateNote,
+      // A duplex valued against single-family homes (or the reverse) can
+      // be far off, so say when the type wasn't settled.
+      !property.propertyType && topComps.length > 0
+        ? "The property's type (single family or multi-family) couldn't be confirmed, so comps weren't held to one — check it before relying on the ARV."
+        : null,
       outsideRules > 0
         ? `${plural(outsideRules, "comp")} ${outsideRules === 1 ? "falls" : "fall"} outside the comp rules — see how each differs.`
         : null,

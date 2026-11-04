@@ -19,6 +19,7 @@ const UNKNOWN_LABELS = {
   beds: "beds",
   baths: "baths",
   yearBuilt: "year built",
+  sqft: "size",
 };
 
 // "Sold within 0.5 mi in the last 90 days · 3 bd · 1 ba · built 1967–1977"
@@ -30,6 +31,7 @@ export function compsCriteriaText(result) {
     c.beds ? `${c.beds} bd` : null,
     c.baths ? `${c.baths} ba` : null,
     c.yearBuiltFrom ? `built ${c.yearBuiltFrom}–${c.yearBuiltTo}` : null,
+    c.sqftFrom ? `${num(c.sqftFrom)}–${num(c.sqftTo)} sq ft` : null,
     c.highwayCheck ? "same side of major highways" : null,
   ].filter(Boolean);
   const unknown = (c.unknown || []).map((f) => UNKNOWN_LABELS[f] || f);
@@ -50,6 +52,7 @@ const EXCLUDED_LABELS = {
   beds: "different beds",
   baths: "different baths",
   yearBuilt: "built outside the range",
+  sqft: "different size",
   propertyType: "different property type",
 };
 

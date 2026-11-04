@@ -33,7 +33,9 @@ describe("PotentialLeads", () => {
     vi.restoreAllMocks();
   });
 
-  it("records calls and thumbs up / down on a lead, saving just those fields", async () => {
+  it("asks how a call went and adds it to the notes with the date", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-04T10:00:00"));
     const updateLeadPatch = vi.fn().mockResolvedValue(undefined);
     const setLeads = vi.fn();
     const lead = {
@@ -42,6 +44,7 @@ describe("PotentialLeads", () => {
       address: "1 Main St, Dallas, TX",
       firstName: "Ann",
       callCount: 2,
+      notes: "Wants a quick sale.",
     };
     render(
       <PotentialLeads
@@ -49,21 +52,61 @@ describe("PotentialLeads", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "One more call" }));
+    // Nothing is saved until the call's notes are.
+    expect(updateLeadPatch).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog", { name: "Call notes" });
+    expect(dialog).toHaveTextContent("Call 3");
+    fireEvent.change(screen.getByLabelText(/How did the call go/), {
+      target: { value: "Owner wants $120k, call back Friday." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save call" }));
     await waitFor(() =>
-      expect(updateLeadPatch).toHaveBeenCalledWith(
-        "l1",
-        expect.objectContaining({
-          callCount: 3,
-          lastCalledAt: expect.any(String),
-        }),
-      ),
+      expect(updateLeadPatch).toHaveBeenCalledWith("l1", {
+        callCount: 3,
+        lastCalledAt: new Date("2026-11-04T10:00:00").toISOString(),
+        notes:
+          "Wants a quick sale.\n\nCall 3 (11/4/2026): Owner wants $120k, call back Friday.",
+      }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("doesn't count a call when its notes are cancelled, and takes calls off straight away", async () => {
+    const updateLeadPatch = vi.fn().mockResolvedValue(undefined);
+    const lead = {
+      id: "l1",
+      leadType: "residential",
+      address: "1 Main St, Dallas, TX",
+      callCount: 2,
+    };
+    render(
+      <PotentialLeads {...baseProps({ leads: [lead], updateLeadPatch })} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "One more call" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(updateLeadPatch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "One call fewer" }));
+    await waitFor(() =>
+      expect(updateLeadPatch).toHaveBeenCalledWith("l1", { callCount: 1 }),
+    );
+  });
+
+  it("rates a lead with thumbs up / down, saving just that", async () => {
+    const updateLeadPatch = vi.fn().mockResolvedValue(undefined);
+    const lead = {
+      id: "l1",
+      leadType: "residential",
+      address: "1 Main St, Dallas, TX",
+    };
+    render(
+      <PotentialLeads {...baseProps({ leads: [lead], updateLeadPatch })} />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Mark as good lead" }));
     await waitFor(() =>
       expect(updateLeadPatch).toHaveBeenCalledWith("l1", { quality: "good" }),
     );
-    // Shown straight away, before the save finishes.
-    expect(setLeads).toHaveBeenCalled();
   });
 
   it("opens the Add Lead form from the Add a lead button", () => {

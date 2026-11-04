@@ -800,6 +800,9 @@ describe("run-comps", () => {
     const out = await runComps(ADDRESS, ENV, NOW);
     expect(out.property.propertyType).toBeNull();
     expect(out.property.annualTax).toBeNull();
+    expect(out.summary).toContain(
+      "The property's type (single family or multi-family) couldn't be confirmed",
+    );
   });
 
   it("re-runs with corrected facts at a known location, without searching or scraping", async () => {
@@ -981,7 +984,46 @@ describe("comp rules", () => {
       ["3 C St", []],
       ["1 A St", ["sold 6 months ago"]],
     ]);
-    expect(unknown).toEqual(["baths", "yearBuilt"]);
+    expect(unknown).toEqual(["baths", "yearBuilt", "sqft"]);
+  });
+
+  it("labels comps far off the property's size", () => {
+    const { ranked, excluded } = rankComps({
+      subject: { beds: 6, baths: 2, sqft: 3900 },
+      location: SUBJECT,
+      sales: [
+        {
+          street: "1 A St",
+          soldDate: "2026-09-20",
+          beds: 6,
+          baths: 2,
+          sqft: 3500,
+        },
+        {
+          street: "2 B St",
+          soldDate: "2026-09-20",
+          beds: 6,
+          baths: 2,
+          sqft: 2600,
+        },
+        { street: "3 C St", soldDate: "2026-09-20", beds: 6, baths: 2 },
+      ].map((s) => ({
+        ...s,
+        price: 150000,
+        lat: SUBJECT.lat,
+        lng: SUBJECT.lng,
+      })),
+      subjectAddress: "9 Z St",
+      now: NOW,
+    });
+    const misses = Object.fromEntries(
+      ranked.map((r) => [r.street, r.misses.map(([, l]) => l)]),
+    );
+    // Within 25%, or size unknown: meets the rule.
+    expect(misses["1 A St"]).toEqual([]);
+    expect(misses["3 C St"]).toEqual([]);
+    expect(misses["2 B St"]).toEqual(["33% smaller"]);
+    expect(excluded.sqft).toBe(1);
   });
 
   it("uses price per sq ft only when enough comps have a size", () => {
@@ -1040,6 +1082,34 @@ describe("cleanScraped", () => {
     expect(
       cleanScraped({ beds: 3, sqft: 0, yearBuilt: "N/A", propertyType: " — " }),
     ).toEqual({ beds: 3 });
+  });
+});
+
+describe("ARV for a property much bigger than its comps", () => {
+  // 1823 Grasmere St, East Cleveland: a 3,900 sq ft duplex whose comps
+  // were 2,000–3,000 sq ft and all sold for under $150k.
+  const comps = [
+    { price: 140000, sqft: 3030 },
+    { price: 130000, sqft: 2226 },
+    { price: 148600 },
+    { price: 128900, sqft: 2042 },
+    { price: 147000, sqft: 2762 },
+  ];
+
+  it("uses the median $/sq ft, and caps it 10% over the highest sale", () => {
+    const { arvEstimate, arvBasis } = estimateArv(comps, 3900);
+    expect(arvEstimate).toBe(163460);
+    expect(arvBasis).toContain("ARV = median $56/sq ft across 4 comps");
+    expect(arvBasis).toContain("56% bigger than the typical comp");
+    expect(arvBasis).toContain(
+      "more than 10% over the highest comp sale ($148,600), so the ARV is capped at $163,460.",
+    );
+  });
+
+  it("keeps the upper quartile for a property the comps' size", () => {
+    const { arvEstimate, arvBasis } = estimateArv(comps, 2500);
+    expect(arvBasis).toMatch(/^ARV = upper-quartile/);
+    expect(arvEstimate).toBeLessThanOrEqual(163460);
   });
 });
 

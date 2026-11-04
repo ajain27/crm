@@ -1,6 +1,6 @@
 // Step 5: ARV, worked out in code from the final comps.
 
-import { isNum } from "./rules.js";
+import { COMP_RULES, isNum } from "./rules.js";
 
 // The value three quarters of the way up (interpolated). Comps mix
 // renovated and as-is sales; ARV is the after-repair value, so it sits
@@ -17,28 +17,61 @@ function upperQuartile(values) {
 const fmtMoney = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
 export const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
 // Price per sq ft when enough comps have a size (at least 2, and at least
 // half of them) — one sized comp shouldn't set the ARV alone. Otherwise
-// the sale prices. Either way, the upper quartile.
+// the sale prices. Either way the upper quartile, except:
+//   - a property much bigger than the comps (over the size tolerance) gets
+//     the median $/sq ft, as bigger homes sell for less per sq ft;
+//   - the ARV never goes more than 10% over the highest comp sale, so
+//     stretching a smaller home's $/sq ft over a big one can't run away.
 export function estimateArv(comps, subjectSqft) {
   if (comps.length === 0) return { arvEstimate: null, arvBasis: null };
   const withSize = comps.filter((c) => isNum(c.sqft));
   const enoughSized =
     withSize.length >= 2 && withSize.length * 2 >= comps.length;
+  let arv;
+  let basis;
   if (isNum(subjectSqft) && enoughSized) {
-    const ppsf = upperQuartile(withSize.map((c) => c.price / c.sqft));
+    const typicalSqft = median(withSize.map((c) => c.sqft));
+    const bigger = subjectSqft / typicalSqft - 1;
+    const ppsfs = withSize.map((c) => c.price / c.sqft);
+    const sized = plural(withSize.length, "comp");
+    const size = `${subjectSqft.toLocaleString("en-US")} sq ft`;
+    if (bigger > COMP_RULES.sqftTolerance) {
+      const ppsf = median(ppsfs);
+      arv = ppsf * subjectSqft;
+      basis = `ARV = median ${fmtMoney(ppsf)}/sq ft across ${sized} × ${size} — the property is ${Math.round(bigger * 100)}% bigger than the typical comp (${Math.round(typicalSqft).toLocaleString("en-US")} sq ft), and bigger homes sell for less per sq ft.`;
+    } else {
+      const ppsf = upperQuartile(ppsfs);
+      arv = ppsf * subjectSqft;
+      basis = `ARV = upper-quartile ${fmtMoney(ppsf)}/sq ft across ${sized} × ${size}.`;
+    }
+  } else {
+    const why = !isNum(subjectSqft)
+      ? " (the property's size wasn't available)"
+      : " (too few comps had a size for price per sq ft)";
+    arv = upperQuartile(comps.map((c) => c.price));
+    basis = `ARV = upper-quartile sale price of ${plural(comps.length, "comp")}${why}.`;
+  }
+
+  const topSale = Math.max(...comps.map((c) => c.price).filter(isNum));
+  const cap = Number.isFinite(topSale)
+    ? topSale * (1 + COMP_RULES.arvOverTopSale)
+    : null;
+  if (cap !== null && arv > cap) {
     return {
-      arvEstimate: Math.round(ppsf * subjectSqft),
-      arvBasis: `ARV = upper-quartile ${fmtMoney(ppsf)}/sq ft across ${plural(withSize.length, "comp")} × ${subjectSqft.toLocaleString("en-US")} sq ft.`,
+      arvEstimate: Math.round(cap),
+      arvBasis: `${basis} That came to ${fmtMoney(arv)}, more than ${Math.round(COMP_RULES.arvOverTopSale * 100)}% over the highest comp sale (${fmtMoney(topSale)}), so the ARV is capped at ${fmtMoney(cap)}.`,
     };
   }
-  const why = !isNum(subjectSqft)
-    ? " (the property's size wasn't available)"
-    : " (too few comps had a size for price per sq ft)";
-  return {
-    arvEstimate: Math.round(upperQuartile(comps.map((c) => c.price))),
-    arvBasis: `ARV = upper-quartile sale price of ${plural(comps.length, "comp")}${why}.`,
-  };
+  return { arvEstimate: Math.round(arv), arvBasis: basis };
 }
 
 export function ruleReason(comp) {

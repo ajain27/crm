@@ -46,6 +46,7 @@ import {
   startEmailSequence,
   stopEmailSequence,
 } from "../../constants/emailSequence";
+import CallNotesModal from "./components/CallNotesModal";
 import {
   addressConflictMessage,
   dealAddress,
@@ -88,6 +89,8 @@ export default function PotentialLeads({
   // The tab ("residential", "commercial", "ppc", "ppl" or "coldcall")
   // whose Add a lead window is open.
   const [addLeadTab, setAddLeadTab] = useState(null);
+  // The call being added ({ lead, count }), while its notes are asked for.
+  const [callNotes, setCallNotes] = useState(null);
 
   const residentialList = useLeadListState(RESIDENTIAL_FILTERS);
   const commercialList = useLeadListState();
@@ -516,15 +519,31 @@ export default function PotentialLeads({
     }
   }
 
-  // How many times the seller has been called (0 = not called), and when
-  // last.
+  // How many times the seller has been called (0 = not called). Adding a
+  // call first asks how it went (see handleSaveCall); taking one off saves
+  // straight away.
   function handleSetCalls(lead, count) {
     const callCount = Math.max(0, count);
+    if (callCount > (lead.callCount || 0)) {
+      setCallNotes({ lead, count: callCount });
+      return undefined;
+    }
+    return patchLead(lead, { callCount });
+  }
+
+  // Counts the call, notes when, and adds what was said to the lead's
+  // notes as "Call 2 (11/4/2026): …".
+  function handleSaveCall(details) {
+    const { lead: asked, count } = callNotes;
+    const lead = leads.find((l) => l.id === asked.id) || asked;
+    const line = details
+      ? `Call ${count} (${new Date().toLocaleDateString("en-US")}): ${details}`
+      : "";
+    const notes = String(lead.notes || "").trim();
     return patchLead(lead, {
-      callCount,
-      ...(callCount > (lead.callCount || 0)
-        ? { lastCalledAt: new Date().toISOString() }
-        : {}),
+      callCount: count,
+      lastCalledAt: new Date().toISOString(),
+      ...(line ? { notes: notes ? `${notes}\n\n${line}` : line } : {}),
     });
   }
 
@@ -718,6 +737,15 @@ export default function PotentialLeads({
           onRemoveDuplicates={() => handleRemoveDuplicates(coldCallLeads)}
           onAddLead={() => setAddLeadTab("coldcall")}
           {...leadActions}
+        />
+      )}
+
+      {callNotes && (
+        <CallNotesModal
+          lead={callNotes.lead}
+          callNumber={callNotes.count}
+          onSave={handleSaveCall}
+          onClose={() => setCallNotes(null)}
         />
       )}
 

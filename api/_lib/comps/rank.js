@@ -99,6 +99,16 @@ function ruleMisses(sale, subject, distance, now, search) {
       isNum(sale.yearBuilt) ? `built ${sale.yearBuilt}` : "year built unknown",
     ]);
   }
+  // Only checked when both sizes are known.
+  if (isNum(subject.sqft) && isNum(sale.sqft)) {
+    const diff = (sale.sqft - subject.sqft) / subject.sqft;
+    if (Math.abs(diff) > COMP_RULES.sqftTolerance) {
+      misses.push([
+        "sqft",
+        `${Math.round(Math.abs(diff) * 100)}% ${diff < 0 ? "smaller" : "larger"}`,
+      ]);
+    }
+  }
   const subjectType = typeBucket(subject.propertyType);
   const saleType = typeBucket(sale.propertyType);
   if (subjectType && saleType && saleType !== subjectType) {
@@ -130,7 +140,7 @@ function matchScore(sale, subject, distance, now) {
       : 1;
   }
   if (isNum(subject.sqft) && isNum(sale.sqft)) {
-    score += (Math.abs(sale.sqft - subject.sqft) / subject.sqft) * 3;
+    score += (Math.abs(sale.sqft - subject.sqft) / subject.sqft) * 6;
   }
   const subjectType = typeBucket(subject.propertyType);
   const saleType = typeBucket(sale.propertyType);
@@ -155,7 +165,7 @@ export function rankComps({
   now = Date.now(),
 }) {
   const subjectStreet = streetKey(subjectAddress);
-  const unknown = ["beds", "baths", "yearBuilt"].filter(
+  const unknown = ["beds", "baths", "yearBuilt", "sqft"].filter(
     (f) => !isNum(subject[f]),
   );
   const excluded = {
@@ -164,6 +174,7 @@ export function rankComps({
     beds: 0,
     baths: 0,
     yearBuilt: 0,
+    sqft: 0,
     propertyType: 0,
   };
   const nearby = [];
