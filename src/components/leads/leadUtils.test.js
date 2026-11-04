@@ -255,21 +255,20 @@ describe("leadForTab", () => {
 });
 
 describe("cashOfferText", () => {
-  it("politely asks about a cash offer on the property, signed by the user", () => {
+  it("asks whether they'd sell the property for a cash offer", () => {
     expect(
-      cashOfferText(
-        { firstName: "Rosario", address: "590 Ridgewood St, Buffalo, NY" },
-        "Ankit Jain",
-      ),
+      cashOfferText({
+        firstName: "Rosario",
+        address: "590 Ridgewood St, Buffalo, NY",
+      }),
     ).toBe(
-      "Hi Rosario, this is Ankit Jain with You Win Estates. I'm reaching out about your property at 590 Ridgewood St, Buffalo, NY. Would you be open to a cash offer on it? We buy as-is and can close on your timeline. No pressure at all — thank you for your time!",
+      "Hi, I'm reaching out regarding the property at 590 Ridgewood St, Buffalo, NY. I wanted to see if you would be open to selling it. If so, I'd be interested in making a competitive cash offer. Looking forward to hearing from you!",
     );
   });
 
-  it("reads well without a name, sender or address", () => {
-    expect(cashOfferText({ sellerName: "Ann Bell" })).toMatch(
-      /^Hi Ann, this is You Win Estates\. I'm reaching out about your property\. /,
+  it("says your property when the lead has no address", () => {
+    expect(cashOfferText({})).toMatch(
+      /^Hi, I'm reaching out regarding your property\. I wanted/,
     );
-    expect(cashOfferText({})).toMatch(/^Hi, this is You Win Estates\./);
   });
 });

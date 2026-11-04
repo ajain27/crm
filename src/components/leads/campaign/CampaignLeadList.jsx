@@ -71,7 +71,6 @@ export default function CampaignLeadList({
   onImport,
   onRemoveDuplicates,
   onAddLead,
-  senderName = "",
 }) {
   const [badModalLead, setBadModalLead] = useState(null);
   const { selectedIds } = listState;
@@ -203,7 +202,7 @@ export default function CampaignLeadList({
                     <PhoneCell
                       phone={lead.phone}
                       phone2={lead.phone2}
-                      textBody={cashOfferText(lead, senderName)}
+                      textBody={cashOfferText(lead)}
                     />
                     <td className="leads-address-cell" data-label="Address">
                       {lead.address || "—"}

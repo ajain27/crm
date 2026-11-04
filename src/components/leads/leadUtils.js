@@ -352,20 +352,16 @@ export function parseAddress(full) {
   return { address: full, city: "", state: "", zipCode: "" };
 }
 
-// The text the Text button writes to a seller: a polite note asking
-// whether they'd consider a cash offer on the property. Signed with
-// `senderName` when the user has one.
-export function cashOfferText(lead, senderName = "") {
-  const first =
-    String(lead?.firstName || "").trim() ||
-    splitName(lead?.sellerName).firstName;
+// The text the Text button writes to a seller, asking whether they'd sell
+// the property for a cash offer. "the property at …", or "your property"
+// when the lead has no address.
+export function cashOfferText(lead) {
   const address = String(lead?.address || "").trim();
-  const from = String(senderName || "").trim();
   return [
-    `Hi${first ? ` ${first}` : ""}, this is ${from ? `${from} with ` : ""}You Win Estates.`,
-    `I'm reaching out about your property${address ? ` at ${address}` : ""}.`,
-    "Would you be open to a cash offer on it? We buy as-is and can close on your timeline.",
-    "No pressure at all — thank you for your time!",
+    `Hi, I'm reaching out regarding ${address ? `the property at ${address}` : "your property"}.`,
+    "I wanted to see if you would be open to selling it.",
+    "If so, I'd be interested in making a competitive cash offer.",
+    "Looking forward to hearing from you!",
   ].join(" ");
 }
 

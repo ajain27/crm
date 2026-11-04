@@ -200,7 +200,7 @@ export default function PotentialLeads({
     onSaved: () => setAddLeadTab(null),
   });
 
-  // The user's name, for signing texts and automated emails.
+  // The user's name, for signing automated emails.
   const senderName = [currentUser?.firstName, currentUser?.lastName]
     .filter(Boolean)
     .join(" ");
@@ -677,7 +677,6 @@ export default function PotentialLeads({
 
       {activeTab === "ppc" && (
         <CampaignLeadList
-          senderName={senderName}
           title="PPC Leads"
           leads={ppcLeads}
           listState={ppcList}
@@ -694,7 +693,6 @@ export default function PotentialLeads({
 
       {activeTab === "ppl" && (
         <CampaignLeadList
-          senderName={senderName}
           title="PPL Leads"
           leads={pplLeads}
           listState={pplList}
@@ -710,7 +708,6 @@ export default function PotentialLeads({
 
       {activeTab === "coldcall" && !ppcOnly && (
         <CampaignLeadList
-          senderName={senderName}
           title="Cold Calling"
           leads={coldCallLeads}
           listState={coldCallList}
