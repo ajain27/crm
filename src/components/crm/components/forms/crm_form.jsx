@@ -373,6 +373,14 @@ function Wholesale_form({
             />
           )}
           <Field
+            label="Buyer's Profit (%)"
+            name="buyersProfit"
+            value={form.buyersProfit}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="30%"
+          />
+          <Field
             currency
             label="Desired Profit"
             name="desiredProfit"

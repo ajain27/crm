@@ -80,4 +80,20 @@ describe("getSuggestedWholesaleMao", () => {
 
     expect(getSuggestedWholesaleMao(form)).toBe(-20000);
   });
+
+  it("uses the deal's buyer's profit % in place of the 70% rule", () => {
+    const form = {
+      ...createEmptyDealForm(),
+      arv: "$385,000",
+      rehabType: "heavy",
+      squareFootage: "5600",
+      rehabCost: "$55,000",
+      desiredProfit: "$10,000",
+    };
+
+    expect(getSuggestedWholesaleMao(form)).toBe(204500);
+    expect(getSuggestedWholesaleMao({ ...form, buyersProfit: "20%" })).toBe(
+      243000,
+    );
+  });
 });

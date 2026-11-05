@@ -182,6 +182,11 @@ export function useDealForm({
       return;
     }
 
+    if (name === "buyersProfit") {
+      setForm((prev) => ({ ...prev, [name]: value.replace(/[^0-9.]/g, "") }));
+      return;
+    }
+
     if (name === "rehabType") {
       setForm((prev) => ({
         ...prev,
@@ -222,6 +227,11 @@ export function useDealForm({
 
   function handleBlur(event) {
     const { name, value } = event.target;
+    if (name === "buyersProfit") {
+      const numeric = value.replace(/[^0-9.]/g, "");
+      setForm((prev) => ({ ...prev, [name]: numeric ? `${numeric}%` : "" }));
+      return;
+    }
     const currencyFields = [
       "arv",
       "listedPrice",

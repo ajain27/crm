@@ -85,6 +85,8 @@ export function createEmptyDealForm() {
     rehabCost: "",
     additionalRehabCost: "",
     desiredProfit: "",
+    // The buyer's profit as a share of ARV ("30%"); empty means 30%.
+    buyersProfit: "",
     mao: "",
     offerStatus: "Not Sent",
     offerDate: "",
@@ -221,11 +223,24 @@ export function getWholesaleRehabDetails(form) {
   };
 }
 
+export const DEFAULT_BUYERS_PROFIT_PCT = 30;
+
+// The buyer's profit % a deal uses: its own, else the usual 30%.
+export function getBuyersProfitPct(form) {
+  const pct = Number.parseFloat(
+    String(form?.buyersProfit ?? "").replace(/[^0-9.]/g, ""),
+  );
+  return Number.isFinite(pct) && pct < 100 ? pct : DEFAULT_BUYERS_PROFIT_PCT;
+}
+
+// ARV less the buyer's profit (30% gives the usual 70% rule), the rehab
+// and our desired profit — the same formula as the Wholesale calculator.
 export function getSuggestedWholesaleMao(form) {
   const arv = parseCurrency(form?.arv);
   const desiredProfit = parseCurrency(form?.desiredProfit);
   const { totalRehabCost } = getWholesaleRehabDetails(form);
-  const suggestedMao = arv * 0.7 - totalRehabCost - desiredProfit;
+  const suggestedMao =
+    arv * (1 - getBuyersProfitPct(form) / 100) - totalRehabCost - desiredProfit;
 
   return Math.round(suggestedMao);
 }

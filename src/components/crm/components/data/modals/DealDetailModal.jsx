@@ -389,6 +389,7 @@ function DealDetailModal({
     draft.rehabCost,
     draft.additionalRehabCost,
     draft.desiredProfit,
+    draft.buyersProfit,
   ]);
 
   if (!deal) return null;
@@ -1021,6 +1022,28 @@ function DealDetailModal({
                         set("additionalRehabCost", e.target.value)
                       }
                       placeholder="$0"
+                    />
+                  </Field>
+                  <Field label="Buyer's Profit (%)">
+                    <input
+                      disabled={locked}
+                      inputMode="decimal"
+                      value={draft.buyersProfit || ""}
+                      onChange={(e) =>
+                        set(
+                          "buyersProfit",
+                          e.target.value.replace(/[^0-9.]/g, ""),
+                        )
+                      }
+                      onBlur={(e) =>
+                        set(
+                          "buyersProfit",
+                          e.target.value.replace(/[^0-9.]/g, "")
+                            ? `${e.target.value.replace(/[^0-9.]/g, "")}%`
+                            : "",
+                        )
+                      }
+                      placeholder="30%"
                     />
                   </Field>
                   <Field label="Desired Profit">
