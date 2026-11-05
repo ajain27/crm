@@ -4,6 +4,7 @@ import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
 import {
+  cashOfferText,
   dealLeadTab,
   joinName,
   LEAD_TAB_IDS,
@@ -47,6 +48,7 @@ import {
 import { historyToSave } from "../../../../propertyHistory/propertyHistory";
 import {
   ExtraDetails,
+  TextLink,
   ZillowLink,
 } from "../../../../leads/components/LeadTableCells";
 import { LEAD_SOURCES } from "../../../../leads/leadsConfig";
@@ -130,13 +132,23 @@ function initDraft(deal) {
   CURRENCY_FIELDS.forEach((f) => {
     d[f] = d[f] ? fmtCurrency(String(d[f])) : "";
   });
-  // The MAO as the form will calculate it, so opening a deal doesn't count
-  // as a change.
-  if (parseCurrency(d.arv) > 0) {
+  // A saved MAO is kept as it is (it may have been typed in); without one,
+  // the MAO as the form will calculate it.
+  if (!d.mao && parseCurrency(d.arv) > 0) {
     const mao = getSuggestedWholesaleMao(d);
     d.mao = mao > 0 ? fmtCurrency(String(mao)) : "";
   }
   return d;
+}
+
+function maoInputsKey(d) {
+  return JSON.stringify([
+    d.arv,
+    d.rehabCost,
+    d.additionalRehabCost,
+    d.desiredProfit,
+    d.buyersProfit,
+  ]);
 }
 
 // A field's value for comparing the form with the saved deal: blank and
@@ -253,6 +265,9 @@ function DealDetailModal({
   // these notes, only the notes are taken in, so unsaved edits survive.
   const pendingCompsNotes = useRef(null);
   const prevDeal = useRef(null);
+  // The MAO inputs the MAO was last worked out from, so it's only
+  // recalculated when one of them changes, not when a deal opens.
+  const maoInputs = useRef(null);
   const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
 
   // The Comps, Price History and Property History tabs, as in the lead
@@ -369,6 +384,7 @@ function DealDetailModal({
       return;
     }
     const initial = initDraft(deal);
+    maoInputs.current = maoInputsKey(initial);
     setDraft(initial);
     setSavedDraft(initial);
     if (previous?.id !== deal.id) setEditingNotes(false);
@@ -376,6 +392,14 @@ function DealDetailModal({
 
   // Auto-calculate MAO when inputs change (mirrors the add-form formula)
   useEffect(() => {
+    // Not until the form holds this deal.
+    if (!deal || draft.id !== deal.id) return;
+    const key = maoInputsKey(draft);
+    if (maoInputs.current === null || maoInputs.current === key) {
+      maoInputs.current = key;
+      return;
+    }
+    maoInputs.current = key;
     const arv = parseCurrency(draft.arv);
     if (arv <= 0) return;
     const mao = getSuggestedWholesaleMao(draft);
@@ -415,6 +439,8 @@ function DealDetailModal({
   const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
   const sellerPhones = draft.sellerPhones || [];
+  // The message each seller phone's Text button writes.
+  const textBody = cashOfferText({ address: formatFullAddress(draft) });
   const hasChanges = isDraftChanged(draft, savedDraft);
   const assignedPriceTooLow = isAssignedPriceTooLow(
     parseCurrency(draft.contractPrice),
@@ -812,18 +838,24 @@ function DealDetailModal({
                       <Field
                         label="Seller Phone"
                         action={
-                          !locked && (
-                            <button
-                              type="button"
-                              className="leads-mls-link ddm-doc-link"
-                              onClick={() =>
-                                set("sellerPhones", [...sellerPhones, ""])
-                              }
-                            >
-                              <Plus size={12} />
-                              Add phone
-                            </button>
-                          )
+                          <>
+                            <TextLink
+                              phone={draft.sellerPhone}
+                              body={textBody}
+                            />
+                            {!locked && (
+                              <button
+                                type="button"
+                                className="leads-mls-link ddm-doc-link"
+                                onClick={() =>
+                                  set("sellerPhones", [...sellerPhones, ""])
+                                }
+                              >
+                                <Plus size={12} />
+                                Add phone
+                              </button>
+                            )}
+                          </>
                         }
                       >
                         <input
@@ -841,21 +873,24 @@ function DealDetailModal({
                           key={i}
                           label={`Seller Phone ${i + 2}`}
                           action={
-                            !locked && (
-                              <button
-                                type="button"
-                                className="leads-mls-link ddm-doc-link"
-                                onClick={() =>
-                                  set(
-                                    "sellerPhones",
-                                    sellerPhones.filter((_, j) => j !== i),
-                                  )
-                                }
-                              >
-                                <X size={12} />
-                                Remove
-                              </button>
-                            )
+                            <>
+                              <TextLink phone={phone} body={textBody} />
+                              {!locked && (
+                                <button
+                                  type="button"
+                                  className="leads-mls-link ddm-doc-link"
+                                  onClick={() =>
+                                    set(
+                                      "sellerPhones",
+                                      sellerPhones.filter((_, j) => j !== i),
+                                    )
+                                  }
+                                >
+                                  <X size={12} />
+                                  Remove
+                                </button>
+                              )}
+                            </>
                           }
                         >
                           <input

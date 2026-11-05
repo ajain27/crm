@@ -157,6 +157,63 @@ describe("DealDetailModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("keeps a typed-in MAO and recalculates it when Buyer's Profit changes", async () => {
+    const updateDealPatch = vi.fn().mockResolvedValue();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          arv: 385000,
+          rehabCost: 55000,
+          desiredProfit: 10000,
+          mao: 240000,
+        }}
+        updateDealPatch={updateDealPatch}
+      />,
+    );
+    expect(screen.getByDisplayValue("$240,000")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Save Changes/i }).disabled).toBe(
+      true,
+    );
+
+    const buyersProfit = screen.getByPlaceholderText("30%");
+    fireEvent.change(buyersProfit, { target: { value: "20" } });
+    fireEvent.blur(buyersProfit);
+    expect(screen.getByDisplayValue("$243,000")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    await waitFor(() => expect(updateDealPatch).toHaveBeenCalled());
+    expect(updateDealPatch.mock.calls[0][1]).toMatchObject({
+      buyersProfit: "20%",
+      mao: 243000,
+    });
+  });
+
+  it("texts each seller phone a cash-offer message for the deal's address", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          sellerPhone: "512-555-0101",
+          sellerPhones: ["512-555-0102"],
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    const first = screen.getByRole("link", { name: "Text 512-555-0101" });
+    expect(first.getAttribute("href")).toMatch(/^sms:\+15125550101[?&]body=/);
+    expect(decodeURIComponent(first.getAttribute("href"))).toContain(
+      "the property at 1 Main St, Austin, TX 78701",
+    );
+    expect(
+      screen.getByRole("link", { name: "Text 512-555-0102" }),
+    ).toBeTruthy();
+  });
+
   it("Save Changes is disabled until something in the form changes", () => {
     render(
       <DealDetailModal
