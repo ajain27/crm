@@ -477,7 +477,11 @@ describe("DealDetailModal", () => {
     });
 
     fireEvent.click(screen.getByText("Run comps"));
-    expect(requestComps).toHaveBeenCalledWith("2 Main St, Austin, TX 78701");
+    expect(requestComps).toHaveBeenCalledWith(
+      "2 Main St, Austin, TX 78701",
+      null,
+      null,
+    );
     // In the comps window, and in the deal's notes once saved.
     expect((await screen.findAllByText("9 Oak St")).length).toBeGreaterThan(0);
     expect(

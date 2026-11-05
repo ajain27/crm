@@ -79,10 +79,12 @@ export function LeadCompsTab({ compsState, lead, disabled }) {
 }
 
 // The Run comps window for a lead; `onApplyArv(arv)` (optional) offers to
-// fill the lead's ARV from the result.
+// fill the lead's ARV from the result. `lotSize` is the lead's own, used
+// over the sites'.
 export function LeadRunCompsModal({
   compsState,
   address,
+  lotSize,
   onApplyArv,
   noteSavedLabel = "Added to the lead's notes — Save Changes to keep",
 }) {
@@ -90,6 +92,7 @@ export function LeadRunCompsModal({
   return (
     <RunCompsModal
       address={String(address || "").trim()}
+      lotSize={lotSize}
       onSaveNote={compsState.saveRun}
       onApply={onApplyArv ? ({ arv }) => onApplyArv(arv) : undefined}
       onClose={compsState.closeRun}

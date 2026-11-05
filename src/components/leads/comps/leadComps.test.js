@@ -106,6 +106,16 @@ describe("parseFacts", () => {
       ),
     ).toMatchObject({ beds: 3, baths: 2, sqft: 2260, yearBuilt: 2001 });
   });
+
+  it("reads the lot size apart from the home's size", () => {
+    expect(
+      parseFacts("3 bd/2 ba · 2,260 sq ft · lot 7,405 sq ft · built 2001"),
+    ).toMatchObject({ sqft: 2260, lotSqft: 7405 });
+    expect(parseFacts("3 bd/2 ba · lot 7,405 sq ft")).toMatchObject({
+      sqft: null,
+      lotSqft: 7405,
+    });
+  });
 });
 
 describe("compsResultToSave", () => {

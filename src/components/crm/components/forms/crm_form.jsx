@@ -310,6 +310,13 @@ function Wholesale_form({
             onChange={handleChange}
             placeholder="e.g. 1,800"
           />
+          <Field
+            label="Lot Size"
+            name="lotSize"
+            value={form.lotSize}
+            onChange={handleChange}
+            placeholder="Sq ft, or acres e.g. 0.25 ac"
+          />
           <label className="field">
             <span>Rehab Type</span>
             <select

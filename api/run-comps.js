@@ -1,6 +1,7 @@
 // POST { address } → comps for that address; with { subject, location }
 // (and the first run's `estimates`) too, re-runs them with corrected
-// subject facts. The steps live in
+// subject facts. `known` ({ lotSqft }) is what the user entered for the
+// property, used over what the sites say. The steps live in
 // api/_lib/comps/ (the "_" keeps Vercel from serving them as endpoints).
 
 import { runComps } from "./_lib/comps/runComps.js";
@@ -22,12 +23,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { subject, location, estimates } = req.body || {};
+    const { subject, location, estimates, known } = req.body || {};
     const adjust =
       subject && location ? { subject, location, estimates } : null;
     return res
       .status(200)
-      .json(await runComps(address, process.env, Date.now(), adjust));
+      .json(await runComps(address, process.env, Date.now(), adjust, known));
   } catch (err) {
     console.error("run-comps error:", err);
     return res.status(err.status || 502).json({

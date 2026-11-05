@@ -26,7 +26,7 @@ const REVIEW_SCHEMA = {
 };
 
 const REVIEW_PROMPT = `You are helping a real estate wholesaler pick comps for a subject property.
-The comp rules: sold within 0.5 miles in the last 90 days, same beds and baths, built within 5 years, same property type.
+The comp rules: sold within 0.5 miles in the last 90 days, same beds and baths, built within 5 years, size within 25%, lot size within 50%, same property type.
 You get the subject and nearby sales ranked by how well they match. Each lists "misses": the rules it doesn't meet (empty = meets every rule).
 Remove bad or irrelevant comps: price outliers versus the others, likely distressed or non-arm's-length sales, a clearly different kind of property, or duplicates.
 Then select the 5 closest matches to the subject (fewer only if there aren't 5 reasonable ones). Prefer sales that meet every rule, then those missing the fewest and smallest rules.
@@ -64,6 +64,7 @@ export async function claudeReview(subject, candidates, apiKey) {
             beds: m.beds,
             baths: m.baths,
             sqft: m.sqft,
+            lotSqft: m.lotSqft,
             yearBuilt: m.yearBuilt,
             propertyType: m.propertyType,
             distanceMiles: m.distance,

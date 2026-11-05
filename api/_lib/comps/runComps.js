@@ -153,6 +153,7 @@ const ADJUSTABLE = [
   "beds",
   "baths",
   "sqft",
+  "lotSqft",
   "yearBuilt",
   "valueEstimate",
   "rentEstimate",
@@ -180,12 +181,14 @@ export function sanitizeSubject(subject = {}) {
 // `adjust` re-runs comps with the user's corrected subject facts at a known
 // location — no searching or scraping, so it's quick and costs no credits.
 // Its `estimates` ({ zestimate, redfinEstimate }) carry over from the first
-// run, as there are no pages to read them from.
+// run, as there are no pages to read them from. `known` holds facts the
+// user entered on the deal or lead ({ lotSqft }), which win over the sites'.
 export async function runComps(
   address,
   env = process.env,
   now = Date.now(),
   adjust = null,
+  known = null,
 ) {
   let location;
   let sales;
@@ -212,6 +215,8 @@ export async function runComps(
     ({ location, sales, highways, sources, listingUrls, property } =
       await gatherSubject(address, env));
   }
+  const knownLot = saneValue("lotSqft", Number(known?.lotSqft) || null);
+  if (knownLot !== null) property = { ...property, lotSqft: knownLot };
   const fromSites = adjust
     ? {
         zestimate: saneValue("valueEstimate", adjust.estimates?.zestimate),
@@ -298,6 +303,7 @@ export async function runComps(
     beds: c.beds,
     baths: c.baths,
     sqft: isNum(c.sqft) ? c.sqft : null,
+    lotSqft: isNum(c.lotSqft) ? c.lotSqft : null,
     yearBuilt: isNum(c.yearBuilt) ? c.yearBuilt : null,
     soldDate: c.soldDate,
     distance: c.distance,
@@ -342,6 +348,7 @@ export async function runComps(
               "beds",
               "baths",
               "sqft",
+              "lotSqft",
               "yearBuilt",
             ].map((f) => [
               f,
@@ -378,6 +385,12 @@ export async function runComps(
         : null,
       sqftTo: isNum(property.sqft)
         ? Math.round(property.sqft * (1 + COMP_RULES.sqftTolerance))
+        : null,
+      lotFrom: isNum(property.lotSqft)
+        ? Math.round(property.lotSqft * (1 - COMP_RULES.lotTolerance))
+        : null,
+      lotTo: isNum(property.lotSqft)
+        ? Math.round(property.lotSqft * (1 + COMP_RULES.lotTolerance))
         : null,
       // False when OpenStreetMap couldn't be reached, so sales across a
       // highway weren't screened out.

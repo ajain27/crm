@@ -15,6 +15,7 @@ const FIELDS = [
   { key: "bedrooms", source: "beds", label: "Beds", step: "1" },
   { key: "bathrooms", source: "baths", label: "Baths", step: "0.5" },
   { key: "squareFootage", source: "sqft", label: "Sq Ft", step: "1" },
+  { key: "lotSqft", source: "lotSqft", label: "Lot (sq ft)", step: "1" },
   { key: "yearBuilt", source: "yearBuilt", label: "Year Built", step: "1" },
 ];
 
@@ -73,6 +74,7 @@ export default function SubjectAdjuster({
       beds: number(form.bedrooms),
       baths: number(form.bathrooms),
       sqft: number(form.squareFootage),
+      lotSqft: number(form.lotSqft),
       yearBuilt: number(form.yearBuilt),
     });
   }
@@ -93,13 +95,15 @@ export default function SubjectAdjuster({
         {anyConflict
           ? "Zillow, Redfin and Realtor.com don't agree on everything below. "
           : ""}
-        Check the beds, baths, size and type, correct anything that's wrong, and
-        re-run the comps.
+        Check the beds, baths, size, lot size and type, correct anything that's
+        wrong, and re-run the comps.
       </p>
       <div className="find-comps-subject-grid">
         {FIELDS.map(({ key, source, label, step }) => {
           const sites = siteValues(sources, source, (v) =>
-            source === "sqft" ? Number(v).toLocaleString() : v,
+            source === "sqft" || source === "lotSqft"
+              ? Number(v).toLocaleString()
+              : v,
           );
           return (
             <label

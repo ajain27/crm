@@ -460,6 +460,7 @@ export function buildDealFromLead(lead, userId) {
     sellingUrgency: lead.sellingUrgency || "",
     sellerMotivation: lead.sellerMotivation || "",
     followUpDate: lead.followUpDate || "",
+    lotSize: lead.lotSize || "",
     // PPL leads collect an ARV; carry it over so the deal's MAO calculates.
     arv:
       Math.round(parseFloat(String(lead.arv || "").replace(/[^0-9.]/g, ""))) ||
@@ -479,6 +480,7 @@ const SHARED_LEAD_FIELDS = [
   "sellingUrgency",
   "sellerMotivation",
   "followUpDate",
+  "lotSize",
 ];
 
 // { [field]: value } when value is set on the deal and differs from the

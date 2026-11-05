@@ -7,6 +7,9 @@ export const COMP_RULES = {
   // A comp's size within this share of the subject's (±25%). Bigger homes
   // sell for less per sq ft, so far-off sizes skew a $/sq ft ARV.
   sqftTolerance: 0.25,
+  // A comp's lot within this share of the subject's (±50%). Lots vary more
+  // than house sizes, but a much bigger or smaller lot changes the value.
+  lotTolerance: 0.5,
   maxComps: 5,
   // The ARV never goes more than this share over the highest comp sale.
   arvOverTopSale: 0.1,

@@ -301,9 +301,10 @@ function DealDetailModal({
     compsState.setTab("comps");
   }
 
-  function handleApplyComps({ arv, squareFootage }) {
+  function handleApplyComps({ arv, squareFootage, lotSqft }) {
     if (arv > 0) set("arv", String(Math.round(arv)));
     if (squareFootage > 0) set("squareFootage", String(squareFootage));
+    if (lotSqft > 0 && !draft.lotSize) set("lotSize", String(lotSqft));
   }
 
   // The options are committed together with the print template's mount, so
@@ -767,6 +768,14 @@ function DealDetailModal({
                       value={draft.squareFootage || ""}
                       onChange={(e) => set("squareFootage", e.target.value)}
                       placeholder="0"
+                    />
+                  </Field>
+                  <Field label="Lot Size">
+                    <input
+                      disabled={locked}
+                      value={draft.lotSize || ""}
+                      onChange={(e) => set("lotSize", e.target.value)}
+                      placeholder="Sq ft, or acres e.g. 0.25 ac"
                     />
                   </Field>
                   <Field label="Source">
@@ -1451,6 +1460,7 @@ function DealDetailModal({
       {compsState.runOpen && (
         <RunCompsModal
           address={formatFullAddress(draft)}
+          lotSize={draft.lotSize}
           onSaveNote={handleSaveCompsNote}
           onApply={handleApplyComps}
           onClose={compsState.closeRun}

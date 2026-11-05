@@ -46,6 +46,11 @@ export const SUBJECT_SCHEMA = {
     beds: { type: "number" },
     baths: { type: "number", description: "Total bathrooms, e.g. 2.5" },
     sqft: { type: "number" },
+    lotSqft: {
+      type: "number",
+      description:
+        "Lot size in square feet (convert acres: 1 acre = 43,560 sq ft)",
+    },
     yearBuilt: { type: "number" },
     latitude: { type: "number", description: "This home's map latitude" },
     longitude: { type: "number", description: "This home's map longitude" },
@@ -230,7 +235,7 @@ export function cleanScraped(value) {
 }
 
 const SUBJECT_PROMPT =
-  "Extract this property's own details (not nearby or similar homes) — its address, type, beds, total baths, square feet, year built, estimated value, estimated monthly rent and annual property tax — and every row of its price/sale history and tax history tables.";
+  "Extract this property's own details (not nearby or similar homes) — its address, type, beds, total baths, square feet, lot size, year built, estimated value, estimated monthly rent and annual property tax — and every row of its price/sale history and tax history tables.";
 
 // The subject's facts from one of its pages, with its listing photo when
 // the scraper returns the page's metadata (`photoUrl` is left out when it
@@ -297,6 +302,8 @@ const SANE = {
   beds: [1, 15],
   baths: [0.5, 15],
   sqft: [200, 20000],
+  // Up to 500 acres.
+  lotSqft: [300, 21780000],
   yearBuilt: [1700, new Date().getFullYear() + 1],
   valueEstimate: [5000, 50000000],
   rentEstimate: [100, 25000],
@@ -414,6 +421,7 @@ export function reconcileSubject(sources, address) {
     beds: pick("beds"),
     baths: pick("baths"),
     sqft: pick("sqft"),
+    lotSqft: pick("lotSqft"),
     yearBuilt: pick("yearBuilt"),
     valueEstimate: pick("valueEstimate"),
     rentEstimate: pick("rentEstimate"),

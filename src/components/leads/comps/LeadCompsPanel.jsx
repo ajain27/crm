@@ -146,6 +146,7 @@ export default function LeadCompsPanel({ comps, lead }) {
                 <th>Bd</th>
                 <th>Ba</th>
                 <th>Sq ft</th>
+                <th>Lot</th>
                 <th>Built</th>
                 <th>$/sq ft</th>
                 <th className="lcp-right">Last sale</th>
@@ -183,6 +184,7 @@ export default function LeadCompsPanel({ comps, lead }) {
                     <td>{num(home.beds)}</td>
                     <td>{num(home.baths)}</td>
                     <td>{num(home.sqft)}</td>
+                    <td>{num(home.lotSqft)}</td>
                     <td>{home.yearBuilt ?? "—"}</td>
                     <td>{money(perSqft)}</td>
                     <td className="lcp-right">

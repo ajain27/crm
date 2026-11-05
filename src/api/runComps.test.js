@@ -833,6 +833,19 @@ describe("run-comps", () => {
     expect(out.listingUrls).toBeNull();
   });
 
+  it("uses the lot size the user entered over the sites'", async () => {
+    mockFetch();
+    const out = await runComps(
+      ADDRESS,
+      {},
+      NOW,
+      { location: SUBJECT, subject: { beds: 3, lotSqft: 5000 } },
+      { lotSqft: 7405 },
+    );
+    expect(out.property.lotSqft).toBe(7405);
+    expect(out.criteria).toMatchObject({ lotFrom: 3703, lotTo: 11108 });
+  });
+
   it("reads the Zestimate and Redfin Estimate apart and averages them", async () => {
     mockFetch({
       firecrawl: (body) =>
@@ -984,7 +997,36 @@ describe("comp rules", () => {
       ["3 C St", []],
       ["1 A St", ["sold 6 months ago"]],
     ]);
-    expect(unknown).toEqual(["baths", "yearBuilt", "sqft"]);
+    expect(unknown).toEqual(["baths", "yearBuilt", "sqft", "lotSqft"]);
+  });
+
+  it("labels comps far off the property's lot size", () => {
+    const { ranked, excluded } = rankComps({
+      subject: { beds: 3, lotSqft: 8000 },
+      location: SUBJECT,
+      sales: [
+        { street: "1 A St", lotSqft: 6000 },
+        { street: "2 B St", lotSqft: 20000 },
+        { street: "3 C St" },
+      ].map((s) => ({
+        ...s,
+        soldDate: "2026-09-20",
+        beds: 3,
+        price: 150000,
+        lat: SUBJECT.lat,
+        lng: SUBJECT.lng,
+      })),
+      subjectAddress: "9 Z St",
+      now: NOW,
+    });
+    const misses = Object.fromEntries(
+      ranked.map((r) => [r.street, r.misses.map(([, l]) => l)]),
+    );
+    // Within 50%, or lot unknown: meets the rule.
+    expect(misses["1 A St"]).toEqual([]);
+    expect(misses["3 C St"]).toEqual([]);
+    expect(misses["2 B St"]).toEqual(["lot 150% larger"]);
+    expect(excluded.lotSqft).toBe(1);
   });
 
   it("labels comps far off the property's size", () => {

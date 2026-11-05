@@ -503,6 +503,14 @@ export default function LeadDetailModal({
                                 />
                               </Field>
                             )}
+                            <Field label="Lot Size">
+                              <input
+                                className="ldm-input"
+                                value={draft.lotSize || ""}
+                                onChange={(e) => set("lotSize", e.target.value)}
+                                placeholder="Sq ft, or acres e.g. 0.25 ac"
+                              />
+                            </Field>
                             <SellerDetailsFields
                               values={draft}
                               onChange={set}
@@ -573,6 +581,7 @@ export default function LeadDetailModal({
       <LeadRunCompsModal
         compsState={compsState}
         address={draft.address}
+        lotSize={draft.lotSize}
         // PPC leads have no ARV field to fill.
         onApplyArv={isPpc ? undefined : handleApplyArv}
       />

@@ -80,6 +80,8 @@ export function createEmptyDealForm() {
     arv: "",
     rehabType: "",
     squareFootage: "",
+    // As typed: sq ft, or acres ("0.25 ac").
+    lotSize: "",
     rehabCost: "",
     additionalRehabCost: "",
     desiredProfit: "",

@@ -9,7 +9,7 @@ import { historyToSave } from "../../propertyHistory/propertyHistory";
 //
 // Returns null when the lead has no comps, else
 // { date, arv, rent, subject, comps } where subject and each comp are
-// { address, price, beds, baths, sqft, yearBuilt, soldDate, distance,
+// { address, price, beds, baths, sqft, lotSqft, yearBuilt, soldDate, distance,
 //   lat, lng, url, differs } (missing values are null).
 
 const numberOrNull = (n) =>
@@ -43,6 +43,7 @@ function fromResult(result, address) {
       beds: numberOrNull(p.beds),
       baths: numberOrNull(p.baths),
       sqft: numberOrNull(p.sqft),
+      lotSqft: numberOrNull(p.lotSqft),
       yearBuilt: numberOrNull(p.yearBuilt),
       soldDate: null,
       distance: null,
@@ -56,6 +57,7 @@ function fromResult(result, address) {
       beds: numberOrNull(c.beds),
       baths: numberOrNull(c.baths),
       sqft: numberOrNull(c.sqft),
+      lotSqft: numberOrNull(c.lotSqft),
       yearBuilt: numberOrNull(c.yearBuilt),
       soldDate: c.soldDate || null,
       distance: numberOrNull(c.distance),
@@ -67,7 +69,7 @@ function fromResult(result, address) {
 }
 
 // The facts in a note line like
-// "3 bd/2 ba (+1 bed · built 2015) · 2,260 sq ft · built 2015 · sold
+// "3 bd/2 ba (+1 bed · built 2015) · 2,260 sq ft · lot 6,500 sq ft · built 2015 · sold
 // 2026-09-30 · 1.98 mi away" or "2 bd · 2 ba · 2,014 sq ft · built 2001".
 export function parseFacts(text) {
   const differs = String(text || "").match(/\(([^)]*)\)/)?.[1] || null;
@@ -77,7 +79,8 @@ export function parseFacts(text) {
   return {
     beds: parseNumber(beds),
     baths: parseNumber(baths),
-    sqft: parseNumber(plain.match(/([\d,]+) sq ft/)?.[1]),
+    sqft: parseNumber(plain.match(/(?<!lot |[\d,])([\d,]+) sq ft/)?.[1]),
+    lotSqft: parseNumber(plain.match(/lot ([\d,]+) sq ft/)?.[1]),
     yearBuilt: parseNumber(plain.match(/built (\d{4})/)?.[1]),
     soldDate: plain.match(/sold (\S+)/)?.[1] || null,
     distance: parseNumber(plain.match(/([\d.]+) mi away/)?.[1]),
@@ -146,6 +149,7 @@ export function compsResultToSave(result, runAt = new Date()) {
       beds: numberOrNull(p.beds),
       baths: numberOrNull(p.baths),
       sqft: numberOrNull(p.sqft),
+      lotSqft: numberOrNull(p.lotSqft),
       yearBuilt: numberOrNull(p.yearBuilt),
     },
     // The property's sales, listings and taxes, read in the same run.
@@ -156,6 +160,7 @@ export function compsResultToSave(result, runAt = new Date()) {
       beds: numberOrNull(c.beds),
       baths: numberOrNull(c.baths),
       sqft: numberOrNull(c.sqft),
+      lotSqft: numberOrNull(c.lotSqft),
       yearBuilt: numberOrNull(c.yearBuilt),
       soldDate: c.soldDate || null,
       distance: numberOrNull(c.distance),

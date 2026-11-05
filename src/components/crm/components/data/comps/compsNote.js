@@ -20,6 +20,7 @@ const UNKNOWN_LABELS = {
   baths: "baths",
   yearBuilt: "year built",
   sqft: "size",
+  lotSqft: "lot size",
 };
 
 // "Sold within 0.5 mi in the last 90 days · 3 bd · 1 ba · built 1967–1977"
@@ -32,6 +33,7 @@ export function compsCriteriaText(result) {
     c.baths ? `${c.baths} ba` : null,
     c.yearBuiltFrom ? `built ${c.yearBuiltFrom}–${c.yearBuiltTo}` : null,
     c.sqftFrom ? `${num(c.sqftFrom)}–${num(c.sqftTo)} sq ft` : null,
+    c.lotFrom ? `lot ${num(c.lotFrom)}–${num(c.lotTo)} sq ft` : null,
     c.highwayCheck ? "same side of major highways" : null,
   ].filter(Boolean);
   const unknown = (c.unknown || []).map((f) => UNKNOWN_LABELS[f] || f);
@@ -53,6 +55,7 @@ const EXCLUDED_LABELS = {
   baths: "different baths",
   yearBuilt: "built outside the range",
   sqft: "different size",
+  lotSqft: "different lot size",
   propertyType: "different property type",
 };
 
@@ -98,6 +101,7 @@ export function compDetailsText(comp) {
     `${num(comp.beds)} bd/${num(comp.baths)} ba` +
       (comp.differs ? ` (${comp.differs})` : ""),
     comp.sqft ? num(comp.sqft, " sq ft") : null,
+    comp.lotSqft ? `lot ${num(comp.lotSqft, " sq ft")}` : null,
     comp.yearBuilt ? `built ${comp.yearBuilt}` : null,
     comp.soldDate ? `sold ${comp.soldDate}` : null,
     typeof comp.distance === "number" ? `${comp.distance} mi away` : null,
@@ -111,7 +115,7 @@ export function formatCompsNote(result, date = new Date()) {
   const lines = [
     `Comps (${date.toLocaleDateString("en-US")}):`,
     `ARV estimate: ${money(result.arvEstimate)} · Rent estimate: ${money(result.rentEstimate)}/mo`,
-    `Property: ${num(p.beds)} bd · ${num(p.baths)} ba · ${num(p.sqft, " sq ft")} · built ${p.yearBuilt ?? "—"} · tax ${money(p.annualTax)}/yr`,
+    `Property: ${num(p.beds)} bd · ${num(p.baths)} ba · ${num(p.sqft, " sq ft")}${p.lotSqft ? ` · lot ${num(p.lotSqft, " sq ft")}` : ""} · built ${p.yearBuilt ?? "—"} · tax ${money(p.annualTax)}/yr`,
   ];
   const est = result.valueEstimates;
   if (est?.average != null) {

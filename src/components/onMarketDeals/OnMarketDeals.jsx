@@ -132,6 +132,7 @@ function compsSubject(l) {
     beds: l.beds ?? null,
     baths: l.baths ?? null,
     sqft: l.sqft ?? null,
+    lotSqft: l.lotSqft ?? null,
     yearBuilt: l.yearBuilt ?? null,
     valueEstimate: l.zestimate ?? null,
     rentEstimate: l.rentZestimate ?? null,

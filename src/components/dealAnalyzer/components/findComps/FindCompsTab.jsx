@@ -53,6 +53,7 @@ function slimResult(data) {
           bedrooms: sp.bedrooms,
           bathrooms: sp.bathrooms,
           squareFootage: sp.squareFootage,
+          lotSqft: sp.lotSqft,
           yearBuilt: sp.yearBuilt,
           annualTax: sp.annualTax,
         }
@@ -65,6 +66,7 @@ function slimResult(data) {
       bedrooms: c.bedrooms,
       bathrooms: c.bathrooms,
       squareFootage: c.squareFootage,
+      lotSqft: c.lotSqft,
       soldDate: c.soldDate,
       distance: c.distance,
       yearBuilt: c.yearBuilt,
@@ -100,6 +102,7 @@ export function toFindCompsResult(api, address) {
       bedrooms: p.beds,
       bathrooms: p.baths,
       squareFootage: p.sqft,
+      lotSqft: p.lotSqft,
       yearBuilt: p.yearBuilt,
       annualTax: p.annualTax,
     },
@@ -111,6 +114,7 @@ export function toFindCompsResult(api, address) {
       bedrooms: c.beds,
       bathrooms: c.baths,
       squareFootage: c.sqft,
+      lotSqft: c.lotSqft,
       soldDate: c.soldDate,
       distance: c.distance,
       yearBuilt: c.yearBuilt,
@@ -607,6 +611,7 @@ function FindCompsTab({ tab }) {
                         <th>Beds</th>
                         <th>Baths</th>
                         <th>Sq Ft</th>
+                        <th>Lot</th>
                         <th>Built</th>
                         <th>Distance</th>
                       </tr>
@@ -662,6 +667,9 @@ function FindCompsTab({ tab }) {
                             {c.squareFootage
                               ? c.squareFootage.toLocaleString()
                               : "—"}
+                          </td>
+                          <td>
+                            {c.lotSqft ? c.lotSqft.toLocaleString() : "—"}
                           </td>
                           <td>{c.yearBuilt ?? "—"}</td>
                           <td>

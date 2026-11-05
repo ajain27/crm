@@ -10,6 +10,7 @@ import {
   pricePerSqft,
   requestComps,
 } from "./compsNote";
+import { lotSqftFromText } from "../../../../../services/compsService";
 
 const money = (n) =>
   typeof n === "number" && Number.isFinite(n)
@@ -29,8 +30,11 @@ const SOURCE_LABELS = {
 // puts it in the deal's notes in place of any earlier comps note.
 // `onApply` fills the deal's ARV and Sq Ft from the result (optional). Leads pass their
 // own wording, since their note and ARV only stick after Save Changes.
+// `lotSize` (as typed: sq ft or acres) is the property's own, used over
+// what the sites say.
 export default function RunCompsModal({
   address,
+  lotSize,
   onSaveNote,
   onApply,
   onClose,
@@ -47,7 +51,8 @@ export default function RunCompsModal({
     // Run once per open (React may mount effects twice in development).
     if (started.current) return;
     started.current = true;
-    requestComps(address)
+    const lotSqft = lotSqftFromText(lotSize);
+    requestComps(address, null, lotSqft ? { lotSqft } : null)
       .then(async (data) => {
         setResult(data);
         try {
@@ -88,7 +93,11 @@ export default function RunCompsModal({
               className="secondary-btn"
               disabled={applied}
               onClick={() => {
-                onApply({ arv: result.arvEstimate, squareFootage: p.sqft });
+                onApply({
+                  arv: result.arvEstimate,
+                  squareFootage: p.sqft,
+                  lotSqft: p.lotSqft,
+                });
                 setApplied(true);
               }}
             >
@@ -138,6 +147,7 @@ export default function RunCompsModal({
                 <span>Property</span>
                 <strong>
                   {num(p.beds)} bd · {num(p.baths)} ba · {num(p.sqft)} sq ft
+                  {p.lotSqft ? ` · lot ${num(p.lotSqft)} sq ft` : ""}
                 </strong>
               </div>
               <div>

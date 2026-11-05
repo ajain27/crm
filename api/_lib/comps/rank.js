@@ -109,6 +109,15 @@ function ruleMisses(sale, subject, distance, now, search) {
       ]);
     }
   }
+  if (isNum(subject.lotSqft) && isNum(sale.lotSqft)) {
+    const diff = (sale.lotSqft - subject.lotSqft) / subject.lotSqft;
+    if (Math.abs(diff) > COMP_RULES.lotTolerance) {
+      misses.push([
+        "lotSqft",
+        `lot ${Math.round(Math.abs(diff) * 100)}% ${diff < 0 ? "smaller" : "larger"}`,
+      ]);
+    }
+  }
   const subjectType = typeBucket(subject.propertyType);
   const saleType = typeBucket(sale.propertyType);
   if (subjectType && saleType && saleType !== subjectType) {
@@ -142,6 +151,9 @@ function matchScore(sale, subject, distance, now) {
   if (isNum(subject.sqft) && isNum(sale.sqft)) {
     score += (Math.abs(sale.sqft - subject.sqft) / subject.sqft) * 6;
   }
+  if (isNum(subject.lotSqft) && isNum(sale.lotSqft)) {
+    score += (Math.abs(sale.lotSqft - subject.lotSqft) / subject.lotSqft) * 2;
+  }
   const subjectType = typeBucket(subject.propertyType);
   const saleType = typeBucket(sale.propertyType);
   if (subjectType && saleType && saleType !== subjectType) score += 4;
@@ -165,7 +177,7 @@ export function rankComps({
   now = Date.now(),
 }) {
   const subjectStreet = streetKey(subjectAddress);
-  const unknown = ["beds", "baths", "yearBuilt", "sqft"].filter(
+  const unknown = ["beds", "baths", "yearBuilt", "sqft", "lotSqft"].filter(
     (f) => !isNum(subject[f]),
   );
   const excluded = {
@@ -175,6 +187,7 @@ export function rankComps({
     baths: 0,
     yearBuilt: 0,
     sqft: 0,
+    lotSqft: 0,
     propertyType: 0,
   };
   const nearby = [];

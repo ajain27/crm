@@ -231,7 +231,7 @@ describe("LeadDetailModal", () => {
     );
 
     fireEvent.click(screen.getByText("Run comps"));
-    expect(requestComps).toHaveBeenCalledWith("1 Main St");
+    expect(requestComps).toHaveBeenCalledWith("1 Main St", null, null);
     expect(
       await screen.findByText(/Added to the lead's notes/),
     ).toBeInTheDocument();
