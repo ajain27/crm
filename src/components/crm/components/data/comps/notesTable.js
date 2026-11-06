@@ -120,6 +120,18 @@ export function splitQaTable(text) {
 // A call's note, as the Called button adds it: "Call 2 (11/6/2026): …".
 export const CALL_LINE = /^Call \d+ \([^)]*\):/;
 
+// How many calls a deal or lead has had: its count, else the highest call
+// noted in its notes (deals made from leads before they kept a count).
+export function callCountOf(item) {
+  const counted = Number(item?.callCount) || 0;
+  const noted = String(item?.notes || "")
+    .split("\n")
+    .map((line) => line.trim().match(/^Call (\d+) \([^)]*\):/)?.[1])
+    .filter(Boolean)
+    .map(Number);
+  return Math.max(counted, ...noted, 0);
+}
+
 // Whether the notes have anything the formatted notes view lays out (a
 // comps note, a Question / Answer table or a call's note, shown in bold),
 // rather than plain text only.

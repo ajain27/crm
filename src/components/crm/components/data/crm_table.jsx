@@ -18,6 +18,9 @@ import DealDetailModal from "./modals/DealDetailModal";
 import LeadDedupeButton from "../../../leads/components/LeadDedupeButton";
 import { dealAddress } from "../../../leads/leadDuplicates";
 import AccordionTable from "../../../elements/AccordionTable";
+import CallNotesModal from "../../../leads/components/CallNotesModal";
+import { callCountOf } from "./comps/notesTable";
+import { withNoteAdded } from "./comps/compsNote";
 
 function Wholesale_data({
   filteredDeals,
@@ -43,6 +46,8 @@ function Wholesale_data({
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [notesDraft, setNotesDraft] = useState("");
   const [detailDealId, setDetailDealId] = useState(null);
+  // The deal whose new call is being noted, and that call's number.
+  const [callNotes, setCallNotes] = useState(null);
   const detailDeal = detailDealId
     ? deals.find((d) => d.id === detailDealId) || null
     : null;
@@ -104,6 +109,31 @@ function Wholesale_data({
       updateDeal(selectedDeal.id, "notes", notesDraft);
       setSelectedDeal(null);
     }
+  }
+
+  // A call more opens the call notes; fewer just saves the count.
+  function handleSetCalls(deal, count) {
+    const callCount = Math.max(0, count);
+    if (callCount > callCountOf(deal)) {
+      setCallNotes({ deal, count: callCount });
+      return;
+    }
+    updateDealPatch(deal.id, { callCount });
+  }
+
+  // Counts the call and adds what was said to the deal's notes as
+  // "Call 2 (11/6/2026): …", above any comps note.
+  function handleSaveCall(details) {
+    const { deal: asked, count } = callNotes;
+    const deal = deals.find((d) => d.id === asked.id) || asked;
+    const line = details
+      ? `Call ${count} (${new Date().toLocaleDateString("en-US")}): ${details}`
+      : "";
+    updateDealPatch(deal.id, {
+      callCount: count,
+      lastCalledAt: new Date().toISOString(),
+      ...(line ? { notes: withNoteAdded(deal.notes, line) } : {}),
+    });
   }
 
   function reactivateDeal(deal) {
@@ -233,6 +263,7 @@ function Wholesale_data({
             <th>Offer Sent</th>
             <th>Seller</th>
             <th>Phone</th>
+            <th>Called</th>
           </tr>
         </thead>
         <tbody>
@@ -242,6 +273,7 @@ function Wholesale_data({
               deal={deal}
               index={index}
               onRowDetailClick={(d) => setDetailDealId(d.id)}
+              onSetCalls={handleSetCalls}
             />
           ))}
         </tbody>
@@ -290,6 +322,19 @@ function Wholesale_data({
             : undefined
         }
       />
+
+      {callNotes && (
+        <CallNotesModal
+          lead={{
+            firstName: callNotes.deal.sellerFirstName,
+            lastName: callNotes.deal.sellerLastName,
+            address: callNotes.deal.address,
+          }}
+          callNumber={callNotes.count}
+          onSave={handleSaveCall}
+          onClose={() => setCallNotes(null)}
+        />
+      )}
 
       <NotesModal
         isOpen={!!selectedDeal}

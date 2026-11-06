@@ -5,10 +5,12 @@ import {
 } from "../../../elements/elements";
 import { currency } from "../../../../utils/utils";
 import {
+  CallCell,
   EmailCell,
   NotesCell,
   PhoneCell,
 } from "../../../leads/components/LeadTableCells";
+import { callCountOf } from "./comps/notesTable";
 import { dealLeadDetail, isDealRejected, isDealWithdrawn } from "../crmConfig";
 
 function formatFullAddress(deal) {
@@ -16,7 +18,8 @@ function formatFullAddress(deal) {
   return [deal.address, deal.city, stateZip].filter(Boolean).join(", ");
 }
 
-function DealRow({ deal, index, onRowDetailClick }) {
+// `onSetCalls(deal, count)` changes how many times the seller was called.
+function DealRow({ deal, index, onRowDetailClick, onSetCalls }) {
   const isRejected = isDealRejected(deal);
   // Made inactive by hand: greyed out like a withdrawn offer.
   const isWithdrawn = isDealWithdrawn(deal) || deal.inactive === true;
@@ -86,6 +89,12 @@ function DealRow({ deal, index, onRowDetailClick }) {
           ...(deal.sellerPhones || []),
         ]}
       />
+      {onSetCalls && (
+        <CallCell
+          count={callCountOf(deal)}
+          onChange={(count) => onSetCalls(deal, count)}
+        />
+      )}
       {/* Card-only (an open card reads like a lead's): the address and the
           full notes. */}
       <td className="acc-col-card-only dt-card-contact" data-label="Address">

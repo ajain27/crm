@@ -100,6 +100,43 @@ describe("Wholesale_data", () => {
     ).toBeInTheDocument();
   });
 
+  it("notes a call from the dashboard, above the comps note", async () => {
+    const saveDeal = vi.fn(async (d) => d);
+    const called = {
+      ...deal,
+      sellerFirstName: "Charles",
+      notes:
+        "Call 1 (11/5/2026): wants 250k\n\nComps (11/6/2026):\nARV estimate: $325,000 · Rent estimate: —/mo",
+    };
+    render(
+      <Wholesale_data
+        filteredDeals={[called]}
+        deals={[called]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={saveDeal}
+      />,
+    );
+    // One call already noted on the deal.
+    expect(screen.getAllByText("Called 1×").length).toBeGreaterThan(0);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "One more call" })[0],
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Call notes" }),
+    ).toHaveTextContent("Call 2");
+    fireEvent.change(screen.getByLabelText(/How did the call go/), {
+      target: { value: "offered 225k" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save call" }));
+    await waitFor(() => expect(saveDeal).toHaveBeenCalled());
+    const saved = saveDeal.mock.calls[0][0];
+    expect(saved.callCount).toBe(2);
+    expect(saved.notes).toMatch(
+      /^Call 1 \(11\/5\/2026\): wants 250k\n\nCall 2 \([^)]+\): offered 225k\n\nComps \(11\/6\/2026\):/,
+    );
+  });
+
   it("opens the details modal by clicking the address cell", () => {
     render(
       <Wholesale_data
