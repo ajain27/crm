@@ -47,6 +47,7 @@ import {
   stopEmailSequence,
 } from "../../constants/emailSequence";
 import CallNotesModal from "./components/CallNotesModal";
+import { withNoteAdded } from "../crm/components/data/comps/compsNote";
 import {
   addressConflictMessage,
   dealAddress,
@@ -539,11 +540,10 @@ export default function PotentialLeads({
     const line = details
       ? `Call ${count} (${new Date().toLocaleDateString("en-US")}): ${details}`
       : "";
-    const notes = String(lead.notes || "").trim();
     return patchLead(lead, {
       callCount: count,
       lastCalledAt: new Date().toISOString(),
-      ...(line ? { notes: notes ? `${notes}\n\n${line}` : line } : {}),
+      ...(line ? { notes: withNoteAdded(lead.notes, line) } : {}),
     });
   }
 

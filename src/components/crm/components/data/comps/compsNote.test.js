@@ -6,6 +6,7 @@ import {
   formatCompsNote,
   splitCompsNotes,
   withCompsNote,
+  withNoteAdded,
 } from "./compsNote";
 
 describe("formatCompsNote", () => {
@@ -122,12 +123,26 @@ describe("splitCompsNotes", () => {
     "Sources: https://www.zillow.com/a · https://www.redfin.com/b",
   ].join("\n");
 
-  it("lays out a comps note between plain notes", () => {
+  it("adds a note above the comps note, after the other notes", () => {
+    expect(
+      withNoteAdded(
+        `Call 1 (11/6/2026): wants an offer\n\n${compsNote}`,
+        "Call 2 (11/6/2026): offered 600k",
+      ),
+    ).toBe(
+      `Call 1 (11/6/2026): wants an offer\n\nCall 2 (11/6/2026): offered 600k\n\n${compsNote}`,
+    );
+    expect(withNoteAdded("", "Call 1 (11/6/2026): hi")).toBe(
+      "Call 1 (11/6/2026): hi",
+    );
+  });
+
+  it("puts the plain notes together, above a comps note", () => {
     const segments = splitCompsNotes(
       `Called, no answer.\n\n${compsNote}\n\nCall back Friday.`,
     );
-    expect(segments.map((s) => s.type)).toEqual(["text", "comps", "text"]);
-    expect(segments[0].text).toBe("Called, no answer.");
+    expect(segments.map((s) => s.type)).toEqual(["text", "comps"]);
+    expect(segments[0].text).toBe("Called, no answer.\n\nCall back Friday.");
     expect(segments[1].comps).toEqual({
       date: "10/13/2026",
       arv: "$376,182",

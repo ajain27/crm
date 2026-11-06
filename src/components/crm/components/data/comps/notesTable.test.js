@@ -89,3 +89,10 @@ describe("hasFormattedNotes", () => {
     expect(hasFormattedNotes("")).toBe(false);
   });
 });
+
+describe("hasFormattedNotes with call notes", () => {
+  it("counts a call's note, so it can be shown in bold", () => {
+    expect(hasFormattedNotes("Call 2 (11/6/2026): offered 600k")).toBe(true);
+    expect(hasFormattedNotes("Called back, no answer.")).toBe(false);
+  });
+});

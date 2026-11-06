@@ -1,7 +1,8 @@
+import { Fragment } from "react";
 import { ExternalLink } from "lucide-react";
 import { StreetViewButton } from "../../../../elements/StreetView";
 import { splitCompsNotes } from "./compsNote";
-import { splitQaTable } from "./notesTable";
+import { CALL_LINE, splitQaTable } from "./notesTable";
 
 const SOURCE_LABELS = {
   zillow: "Zillow",
@@ -126,12 +127,26 @@ function CompsNote({ comps }) {
 
 // A run of plain notes text, with any Question / Answer table in it laid
 // out as label / value rows.
+// Plain notes as written, with each call's note in bold.
+function PlainText({ text }) {
+  return (
+    <p className="comps-note-text">
+      {text.split("\n").map((line, i) => (
+        <Fragment key={i}>
+          {i > 0 && "\n"}
+          {CALL_LINE.test(line.trim()) ? <strong>{line}</strong> : line}
+        </Fragment>
+      ))}
+    </p>
+  );
+}
+
 function NoteText({ text }) {
   const table = splitQaTable(text);
-  if (!table) return <p className="comps-note-text">{text}</p>;
+  if (!table) return <PlainText text={text} />;
   return (
     <>
-      {table.before && <p className="comps-note-text">{table.before}</p>}
+      {table.before && <PlainText text={table.before} />}
       <div className="notes-qa">
         {table.title && <div className="notes-qa-title">{table.title}</div>}
         <dl className="notes-qa-table">

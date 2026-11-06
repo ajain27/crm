@@ -117,10 +117,17 @@ export function splitQaTable(text) {
   return null;
 }
 
+// A call's note, as the Called button adds it: "Call 2 (11/6/2026): …".
+export const CALL_LINE = /^Call \d+ \([^)]*\):/;
+
 // Whether the notes have anything the formatted notes view lays out (a
-// comps note or a Question / Answer table), rather than plain text only.
+// comps note, a Question / Answer table or a call's note, shown in bold),
+// rather than plain text only.
 export function hasFormattedNotes(notes) {
   return splitCompsNotes(notes).some(
-    (seg) => seg.type === "comps" || splitQaTable(seg.text),
+    (seg) =>
+      seg.type === "comps" ||
+      splitQaTable(seg.text) ||
+      seg.text.split("\n").some((line) => CALL_LINE.test(line.trim())),
   );
 }

@@ -209,22 +209,44 @@ function parseCompsBlock(lines) {
 
 // Splits free-form notes into plain-text and comps-note segments, so a
 // comps note can be shown laid out instead of as one run of text. Notes
-// are separated by blank lines (see handleSaveCompsNote).
+// are separated by blank lines (see handleSaveCompsNote). The plain notes
+// come first, together, and comps notes last — even when a note was
+// added after the comps.
 export function splitCompsNotes(notes) {
-  const segments = [];
-  const pushText = (text) => {
-    const last = segments.at(-1);
-    if (last?.type === "text") last.text += `\n\n${text}`;
-    else segments.push({ type: "text", text });
-  };
+  const texts = [];
+  const comps = [];
   for (const block of (notes || "").split(/\n\s*\n/)) {
     const trimmed = block.trim();
     if (!trimmed) continue;
-    const comps = parseCompsBlock(trimmed.split("\n").map((l) => l.trim()));
-    if (comps) segments.push({ type: "comps", comps });
-    else pushText(trimmed);
+    const parsed = parseCompsBlock(trimmed.split("\n").map((l) => l.trim()));
+    if (parsed) comps.push({ type: "comps", comps: parsed });
+    else texts.push(trimmed);
   }
-  return segments;
+  return [
+    ...(texts.length ? [{ type: "text", text: texts.join("\n\n") }] : []),
+    ...comps,
+  ];
+}
+
+const isCompsBlock = (block) =>
+  Boolean(
+    parseCompsBlock(
+      block
+        .trim()
+        .split("\n")
+        .map((l) => l.trim()),
+    ),
+  );
+
+// The notes with `text` added after the other notes but before any comps
+// note, so the comps stay at the bottom.
+export function withNoteAdded(notes, text) {
+  const blocks = (notes || "").split(/\n\s*\n/).filter((b) => b.trim());
+  return [
+    ...blocks.filter((b) => !isCompsBlock(b)).map((b) => b.trim()),
+    text,
+    ...blocks.filter(isCompsBlock).map((b) => b.trim()),
+  ].join("\n\n");
 }
 
 // The notes with a new comps note in place of any earlier one; other
