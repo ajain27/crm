@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { displayPhone, formatDate } from "../../../utils/utils";
-import { zillowUrl } from "../leadUtils";
+import { redfinUrl, zillowUrl } from "../leadUtils";
 import CompsNoteView from "../../crm/components/data/comps/CompsNoteView";
 
 const EMPTY = "—";
@@ -56,6 +56,24 @@ export function ZillowLink({ address }) {
     >
       <ExternalLink size={12} />
       Zillow
+    </a>
+  ) : null;
+}
+
+// `url` is the Redfin page comps found, when they've been run.
+export function RedfinLink({ address, url }) {
+  const href = redfinUrl(address, url);
+  return href ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="leads-mls-link"
+      title={`View ${address} on Redfin`}
+      onClick={stopPropagation}
+    >
+      <ExternalLink size={12} />
+      Redfin
     </a>
   ) : null;
 }

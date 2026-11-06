@@ -4,7 +4,11 @@ import { Badge } from "../elements/elements";
 import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
 import { joinName, splitName } from "./leadUtils";
-import { ExtraDetails, ZillowLink } from "./components/LeadTableCells";
+import {
+  ExtraDetails,
+  RedfinLink,
+  ZillowLink,
+} from "./components/LeadTableCells";
 import { LeadMainPhotoRow, useLeadPhotos } from "./components/LeadPhotos";
 import { StreetViewButton } from "../elements/StreetView";
 import CompsNoteView from "../crm/components/data/comps/CompsNoteView";
@@ -169,6 +173,10 @@ export default function LeadDetailModal({
             {draft.address?.trim() && (
               <span className="ldm-title-links">
                 <ZillowLink address={draft.address} />
+                <RedfinLink
+                  address={draft.address}
+                  url={draft.compsResult?.listingUrls?.redfin}
+                />
                 <StreetViewButton address={draft.address} />
               </span>
             )}

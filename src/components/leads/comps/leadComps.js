@@ -37,6 +37,7 @@ function fromResult(result, address) {
     arv: numberOrNull(result.arvEstimate),
     rent: numberOrNull(result.rentEstimate),
     estimates: result.valueEstimates || null,
+    listingUrls: result.listingUrls || {},
     subject: {
       address: result.address || address,
       price: null,
@@ -137,6 +138,10 @@ export function compsResultToSave(result, runAt = new Date()) {
       : null,
     arvEstimate: numberOrNull(result.arvEstimate),
     rentEstimate: numberOrNull(result.rentEstimate),
+    // The property's Zillow, Redfin and Realtor.com pages comps read.
+    listingUrls: Object.fromEntries(
+      Object.entries(result.listingUrls || {}).filter(([, url]) => url),
+    ),
     // The Zestimate, Redfin Estimate and their average.
     valueEstimates: result.valueEstimates
       ? {

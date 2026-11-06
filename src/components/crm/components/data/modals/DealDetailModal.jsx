@@ -48,6 +48,7 @@ import {
 import { historyToSave } from "../../../../propertyHistory/propertyHistory";
 import {
   ExtraDetails,
+  RedfinLink,
   TextLink,
   ZillowLink,
 } from "../../../../leads/components/LeadTableCells";
@@ -589,6 +590,10 @@ function DealDetailModal({
             {formatFullAddress(draft) && (
               <span className="ldm-title-links">
                 <ZillowLink address={formatFullAddress(draft)} />
+                <RedfinLink
+                  address={formatFullAddress(draft)}
+                  url={draft.compsResult?.listingUrls?.redfin}
+                />
                 <StreetViewButton address={formatFullAddress(draft)} />
               </span>
             )}

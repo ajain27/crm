@@ -286,6 +286,17 @@ export function zillowUrl(address) {
     : "";
 }
 
+// The property's Redfin page: the one comps found (`url`), else a search
+// for the address on Redfin (Redfin has no address-only link like
+// Zillow's).
+export function redfinUrl(address, url = "") {
+  if (/^https:\/\/(www\.)?redfin\.com\//.test(url || "")) return url;
+  const q = String(address || "").trim();
+  return q
+    ? `https://www.google.com/search?q=${encodeURIComponent(`${q} site:redfin.com`)}`
+    : "";
+}
+
 export function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

@@ -124,6 +124,21 @@ describe("compsResultToSave", () => {
     expect(saved.location).toEqual({ lat: 30.1, lng: -97.7 });
     expect(saved.topComps[0]).not.toHaveProperty("reason");
   });
+
+  it("keeps the property's pages, for the Redfin and Zillow links", () => {
+    const saved = compsResultToSave({
+      ...RESULT,
+      listingUrls: {
+        zillow: "https://www.zillow.com/homedetails/1_zpid/",
+        redfin: "https://www.redfin.com/TN/Nashville/1/home/2",
+        realtor: null,
+      },
+    });
+    expect(saved.listingUrls).toEqual({
+      zillow: "https://www.zillow.com/homedetails/1_zpid/",
+      redfin: "https://www.redfin.com/TN/Nashville/1/home/2",
+    });
+  });
 });
 
 describe("medianPricePerSqft", () => {

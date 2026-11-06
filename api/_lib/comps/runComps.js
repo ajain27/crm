@@ -66,6 +66,7 @@ import {
   estimateArv,
   plural,
   ruleReason,
+  poorSizeMatch,
   stateFromAddress,
   valueEstimates,
 } from "./arv.js";
@@ -317,11 +318,13 @@ export async function runComps(
   const { arvEstimate: compsArv, arvBasis } = estimateArv(
     topComps,
     property.sqft,
+    { hasEstimates: estimates.average !== null },
   );
   const { arvEstimate, note: estimateNote } = blendArv({
     compsArv,
     estimates,
     state,
+    poorSizeMatch: poorSizeMatch(topComps, property.sqft),
   });
   const photo = await photoData;
 

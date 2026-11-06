@@ -44,6 +44,17 @@ function Stat({ label, value, suffix, note }) {
   );
 }
 
+// An estimate's site name, linked to the page it was read from.
+function EstimateLink({ url, name }) {
+  return url ? (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      {name}
+    </a>
+  ) : (
+    name
+  );
+}
+
 function location(home) {
   return home.lat != null && home.lng != null
     ? { lat: home.lat, lng: home.lng }
@@ -123,9 +134,17 @@ export default function LeadCompsPanel({ comps, lead }) {
           label="After repair value"
           value={money(parseMoney(lead.arv) ?? comps.arv)}
           note={
-            comps.estimates?.average != null
-              ? `Zestimate ${money(comps.estimates.zestimate)} · Redfin ${money(comps.estimates.redfinEstimate)}`
-              : null
+            comps.estimates?.average != null ? (
+              <>
+                <EstimateLink
+                  url={comps.listingUrls?.zillow}
+                  name="Zestimate"
+                />{" "}
+                {money(comps.estimates.zestimate)} ·{" "}
+                <EstimateLink url={comps.listingUrls?.redfin} name="Redfin" />{" "}
+                {money(comps.estimates.redfinEstimate)}
+              </>
+            ) : null
           }
         />
         <Stat

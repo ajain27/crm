@@ -31,6 +31,7 @@ import { distanceMiles } from "../../api/_lib/comps/rules.js";
 import {
   blendArv,
   estimateArv,
+  poorSizeMatch,
   stateFromAddress,
   valueEstimates,
 } from "../../api/_lib/comps/arv.js";
@@ -1138,14 +1139,47 @@ describe("ARV for a property much bigger than its comps", () => {
     { price: 147000, sqft: 2762 },
   ];
 
-  it("uses the median $/sq ft, and caps it 10% over the highest sale", () => {
+  it("uses the median $/sq ft, and caps it 10% over the highest sale of a comp its size", () => {
     const { arvEstimate, arvBasis } = estimateArv(comps, 3900);
-    expect(arvEstimate).toBe(163460);
+    expect(arvEstimate).toBe(154000);
     expect(arvBasis).toContain("ARV = median $56/sq ft across 4 comps");
     expect(arvBasis).toContain("56% bigger than the typical comp");
     expect(arvBasis).toContain(
-      "more than 10% over the highest comp sale ($148,600), so the ARV is capped at $163,460.",
+      "more than 10% over the highest sale among comps about its size ($140,000), so the ARV is capped at $154,000.",
     );
+  });
+
+  // 445 Caledonian Ct, Nashville: a 3,584 sq ft home whose comps were all
+  // 1,162–2,070 sq ft (Redfin's download leaves out most MLS sales there).
+  const small = [
+    { price: 303044, sqft: 1884 },
+    { price: 400000, sqft: 1215 },
+    { price: 440000, sqft: 1928 },
+    { price: 435000, sqft: 2070 },
+    { price: 265000, sqft: 1162 },
+  ];
+
+  it("doesn't cap by much smaller homes when there are estimates to average with", () => {
+    expect(poorSizeMatch(small, 3584)).toBe(true);
+    const { arvEstimate, arvBasis } = estimateArv(small, 3584, {
+      hasEstimates: true,
+    });
+    expect(arvEstimate).toBe(Math.round(3584 * (265000 / 1162)));
+    expect(arvBasis).not.toContain("capped");
+    const blended = blendArv({
+      compsArv: arvEstimate,
+      estimates: valueEstimates(null, 881219),
+      state: "TN",
+      poorSizeMatch: true,
+    });
+    expect(blended.arvEstimate).toBe(Math.round((arvEstimate + 881219) / 2));
+    expect(blended.note).toContain(
+      "None of the comps is near the property's size",
+    );
+  });
+
+  it("still caps by the highest sale without estimates", () => {
+    expect(estimateArv(small, 3584).arvEstimate).toBe(484000);
   });
 
   it("keeps the upper quartile for a property the comps' size", () => {

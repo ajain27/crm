@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  redfinUrl,
   uniqueById,
   sellerNameOf,
   buildDealFromLead,
@@ -282,5 +283,16 @@ describe("cashOfferText", () => {
     expect(cashOfferText({})).toMatch(
       /^Hi, I'm reaching out regarding your property\. I wanted/,
     );
+  });
+});
+
+describe("redfinUrl", () => {
+  it("uses the Redfin page comps found, else searches Redfin for the address", () => {
+    const page = "https://www.redfin.com/TN/Nashville/445-Caledonian-Ct/home/1";
+    expect(redfinUrl("445 Caledonian Ct", page)).toBe(page);
+    expect(redfinUrl("445 Caledonian Ct, Nashville, TN")).toBe(
+      "https://www.google.com/search?q=445%20Caledonian%20Ct%2C%20Nashville%2C%20TN%20site%3Aredfin.com",
+    );
+    expect(redfinUrl("  ")).toBe("");
   });
 });
