@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { displayPhone, formatDate } from "../../../utils/utils";
 import { redfinUrl, zillowUrl } from "../leadUtils";
+import { requestRedfinUrl } from "../../../services/compsService";
 import CompsNoteView from "../../crm/components/data/comps/CompsNoteView";
 
 const EMPTY = "—";
@@ -60,9 +61,29 @@ export function ZillowLink({ address }) {
   ) : null;
 }
 
-// `url` is the Redfin page comps found, when they've been run.
+// `url` is the Redfin page comps found, when they've been run. Without
+// it, a click opens a tab straight away (so it isn't blocked as a pop-up),
+// looks the property's Redfin page up, and sends the tab there — to a
+// search for it only when Redfin has no page for the address.
 export function RedfinLink({ address, url }) {
   const href = redfinUrl(address, url);
+  const known = href && href === url;
+
+  async function handleClick(e) {
+    e.stopPropagation();
+    if (known) return;
+    e.preventDefault();
+    const tab = window.open("", "_blank");
+    const found = await requestRedfinUrl(address);
+    const target = found || href;
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = target;
+    } else {
+      window.open(target, "_blank", "noopener,noreferrer");
+    }
+  }
+
   return href ? (
     <a
       href={href}
@@ -70,7 +91,7 @@ export function RedfinLink({ address, url }) {
       rel="noopener noreferrer"
       className="leads-mls-link"
       title={`View ${address} on Redfin`}
-      onClick={stopPropagation}
+      onClick={handleClick}
     >
       <ExternalLink size={12} />
       Redfin

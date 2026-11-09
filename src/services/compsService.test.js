@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { lotSqftFromText, requestComps } from "./compsService";
+import {
+  lotSqftFromText,
+  requestComps,
+  requestRedfinUrl,
+} from "./compsService";
 
 const respond = (status, body) =>
   vi.stubGlobal(
@@ -57,5 +61,29 @@ describe("requestComps", () => {
   it("explains when the API server isn't reachable", async () => {
     respond(502);
     await expect(requestComps("1 Main St")).rejects.toThrow(/npm run dev/);
+  });
+});
+
+describe("requestRedfinUrl", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("asks the comps service for the Redfin page and remembers it", async () => {
+    const page =
+      "https://www.redfin.com/IL/Chicago/11742-S-Harvard-Ave-60628/home/13062672";
+    respond(200, { url: page });
+    await expect(requestRedfinUrl("11742 S Harvard Ave")).resolves.toBe(page);
+    await expect(requestRedfinUrl("11742 S Harvard Ave")).resolves.toBe(page);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+      address: "11742 S Harvard Ave",
+      redfinLink: true,
+    });
+  });
+
+  it("is null when there's no page or the search fails", async () => {
+    respond(200, { url: null });
+    await expect(requestRedfinUrl("1 Nowhere Rd")).resolves.toBeNull();
+    respond(502);
+    await expect(requestRedfinUrl("1 Nowhere Rd")).resolves.toBeNull();
   });
 });

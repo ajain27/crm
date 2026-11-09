@@ -17,6 +17,28 @@ export function lotSqftFromText(text) {
   return Math.round(acres ? n * 43560 : n);
 }
 
+// The property's own Redfin page, found by the comps service's search;
+// null when there's none (or the search failed). Remembered per address.
+const redfinPages = new Map();
+export async function requestRedfinUrl(address) {
+  if (!redfinPages.has(address)) {
+    redfinPages.set(
+      address,
+      fetch("/api/run-comps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, redfinLink: true }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => data?.url || null)
+        .catch(() => null),
+    );
+  }
+  const url = await redfinPages.get(address);
+  if (!url) redfinPages.delete(address);
+  return url;
+}
+
 export async function requestComps(address, adjust = null, known = null) {
   const res = await fetch("/api/run-comps", {
     method: "POST",

@@ -1,10 +1,14 @@
-// POST { address } → comps for that address; with { subject, location }
+// POST { address } → comps for that address; { address, redfinLink: true }
+// → just the property's Redfin page ({ url }, null when there's none),
+// for the Redfin link (kept in this endpoint: Vercel's plan allows only
+// 12 functions); with { subject, location }
 // (and the first run's `estimates`) too, re-runs them with corrected
 // subject facts. `known` ({ lotSqft }) is what the user entered for the
 // property, used over what the sites say. The steps live in
 // api/_lib/comps/ (the "_" keeps Vercel from serving them as endpoints).
 
 import { runComps } from "./_lib/comps/runComps.js";
+import { findRedfinUrl } from "./_lib/comps/subject.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -20,6 +24,19 @@ export default async function handler(req, res) {
     return res
       .status(400)
       .json({ error: "Enter the property's full address." });
+  }
+
+  if (req.body?.redfinLink) {
+    if (!process.env.SERPER_API_KEY) {
+      return res.status(500).json({ error: "Missing SERPER_API_KEY." });
+    }
+    try {
+      const url = await findRedfinUrl(address, process.env.SERPER_API_KEY);
+      return res.status(200).json({ url });
+    } catch (err) {
+      console.error("run-comps redfin link error:", err);
+      return res.status(502).json({ error: err.message });
+    }
   }
 
   try {

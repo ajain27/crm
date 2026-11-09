@@ -26,7 +26,11 @@ const CLAUDE_REVIEW = {
   ],
 };
 import { rankComps } from "../../api/_lib/comps/rank.js";
-import { cleanScraped, pickListingUrls } from "../../api/_lib/comps/subject.js";
+import {
+  cleanScraped,
+  findRedfinUrl,
+  pickListingUrls,
+} from "../../api/_lib/comps/subject.js";
 import { distanceMiles } from "../../api/_lib/comps/rules.js";
 import {
   blendArv,
@@ -1225,5 +1229,34 @@ describe("ARV and the sites' estimates", () => {
     expect(
       blendArv({ compsArv: 470000, estimates, state: "TN" }).note,
     ).toBeNull();
+  });
+});
+
+describe("findRedfinUrl", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("searches Redfin for the address and picks the property's own page", async () => {
+    const page =
+      "https://www.redfin.com/IL/Chicago/11742-S-Harvard-Ave-60628/home/13062672";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            organic: [
+              { link: "https://www.redfin.com/city/29470/IL/Chicago" },
+              { link: page },
+            ],
+          },
+        ],
+      }),
+    );
+    await expect(
+      findRedfinUrl("11742 S Harvard Ave, Chicago, IL 60628", "key"),
+    ).resolves.toBe(page);
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual([
+      { q: "11742 S Harvard Ave, Chicago, IL 60628 site:redfin.com", num: 10 },
+    ]);
   });
 });

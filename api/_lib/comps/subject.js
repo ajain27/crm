@@ -184,6 +184,17 @@ export function listingQueries(address) {
   return SITES.map((s) => `${where} site:${s.domain}`);
 }
 
+// The property's own Redfin page (one Serper search), or null when
+// there's none.
+export async function findRedfinUrl(address, apiKey) {
+  const [results] = await serperSearch(
+    [listingQueries(address)[SITES.findIndex((s) => s.key === "redfin")]],
+    apiKey,
+  );
+  const bySite = SITES.map((s) => (s.key === "redfin" ? results : []));
+  return pickListingUrls(bySite, address).redfin;
+}
+
 export async function serperSearch(queries, apiKey) {
   const search = async (body) => {
     const res = await fetch("https://google.serper.dev/search", {
