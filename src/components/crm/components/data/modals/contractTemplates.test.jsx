@@ -37,12 +37,44 @@ describe("contract templates", () => {
     unmount();
   });
 
-  it("purchase agreement: the EMD goes hard if Buyer can't close after inspection", () => {
+  it("purchase agreement with assignment: closing terms (a)–(f) with the closing timeline", () => {
     const { unmount } = render(
       <WholesaleOfferPdfTemplate
         sellerName="Jane Doe"
         propertyAddress="1 Main St, Dallas, TX"
         purchasePrice={150000}
+        closingDays={30}
+      />,
+    );
+    const text = document.body.textContent;
+    expect(text).toContain(
+      '(a) Closing Date. Closing shall occur on or before thirty (30) calendar days after the Effective Date (the "Closing Date").',
+    );
+    for (const heading of [
+      "(b) Earnest Money.",
+      "(c) Delays Not Caused by Either Party.",
+      "(d) Seller's Failure to Close.",
+      "(e) Buyer's Failure to Close.",
+      "(f) Assignment and Release of EMD.",
+    ]) {
+      expect(text).toContain(heading);
+    }
+    expect(text).toContain(
+      "it shall be refunded to Buyer in full under Section 3(c), Section 3(d), or Section 8.",
+    );
+    expect(text).toContain("extended by up to fifteen (15) calendar days");
+    expect(text).toContain("Any assignment or novation under Section 6");
+    expect(text).not.toContain("Targeted Closing Date");
+    unmount();
+  });
+
+  it("purchase agreement without assignment: the EMD goes hard if Buyer can't close after inspection", () => {
+    const { unmount } = render(
+      <WholesaleOfferPdfTemplate
+        sellerName="Jane Doe"
+        propertyAddress="1 Main St, Dallas, TX"
+        purchasePrice={150000}
+        allowAssignment={false}
       />,
     );
     const text = document.body.textContent;

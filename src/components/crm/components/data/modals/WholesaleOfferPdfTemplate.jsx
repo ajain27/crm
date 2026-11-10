@@ -97,6 +97,81 @@ export function numberToWords(n) {
   return `${ONES[Math.floor(n / 100)]} hundred${rest ? ` ${numberToWords(rest)}` : ""}`;
 }
 
+// Section 3 of the assignable agreement: when closing is due, when the
+// EMD goes hard, and what happens when closing slips — for a title or
+// agency delay, a seller who won't close, or a buyer who can't — and that
+// an assignment changes none of it. `liensSection` is the Liens, Taxes &
+// Encumbrances clause's number.
+function AssignableClosingTerms({ closingDays, liensSection }) {
+  const liens = `Section ${liensSection}`;
+  return (
+    <>
+      <p>
+        <strong>(a) Closing Date.</strong> Closing shall occur on or before{" "}
+        {numberToWords(closingDays)} ({closingDays}) calendar{" "}
+        {closingDays === 1 ? "day" : "days"} after the Effective Date (the{" "}
+        <strong>"Closing Date"</strong>). If the Closing Date falls on a
+        Saturday, Sunday, legal holiday, or a day the escrow/title agent or
+        county recording office is closed, it shall be the next business day.
+      </p>
+      <p>
+        <strong>(b) Earnest Money.</strong> Buyer shall deliver the EMD to the
+        escrow/title agent within three (3) business days after the Effective
+        Date. If Buyer does not terminate this Agreement in writing before the
+        Inspection Period expires, the EMD becomes non-refundable to Buyer,
+        except that it shall be refunded to Buyer in full under Section 3(c),
+        Section 3(d), or {liens}.
+      </p>
+      <p>
+        <strong>(c) Delays Not Caused by Either Party.</strong> If closing
+        cannot occur by the Closing Date because of (i) a title defect, lien, or
+        encumbrance, or (ii) a delay by the escrow/title agent, the recording
+        office, or a government agency that is not caused by Buyer or Seller,
+        the Closing Date shall automatically be extended by up to fifteen (15)
+        calendar days (the <strong>"Extension Period"</strong>). During the
+        Extension Period, Seller shall diligently work to cure any title matter
+        and Buyer shall remain ready to close. If closing still cannot occur by
+        the end of the Extension Period for one of these reasons, either party
+        may terminate this Agreement by written notice; the EMD shall then be
+        refunded to Buyer in full, and both parties shall be released from
+        further obligations. Buyer may instead elect in writing to accept title
+        as-is, subject to {liens}, and close. The parties may agree in writing
+        to any further extension.
+      </p>
+      <p>
+        <strong>(d) Seller's Failure to Close.</strong> If closing does not
+        occur because Seller fails to sign or deliver the deed or other closing
+        documents, deliver possession, satisfy its obligations under {liens}, or
+        otherwise perform, this Agreement shall not terminate automatically and
+        Seller shall not benefit from Section 3(c). Seller shall be in default.
+        Buyer shall be entitled to a full refund of the EMD and may pursue the
+        remedies in Section 5, including specific performance.
+      </p>
+      <p>
+        <strong>(e) Buyer's Failure to Close.</strong> If the Inspection Period
+        has expired without Buyer terminating this Agreement and Buyer fails to
+        close by the Closing Date (as extended under Section 3(c), if
+        applicable) for any reason not described in Sections 3(c) or 3(d),
+        Seller shall give Buyer written notice, and Buyer shall have three (3)
+        business days to close. If Buyer does not close within that time, Buyer
+        shall be in default, and the EMD shall be released to Seller as
+        liquidated damages, which shall be Seller's sole and exclusive remedy
+        under Section 5.
+      </p>
+      <p>
+        <strong>(f) Assignment and Release of EMD.</strong> Any assignment or
+        novation under Section 6 shall not extend the Closing Date or change
+        Seller's rights under this Section 3. The EMD shall remain in escrow,
+        and this Section 3 shall control how it is released, whether or not this
+        Agreement has been assigned or novated. Buyer and Seller shall each
+        sign, within three (3) business days after a written request, any
+        instructions the escrow/title agent requires to release the EMD as this
+        Section 3 provides.
+      </p>
+    </>
+  );
+}
+
 // Purchase & Sale Agreement generated from a dashboard deal. Reproduces the
 // uploaded You Win Estates wholesale contracts clause for clause; Seller
 // Name(s), Property Address and Purchase Price come from the deal, and the
@@ -201,24 +276,33 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
         </Section>
 
         <Section number={3} title="CLOSING & TARGETED TIMELINE">
-          <p>
-            <strong>Targeted Closing Date:</strong> {closingDays}{" "}
-            {closingDays === 1 ? "day" : "days"} after mutual acceptance.
-          </p>
-          <p>
-            If closing cannot be completed within the specified timeframe due to
-            closing administrative delays or title defects not caused by Buyer,
-            this Agreement shall automatically become null and void, the parties
-            shall be released from all further obligations, and the Earnest
-            Money Deposit shall be promptly returned to Buyer, unless extended
-            or modified by the parties in writing. However, if Buyer is unable
-            to close within the {numberToWords(closingDays)} ({closingDays}) day
-            timeframe and the Inspection Period has expired without Buyer
-            terminating this Agreement, the Earnest Money Deposit shall be
-            non-refundable (&quot;hard&quot;), Buyer shall not be entitled to
-            any refund, and the Earnest Money Deposit shall be released to
-            Seller.
-          </p>
+          {allowAssignment ? (
+            <AssignableClosingTerms
+              closingDays={closingDays}
+              liensSection={afterRemedies + 1}
+            />
+          ) : (
+            <>
+              <p>
+                <strong>Targeted Closing Date:</strong> {closingDays}{" "}
+                {closingDays === 1 ? "day" : "days"} after mutual acceptance.
+              </p>
+              <p>
+                If closing cannot be completed within the specified timeframe
+                due to closing administrative delays or title defects not caused
+                by Buyer, this Agreement shall automatically become null and
+                void, the parties shall be released from all further
+                obligations, and the Earnest Money Deposit shall be promptly
+                returned to Buyer, unless extended or modified by the parties in
+                writing. However, if Buyer is unable to close within the{" "}
+                {numberToWords(closingDays)} ({closingDays}) day timeframe and
+                the Inspection Period has expired without Buyer terminating this
+                Agreement, the Earnest Money Deposit shall be non-refundable
+                (&quot;hard&quot;), Buyer shall not be entitled to any refund,
+                and the Earnest Money Deposit shall be released to Seller.
+              </p>
+            </>
+          )}
         </Section>
 
         <Section number={4} title="CONDITION & RISK OF LOSS">
