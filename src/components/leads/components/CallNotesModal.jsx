@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PhoneCall } from "lucide-react";
 import { sellerNameOf } from "../leadUtils";
+import { ActionButton } from "../../elements/ModalActions";
 
 // Asks how a call went when one is added. Saving counts the call and adds
 // what was typed to the lead's notes (with the date); Cancel doesn't
@@ -47,12 +48,8 @@ export default function CallNotesModal({ lead, callNumber, onSave, onClose }) {
           autoFocus
         />
         <div className="ppc-bad-popup-actions">
-          <button type="button" className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button type="button" className="primary-btn" onClick={save}>
-            Save call
-          </button>
+          <ActionButton label="Cancel" onClick={onClose} />
+          <ActionButton label="Save call" tone="primary" onClick={save} />
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   requestComps,
 } from "./compsNote";
 import { lotSqftFromText } from "../../../../../services/compsService";
+import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
 const money = (n) =>
   typeof n === "number" && Number.isFinite(n)
@@ -81,33 +82,36 @@ export default function RunCompsModal({
         height: loading || !result ? "auto" : undefined,
       }}
       actions={
-        <>
-          {noteSaved && (
-            <span className="run-comps-saved">
-              <Check size={14} /> {noteSavedLabel}
-            </span>
-          )}
-          {onApply && result && (result.arvEstimate || p.sqft) && (
-            <button
-              type="button"
-              className="secondary-btn"
-              disabled={applied}
-              onClick={() => {
-                onApply({
-                  arv: result.arvEstimate,
-                  squareFootage: p.sqft,
-                  lotSqft: p.lotSqft,
-                });
-                setApplied(true);
-              }}
-            >
-              {applied ? "Filled in — Save Changes to keep" : applyLabel}
-            </button>
-          )}
-          <button type="button" className="primary-btn" onClick={onClose}>
-            Close
-          </button>
-        </>
+        <ModalActions
+          start={
+            noteSaved && (
+              <span className="run-comps-saved">
+                <Check size={14} /> {noteSavedLabel}
+              </span>
+            )
+          }
+          end={
+            <>
+              {onApply && result && (result.arvEstimate || p.sqft) && (
+                <ActionButton
+                  label={
+                    applied ? "Filled in — Save Changes to keep" : applyLabel
+                  }
+                  disabled={applied}
+                  onClick={() => {
+                    onApply({
+                      arv: result.arvEstimate,
+                      squareFootage: p.sqft,
+                      lotSqft: p.lotSqft,
+                    });
+                    setApplied(true);
+                  }}
+                />
+              )}
+              <ActionButton label="Close" tone="primary" onClick={onClose} />
+            </>
+          }
+        />
       }
     >
       <div className="run-comps-body">

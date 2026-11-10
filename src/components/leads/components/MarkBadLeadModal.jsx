@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ThumbsDown } from "lucide-react";
+import { ActionButton } from "../../elements/ModalActions";
 
 // Confirms marking a PPC/PPL lead as bad, with an optional reason. Starts
 // from the lead's previous reason if it had one.
@@ -28,18 +29,15 @@ export default function MarkBadLeadModal({ lead, onConfirm, onClose }) {
           autoFocus
         />
         <div className="ppc-bad-popup-actions">
-          <button className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="danger-btn ppc-bad-confirm-btn"
+          <ActionButton label="Cancel" onClick={onClose} />
+          <ActionButton
+            label="Confirm Bad Lead"
+            tone="danger"
             onClick={() => {
               onConfirm(reason);
               onClose();
             }}
-          >
-            Confirm Bad Lead
-          </button>
+          />
         </div>
       </div>
     </div>

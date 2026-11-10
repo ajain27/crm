@@ -76,17 +76,8 @@
     border-color: var(--text);
   }
 
-  .modal-actions,
-  .profile-modal-actions {
+  .modal-actions {
     @apply flex justify-end gap-3;
-  }
-
-  .profile-modal-actions {
-    @apply w-full;
-  }
-
-  .profile-modal-btn {
-    @apply min-h-12 min-w-[160px];
   }
 
   /* Mail Merge Modal */
@@ -451,14 +442,6 @@
   }
 
   @media (max-width: 600px) {
-    .profile-modal-actions {
-      @apply flex-col;
-    }
-
-    .profile-modal-btn {
-      @apply w-full;
-    }
-
     .mail-merge-grid {
       grid-template-columns: 1fr;
     }

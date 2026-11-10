@@ -3,6 +3,7 @@ import Modal from "../../modal/Modal";
 import { Field } from "../../elements/elements";
 import { formatPhone } from "../../../utils/utils";
 import { STATE_OPTIONS } from "../../../constants/stateOptions";
+import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
 const toTypes = (value) =>
   Array.isArray(value) ? value : value ? [value] : [];
@@ -67,18 +68,19 @@ function BuyerDetailModal({ buyer, onClose, onSave, propertyTypes = [] }) {
       className="buyer-detail-modal"
       style={{ maxWidth: "640px" }}
       actions={
-        <div className="buyer-form-actions">
-          <button className="secondary-btn form-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="primary-btn form-btn"
-            onClick={handleSave}
-            disabled={!isComplete || saving}
-          >
-            {saving ? "Saving…" : "Save Changes"}
-          </button>
-        </div>
+        <ModalActions
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label={saving ? "Saving…" : "Save Changes"}
+                tone="primary"
+                onClick={handleSave}
+                disabled={!isComplete || saving}
+              />
+            </>
+          }
+        />
       }
     >
       <form

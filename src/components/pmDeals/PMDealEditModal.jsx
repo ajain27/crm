@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Eye, Upload, Loader2, Pencil, Check } from "lucide-react";
+import { Check, Eye, Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import Modal from "../modal/Modal";
 import { fmt, formatDate } from "../../utils/utils";
 import "./PMDealsTable.css";
 import CurrencyInput from "../elements/CurrencyInput";
+import ModalActions, { ActionButton } from "../elements/ModalActions";
 
 function ReadOnlyField({ label, value }) {
   return (
@@ -52,21 +53,27 @@ export default function PMDealEditModal({
       className="pm-deal-edit-modal"
       style={{ maxWidth: 760, width: "min(760px, 96vw)" }}
       actions={
-        <>
-          <button className="danger-btn pm-delete-deal-btn" onClick={onDelete}>
-            Delete Deal
-          </button>
-          <button className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="primary-btn"
-            onClick={onSave}
-            disabled={editSaving}
-          >
-            {editSaving ? "Saving…" : "Save Changes"}
-          </button>
-        </>
+        <ModalActions
+          start={
+            <ActionButton
+              icon={Trash2}
+              label="Delete Deal"
+              tone="danger"
+              onClick={onDelete}
+            />
+          }
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label={editSaving ? "Saving…" : "Save Changes"}
+                tone="primary"
+                onClick={onSave}
+                disabled={editSaving}
+              />
+            </>
+          }
+        />
       }
     >
       {editForm && (

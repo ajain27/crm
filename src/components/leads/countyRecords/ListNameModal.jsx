@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Modal from "../../modal/Modal";
+import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
 const MAX_NAME_LENGTH = 60;
 
@@ -45,24 +46,23 @@ export default function ListNameModal({
         height: "auto",
       }}
       actions={
-        <>
-          <button
-            type="button"
-            className="secondary-btn"
-            onClick={onClose}
-            disabled={saving}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={handleSubmit}
-            disabled={!!error || saving}
-          >
-            {saving ? "Saving…" : submitLabel}
-          </button>
-        </>
+        <ModalActions
+          end={
+            <>
+              <ActionButton
+                label="Cancel"
+                onClick={onClose}
+                disabled={saving}
+              />
+              <ActionButton
+                label={saving ? "Saving…" : submitLabel}
+                tone="primary"
+                onClick={handleSubmit}
+                disabled={!!error || saving}
+              />
+            </>
+          }
+        />
       }
     >
       <form className="county-list-name-form" onSubmit={handleSubmit}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  ChartColumn,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -23,6 +24,7 @@ import {
   money,
   pricePerSqft,
 } from "./marketDeals";
+import { ActionButton } from "../elements/ModalActions";
 
 // "248-765-9901" → "tel:+12487659901".
 function telHref(phone) {
@@ -116,18 +118,27 @@ function Contacts({ contacts, message }) {
           <div className="omd-contact-actions">
             {c.phone && (
               <>
-                <a className="secondary-btn" href={telHref(c.phone)}>
+                <a
+                  className="action-btn action-btn--default"
+                  href={telHref(c.phone)}
+                >
                   <Phone size={14} />
                   Call
                 </a>
-                <a className="secondary-btn" href={smsHref(c.phone, message)}>
+                <a
+                  className="action-btn action-btn--default"
+                  href={smsHref(c.phone, message)}
+                >
                   <MessageSquare size={14} />
                   Text
                 </a>
               </>
             )}
             {c.email && (
-              <a className="secondary-btn" href={`mailto:${c.email}`}>
+              <a
+                className="action-btn action-btn--default"
+                href={`mailto:${c.email}`}
+              >
                 <Mail size={14} />
                 Email
               </a>
@@ -241,9 +252,7 @@ function CompsSection({ listing: l, compsState }) {
     body = (
       <div className="omd-details-error">
         <span>{error}</span>
-        <button type="button" className="secondary-btn" onClick={run}>
-          Try again
-        </button>
+        <ActionButton label="Try again" onClick={run} />
       </div>
     );
   } else {
@@ -253,9 +262,12 @@ function CompsSection({ listing: l, compsState }) {
           Run comps to see this home's after repair value and the comparable
           sales nearby.
         </span>
-        <button type="button" className="primary-btn" onClick={run}>
-          Run comps
-        </button>
+        <ActionButton
+          icon={ChartColumn}
+          label="Run comps"
+          tone="primary"
+          onClick={run}
+        />
       </div>
     );
   }
@@ -422,9 +434,7 @@ export default function ListingDetailsModal({
             ) : (
               <div className="omd-details-error">
                 <span>{error || "Couldn't load the contacts."}</span>
-                <button type="button" className="secondary-btn" onClick={retry}>
-                  Try again
-                </button>
+                <ActionButton label="Try again" onClick={retry} />
               </div>
             )}
           </section>

@@ -544,4 +544,17 @@ describe("LeadDetailModal PPC seller name", () => {
       screen.getByRole("tab", { name: "Price History" }),
     ).toBeInTheDocument();
   });
+
+  it("analyzes any lead, a potential rental too", () => {
+    render(
+      <LeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ ...lead, dealType: "Potential Rental", arv: "$300,000" }}
+        onSave={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+    expect(screen.getByLabelText("ARV")).toHaveValue("$300,000");
+  });
 });

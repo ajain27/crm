@@ -10,6 +10,7 @@ import {
 import Modal from "../../modal/Modal";
 import { useAddressAutocomplete } from "../../../hooks/useAddressAutocomplete";
 import CurrencyInput from "../../elements/CurrencyInput";
+import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
 async function sendViaBrevo({
   apiKey,
@@ -292,35 +293,35 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
       style={{ maxWidth: "700px" }}
       closeOnOverlayClick={false}
       actions={
-        <div className="profile-modal-actions">
-          <button
-            className="secondary-btn profile-modal-btn"
-            onClick={handleClose}
-            disabled={sendStatus === "sending"}
-          >
-            {sendStatus === "done" ? "Close" : "Cancel"}
-          </button>
-          {sendStatus !== "done" && (
-            <button
-              className="primary-btn profile-modal-btn"
-              onClick={handleSend}
-              disabled={!isReady}
-            >
-              {sendStatus === "sending" ? (
-                <>
-                  <Loader size={15} className="spin-icon" />
-                  Sending {sendProgress.sent}/{sendProgress.total}...
-                </>
-              ) : (
-                <>
-                  <Send size={15} />
-                  Send to {recipients.length} Buyer
-                  {recipients.length !== 1 ? "s" : ""}
-                </>
+        <ModalActions
+          end={
+            <>
+              <ActionButton
+                label={sendStatus === "done" ? "Close" : "Cancel"}
+                onClick={handleClose}
+                disabled={sendStatus === "sending"}
+              />
+              {sendStatus !== "done" && (
+                <ActionButton
+                  tone="primary"
+                  onClick={handleSend}
+                  disabled={!isReady}
+                  icon={sendStatus === "sending" ? undefined : Send}
+                  label={
+                    sendStatus === "sending" ? (
+                      <>
+                        <Loader size={14} className="spin-icon" />
+                        Sending {sendProgress.sent}/{sendProgress.total}...
+                      </>
+                    ) : (
+                      `Send to ${recipients.length} Buyer${recipients.length !== 1 ? "s" : ""}`
+                    )
+                  }
+                />
               )}
-            </button>
-          )}
-        </div>
+            </>
+          }
+        />
       }
     >
       <div className="mail-merge-modal">

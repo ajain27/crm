@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Pencil, Check } from "lucide-react";
+import { Check, Pencil, Trash2 } from "lucide-react";
 import Modal from "../modal/Modal";
 import { Field } from "../elements/elements";
 import { STATE_OPTIONS } from "../../constants/stateOptions";
 import { currency, displayPhone } from "../../utils/utils";
 import TenantFormSection from "./TenantFormSection";
+import ModalActions, { ActionButton } from "../elements/ModalActions";
 
 function formatAddress(form) {
   if (!form) return "";
@@ -167,28 +168,31 @@ export default function RentalEditModal({
       className="rental-edit-modal"
       style={{ maxWidth: 900, width: "min(900px, 96vw)" }}
       actions={
-        <>
-          <button
-            className="danger-btn rm-delete-property-btn"
-            onClick={onDelete}
-          >
-            Delete Property
-          </button>
-          <button className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="primary-btn"
-            onClick={onSave}
-            disabled={
-              editSaving ||
-              !editForm?.address?.trim() ||
-              !editForm?.state?.trim()
-            }
-          >
-            {editSaving ? "Saving…" : "Save Changes"}
-          </button>
-        </>
+        <ModalActions
+          start={
+            <ActionButton
+              icon={Trash2}
+              label="Delete Property"
+              tone="danger"
+              onClick={onDelete}
+            />
+          }
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label={editSaving ? "Saving…" : "Save Changes"}
+                tone="primary"
+                onClick={onSave}
+                disabled={
+                  editSaving ||
+                  !editForm?.address?.trim() ||
+                  !editForm?.state?.trim()
+                }
+              />
+            </>
+          }
+        />
       }
     >
       {editForm && (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Plus, Save, Trash2 } from "lucide-react";
+import { ChartColumn, Check, Plus, Save, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import { countyRecordFields, isAmountDueColumn } from "./countyRecordDeal";
 import { ZillowLink } from "../components/LeadTableCells";
@@ -10,8 +10,8 @@ import {
   LeadCompsTab,
   LeadCompsTabBar,
   LeadRunCompsModal,
-  RunCompsButton,
 } from "../comps/LeadCompsTabs";
+import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
 const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone/i;
 const LONG_TEXT_COLUMN =
@@ -198,60 +198,62 @@ export default function CountyRecordModal({
           maxHeight: "92vh",
         }}
         actions={
-          <>
-            {onDelete && (
-              <button
-                type="button"
-                className="danger-btn county-record-delete"
-                onClick={onDelete}
-                disabled={busy}
-              >
-                <Trash2 size={14} />
-                Delete record
-              </button>
-            )}
-            {error && <span className="county-record-error">{error}</span>}
-            {!address && !alreadyInCrm && (
-              <span className="county-record-hint">
-                No property address column found, so this can't be added.
-              </span>
-            )}
-            <button type="button" className="secondary-btn" onClick={onClose}>
-              Close
-            </button>
-            {compsState.enabled && (
-              <RunCompsButton
-                compsState={compsState}
-                address={address}
-                disabled={busy}
-              />
-            )}
-            {alreadyInCrm ? (
-              <button type="button" className="secondary-btn" disabled>
-                <Check size={14} />
-                {added ? "Added to CRM" : "Already in CRM"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={handleAdd}
-                disabled={busy || !address}
-              >
-                <Plus size={14} />
-                {adding ? "Adding…" : "Add to CRM"}
-              </button>
-            )}
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={handleSave}
-              disabled={busy || !dirty}
-            >
-              <Save size={14} />
-              {saving ? "Saving…" : "Save changes"}
-            </button>
-          </>
+          <ModalActions
+            start={
+              <>
+                {onDelete && (
+                  <ActionButton
+                    icon={Trash2}
+                    label="Delete record"
+                    tone="danger"
+                    onClick={onDelete}
+                    disabled={busy}
+                  />
+                )}
+                {error && <span className="county-record-error">{error}</span>}
+                {!address && !alreadyInCrm && (
+                  <span className="county-record-hint">
+                    No property address column found, so this can't be added.
+                  </span>
+                )}
+                {compsState.enabled && (
+                  <ActionButton
+                    icon={ChartColumn}
+                    label="Run comps"
+                    onClick={compsState.openRun}
+                    disabled={busy || !String(address || "").trim()}
+                    title="Pull comps from Zillow, Redfin and Realtor.com"
+                  />
+                )}
+                {alreadyInCrm ? (
+                  <ActionButton
+                    icon={Check}
+                    label={added ? "Added to CRM" : "Already in CRM"}
+                    disabled
+                  />
+                ) : (
+                  <ActionButton
+                    icon={Plus}
+                    label={adding ? "Adding…" : "Add to CRM"}
+                    onClick={handleAdd}
+                    disabled={busy || !address}
+                  />
+                )}
+              </>
+            }
+            end={
+              <>
+                <ActionButton label="Close" onClick={onClose} />
+                <ActionButton
+                  icon={Save}
+                  label={saving ? "Saving…" : "Save changes"}
+                  tone="primary"
+                  onClick={handleSave}
+                  disabled={busy || !dirty}
+                />
+              </>
+            }
+          />
         }
       >
         <div className="ldm-body">

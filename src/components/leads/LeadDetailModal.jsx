@@ -217,15 +217,13 @@ export default function LeadDetailModal({
                     title="Add another property this seller owns, with their details filled in"
                   />
                 )}
-                {!isRental && (
-                  <ActionButton
-                    icon={Calculator}
-                    label="Analyze"
-                    onClick={() => setAnalyzeOpen(true)}
-                    disabled={saving}
-                    title="Wholesale and novation numbers from the ARV"
-                  />
-                )}
+                <ActionButton
+                  icon={Calculator}
+                  label="Analyze"
+                  onClick={() => setAnalyzeOpen(true)}
+                  disabled={saving}
+                  title="Wholesale and novation numbers from the ARV"
+                />
                 {canRunComps && (
                   <ActionButton
                     icon={ChartColumn}

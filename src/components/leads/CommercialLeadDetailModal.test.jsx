@@ -210,4 +210,19 @@ describe("CommercialLeadDetailModal history", () => {
       "500 Commerce St, Dallas, TX 75201",
     );
   });
+
+  it("analyzes a commercial lead's wholesale and novation numbers", () => {
+    render(
+      <CommercialLeadDetailModal
+        isOpen
+        onClose={vi.fn()}
+        lead={{ id: "c1", address: "9 Market St, Dallas, TX 75201" }}
+        onSave={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+    expect(
+      screen.getByText("How much work does the property need?"),
+    ).toBeInTheDocument();
+  });
 });

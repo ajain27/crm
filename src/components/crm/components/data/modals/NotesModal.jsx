@@ -1,4 +1,5 @@
 import Modal from "../../../../modal/Modal";
+import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
 function NotesModal({
   isOpen,
@@ -15,14 +16,18 @@ function NotesModal({
       title={`Notes for ${selectedDeal?.address}`}
       style={{ maxWidth: "500px" }}
       actions={
-        <>
-          <button className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="primary-btn" onClick={saveNotes}>
-            Save Notes
-          </button>
-        </>
+        <ModalActions
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label="Save Notes"
+                tone="primary"
+                onClick={saveNotes}
+              />
+            </>
+          }
+        />
       }
     >
       <textarea

@@ -403,16 +403,6 @@
     opacity: 0.8;
   }
 
-  /* Override danger-btn's fixed 38x38 icon-button sizing so it can carry
-     a text label, and pin it to the opposite end from Cancel/Save. */
-  .rm-delete-property-btn {
-    width: auto;
-    height: auto;
-    padding: 0.6rem 1.1rem;
-    font-weight: 600;
-    margin-right: auto;
-  }
-
   .rm-muted {
     color: var(--muted);
   }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Modal from "../../../../modal/Modal";
 import { DEFAULT_OFFER_OPTIONS } from "./WholesaleOfferPdfTemplate";
 import CurrencyInput from "../../../../elements/CurrencyInput";
+import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
 const MAX_INSPECTION_DAYS = 365;
 
@@ -68,19 +69,19 @@ export default function OfferOptionsModal({
         height: "auto",
       }}
       actions={
-        <>
-          <button type="button" className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={handleSubmit}
-            disabled={!!emdError || !!daysError}
-          >
-            Generate
-          </button>
-        </>
+        <ModalActions
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label="Generate"
+                tone="primary"
+                onClick={handleSubmit}
+                disabled={!!emdError || !!daysError}
+              />
+            </>
+          }
+        />
       }
     >
       <form className="offer-options-body" onSubmit={handleSubmit}>

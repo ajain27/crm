@@ -1,5 +1,6 @@
 import Modal from "../../modal/Modal";
 import { trimFieldOnBlur } from "../../../utils/utils";
+import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
 function ProfileModal({
   currentUser,
@@ -17,14 +18,18 @@ function ProfileModal({
       title="Edit Profile"
       style={{ maxWidth: "500px" }}
       actions={
-        <div className="profile-modal-actions">
-          <button className="secondary-btn profile-modal-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="primary-btn profile-modal-btn" onClick={onSave}>
-            Save Profile
-          </button>
-        </div>
+        <ModalActions
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label="Save Profile"
+                tone="primary"
+                onClick={onSave}
+              />
+            </>
+          }
+        />
       }
     >
       <div className="auth-form">

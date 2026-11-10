@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal from "../../../../modal/Modal";
+import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
 // Asks whether the buyer gets an inspection period before the Assignment
 // of Contract is generated. Opens with the last choice made.
@@ -31,18 +32,18 @@ export default function AssignmentOptionsModal({
         height: "auto",
       }}
       actions={
-        <>
-          <button type="button" className="secondary-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={() => onGenerate({ inspectionPeriod })}
-          >
-            Generate
-          </button>
-        </>
+        <ModalActions
+          end={
+            <>
+              <ActionButton label="Cancel" onClick={onClose} />
+              <ActionButton
+                label="Generate"
+                tone="primary"
+                onClick={() => onGenerate({ inspectionPeriod })}
+              />
+            </>
+          }
+        />
       }
     >
       <div className="offer-options-body">

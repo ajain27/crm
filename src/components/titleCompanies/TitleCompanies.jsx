@@ -11,6 +11,7 @@ import AccordionTable from "../elements/AccordionTable";
 import { PAGE_SIZE } from "../pagination/usePagination";
 import PageHero from "../elements/PageHero";
 import { PAGE_HEROES } from "../crm/components/pageHeroes";
+import ModalActions, { ActionButton } from "../elements/ModalActions";
 
 function createEmptyForm() {
   return {
@@ -654,23 +655,24 @@ export default function TitleCompanies({
         title={editingCompany?.name || "Edit Title Company"}
         style={{ maxWidth: 640, height: "auto", minHeight: 320 }}
         actions={
-          <>
-            <button className="secondary-btn" onClick={closeEdit}>
-              Cancel
-            </button>
-            <button
-              className="primary-btn"
-              onClick={handleEditSave}
-              disabled={
-                editSaving ||
-                !editForm?.name?.trim() ||
-                !editForm?.state?.trim() ||
-                !!editNameError
-              }
-            >
-              {editSaving ? "Saving…" : "Save Changes"}
-            </button>
-          </>
+          <ModalActions
+            end={
+              <>
+                <ActionButton label="Cancel" onClick={closeEdit} />
+                <ActionButton
+                  label={editSaving ? "Saving…" : "Save Changes"}
+                  tone="primary"
+                  onClick={handleEditSave}
+                  disabled={
+                    editSaving ||
+                    !editForm?.name?.trim() ||
+                    !editForm?.state?.trim() ||
+                    !!editNameError
+                  }
+                />
+              </>
+            }
+          />
         }
       >
         {editForm && (
