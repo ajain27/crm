@@ -116,17 +116,10 @@ const analyzerTabs = [
   },
 ];
 
-// `tabIds` picks the tabs shown, in that order (the first opens first);
-// `prefill` gives tabs their starting inputs by tab id — see
-// prefillFromDeal.
-function DealAnalyzer({ tabIds, prefill = {} }) {
-  const tabs = tabIds
-    ? tabIds
-        .map((id) => analyzerTabs.find((tab) => tab.id === id))
-        .filter(Boolean)
-    : analyzerTabs;
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const currentTab = tabs.find((tab) => tab.id === activeTab) || tabs[0];
+function DealAnalyzer() {
+  const [activeTab, setActiveTab] = useState("find-comps");
+  const currentTab =
+    analyzerTabs.find((tab) => tab.id === activeTab) || analyzerTabs[0];
 
   return (
     <>
@@ -140,7 +133,7 @@ function DealAnalyzer({ tabIds, prefill = {} }) {
           role="tablist"
           aria-label="Deal types"
         >
-          {tabs.map((tab) => (
+          {analyzerTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -155,17 +148,11 @@ function DealAnalyzer({ tabIds, prefill = {} }) {
         </div>
 
         <div className="deal-analyzer-content">
-          {activeTab === "wholesale" && (
-            <WholesaleTab tab={currentTab} prefill={prefill.wholesale} />
-          )}
+          {activeTab === "wholesale" && <WholesaleTab tab={currentTab} />}
           {activeTab === "subto" && <SubToTab tab={currentTab} />}
-          {activeTab === "fix-flip" && (
-            <FixAndFlipTab tab={currentTab} prefill={prefill["fix-flip"]} />
-          )}
+          {activeTab === "fix-flip" && <FixAndFlipTab tab={currentTab} />}
           {activeTab === "multi-family" && <MultiFamilyTab tab={currentTab} />}
-          {activeTab === "novation" && (
-            <NovationTab tab={currentTab} prefill={prefill.novation} />
-          )}
+          {activeTab === "novation" && <NovationTab tab={currentTab} />}
           {activeTab === "rental" && <RentalTab tab={currentTab} />}
           {activeTab === "find-comps" && <FindCompsTab tab={currentTab} />}
           {activeTab === "seller-finance" && (

@@ -19,9 +19,8 @@ import {
   fmtCurrencyInput,
 } from "./fixAndFlipConfig";
 
-// `prefill`: inputs to start with (a CRM deal's numbers).
-function FixAndFlipTab({ tab, prefill }) {
-  const [form, setForm] = useState(() => ({ ...initialForm, ...prefill }));
+function FixAndFlipTab({ tab }) {
+  const [form, setForm] = useState(initialForm);
   const [summary, setSummary] = useState(null);
 
   function handleChange(event) {

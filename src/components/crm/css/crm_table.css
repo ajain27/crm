@@ -803,29 +803,9 @@
     border-color: var(--text);
   }
 
-  /* Give Delete/Cancel/Save the same shape (size, padding, radius) and
-     differentiate them by color only: dark-navy fill for Save (same tone
-     as the active tab pill, kept constant across themes so it never
-     flips to a near-white fill in dark mode), neutral outline for Cancel,
-     red-tinted outline for the destructive Delete action. */
   /* Space between the last section (Notes) and the buttons. */
   .deal-detail-modal .modal-actions {
     margin-top: 1.25rem;
-  }
-
-  .deal-detail-modal .modal-actions > button,
-  .deal-detail-modal .modal-actions > .menu-button > button {
-    height: auto;
-    width: auto;
-    padding: 0.75rem 1.25rem;
-    font-weight: 600;
-    border-radius: 0.6rem;
-  }
-
-  .deal-detail-modal .modal-actions .secondary-btn {
-    border: 1px solid var(--line);
-    background: var(--panel);
-    color: var(--text);
   }
 
   /* ── Run comps ───────────────────────────────────────────── */
@@ -1065,10 +1045,6 @@
     outline-offset: 2px;
   }
 
-  .deal-detail-modal .modal-actions .ddm-delete-btn {
-    margin-right: auto;
-  }
-
   .clickable-row {
     cursor: pointer;
   }
@@ -1154,48 +1130,6 @@
       @apply px-3;
     }
   }
-}
-
-/* Solid green Generate Offer button in the deal modal, so it reads as its
-   own action next to Cancel and Save. Unlayered on purpose: gloss.css's
-   unlayered dark-mode .secondary-btn background would otherwise win. */
-.deal-detail-modal .modal-actions .secondary-btn.ddm-offer-btn {
-  background: var(--green);
-  color: #ffffff;
-}
-
-.deal-detail-modal .modal-actions .secondary-btn.ddm-offer-btn:hover {
-  background: color-mix(in srgb, var(--green) 88%, #000000 12%);
-}
-
-/* Light mode: the plain footer buttons (Cancel, Run comps, Make Active)
-   would otherwise be white on the white footer with no edge — base.css
-   makes every .secondary-btn border transparent with !important — so the
-   border is drawn with an inset shadow instead. */
-:root:not(.dark)
-  .deal-detail-modal
-  .modal-actions
-  .secondary-btn:not(.ddm-offer-btn) {
-  background: #f1f5f9;
-  color: #1e293b;
-  box-shadow:
-    inset 0 0 0 1px #cbd5e1,
-    0 1px 2px rgba(15, 23, 42, 0.06);
-  transition:
-    background 0.15s,
-    box-shadow 0.15s,
-    color 0.15s;
-}
-
-:root:not(.dark)
-  .deal-detail-modal
-  .modal-actions
-  .secondary-btn:not(.ddm-offer-btn):hover:not(:disabled) {
-  background: var(--blue-light);
-  color: var(--blue);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--blue) 45%, transparent),
-    0 2px 6px rgba(23, 105, 232, 0.12);
 }
 
 /* Small "Create …" links beside a field's label, styled like the Zillow

@@ -1,5 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Upload, Loader2, Trash2, FileText, Plus, X } from "lucide-react";
+import {
+  Archive,
+  ArrowLeftRight,
+  Calculator,
+  ChartColumn,
+  FileText,
+  HousePlus,
+  Loader2,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
@@ -28,8 +41,8 @@ import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import AssignmentOptionsModal from "./AssignmentOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
-import DealAnalyzer from "../../../../dealAnalyzer/components/DealAnalyzer";
-import { prefillFromDeal } from "../../../../dealAnalyzer/components/dealPrefill";
+import DealAnalysisModal from "../../../../dealAnalyzer/components/quickAnalysis/DealAnalysisModal";
+import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 import CompsNoteView from "../comps/CompsNoteView";
 import { withCompsNote } from "../comps/compsNote";
 import { hasFormattedNotes } from "../comps/notesTable";
@@ -617,102 +630,108 @@ function DealDetailModal({
         className="deal-detail-modal"
         style={{ width: "min(1240px, 96vw)", maxWidth: "min(1240px, 96vw)" }}
         actions={
-          <>
-            {deleteDeal && (
-              <button
-                className="danger-btn ddm-delete-btn"
-                onClick={handleDelete}
-                disabled={saving}
-              >
-                Delete
-              </button>
-            )}
-            {moveDealToLeads && (
-              <MenuButton
-                label="Move to Leads"
-                placement="top"
-                disabled={saving}
-                title="Take this deal off the CRM and put it in a Leads tab"
-                items={LEAD_TAB_IDS.map((tab) => ({
-                  id: tab,
-                  label: leadTabLabel(tab),
-                  hint: tab === dealLeadTab(deal) ? "Came from" : undefined,
-                }))}
-                onSelect={handleMoveToLeads}
-              />
-            )}
-            {onAddPropertyForSeller && !isRental && hasSeller && (
-              <button
-                className="secondary-btn"
-                onClick={handleAddPropertyForSeller}
-                disabled={saving}
-                title="Add another property this seller owns, with their details filled in"
-              >
-                Add Property for Seller
-              </button>
-            )}
-            <button
-              className="secondary-btn"
-              onClick={onClose}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            {!isRental && (
-              <button
-                className="secondary-btn"
-                onClick={() => setAnalyzeOpen(true)}
-                disabled={saving}
-                title="Check the wholesale, novation and fix-and-flip numbers"
-              >
-                Analyze
-              </button>
-            )}
-            {!isRental && (
-              <button
-                className="secondary-btn"
-                onClick={compsState.openRun}
-                disabled={saving || !formatFullAddress(draft)}
-                title="Pull comps from Zillow, Redfin and Realtor.com"
-              >
-                Run comps
-              </button>
-            )}
-            {!isRental && (
-              <button
-                className="secondary-btn ddm-offer-btn"
-                onClick={() => setOfferOptionsOpen(true)}
-                disabled={saving || exportingOffer}
-              >
-                {exportingOffer ? "Generating…" : "Generate Offer"}
-              </button>
-            )}
-            {onMakeInactive && (
-              <button
-                className="secondary-btn"
-                onClick={onMakeInactive}
-                disabled={saving}
-              >
-                Make Inactive
-              </button>
-            )}
-            {onReactivate && (
-              <button
-                className="secondary-btn"
-                onClick={onReactivate}
-                disabled={saving}
-              >
-                Make Active
-              </button>
-            )}
-            <button
-              className="primary-btn"
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-            >
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </>
+          <ModalActions
+            start={
+              <>
+                {deleteDeal && (
+                  <ActionButton
+                    icon={Trash2}
+                    label="Delete"
+                    tone="danger"
+                    onClick={handleDelete}
+                    disabled={saving}
+                  />
+                )}
+                {moveDealToLeads && (
+                  <MenuButton
+                    className="action-btn action-btn--default"
+                    label={
+                      <>
+                        <ArrowLeftRight size={14} aria-hidden="true" />
+                        Move to Leads
+                      </>
+                    }
+                    placement="top"
+                    disabled={saving}
+                    title="Take this deal off the CRM and put it in a Leads tab"
+                    items={LEAD_TAB_IDS.map((tab) => ({
+                      id: tab,
+                      label: leadTabLabel(tab),
+                      hint: tab === dealLeadTab(deal) ? "Came from" : undefined,
+                    }))}
+                    onSelect={handleMoveToLeads}
+                  />
+                )}
+                {onAddPropertyForSeller && !isRental && hasSeller && (
+                  <ActionButton
+                    icon={HousePlus}
+                    label="Add Property"
+                    onClick={handleAddPropertyForSeller}
+                    disabled={saving}
+                    title="Add another property this seller owns, with their details filled in"
+                  />
+                )}
+                {!isRental && (
+                  <ActionButton
+                    icon={Calculator}
+                    label="Analyze"
+                    onClick={() => setAnalyzeOpen(true)}
+                    disabled={saving}
+                    title="Wholesale and novation numbers from the ARV"
+                  />
+                )}
+                {!isRental && (
+                  <ActionButton
+                    icon={ChartColumn}
+                    label="Run comps"
+                    onClick={compsState.openRun}
+                    disabled={saving || !formatFullAddress(draft)}
+                    title="Pull comps from Zillow, Redfin and Realtor.com"
+                  />
+                )}
+                {!isRental && (
+                  <ActionButton
+                    icon={FileText}
+                    label={exportingOffer ? "Generating…" : "Generate Offer"}
+                    tone="accent"
+                    onClick={() => setOfferOptionsOpen(true)}
+                    disabled={saving || exportingOffer}
+                  />
+                )}
+                {onMakeInactive && (
+                  <ActionButton
+                    icon={Archive}
+                    label="Make Inactive"
+                    onClick={onMakeInactive}
+                    disabled={saving}
+                  />
+                )}
+                {onReactivate && (
+                  <ActionButton
+                    icon={RotateCcw}
+                    label="Make Active"
+                    onClick={onReactivate}
+                    disabled={saving}
+                  />
+                )}
+              </>
+            }
+            end={
+              <>
+                <ActionButton
+                  label="Cancel"
+                  onClick={onClose}
+                  disabled={saving}
+                />
+                <ActionButton
+                  label={saving ? "Saving…" : "Save Changes"}
+                  tone="primary"
+                  onClick={handleSave}
+                  disabled={saving || !hasChanges}
+                />
+              </>
+            }
+          />
         }
       >
         <div className="ddm-body">
@@ -1556,18 +1575,12 @@ function DealDetailModal({
         sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
       />
       {analyzeOpen && (
-        <Modal
+        <DealAnalysisModal
           isOpen
           onClose={() => setAnalyzeOpen(false)}
-          title="Analyze Deal"
-          className="deal-analyze-modal"
-          style={{ width: "min(1100px, 96vw)", maxWidth: "min(1100px, 96vw)" }}
-        >
-          <DealAnalyzer
-            tabIds={["wholesale", "novation", "fix-flip"]}
-            prefill={prefillFromDeal(draft, formatFullAddress(draft))}
-          />
-        </Modal>
+          item={draft}
+          address={formatFullAddress(draft)}
+        />
       )}
       {compsState.runOpen && (
         <RunCompsModal

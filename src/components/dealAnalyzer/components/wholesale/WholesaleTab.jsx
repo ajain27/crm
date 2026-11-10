@@ -30,9 +30,8 @@ const initialForm = {
   buyersProfit: "",
 };
 
-// `prefill`: inputs to start with (a CRM deal's numbers).
-function WholesaleTab({ tab, prefill }) {
-  const [form, setForm] = useState(() => ({ ...initialForm, ...prefill }));
+function WholesaleTab({ tab }) {
+  const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
   const {
     printRef,

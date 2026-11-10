@@ -25,13 +25,15 @@ import {
   LeadCompsTab,
   LeadCompsTabBar,
   LeadRunCompsModal,
-  RunCompsButton,
 } from "./comps/LeadCompsTabs";
 import { LEAD_SOURCES } from "./leadsConfig";
 import SellerDetailsFields, {
   OptionSelect,
 } from "./components/SellerDetailsFields";
 import CurrencyInput from "../elements/CurrencyInput";
+import ModalActions, { ActionButton } from "../elements/ModalActions";
+import DealAnalysisModal from "../dealAnalyzer/components/quickAnalysis/DealAnalysisModal";
+import { Calculator, ChartColumn, HousePlus } from "lucide-react";
 
 function Field({ label, action, children }) {
   return (
@@ -56,8 +58,11 @@ export default function LeadDetailModal({
   onPhotosChange,
   currentUserId,
   onHistoryLoaded,
+  onAddPropertyForSeller,
 }) {
   const [draft, setDraft] = useState({});
+  // The Analyze window: wholesale and novation numbers from the ARV.
+  const [analyzeOpen, setAnalyzeOpen] = useState(false);
   const photosState = useLeadPhotos({
     lead,
     draft,
@@ -124,6 +129,17 @@ export default function LeadDetailModal({
   // PPC leads and rentals not on the market ask for the seller's first and
   // last name in the Property section (others have a Seller section).
   const hasNameFields = isPpc || (isRental && draft.onMarket !== "Yes");
+  const hasSeller = Boolean(
+    joinName(draft.firstName, draft.lastName) || draft.phone || draft.email,
+  );
+
+  function handleAddPropertyForSeller() {
+    onAddPropertyForSeller({
+      ...draft,
+      sellerName: joinName(draft.firstName, draft.lastName) || draft.sellerName,
+    });
+    onClose();
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -189,29 +205,54 @@ export default function LeadDetailModal({
             : { width: "min(600px, 95vw)", maxWidth: "min(600px, 95vw)" }
         }
         actions={
-          <>
-            <button
-              className="secondary-btn"
-              onClick={onClose}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            {canRunComps && (
-              <RunCompsButton
-                compsState={compsState}
-                address={draft.address}
-                disabled={saving}
-              />
-            )}
-            <button
-              className="primary-btn"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </>
+          <ModalActions
+            start={
+              <>
+                {onAddPropertyForSeller && !isRental && hasSeller && (
+                  <ActionButton
+                    icon={HousePlus}
+                    label="Add Property"
+                    onClick={handleAddPropertyForSeller}
+                    disabled={saving}
+                    title="Add another property this seller owns, with their details filled in"
+                  />
+                )}
+                {!isRental && (
+                  <ActionButton
+                    icon={Calculator}
+                    label="Analyze"
+                    onClick={() => setAnalyzeOpen(true)}
+                    disabled={saving}
+                    title="Wholesale and novation numbers from the ARV"
+                  />
+                )}
+                {canRunComps && (
+                  <ActionButton
+                    icon={ChartColumn}
+                    label="Run comps"
+                    onClick={compsState.openRun}
+                    disabled={saving || !String(draft.address || "").trim()}
+                    title="Pull comps from Zillow, Redfin and Realtor.com"
+                  />
+                )}
+              </>
+            }
+            end={
+              <>
+                <ActionButton
+                  label="Cancel"
+                  onClick={onClose}
+                  disabled={saving}
+                />
+                <ActionButton
+                  label={saving ? "Saving…" : "Save Changes"}
+                  tone="primary"
+                  onClick={handleSave}
+                  disabled={saving}
+                />
+              </>
+            }
+          />
         }
       >
         <div className="ldm-body">
@@ -593,6 +634,14 @@ export default function LeadDetailModal({
         // PPC leads have no ARV field to fill.
         onApplyArv={isPpc ? undefined : handleApplyArv}
       />
+      {analyzeOpen && (
+        <DealAnalysisModal
+          isOpen
+          onClose={() => setAnalyzeOpen(false)}
+          item={draft}
+          address={draft.address}
+        />
+      )}
     </>
   );
 }

@@ -26,6 +26,13 @@ export function useLeadForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  // Starts the form over with `values` filled in (e.g. another property
+  // for a lead's seller); startWith({}) empties it.
+  function startWith(values) {
+    setForm({ ...createEmpty(), ...values });
+    setError("");
+  }
+
   function handleChange(e) {
     setField(e.target.name, e.target.value);
   }
@@ -91,6 +98,7 @@ export function useLeadForm({
     saving,
     error,
     setField,
+    startWith,
     handleChange,
     handleTrimBlur,
     handlePhoneChange,

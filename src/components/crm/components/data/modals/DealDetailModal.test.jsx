@@ -86,21 +86,28 @@ describe("DealDetailModal", () => {
       <DealDetailModal
         isOpen={true}
         onClose={vi.fn()}
-        deal={deal}
+        deal={{ ...deal, rehabType: "", desiredProfit: "$15,000" }}
         updateDealPatch={vi.fn()}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
-    const analyzerTabs = within(
-      screen.getByRole("tablist", { name: "Deal types" }),
-    );
+    expect(screen.getByLabelText("ARV")).toHaveValue("$450,000");
+    expect(screen.getByLabelText("Wholesale fee")).toHaveValue("$15,000");
+    fireEvent.click(screen.getByRole("radio", { name: /Light/ }));
+    fireEvent.change(screen.getByLabelText("Repair cost"), {
+      target: { value: "40000" },
+    });
+    // 450,000 − 30% − 40,000 − 15,000; novation 450,000 × 90% − 40,000 − 15,000.
     expect(
-      analyzerTabs.getAllByRole("tab").map((tab) => tab.textContent),
-    ).toEqual(["Wholesale", "Novation", "Fix N Flip"]);
-    expect(screen.getByLabelText(/^ARV/)).toHaveValue("$450,000");
-
-    fireEvent.click(analyzerTabs.getByRole("tab", { name: "Novation" }));
-    expect(screen.getByLabelText(/^ARV/)).toHaveValue("$450,000");
+      within(screen.getByRole("region", { name: "Wholesale" })).getAllByText(
+        "$260,000",
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(screen.getByRole("region", { name: "Novation" })).getAllByText(
+        "$350,000",
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("adds another property for the seller", () => {
@@ -119,9 +126,7 @@ describe("DealDetailModal", () => {
         onAddPropertyForSeller={onAddPropertyForSeller}
       />,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Add Property for Seller" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Add Property" }));
     expect(onAddPropertyForSeller).toHaveBeenCalledWith(
       expect.objectContaining({
         sellerFirstName: "Ann",
@@ -131,7 +136,7 @@ describe("DealDetailModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("offers no Add Property for Seller without a seller", () => {
+  it("offers no Add Property without a seller", () => {
     render(
       <DealDetailModal
         isOpen={true}
@@ -142,7 +147,7 @@ describe("DealDetailModal", () => {
       />,
     );
     expect(
-      screen.queryByRole("button", { name: "Add Property for Seller" }),
+      screen.queryByRole("button", { name: "Add Property" }),
     ).not.toBeInTheDocument();
   });
 

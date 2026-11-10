@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import PotentialLeads from "./PotentialLeads";
 
 const baseProps = (overrides = {}) => ({
@@ -290,6 +296,38 @@ describe("PotentialLeads", () => {
         expect.objectContaining({ id: "wp-lead-901", wpLeadId: 901 }),
       );
     });
+  });
+
+  it("adds another property for a lead's seller, with their details filled in", () => {
+    const lead = {
+      id: "l1",
+      leadType: "residential",
+      address: "1 Main St, Dallas, TX",
+      firstName: "Ann",
+      lastName: "Lee",
+      phone: "(555) 111-2222",
+      source: "Referral",
+    };
+    render(<PotentialLeads {...baseProps({ leads: [lead] })} />);
+    fireEvent.click(screen.getByText("1 Main St, Dallas, TX"));
+    fireEvent.click(screen.getByRole("button", { name: "Add Property" }));
+
+    const dialog = screen
+      .getByRole("heading", { name: "Add Property for Seller" })
+      .closest(".modal");
+    expect(within(dialog).getByDisplayValue("Ann")).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue("Lee")).toBeInTheDocument();
+    expect(
+      within(dialog).getByDisplayValue("(555) 111-2222"),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
+    ).toHaveValue("");
+
+    // Closed without saving, the next Add a lead starts empty.
+    fireEvent.click(dialog.querySelector(".modal-close"));
+    fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
+    expect(screen.queryByDisplayValue("Ann")).not.toBeInTheDocument();
   });
 
   it("shows a duplicate-address warning on address blur", () => {

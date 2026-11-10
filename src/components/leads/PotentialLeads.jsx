@@ -90,6 +90,8 @@ export default function PotentialLeads({
   // The tab ("residential", "commercial", "ppc", "ppl" or "coldcall")
   // whose Add a lead window is open.
   const [addLeadTab, setAddLeadTab] = useState(null);
+  // Set while that window adds another property for a lead's seller.
+  const [addingForSeller, setAddingForSeller] = useState(false);
   // The call being added ({ lead, count }), while its notes are asked for.
   const [callNotes, setCallNotes] = useState(null);
 
@@ -156,7 +158,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
-    onSaved: () => setAddLeadTab(null),
+    onSaved: closeAddLead,
   });
   // Added by hand on the PPC / PPL tabs: a residential lead with the source
   // fixed, which is what files it under that tab.
@@ -168,7 +170,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
-    onSaved: () => setAddLeadTab(null),
+    onSaved: closeAddLead,
   });
   const pplForm = useLeadForm({
     createEmpty: () => ({ ...createEmptyResidentialForm(), source: "PPL" }),
@@ -178,7 +180,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
-    onSaved: () => setAddLeadTab(null),
+    onSaved: closeAddLead,
   });
   const coldCallForm = useLeadForm({
     createEmpty: () => ({
@@ -191,7 +193,7 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
-    onSaved: () => setAddLeadTab(null),
+    onSaved: closeAddLead,
   });
   const commercialForm = useLeadForm({
     createEmpty: createEmptyCommercialForm,
@@ -201,8 +203,47 @@ export default function PotentialLeads({
     currentUser,
     saveLead,
     setLeads,
-    onSaved: () => setAddLeadTab(null),
+    onSaved: closeAddLead,
   });
+
+  const addLeadForms = {
+    residential: residentialForm,
+    ppc: ppcForm,
+    ppl: pplForm,
+    coldcall: coldCallForm,
+    commercial: commercialForm,
+  };
+
+  function closeAddLead() {
+    // The seller's details shouldn't stay on the next plain Add a lead.
+    if (addingForSeller) addLeadForms[addLeadTab]?.startWith({});
+    setAddLeadTab(null);
+    setAddingForSeller(false);
+  }
+
+  // Opens Add a lead on `lead`'s tab with its seller's name, phones and
+  // email filled in, for another property they own.
+  function addPropertyForSeller(lead) {
+    const tab = isPpcLead(lead)
+      ? "ppc"
+      : isPplLead(lead)
+        ? "ppl"
+        : isColdCallLead(lead)
+          ? "coldcall"
+          : "residential";
+    addLeadForms[tab].startWith({
+      firstName: lead.firstName || "",
+      lastName: lead.lastName || "",
+      sellerName: lead.sellerName || "",
+      phone: lead.phone || "",
+      phone2: lead.phone2 || "",
+      email: lead.email || "",
+      // The PPC, PPL and Cold Calling forms fix their own source.
+      ...(tab === "residential" ? { source: lead.source || "" } : {}),
+    });
+    setAddingForSeller(true);
+    setAddLeadTab(tab);
+  }
 
   // The user's name, for signing automated emails.
   const senderName = [currentUser?.firstName, currentUser?.lastName]
@@ -752,8 +793,12 @@ export default function PotentialLeads({
       {!ppcOnly && (
         <Modal
           isOpen={!!addLeadTab}
-          onClose={() => setAddLeadTab(null)}
-          title={ADD_LEAD_TITLES[addLeadTab]}
+          onClose={closeAddLead}
+          title={
+            addingForSeller
+              ? "Add Property for Seller"
+              : ADD_LEAD_TITLES[addLeadTab]
+          }
           className="leads-add-modal"
           style={{
             width: "min(960px, 96vw)",
@@ -800,6 +845,7 @@ export default function PotentialLeads({
           isPpc={detailLead ? isPpcLead(detailLead) : false}
           isPpl={detailLead ? isPplLead(detailLead) : false}
           onHistoryLoaded={handleLeadHistoryLoaded}
+          onAddPropertyForSeller={addPropertyForSeller}
           {...photoProps}
         />
       )}

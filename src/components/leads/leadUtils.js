@@ -286,15 +286,18 @@ export function zillowUrl(address) {
     : "";
 }
 
-// The property's Redfin page: the one comps found (`url`), else a search
-// for the address on Redfin (Redfin has no address-only link like
-// Zillow's).
+// The property's Redfin page: the one comps found (`url`), else Redfin's
+// page for the address's ZIP code, where the address can be searched (Redfin
+// has no address-only link like Zillow's, and Google doesn't index every
+// Redfin home page), else Redfin's home page.
 export function redfinUrl(address, url = "") {
   if (/^https:\/\/(www\.)?redfin\.com\//.test(url || "")) return url;
   const q = String(address || "").trim();
-  return q
-    ? `https://www.google.com/search?q=${encodeURIComponent(`${q} site:redfin.com`)}`
-    : "";
+  if (!q) return "";
+  const zip = q.match(/\b(\d{5})(?:-\d{4})?\s*$/)?.[1];
+  return zip
+    ? `https://www.redfin.com/zipcode/${zip}`
+    : "https://www.redfin.com/";
 }
 
 export function todayStr() {
