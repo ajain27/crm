@@ -39,6 +39,7 @@ function Wholesale_data({
   photoStore,
   convertDealToRental,
   moveDealToLeads,
+  onAddPropertyForSeller,
   leads = [],
   onRemoveDuplicates,
 }) {
@@ -297,6 +298,7 @@ function Wholesale_data({
         deleteDeal={deleteDeal}
         convertDealToRental={convertDealToRental}
         moveDealToLeads={moveDealToLeads}
+        onAddPropertyForSeller={onAddPropertyForSeller}
         existingDeals={deals}
         existingLeads={leads}
         openContract={openContract}

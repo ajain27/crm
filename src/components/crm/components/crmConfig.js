@@ -112,6 +112,20 @@ export function createEmptyDealForm() {
   };
 }
 
+// A new, empty deal for another property of `deal`'s seller: the seller's
+// name, phones, email and the lead source carried over.
+export function createDealFormForSeller(deal) {
+  return {
+    ...createEmptyDealForm(),
+    sellerFirstName: deal?.sellerFirstName || "",
+    sellerLastName: deal?.sellerLastName || "",
+    sellerPhone: deal?.sellerPhone || "",
+    sellerPhones: [...(deal?.sellerPhones || [])],
+    sellerEmail: deal?.sellerEmail || "",
+    source: deal?.source || "",
+  };
+}
+
 // A deal is inactive when it was made inactive by hand, or its offer was
 // rejected or withdrawn. Inactive deals show in the dashboard's Inactive tab.
 export function isDealRejected(deal) {

@@ -25,6 +25,7 @@ import {
   ASSIGNED_PRICE_ERROR,
   isAssignedPriceTooLow,
 } from "../crmConfig";
+import { joinName } from "../../../leads/leadUtils";
 import CurrencyInput from "../../../elements/CurrencyInput";
 
 // The add-deal form; `inModal` gives just the form, for the dashboard's
@@ -112,8 +113,23 @@ function Wholesale_form({
 
   const isFormComplete = isRental ? isRentalComplete : isWholesaleComplete;
 
+  // Set when adding another property for a deal's seller; the form has no
+  // seller fields of its own.
+  const sellerSummary = [
+    joinName(form.sellerFirstName, form.sellerLastName),
+    form.sellerPhone,
+    form.sellerEmail,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const formEl = (
     <form className="add-form" onSubmit={addDeal}>
+      {sellerSummary && (
+        <p className="add-form-seller">
+          <strong>Seller:</strong> {sellerSummary}
+        </p>
+      )}
       <Select
         label="Deal Type"
         name="dealType"

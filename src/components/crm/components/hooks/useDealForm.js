@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   createEmptyDealForm,
+  createDealFormForSeller,
   createDefaultFilters,
   createContractVersion,
   getWholesaleRehabDetails,
@@ -31,6 +32,12 @@ export function useDealForm({
 
   function resetForm() {
     setForm(createEmptyDealForm());
+    setFormError("");
+  }
+
+  // Starts the form over for another property of `deal`'s seller.
+  function startForSeller(deal) {
+    setForm(createDealFormForSeller(deal));
     setFormError("");
   }
 
@@ -486,6 +493,7 @@ export function useDealForm({
     form,
     tableLoading,
     resetForm,
+    startForSeller,
     formError,
     handleChange,
     handleBlur,

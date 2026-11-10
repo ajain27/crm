@@ -28,6 +28,8 @@ import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import AssignmentOptionsModal from "./AssignmentOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
+import DealAnalyzer from "../../../../dealAnalyzer/components/DealAnalyzer";
+import { prefillFromDeal } from "../../../../dealAnalyzer/components/dealPrefill";
 import CompsNoteView from "../comps/CompsNoteView";
 import { withCompsNote } from "../comps/compsNote";
 import { hasFormattedNotes } from "../comps/notesTable";
@@ -219,6 +221,7 @@ function DealDetailModal({
   deleteDeal,
   convertDealToRental,
   moveDealToLeads,
+  onAddPropertyForSeller,
   openContract,
   handleContractUpload,
   handleDeleteContractVersion,
@@ -231,6 +234,8 @@ function DealDetailModal({
   existingLeads = [],
 }) {
   const [draft, setDraft] = useState({});
+  // The Deal Analyzer window, with the deal's numbers filled in.
+  const [analyzeOpen, setAnalyzeOpen] = useState(false);
   // The form as the deal was opened (or last saved), for Save Changes.
   const [savedDraft, setSavedDraft] = useState({});
   const [saving, setSaving] = useState(false);
@@ -439,6 +444,11 @@ function DealDetailModal({
   const contractVersions = getContractVersions(deal);
   const latestContractVersion = contractVersions[0];
   const isRental = (draft.dealType || "Wholesale") === "Potential Rental";
+  const hasSeller = Boolean(
+    joinName(draft.sellerFirstName, draft.sellerLastName) ||
+    draft.sellerPhone ||
+    draft.sellerEmail,
+  );
   const sellerPhones = draft.sellerPhones || [];
   // The message each seller phone's Text button writes.
   const textBody = cashOfferText({ address: formatFullAddress(draft) });
@@ -451,6 +461,11 @@ function DealDetailModal({
   async function handleDelete() {
     const deleted = await deleteDeal(deal.id);
     if (deleted) onClose();
+  }
+
+  function handleAddPropertyForSeller() {
+    onAddPropertyForSeller(draft);
+    onClose();
   }
 
   async function handleMoveToLeads(tab) {
@@ -626,6 +641,16 @@ function DealDetailModal({
                 onSelect={handleMoveToLeads}
               />
             )}
+            {onAddPropertyForSeller && !isRental && hasSeller && (
+              <button
+                className="secondary-btn"
+                onClick={handleAddPropertyForSeller}
+                disabled={saving}
+                title="Add another property this seller owns, with their details filled in"
+              >
+                Add Property for Seller
+              </button>
+            )}
             <button
               className="secondary-btn"
               onClick={onClose}
@@ -633,6 +658,16 @@ function DealDetailModal({
             >
               Cancel
             </button>
+            {!isRental && (
+              <button
+                className="secondary-btn"
+                onClick={() => setAnalyzeOpen(true)}
+                disabled={saving}
+                title="Check the wholesale, novation and fix-and-flip numbers"
+              >
+                Analyze
+              </button>
+            )}
             {!isRental && (
               <button
                 className="secondary-btn"
@@ -1520,6 +1555,20 @@ function DealDetailModal({
         initialOptions={offerOptions}
         sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
       />
+      {analyzeOpen && (
+        <Modal
+          isOpen
+          onClose={() => setAnalyzeOpen(false)}
+          title="Analyze Deal"
+          className="deal-analyze-modal"
+          style={{ width: "min(1100px, 96vw)", maxWidth: "min(1100px, 96vw)" }}
+        >
+          <DealAnalyzer
+            tabIds={["wholesale", "novation", "fix-flip"]}
+            prefill={prefillFromDeal(draft, formatFullAddress(draft))}
+          />
+        </Modal>
+      )}
       {compsState.runOpen && (
         <RunCompsModal
           address={formatFullAddress(draft)}

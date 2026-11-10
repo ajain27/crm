@@ -3,6 +3,21 @@
     @apply p-6;
   }
 
+  /* Opened from a deal's window: just the calculator, no page intro. */
+  .deal-analyze-modal .deal-analyzer-panel {
+    @apply mb-0 border-0 p-0 shadow-none;
+  }
+
+  .deal-analyze-modal .deal-analyzer-hero,
+  .deal-analyze-modal .deal-analyzer-cards {
+    display: none;
+  }
+
+  .deal-analyze-modal [data-reveal],
+  .deal-analyze-modal [data-reveal-group] > * {
+    transform: none;
+  }
+
   .deal-analyzer-tabs {
     @apply mb-6 flex flex-wrap gap-3;
   }

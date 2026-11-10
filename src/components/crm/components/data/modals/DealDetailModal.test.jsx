@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import DealDetailModal from "./DealDetailModal";
 import { renderElementToPdfAssets } from "../../../../../utils/pdfExport";
 import { requestComps } from "../comps/compsNote";
@@ -73,6 +79,71 @@ describe("DealDetailModal", () => {
       expect.objectContaining({ id: deal.id }),
       "coldcall",
     );
+  });
+
+  it("analyzes the deal's wholesale and novation numbers in a window", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
+    const analyzerTabs = within(
+      screen.getByRole("tablist", { name: "Deal types" }),
+    );
+    expect(
+      analyzerTabs.getAllByRole("tab").map((tab) => tab.textContent),
+    ).toEqual(["Wholesale", "Novation", "Fix N Flip"]);
+    expect(screen.getByLabelText(/^ARV/)).toHaveValue("$450,000");
+
+    fireEvent.click(analyzerTabs.getByRole("tab", { name: "Novation" }));
+    expect(screen.getByLabelText(/^ARV/)).toHaveValue("$450,000");
+  });
+
+  it("adds another property for the seller", () => {
+    const onAddPropertyForSeller = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={onClose}
+        deal={{
+          ...deal,
+          sellerFirstName: "Ann",
+          sellerPhone: "(555) 111-2222",
+        }}
+        updateDealPatch={vi.fn()}
+        onAddPropertyForSeller={onAddPropertyForSeller}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Property for Seller" }),
+    );
+    expect(onAddPropertyForSeller).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sellerFirstName: "Ann",
+        sellerPhone: "(555) 111-2222",
+      }),
+    );
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("offers no Add Property for Seller without a seller", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+        onAddPropertyForSeller={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Add Property for Seller" }),
+    ).not.toBeInTheDocument();
   });
 
   it("won't save an address already in the CRM or Leads", () => {

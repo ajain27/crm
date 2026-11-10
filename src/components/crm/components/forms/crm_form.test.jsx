@@ -89,3 +89,19 @@ describe("Wholesale_form rehab fields", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("Wholesale_form seller", () => {
+  it("shows the seller when adding a property for one", () => {
+    renderForm({
+      sellerFirstName: "Ann",
+      sellerLastName: "Lee",
+      sellerPhone: "(555) 111-2222",
+    });
+    expect(screen.getByText("Ann Lee · (555) 111-2222")).toBeInTheDocument();
+  });
+
+  it("shows no seller line on a plain new property", () => {
+    renderForm();
+    expect(screen.queryByText("Seller:")).not.toBeInTheDocument();
+  });
+});

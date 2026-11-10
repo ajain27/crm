@@ -26,6 +26,13 @@
     grid-column: span 2;
   }
 
+  /* Whose property it is, when adding one for a deal's seller. */
+  .add-form-seller {
+    @apply col-[1/-1] rounded-xl border px-4 py-3 text-sm;
+    border-color: var(--line);
+    color: var(--text);
+  }
+
   .form-row-break {
     @apply col-[1/-1] h-0;
   }

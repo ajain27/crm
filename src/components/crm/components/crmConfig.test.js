@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createEmptyDealForm,
+  createDealFormForSeller,
   getSuggestedWholesaleMao,
   getWholesaleRehabDetails,
 } from "./crmConfig";
@@ -95,5 +96,31 @@ describe("getSuggestedWholesaleMao", () => {
     expect(getSuggestedWholesaleMao({ ...form, buyersProfit: "20%" })).toBe(
       243000,
     );
+  });
+});
+
+describe("createDealFormForSeller", () => {
+  it("carries over only the seller's contact details and the source", () => {
+    const form = createDealFormForSeller({
+      address: "1 Main St",
+      arv: 300000,
+      notes: "Call 1 (11/9/2026): wants cash",
+      sellerFirstName: "Ann",
+      sellerLastName: "Lee",
+      sellerPhone: "(555) 111-2222",
+      sellerPhones: ["(555) 333-4444"],
+      sellerEmail: "ann@example.com",
+      sellerMotivation: "Divorce",
+      source: "Cold Call",
+    });
+    expect(form).toEqual({
+      ...createEmptyDealForm(),
+      sellerFirstName: "Ann",
+      sellerLastName: "Lee",
+      sellerPhone: "(555) 111-2222",
+      sellerPhones: ["(555) 333-4444"],
+      sellerEmail: "ann@example.com",
+      source: "Cold Call",
+    });
   });
 });
