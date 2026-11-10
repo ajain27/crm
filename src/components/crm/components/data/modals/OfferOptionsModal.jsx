@@ -4,7 +4,7 @@ import { DEFAULT_OFFER_OPTIONS } from "./WholesaleOfferPdfTemplate";
 import CurrencyInput from "../../../../elements/CurrencyInput";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
-const MAX_INSPECTION_DAYS = 365;
+const MAX_DAYS = 365;
 
 function digitsOnly(value) {
   return String(value ?? "").replace(/[^0-9]/g, "");
@@ -16,11 +16,15 @@ function toForm(options, sellerName) {
     allowAssignment: options.allowAssignment,
     emdAmount: String(options.emdAmount),
     inspectionDays: String(options.inspectionDays),
+    closingDays: String(
+      options.closingDays ?? DEFAULT_OFFER_OPTIONS.closingDays,
+    ),
   };
 }
 
-// Asks for the seller's name, the offer's assignment variant, EMD and
-// inspection period before the Purchase & Sale Agreement is generated.
+// Asks for the seller's name, the offer's assignment variant, EMD,
+// inspection period and closing timeline before the Purchase & Sale
+// Agreement is generated.
 // Opens with the deal's seller name and the last options used (or the
 // defaults), so regenerating doesn't mean retyping them.
 export default function OfferOptionsModal({
@@ -42,18 +46,28 @@ export default function OfferOptionsModal({
   const inspectionDays = parseInt(form.inspectionDays, 10) || 0;
   const emdError = emdAmount > 0 ? "" : "Enter an EMD amount.";
   const daysError =
-    inspectionDays >= 1 && inspectionDays <= MAX_INSPECTION_DAYS
+    inspectionDays >= 1 && inspectionDays <= MAX_DAYS
       ? ""
-      : `Enter between 1 and ${MAX_INSPECTION_DAYS} days.`;
+      : `Enter between 1 and ${MAX_DAYS} days.`;
+  const closingDays = parseInt(form.closingDays, 10) || 0;
+  // The EMD goes hard once inspection ends without closing, so closing
+  // can't be due before the inspection period is over.
+  const closingError =
+    closingDays < 1 || closingDays > MAX_DAYS
+      ? `Enter between 1 and ${MAX_DAYS} days.`
+      : !daysError && closingDays < inspectionDays
+        ? "Closing can't be before the inspection period ends."
+        : "";
 
   function handleSubmit(e) {
     e?.preventDefault();
-    if (emdError || daysError) return;
+    if (emdError || daysError || closingError) return;
     onGenerate({
       sellerName: form.sellerName.trim().replace(/\s+/g, " "),
       allowAssignment: form.allowAssignment,
       emdAmount,
       inspectionDays,
+      closingDays,
     });
   }
 
@@ -77,7 +91,7 @@ export default function OfferOptionsModal({
                 label="Generate"
                 tone="primary"
                 onClick={handleSubmit}
-                disabled={!!emdError || !!daysError}
+                disabled={!!emdError || !!daysError || !!closingError}
               />
             </>
           }
@@ -151,7 +165,7 @@ export default function OfferOptionsModal({
           <input
             type="number"
             min={1}
-            max={MAX_INSPECTION_DAYS}
+            max={MAX_DAYS}
             value={form.inspectionDays}
             onChange={(e) =>
               setForm((p) => ({
@@ -165,7 +179,26 @@ export default function OfferOptionsModal({
           {daysError && <span className="field-error">{daysError}</span>}
         </label>
 
-        {/* Lets Enter submit from either input. */}
+        <label className="field">
+          <span>Closing Timeline (days after acceptance)</span>
+          <input
+            type="number"
+            min={1}
+            max={MAX_DAYS}
+            value={form.closingDays}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                closingDays: digitsOnly(e.target.value),
+              }))
+            }
+            placeholder="21"
+            aria-label="Closing Timeline"
+          />
+          {closingError && <span className="field-error">{closingError}</span>}
+        </label>
+
+        {/* Lets Enter submit from any input. */}
         <button type="submit" hidden />
       </form>
     </Modal>

@@ -469,6 +469,9 @@ describe("DealDetailModal", () => {
     fireEvent.change(screen.getByLabelText("Inspection Period"), {
       target: { value: "21" },
     });
+    fireEvent.change(screen.getByLabelText("Closing Timeline"), {
+      target: { value: "30" },
+    });
     renderElementToPdfAssets.mockClear();
     fireEvent.click(screen.getByText("Generate"));
 
@@ -476,6 +479,14 @@ describe("DealDetailModal", () => {
     const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
     expect(text).toContain("Earnest Money Deposit (EMD): $1,500");
     expect(text).toContain("twenty-one (21) calendar days");
+    // The closing timeline asked for, everywhere the agreement states it.
+    expect(text).toContain(
+      "Targeted Closing Date: 30 days after mutual acceptance.",
+    );
+    expect(text).toContain(
+      "unable to close within the thirty (30) day timeframe",
+    );
+    expect(text).not.toMatch(/\b21 days after|\(21\) day timeframe/);
     expect(text).toContain("Effective Date:");
     expect(text).not.toContain("and/or assigns");
     expect(text).not.toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
@@ -507,6 +518,26 @@ describe("DealDetailModal", () => {
     expect(screen.getByText("Generate")).toBeDisabled();
     expect(
       screen.getByText(/Enter between 1 and 365 days/),
+    ).toBeInTheDocument();
+  });
+
+  it("won't generate an offer that closes before inspection ends", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Generate Offer"));
+    expect(screen.getByLabelText("Closing Timeline")).toHaveValue(21);
+    fireEvent.change(screen.getByLabelText("Closing Timeline"), {
+      target: { value: "10" },
+    });
+    expect(screen.getByText("Generate")).toBeDisabled();
+    expect(
+      screen.getByText("Closing can't be before the inspection period ends."),
     ).toBeInTheDocument();
   });
 

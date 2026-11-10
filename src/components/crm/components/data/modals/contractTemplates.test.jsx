@@ -37,6 +37,25 @@ describe("contract templates", () => {
     unmount();
   });
 
+  it("purchase agreement: the EMD goes hard if Buyer can't close after inspection", () => {
+    const { unmount } = render(
+      <WholesaleOfferPdfTemplate
+        sellerName="Jane Doe"
+        propertyAddress="1 Main St, Dallas, TX"
+        purchasePrice={150000}
+      />,
+    );
+    const text = document.body.textContent;
+    expect(text).toContain(
+      "due to closing administrative delays or title defects not caused by Buyer",
+    );
+    expect(text).toContain(
+      'However, if Buyer is unable to close within the twenty-one (21) day timeframe and the Inspection Period has expired without Buyer terminating this Agreement, the Earnest Money Deposit shall be non-refundable ("hard"), Buyer shall not be entitled to any refund, and the Earnest Money Deposit shall be released to Seller.',
+    );
+    expect(text).not.toContain("or if the Buyer is unable to close");
+    unmount();
+  });
+
   it("assignment: names the seller, signed and dated today", () => {
     const { unmount } = render(
       <AssignmentPdfTemplate

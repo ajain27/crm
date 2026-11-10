@@ -49,6 +49,7 @@ export const DEFAULT_OFFER_OPTIONS = {
   allowAssignment: true,
   emdAmount: 100,
   inspectionDays: 14,
+  closingDays: 21,
 };
 
 const ONES = [
@@ -99,7 +100,8 @@ export function numberToWords(n) {
 // Purchase & Sale Agreement generated from a dashboard deal. Reproduces the
 // uploaded You Win Estates wholesale contracts clause for clause; Seller
 // Name(s), Property Address and Purchase Price come from the deal, and the
-// EMD, inspection period and assignment variant are chosen when generating.
+// EMD, inspection period, closing timeline and assignment variant are chosen
+// when generating.
 const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
   {
     sellerName,
@@ -108,6 +110,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
     allowAssignment = DEFAULT_OFFER_OPTIONS.allowAssignment,
     emdAmount = DEFAULT_OFFER_OPTIONS.emdAmount,
     inspectionDays = DEFAULT_OFFER_OPTIONS.inspectionDays,
+    closingDays = DEFAULT_OFFER_OPTIONS.closingDays,
   },
   ref,
 ) {
@@ -199,16 +202,22 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
 
         <Section number={3} title="CLOSING & TARGETED TIMELINE">
           <p>
-            <strong>Targeted Closing Date:</strong> 21 days after mutual
-            acceptance.
+            <strong>Targeted Closing Date:</strong> {closingDays}{" "}
+            {closingDays === 1 ? "day" : "days"} after mutual acceptance.
           </p>
           <p>
             If closing cannot be completed within the specified timeframe due to
-            closing administrative delays, title defects, or if the Buyer is
-            unable to close, this Agreement shall automatically become null and
-            void, the parties shall be released from all further obligations,
-            and the Earnest Money Deposit shall be promptly returned to Buyer,
-            unless extended or modified by the parties in writing.
+            closing administrative delays or title defects not caused by Buyer,
+            this Agreement shall automatically become null and void, the parties
+            shall be released from all further obligations, and the Earnest
+            Money Deposit shall be promptly returned to Buyer, unless extended
+            or modified by the parties in writing. However, if Buyer is unable
+            to close within the {numberToWords(closingDays)} ({closingDays}) day
+            timeframe and the Inspection Period has expired without Buyer
+            terminating this Agreement, the Earnest Money Deposit shall be
+            non-refundable (&quot;hard&quot;), Buyer shall not be entitled to
+            any refund, and the Earnest Money Deposit shall be released to
+            Seller.
           </p>
         </Section>
 
