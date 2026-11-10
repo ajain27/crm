@@ -29,14 +29,15 @@ function median(values) {
 // the sale prices. Either way the upper quartile, except:
 //   - a property much bigger than the comps (over the size tolerance) gets
 //     the median $/sq ft, as bigger homes sell for less per sq ft;
+//   - a property much smaller than the comps gets each comp's sale price
+//     less its extra size at part of its $/sq ft (sqftDifferenceValue), as
+//     smaller homes sell for more per sq ft;
 //   - the ARV never goes more than 10% over the highest comp sale, so a
 //     smaller home's $/sq ft stretched over a big one can't run away. When
 //     some comps are about the property's size, only their sales set the
-//     cap. When none are (see poorSizeMatch) and `hasEstimates` (a
-//     Zestimate or Redfin Estimate to average with — see blendArv),
-//     there's no cap: sales of homes half its size say little about its
-//     price.
-export function estimateArv(comps, subjectSqft, { hasEstimates = false } = {}) {
+//     cap. (The Zestimate and Redfin Estimate are a floor — see blendArv —
+//     so a capped ARV for a big home still isn't under its as-is value.)
+export function estimateArv(comps, subjectSqft) {
   if (comps.length === 0) return { arvEstimate: null, arvBasis: null };
   const withSize = comps.filter((c) => isNum(c.sqft));
   const enoughSized =
@@ -49,7 +50,15 @@ export function estimateArv(comps, subjectSqft, { hasEstimates = false } = {}) {
     const ppsfs = withSize.map((c) => c.price / c.sqft);
     const sized = plural(withSize.length, "comp");
     const size = `${subjectSqft.toLocaleString("en-US")} sq ft`;
-    if (bigger > COMP_RULES.sqftTolerance) {
+    const smaller = 1 - subjectSqft / typicalSqft;
+    if (smaller > COMP_RULES.sqftTolerance) {
+      const share = COMP_RULES.sqftDifferenceValue;
+      const adjusted = withSize.map(
+        (c) => c.price - (c.sqft - subjectSqft) * (c.price / c.sqft) * share,
+      );
+      arv = upperQuartile(adjusted);
+      basis = `ARV = upper-quartile sale price of ${sized}, each less its extra size at ${Math.round(share * 100)}% of its $/sq ft — the property (${size}) is ${Math.round(smaller * 100)}% smaller than the typical comp (${Math.round(typicalSqft).toLocaleString("en-US")} sq ft), and smaller homes sell for more per sq ft.`;
+    } else if (bigger > COMP_RULES.sqftTolerance) {
       const ppsf = median(ppsfs);
       arv = ppsf * subjectSqft;
       basis = `ARV = median ${fmtMoney(ppsf)}/sq ft across ${sized} × ${size} — the property is ${Math.round(bigger * 100)}% bigger than the typical comp (${Math.round(typicalSqft).toLocaleString("en-US")} sq ft), and bigger homes sell for less per sq ft.`;
@@ -69,11 +78,7 @@ export function estimateArv(comps, subjectSqft, { hasEstimates = false } = {}) {
   const sameSize = isNum(subjectSqft)
     ? comps.filter((c) => sizeMatches(c, subjectSqft))
     : [];
-  const capComps = sameSize.length
-    ? sameSize
-    : hasEstimates && poorSizeMatch(comps, subjectSqft)
-      ? []
-      : comps;
+  const capComps = sameSize.length ? sameSize : comps;
   const topSale = Math.max(...capComps.map((c) => c.price).filter(isNum));
   const cap = Number.isFinite(topSale)
     ? topSale * (1 + COMP_RULES.arvOverTopSale)
@@ -94,14 +99,6 @@ export function sizeMatches(comp, subjectSqft) {
     isNum(comp.sqft) &&
     Math.abs(comp.sqft - subjectSqft) / subjectSqft <= COMP_RULES.sqftTolerance
   );
-}
-
-// Whether the comps aren't the property's size: at least 2 have a known
-// size and none of those is within the size rule.
-export function poorSizeMatch(comps, subjectSqft) {
-  if (!isNum(subjectSqft)) return false;
-  const sized = comps.filter((c) => isNum(c.sqft));
-  return sized.length >= 2 && !sized.some((c) => sizeMatches(c, subjectSqft));
 }
 
 export function ruleReason(comp) {
@@ -158,19 +155,14 @@ export function valueEstimates(zestimate, redfinEstimate) {
   };
 }
 
-// The ARV given the comps' ARV and the sites' estimates. In a
-// non-disclosure state it's the average of the two (either alone when the
-// other is missing); elsewhere it's the comps' ARV, with how far it is
-// from the estimates noted.
-// `poorSizeMatch` is set when the comps aren't the property's size (see
-// poorSizeMatch): their ARV is then averaged with the estimates, as in a
-// non-disclosure state.
-export function blendArv({
-  compsArv,
-  estimates,
-  state,
-  poorSizeMatch = false,
-}) {
+// The ARV given the comps' ARV and the sites' estimates (the Zestimate and
+// Redfin Estimate: what the house is worth as it stands). Those are a
+// floor — an after-repair value is never under the as-is value — so comps
+// under them give way to their average. Above it, the comps' ARV stands,
+// with how far it is over noted, except in a non-disclosure state, where
+// "sold" prices can be list prices or estimates: there it's the average of
+// the two. With no comps, it's the estimates' average.
+export function blendArv({ compsArv, estimates, state }) {
   const stateName = NON_DISCLOSURE_STATES[state] || null;
   const average = estimates?.average ?? null;
   const names = [
@@ -180,40 +172,38 @@ export function blendArv({
   const estimateName =
     names.length === 2 ? "Zestimate/Redfin Estimate average" : names[0];
 
-  if (stateName && isNum(average)) {
-    if (!isNum(compsArv)) {
-      return {
-        arvEstimate: average,
-        note: `${stateName} doesn't publish sale prices and there were no comps, so the ARV is the ${estimateName} (${fmtMoney(average)}).`,
-      };
-    }
-    const arvEstimate = Math.round((compsArv + average) / 2);
+  if (!isNum(average)) {
     return {
-      arvEstimate,
-      note: `${stateName} doesn't publish sale prices, so comps can be off: the ARV is the average of the comps (${fmtMoney(compsArv)}) and the ${estimateName} (${fmtMoney(average)}).`,
+      arvEstimate: compsArv,
+      note: stateName
+        ? `${stateName} doesn't publish sale prices, so comps can be off — and neither Zillow nor Redfin had an estimate to check against.`
+        : null,
     };
   }
-  if (poorSizeMatch && isNum(compsArv) && isNum(average)) {
+  if (!isNum(compsArv)) {
     return {
-      arvEstimate: Math.round((compsArv + average) / 2),
-      note: `None of the comps is near the property's size, so the comps can be off: the ARV is the average of the comps (${fmtMoney(compsArv)}) and the ${estimateName} (${fmtMoney(average)}).`,
+      arvEstimate: average,
+      note: `There were no comps, so the ARV is the ${estimateName} (${fmtMoney(average)}).`,
+    };
+  }
+  if (compsArv < average) {
+    return {
+      arvEstimate: average,
+      note: `The comps came to ${fmtMoney(compsArv)}, under the ${estimateName} (${fmtMoney(average)}) — what the house is worth as it stands. The value after repairs isn't lower than that, so the ARV is ${fmtMoney(average)}.`,
     };
   }
   if (stateName) {
     return {
-      arvEstimate: compsArv,
-      note: `${stateName} doesn't publish sale prices, so comps can be off — and neither Zillow nor Redfin had an estimate to check against.`,
+      arvEstimate: Math.round((compsArv + average) / 2),
+      note: `${stateName} doesn't publish sale prices, so the comps can be off: the ARV is the average of the comps (${fmtMoney(compsArv)}) and the ${estimateName} (${fmtMoney(average)}).`,
     };
   }
-  if (isNum(compsArv) && isNum(average)) {
-    const gap = Math.round(((compsArv - average) / average) * 100);
-    return {
-      arvEstimate: compsArv,
-      note:
-        Math.abs(gap) >= 10
-          ? `The comps ARV is ${Math.abs(gap)}% ${gap < 0 ? "under" : "over"} the ${estimateName} (${fmtMoney(average)}).`
-          : null,
-    };
-  }
-  return { arvEstimate: compsArv, note: null };
+  const gap = Math.round(((compsArv - average) / average) * 100);
+  return {
+    arvEstimate: compsArv,
+    note:
+      gap >= 10
+        ? `The comps ARV is ${gap}% over the ${estimateName} (${fmtMoney(average)}).`
+        : null,
+  };
 }

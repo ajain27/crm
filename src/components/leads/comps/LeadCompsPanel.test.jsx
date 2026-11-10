@@ -52,6 +52,41 @@ describe("LeadCompsPanel", () => {
     expect(rows[1]).toHaveTextContent("$260");
   });
 
+  it("tags renovated and as-is comps, with the review's reason on hover", () => {
+    render(
+      <LeadCompsPanel
+        comps={{
+          ...comps,
+          comps: [
+            {
+              ...comps.comps[0],
+              condition: "renovated",
+              reason: "Listing says fully renovated",
+            },
+            {
+              ...comps.comps[0],
+              address: "7 Ash St, Austin, TX 78701",
+              condition: "as-is",
+            },
+            {
+              ...comps.comps[0],
+              address: "9 Elm St, Austin, TX 78701",
+              condition: "unknown",
+            },
+          ],
+        }}
+        lead={{}}
+      />,
+    );
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(screen.getByText("Renovated")).toHaveAttribute(
+      "title",
+      "Listing says fully renovated",
+    );
+    expect(rows[2]).toHaveTextContent("As-is");
+    expect(rows[3]).not.toHaveTextContent(/Renovated|As-is/);
+  });
+
   it("highlights a comp when its row is clicked, and clears on a second click", () => {
     render(<LeadCompsPanel comps={comps} lead={{}} />);
     const row = screen.getAllByRole("row")[2];

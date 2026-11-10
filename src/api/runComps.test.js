@@ -35,7 +35,6 @@ import { distanceMiles } from "../../api/_lib/comps/rules.js";
 import {
   blendArv,
   estimateArv,
-  poorSizeMatch,
   stateFromAddress,
   valueEstimates,
 } from "../../api/_lib/comps/arv.js";
@@ -576,6 +575,80 @@ describe("run-comps", () => {
     expect(out.arvEstimate).toBe(107100);
   });
 
+  it("tells Claude what the web says about each sale, and prices the ARV off the renovated comps", async () => {
+    mockFetch({
+      serper: (body) =>
+        json(
+          200,
+          body.some((q) => q.q.includes("site:"))
+            ? ["zillow", "redfin", "realtor"].map((key) => ({
+                organic: [{ link: LISTINGS[key] }],
+              }))
+            : body.map(({ q }) => ({
+                organic: [
+                  {
+                    link: "https://www.zillow.com/homedetails/x",
+                    snippet: `${q.split(",")[0]}: fully renovated, new roof.`,
+                  },
+                ],
+              })),
+        ),
+    });
+    claudeCreate.mockResolvedValue({
+      stop_reason: "end_turn",
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            selected: [
+              {
+                id: "0",
+                reason: "Renovated per listing",
+                condition: "renovated",
+              },
+              {
+                id: "1",
+                reason: "Renovated per listing",
+                condition: "renovated",
+              },
+              { id: "2", reason: "Sold as a fixer", condition: "as-is" },
+            ],
+            removed: [],
+          }),
+        },
+      ],
+    });
+    const out = await runComps(
+      ADDRESS,
+      { ...ENV, ANTHROPIC_API_KEY: "k" },
+      NOW,
+    );
+
+    const sent = JSON.parse(claudeCreate.mock.calls[0][0].messages[0].content);
+    expect(sent.candidates[0].listingNotes).toBe(
+      `[zillow.com] ${sent.candidates[0].address.split(",")[0]}: fully renovated, new roof.`,
+    );
+    expect(
+      sent.candidates.some(
+        (c) => c.pricePerSqft === Math.round(c.price / c.sqft),
+      ),
+    ).toBe(true);
+    expect(claudeCreate.mock.calls[0][0].system).toMatch(
+      /Prefer renovated sales/,
+    );
+
+    expect(out.topComps.map((c) => c.condition)).toEqual([
+      "renovated",
+      "renovated",
+      "as-is",
+    ]);
+    // Only the 2 renovated comps set the ARV.
+    const renovated = out.topComps.slice(0, 2);
+    const { arvEstimate } = estimateArv(renovated, out.property.sqft);
+    expect(out.compsArv).toBe(arvEstimate);
+    expect(out.summary).toContain("Only the 2 comps that look renovated count");
+  });
+
   it("uses the ranking when Claude fails or declines", async () => {
     mockFetch();
     claudeCreate.mockRejectedValueOnce(
@@ -875,12 +948,13 @@ describe("run-comps", () => {
       average: 115000,
     });
     expect(out.property.valueEstimate).toBe(115000);
-    // Tennessee publishes sale prices: the ARV stays the comps'.
     expect(out.nonDisclosureState).toBeNull();
-    expect(out.arvEstimate).toBe(out.compsArv);
+    // The comps come in under the as-is estimates, which are a floor.
+    expect(out.compsArv).toBeLessThan(115000);
+    expect(out.arvEstimate).toBe(115000);
   });
 
-  it("averages the comps' ARV with the estimates in Texas, carrying them over on a re-run", async () => {
+  it("lifts the comps' ARV to the estimates in Texas, carrying them over on a re-run", async () => {
     mockFetch();
     const out = await runComps("11916 Canoe Rd, Frisco, TX 75035", {}, NOW, {
       location: SUBJECT,
@@ -889,9 +963,10 @@ describe("run-comps", () => {
     });
     expect(out.nonDisclosureState).toBe("TX");
     expect(out.valueEstimates.average).toBe(490000);
-    expect(out.arvEstimate).toBe(Math.round((out.compsArv + 490000) / 2));
+    expect(out.compsArv).toBeLessThan(490000);
+    expect(out.arvEstimate).toBe(490000);
     expect(out.summary).toContain(
-      "Texas doesn't publish sale prices, so comps can be off",
+      "under the Zestimate/Redfin Estimate average ($490,000) — what the house is worth as it stands",
     );
   });
 
@@ -1163,33 +1238,45 @@ describe("ARV for a property much bigger than its comps", () => {
     { price: 265000, sqft: 1162 },
   ];
 
-  it("doesn't cap by much smaller homes when there are estimates to average with", () => {
-    expect(poorSizeMatch(small, 3584)).toBe(true);
-    const { arvEstimate, arvBasis } = estimateArv(small, 3584, {
-      hasEstimates: true,
-    });
-    expect(arvEstimate).toBe(Math.round(3584 * (265000 / 1162)));
-    expect(arvBasis).not.toContain("capped");
+  it("caps by much smaller homes' sales, and the as-is estimate lifts it", () => {
+    const { arvEstimate, arvBasis } = estimateArv(small, 3584);
+    expect(arvEstimate).toBe(484000);
+    expect(arvBasis).toContain("capped");
+    // Under the as-is estimate, which is a floor.
     const blended = blendArv({
       compsArv: arvEstimate,
       estimates: valueEstimates(null, 881219),
       state: "TN",
-      poorSizeMatch: true,
     });
-    expect(blended.arvEstimate).toBe(Math.round((arvEstimate + 881219) / 2));
-    expect(blended.note).toContain(
-      "None of the comps is near the property's size",
-    );
-  });
-
-  it("still caps by the highest sale without estimates", () => {
-    expect(estimateArv(small, 3584).arvEstimate).toBe(484000);
+    expect(blended.arvEstimate).toBe(881219);
   });
 
   it("keeps the upper quartile for a property the comps' size", () => {
     const { arvEstimate, arvBasis } = estimateArv(comps, 2500);
     expect(arvBasis).toMatch(/^ARV = upper-quartile/);
     expect(arvEstimate).toBeLessThanOrEqual(163460);
+  });
+});
+
+describe("ARV for a property much smaller than its comps", () => {
+  // 6212 N 45th St, Tampa: a 633 sq ft 2/1 whose comps were 925–1,326 sq ft.
+  const comps = [
+    { price: 165000, sqft: 1270 },
+    { price: 172000, sqft: 1076 },
+    { price: 210000, sqft: 1257 },
+    { price: 370000, sqft: 925 },
+    { price: 250000, sqft: 1326 },
+  ];
+
+  it("takes each sale less its extra size at half its $/sq ft, not $/sq ft × size", () => {
+    const { arvEstimate, arvBasis } = estimateArv(comps, 633);
+    // 250,000 − (1,326 − 633) × (250,000 / 1,326) × 50%, the upper quartile.
+    expect(arvEstimate).toBe(Math.round(250000 - 693 * (250000 / 1326) * 0.5));
+    expect(arvEstimate).toBeGreaterThan(180000);
+    expect(arvBasis).toContain(
+      "50% smaller than the typical comp (1,257 sq ft)",
+    );
+    expect(arvBasis).toContain("smaller homes sell for more per sq ft");
   });
 });
 
@@ -1211,24 +1298,36 @@ describe("ARV and the sites' estimates", () => {
     expect(valueEstimates(null, null).average).toBeNull();
   });
 
-  it("blends in non-disclosure states, and only notes a gap elsewhere", () => {
+  it("never goes under the as-is estimates; blends a higher ARV in non-disclosure states", () => {
     const estimates = valueEstimates(500000, 480000);
-    expect(
-      blendArv({ compsArv: 410180, estimates, state: "TX" }).arvEstimate,
-    ).toBe(450090);
+    // Under the estimates, anywhere: the estimates' average.
+    for (const state of ["TX", "TN"]) {
+      const under = blendArv({ compsArv: 410180, estimates, state });
+      expect(under.arvEstimate).toBe(490000);
+      expect(under.note).toBe(
+        "The comps came to $410,180, under the Zestimate/Redfin Estimate average ($490,000) — what the house is worth as it stands. The value after repairs isn't lower than that, so the ARV is $490,000.",
+      );
+    }
     expect(
       blendArv({ compsArv: null, estimates, state: "TX" }).arvEstimate,
     ).toBe(490000);
-
-    const elsewhere = blendArv({ compsArv: 410180, estimates, state: "TN" });
-    expect(elsewhere.arvEstimate).toBe(410180);
+    // Over them: averaged in Texas, the comps' elsewhere (a big gap noted).
+    expect(
+      blendArv({ compsArv: 600000, estimates, state: "TX" }).arvEstimate,
+    ).toBe(545000);
+    const elsewhere = blendArv({ compsArv: 600000, estimates, state: "TN" });
+    expect(elsewhere.arvEstimate).toBe(600000);
     expect(elsewhere.note).toBe(
-      "The comps ARV is 16% under the Zestimate/Redfin Estimate average ($490,000).",
+      "The comps ARV is 22% over the Zestimate/Redfin Estimate average ($490,000).",
     );
     // Within 10%: nothing to point out.
     expect(
-      blendArv({ compsArv: 470000, estimates, state: "TN" }).note,
+      blendArv({ compsArv: 500000, estimates, state: "TN" }).note,
     ).toBeNull();
+    // No estimates: the comps' ARV.
+    expect(
+      blendArv({ compsArv: 410180, estimates: null, state: "TN" }).arvEstimate,
+    ).toBe(410180);
   });
 });
 

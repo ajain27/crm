@@ -61,6 +61,9 @@ function location(home) {
     : undefined;
 }
 
+// A comp's condition as the comps review judged it; "unknown" shows none.
+const CONDITION_LABELS = { renovated: "Renovated", "as-is": "As-is" };
+
 function PropertyCell({ home, isSubject }) {
   const [street, rest] = addressLines(home.address);
   return (
@@ -73,6 +76,14 @@ function PropertyCell({ home, isSubject }) {
           <span className="lcp-street">
             {street}
             {isSubject && <span className="lcp-subject-badge">Subject</span>}
+            {CONDITION_LABELS[home.condition] && (
+              <span
+                className={`lcp-condition lcp-condition--${home.condition}`}
+                title={home.reason || undefined}
+              >
+                {CONDITION_LABELS[home.condition]}
+              </span>
+            )}
           </span>
           <span className="lcp-city">
             {rest}

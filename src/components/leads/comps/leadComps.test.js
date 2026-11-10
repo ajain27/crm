@@ -28,7 +28,9 @@ const RESULT = {
       lng: -97.71,
       url: "https://www.redfin.com/x",
       differs: null,
-      reason: "Very similar",
+      reason: "Very similar; listing says fully renovated",
+      condition: "renovated",
+      meetsRules: true,
     },
     {
       address: "9 Elm St, Austin, TX 78701",
@@ -122,7 +124,15 @@ describe("compsResultToSave", () => {
   it("keeps only what the table and map need", () => {
     const saved = compsResultToSave(RESULT);
     expect(saved.location).toEqual({ lat: 30.1, lng: -97.7 });
-    expect(saved.topComps[0]).not.toHaveProperty("reason");
+    expect(saved.topComps[0]).not.toHaveProperty("meetsRules");
+    // Each comp's condition, and why, for the table's tag.
+    expect(saved.topComps[0]).toMatchObject({
+      condition: "renovated",
+      reason: "Very similar; listing says fully renovated",
+    });
+    expect(leadComps({ compsResult: saved }).comps[0].condition).toBe(
+      "renovated",
+    );
   });
 
   it("keeps the property's pages, for the Redfin and Zillow links", () => {

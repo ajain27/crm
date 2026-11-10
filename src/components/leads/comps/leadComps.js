@@ -64,6 +64,8 @@ function fromResult(result, address) {
       distance: numberOrNull(c.distance),
       url: c.url || "",
       differs: c.differs || null,
+      condition: c.condition || null,
+      reason: c.reason || null,
       ...point(c.lat, c.lng),
     })),
   };
@@ -173,6 +175,9 @@ export function compsResultToSave(result, runAt = new Date()) {
       lng: numberOrNull(c.lng),
       url: c.url || "",
       differs: c.differs || null,
+      // "renovated", "as-is" or "unknown", and why (the comps review's).
+      condition: c.condition || null,
+      reason: c.reason || null,
     })),
   };
 }

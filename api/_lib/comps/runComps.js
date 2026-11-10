@@ -17,18 +17,22 @@
 //      how closely they match. The top 5 are shown; any outside the rules
 //      are labeled with exactly how they differ. When there are no sales
 //      at all, the search widens to 2 miles over 12 months.
-//   4. Claude (optional) reviews the top candidates, drops bad or
-//      irrelevant comps and picks the 5 closest. It never estimates value.
-//      Without Claude, or if it fails, the ranking's top 5 are used.
+//   4. Claude (optional) reviews the top candidates — with what web
+//      search results say about each sale — drops bad or irrelevant comps,
+//      labels each picked sale renovated, as-is or unknown, and picks the 5
+//      closest, renovated ones first. It never estimates value. Without
+//      Claude, or if it fails, the ranking's top 5 are used.
 //   5. The property's own history (sales, listings, taxes) comes from the
 //      same pages, read in the same scrape.
 //   6. The listing's main photo (from the same pages; Street View for a
 //      home with none) is downloaded so it can be added to the lead.
-//   7. ARV is worked out in code from the final comps: the upper quartile
-//      of their price per sq ft × the subject's size. The Zestimate and
-//      Redfin Estimate (from the same pages) are averaged; in states that
-//      don't publish sale prices (Texas…), where comps can be well off, the
-//      ARV is the average of the comps' ARV and that estimate.
+//   7. ARV is worked out in code from the final comps — just the renovated
+//      ones when at least 2 are — mostly the upper quartile of their price
+//      per sq ft × the subject's size (see estimateArv). The Zestimate and
+//      Redfin Estimate (from the same pages) are averaged and are a floor
+//      for the ARV; in states that don't publish sale prices (Texas…),
+//      where comps can be well off, a higher comps ARV is averaged with
+//      them (see blendArv).
 //
 // Env: SERPER_API_KEY, FIRECRAWL_API_KEY and/or CRAWL4AI_API_KEY
 // (required); ANTHROPIC_API_KEY
@@ -60,13 +64,13 @@ import { fetchRedfinSold } from "./sales.js";
 import { fetchMajorHighways } from "./highways.js";
 import { rankComps } from "./rank.js";
 import { claudeReview } from "./review.js";
+import { fetchListingNotes } from "./condition.js";
 import {
   NON_DISCLOSURE_STATES,
   blendArv,
   estimateArv,
   plural,
   ruleReason,
-  poorSizeMatch,
   stateFromAddress,
   valueEstimates,
 } from "./arv.js";
@@ -275,14 +279,23 @@ export async function runComps(
     .map((m) => ({ ...m, reason: ruleReason(m) }));
   if (env.ANTHROPIC_API_KEY && candidates.length > 0) {
     try {
+      const listingNotes = await fetchListingNotes(
+        candidates,
+        env.SERPER_API_KEY,
+      );
       const review = await claudeReview(
         property,
         candidates,
         env.ANTHROPIC_API_KEY,
+        listingNotes,
       );
       picked = review.selected
         .slice(0, COMP_RULES.maxComps)
-        .map(({ id, reason }) => ({ ...candidates[Number(id)], reason }));
+        .map(({ id, reason, condition }) => ({
+          ...candidates[Number(id)],
+          reason,
+          condition,
+        }));
       removedByAi = review.removed.map(({ id, reason }) => ({
         address: candidates[Number(id)].address,
         reason,
@@ -313,18 +326,28 @@ export async function runComps(
     url: c.url,
     source: "Redfin",
     reason: c.reason,
+    // "renovated", "as-is" or "unknown" (as Claude judged it; "unknown"
+    // without Claude).
+    condition: c.condition || "unknown",
   }));
   const outsideRules = topComps.filter((c) => !c.meetsRules).length;
-  const { arvEstimate: compsArv, arvBasis } = estimateArv(
-    topComps,
+  // ARV is the value after repair: when enough comps look renovated, only
+  // their sales set it.
+  const renovated = topComps.filter((c) => c.condition === "renovated");
+  const arvComps =
+    renovated.length >= COMP_RULES.minRenovatedComps ? renovated : topComps;
+  const { arvEstimate: compsArv, arvBasis: basis } = estimateArv(
+    arvComps,
     property.sqft,
-    { hasEstimates: estimates.average !== null },
   );
+  const arvBasis =
+    arvComps === renovated && renovated.length < topComps.length
+      ? `${basis} Only the ${renovated.length} comps that look renovated count — the others look as-is or unclear.`
+      : basis;
   const { arvEstimate, note: estimateNote } = blendArv({
     compsArv,
     estimates,
     state,
-    poorSizeMatch: poorSizeMatch(topComps, property.sqft),
   });
   const photo = await photoData;
 

@@ -13,6 +13,13 @@ export const COMP_RULES = {
   maxComps: 5,
   // The ARV never goes more than this share over the highest comp sale.
   arvOverTopSale: 0.1,
+  // For a property much smaller than its comps, each sq ft of difference
+  // is worth this share of a comp's $/sq ft: smaller homes sell for more
+  // per sq ft, so scaling $/sq ft straight down undervalues them.
+  sqftDifferenceValue: 0.5,
+  // How many comps that look renovated it takes for the ARV to be worked
+  // out from them alone.
+  minRenovatedComps: 2,
   // Sales under this share of the area's typical price per sq ft (or price,
   // without a size) are taken as distressed and left out — ARV is the
   // value after repair, so as-is shells and auction sales don't count.
