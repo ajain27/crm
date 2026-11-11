@@ -1,7 +1,13 @@
 // Search across every lead list at once: Residential, Commercial, PPC, PPL,
 // Cold Calling and County Records.
 
-import { leadAddress, leadTabOf, sellerNameOf } from "./leadUtils";
+import {
+  leadAddress,
+  leadMatchesSearch,
+  leadTabOf,
+  matchesQuery,
+  sellerNameOf,
+} from "./leadUtils";
 import {
   countyRecordFields,
   phoneNumbers,
@@ -17,48 +23,13 @@ export const SEARCH_GROUPS = [
   { id: "county", label: "County Records" },
 ];
 
-const digitsOf = (value) => String(value || "").replace(/\D/g, "");
+export { matchesQuery };
 
-// Whether `values` (a record's fields) match `query`. A query that's only
-// a number ("313 682", "(313) 682-2695", "4601") matches by digits, so a
-// phone is found however it's written; otherwise every word must appear
-// somewhere ("leah allen park").
-export function matchesQuery(values, query) {
-  const q = String(query || "")
-    .trim()
-    .toLowerCase();
-  if (!q) return false;
-  const queryDigits = digitsOf(q);
-  if (queryDigits.length >= 3 && /^[\d\s().+-]+$/.test(q)) {
-    return values.some((v) => digitsOf(v).includes(queryDigits));
-  }
-  const text = values
-    .filter(Boolean)
-    .map((v) => String(v).toLowerCase())
-    .join(" ");
-  return q.split(/\s+/).every((word) => text.includes(word));
-}
-
-// Leads (from every tab) matching `query`, each with its tab.
+// Leads (from every tab) matching `query` in any field, each with its
+// tab.
 export function searchLeads(leads, query) {
   return leads
-    .filter((lead) =>
-      matchesQuery(
-        [
-          sellerNameOf(lead),
-          lead.name,
-          leadAddress(lead),
-          lead.city,
-          lead.state,
-          lead.zipCode,
-          lead.phone,
-          lead.phone2,
-          lead.email,
-          lead.sellerEmail,
-        ],
-        query,
-      ),
-    )
+    .filter((lead) => leadMatchesSearch(lead, query))
     .map((lead) => ({
       key: `lead-${lead.id}`,
       group: leadTabOf(lead),

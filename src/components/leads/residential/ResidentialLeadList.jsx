@@ -36,14 +36,6 @@ export const RESIDENTIAL_FILTERS = {
   called: "",
 };
 
-const SEARCH_FIELDS = [
-  "address",
-  "phone",
-  "agentPhone",
-  "sellerName",
-  "agentName",
-];
-
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
@@ -76,7 +68,7 @@ export default function ResidentialLeadList({
   const filtered = leads
     .filter(
       (l) =>
-        leadMatchesSearch(l, search, SEARCH_FIELDS) &&
+        leadMatchesSearch(l, search) &&
         (!filters.source || l.source === filters.source) &&
         (!filters.state || parseAddress(l.address).state === filters.state) &&
         matchesCallFilter(l, filters.called),
@@ -93,7 +85,7 @@ export default function ResidentialLeadList({
       <LeadSearchInput
         value={search}
         onChange={listState.setSearch}
-        placeholder="Search address, name or phone…"
+        placeholder="Search anything: name, address, phone, notes…"
       />
       <select
         value={filters.source}

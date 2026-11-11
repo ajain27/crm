@@ -28,18 +28,6 @@ import {
   sellerNameOf,
 } from "../leadUtils";
 
-const SEARCH_FIELDS = [
-  "name",
-  "address",
-  "source",
-  "phone",
-  "phone2",
-  "sellerEmail",
-  "sellerName",
-  "firstName",
-  "lastName",
-];
-
 export default function CommercialLeadList({
   leads,
   listState,
@@ -55,7 +43,7 @@ export default function CommercialLeadList({
   const { selectedIds } = listState;
   const filtered = leads.filter(
     (l) =>
-      leadMatchesSearch(l, listState.search, SEARCH_FIELDS) &&
+      leadMatchesSearch(l, listState.search) &&
       matchesCallFilter(l, listState.filters.called),
   );
   const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
@@ -65,7 +53,7 @@ export default function CommercialLeadList({
       <LeadSearchInput
         value={listState.search}
         onChange={listState.setSearch}
-        placeholder="Search name, seller, address or phone…"
+        placeholder="Search anything: name, address, phone, notes…"
       />
       <LeadCallFilter listState={listState} />
       <LeadClearFilters listState={listState} />

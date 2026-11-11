@@ -113,7 +113,7 @@ export default function GlobalLeadSearch({
         <input
           type="search"
           className="global-search-input"
-          placeholder="Search all leads: name, address, phone, email…"
+          placeholder="Search all leads by anything: name, address, phone, notes…"
           aria-label="Search all leads"
           value={query}
           onChange={(e) => {

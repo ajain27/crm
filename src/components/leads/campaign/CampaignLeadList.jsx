@@ -34,16 +34,6 @@ import {
   sellerNameOf,
 } from "../leadUtils";
 
-const SEARCH_FIELDS = [
-  "address",
-  "sellerName",
-  "firstName",
-  "lastName",
-  "email",
-  "phone",
-  "phone2",
-];
-
 // PPC leads are tinted by their PPC rating, the others by their own.
 function rowClassName(lead, clickable, isPpc, readOnly) {
   const quality = readOnly
@@ -86,7 +76,7 @@ export default function CampaignLeadList({
 
   const filtered = leads.filter(
     (l) =>
-      leadMatchesSearch(l, listState.search, SEARCH_FIELDS) &&
+      leadMatchesSearch(l, listState.search) &&
       (!showCalls || matchesCallFilter(l, listState.filters.called)),
   );
 
@@ -97,7 +87,7 @@ export default function CampaignLeadList({
       <LeadSearchInput
         value={listState.search}
         onChange={listState.setSearch}
-        placeholder="Search name, email, phone or address…"
+        placeholder="Search anything: name, address, phone, notes…"
       />
       {showCalls && <LeadCallFilter listState={listState} />}
       <LeadClearFilters listState={listState} />

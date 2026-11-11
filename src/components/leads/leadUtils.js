@@ -379,16 +379,54 @@ export function cashOfferText(lead) {
   ].join(" ");
 }
 
-// Case-insensitive "does any of these fields contain the query" check used
-// by every lead list's search box.
-export function leadMatchesSearch(lead, query, fields) {
-  if (!query) return true;
-  const q = query.toLowerCase();
-  return fields.some((field) =>
-    String(lead[field] || "")
-      .toLowerCase()
-      .includes(q),
-  );
+const digitsOf = (value) => String(value || "").replace(/\D/g, "");
+
+// Whether `values` (a record's fields) match `query`. A query that's only
+// a number ("313 682", "(313) 682-2695", "4601") matches by digits, so a
+// phone is found however it's written; otherwise every word must appear
+// somewhere ("leah allen park").
+export function matchesQuery(values, query) {
+  const q = String(query || "")
+    .trim()
+    .toLowerCase();
+  if (!q) return false;
+  const queryDigits = digitsOf(q);
+  if (queryDigits.length >= 3 && /^[\d\s().+-]+$/.test(q)) {
+    return values.some((v) => digitsOf(v).includes(queryDigits));
+  }
+  const text = values
+    .filter((v) => v !== null && v !== undefined && v !== "")
+    .map((v) => String(v).toLowerCase())
+    .join(" ");
+  return q.split(/\s+/).every((word) => text.includes(word));
+}
+
+// Lead fields nobody searches by: ids, timestamps, links and saved data
+// (photos, comps).
+const UNSEARCHED_FIELD =
+  /^(id|uid|userId|wpId|photos|compsResult)$|Id$|At$|(^url|Url)$/;
+
+const isText = (v) =>
+  (typeof v === "string" && v.trim() !== "") || typeof v === "number";
+
+// Everything on a lead it can be searched by: every field (name, address,
+// phones, email, source, status, notes, agent…) and imported extra columns.
+export function leadSearchValues(lead) {
+  return Object.entries(lead || {}).flatMap(([key, value]) => {
+    if (UNSEARCHED_FIELD.test(key)) return [];
+    if (isText(value)) return [value];
+    if (Array.isArray(value)) return value.filter(isText);
+    if (key === "extraFields" && value && typeof value === "object") {
+      return Object.values(value).filter(isText);
+    }
+    return [];
+  });
+}
+
+// Every lead list's search box: matches anything on the lead.
+export function leadMatchesSearch(lead, query) {
+  if (!String(query || "").trim()) return true;
+  return matchesQuery(leadSearchValues(lead), query);
 }
 
 // The Called filter: "called" keeps leads called at least once,

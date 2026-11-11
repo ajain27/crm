@@ -46,9 +46,29 @@ describe("leadUtils", () => {
 
   it("matches a search query case-insensitively across fields", () => {
     const lead = { sellerName: "Jane Doe", phone: null };
-    expect(leadMatchesSearch(lead, "jane", ["sellerName", "phone"])).toBe(true);
-    expect(leadMatchesSearch(lead, "bob", ["sellerName", "phone"])).toBe(false);
-    expect(leadMatchesSearch(lead, "", ["sellerName"])).toBe(true);
+    expect(leadMatchesSearch(lead, "jane")).toBe(true);
+    expect(leadMatchesSearch(lead, "bob")).toBe(false);
+    expect(leadMatchesSearch(lead, "")).toBe(true);
+  });
+
+  it("searches anything on a lead, not ids, dates or links", () => {
+    const lead = {
+      id: "abc123",
+      address: "1 Main St",
+      notes: "Roof leaks, wants to sell before winter",
+      source: "Driving for Dollars",
+      sellerMotivation: "Divorce",
+      extraFields: { "Parcel ID": "44-102-7" },
+      createdAt: "2026-11-01T10:00:00Z",
+      listingUrl: "https://zillow.com/xyz",
+    };
+    expect(leadMatchesSearch(lead, "roof winter")).toBe(true);
+    expect(leadMatchesSearch(lead, "driving")).toBe(true);
+    expect(leadMatchesSearch(lead, "divorce")).toBe(true);
+    expect(leadMatchesSearch(lead, "44-102")).toBe(true);
+    expect(leadMatchesSearch(lead, "abc123")).toBe(false);
+    expect(leadMatchesSearch(lead, "2026")).toBe(false);
+    expect(leadMatchesSearch(lead, "zillow")).toBe(false);
   });
 
   it("parses a full address into parts", () => {
