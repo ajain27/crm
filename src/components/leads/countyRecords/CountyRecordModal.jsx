@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { ChartColumn, Check, Plus, Save, Trash2 } from "lucide-react";
+import {
+  Calculator,
+  ChartColumn,
+  Check,
+  Plus,
+  Save,
+  Trash2,
+} from "lucide-react";
+import DealAnalysisModal from "../../dealAnalyzer/components/quickAnalysis/DealAnalysisModal";
 import Modal from "../../modal/Modal";
 import {
   countyRecordFields,
@@ -74,7 +82,9 @@ export default function CountyRecordModal({
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
-  const { address, ownerName } = countyRecordFields(columns, draft);
+  // The Analyze window: wholesale and novation numbers, and the report.
+  const [analyzeOpen, setAnalyzeOpen] = useState(false);
+  const { address, ownerName, phones } = countyRecordFields(allColumns, draft);
   // Prefilled when a number is texted, as on deals and leads.
   const textBody = cashOfferText({ address });
 
@@ -253,6 +263,12 @@ export default function CountyRecordModal({
                     title="Pull comps from Zillow, Redfin and Realtor.com"
                   />
                 )}
+                <ActionButton
+                  icon={Calculator}
+                  label="Analyze"
+                  onClick={() => setAnalyzeOpen(true)}
+                  disabled={busy}
+                />
                 {alreadyInCrm ? (
                   <ActionButton
                     icon={Check}
@@ -361,6 +377,20 @@ export default function CountyRecordModal({
         address={address}
         noteSavedLabel="Saved to this record"
       />
+      {analyzeOpen && (
+        <DealAnalysisModal
+          isOpen
+          onClose={() => setAnalyzeOpen(false)}
+          item={{
+            address,
+            ownerName,
+            phones,
+            source: "County Records",
+            compsResult: compsRecord?.compsResult,
+          }}
+          address={address}
+        />
+      )}
     </>
   );
 }

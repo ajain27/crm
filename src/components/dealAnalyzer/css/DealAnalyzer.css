@@ -1324,6 +1324,22 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   }
 
+  /* A long report at full width, scrolling, rather than shrunk to fit. */
+  .pdf-report-preview-dialog--scroll {
+    width: min(94vw, 900px);
+    max-width: 900px;
+  }
+
+  .pdf-report-preview-dialog--scroll .pdf-report-preview-body {
+    display: block;
+    padding: 1rem;
+  }
+
+  .pdf-report-preview-dialog--scroll .pdf-report-preview-image {
+    width: 100%;
+    max-height: none;
+  }
+
   .seller-finance-property-grid {
     grid-template-columns: minmax(280px, 480px) minmax(180px, 220px);
   }

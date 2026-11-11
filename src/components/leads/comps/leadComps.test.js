@@ -171,4 +171,42 @@ describe("shortPrice", () => {
     expect(shortPrice(10000000)).toBe("$10M");
     expect(shortPrice(null)).toBe("—");
   });
+
+  it("keeps the other nearby sales and how the ARV was found", () => {
+    const saved = compsResultToSave({
+      address: "1 Main St",
+      summary: "Only the renovated comps set the ARV.",
+      otherSales: [
+        {
+          address: "2 Oak St",
+          price: 150000,
+          sqft: 1100,
+          distance: 0.4,
+          soldDate: "2026-05-01",
+          reason: "Price outlier",
+          lat: 1,
+        },
+      ],
+      topComps: [],
+    });
+    expect(saved.summary).toBe("Only the renovated comps set the ARV.");
+    expect(saved.otherSales).toEqual([
+      {
+        address: "2 Oak St",
+        price: 150000,
+        beds: null,
+        baths: null,
+        sqft: 1100,
+        yearBuilt: null,
+        soldDate: "2026-05-01",
+        distance: 0.4,
+        url: "",
+        reason: "Price outlier",
+      },
+    ]);
+    expect(leadComps({ compsResult: saved }).otherSales[0]).toMatchObject({
+      address: "2 Oak St",
+      reason: "Price outlier",
+    });
+  });
 });

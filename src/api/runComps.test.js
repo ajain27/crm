@@ -556,6 +556,16 @@ describe("run-comps", () => {
         reason: "Price outlier",
       },
     ]);
+    // The other sales looked at are kept too, with why they weren't used.
+    expect(out.otherSales).toHaveLength(5);
+    expect(
+      out.otherSales.find((c) => c.address.startsWith("608 Northaven Dr")),
+    ).toMatchObject({ reason: "Price outlier" });
+    expect(
+      out.otherSales
+        .map((c) => c.address)
+        .filter((a) => out.topComps.some((t) => t.address === a)),
+    ).toEqual([]);
 
     // Claude gets the ranked candidates with how each misses the rules,
     // must answer in the review schema, and isn't asked for a value.

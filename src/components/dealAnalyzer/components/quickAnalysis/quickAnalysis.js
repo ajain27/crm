@@ -37,7 +37,8 @@ export function analysisDefaults(item = {}) {
   const fee = parseCurrency(item.desiredProfit);
   const buyersProfit = parsePercent(item.buyersProfit);
   return {
-    arv: parseCurrency(item.arv),
+    // The deal's ARV, else the one its comps came to.
+    arv: parseCurrency(item.arv) || Number(item.compsResult?.arvEstimate) || 0,
     rehabType: item.rehabType || "",
     repairCost:
       item.rehabType && rehab.rehabCostReady ? rehab.totalRehabCost : "",

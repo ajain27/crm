@@ -330,6 +330,30 @@ export async function runComps(
     // without Claude).
     condition: c.condition || "unknown",
   }));
+  // The other nearby sales that were looked at but not picked, with why
+  // (Claude's reason when it removed one), for a full list of comps.
+  const pickedAddresses = new Set(picked.map((c) => c.address));
+  const removedReasons = new Map(
+    removedByAi.map(({ address: a, reason }) => [a, reason]),
+  );
+  const otherSales = candidates
+    .filter((c) => !pickedAddresses.has(c.address))
+    .map((c) => ({
+      address: c.address,
+      price: c.price,
+      beds: c.beds,
+      baths: c.baths,
+      sqft: isNum(c.sqft) ? c.sqft : null,
+      yearBuilt: isNum(c.yearBuilt) ? c.yearBuilt : null,
+      soldDate: c.soldDate,
+      distance: c.distance,
+      url: c.url,
+      reason:
+        removedReasons.get(c.address) ||
+        (c.misses.length
+          ? c.misses.map(([, label]) => label).join(" · ")
+          : "Less alike than the comps picked"),
+    }));
   const outsideRules = topComps.filter((c) => !c.meetsRules).length;
   // ARV is the value after repair: when enough comps look renovated, only
   // their sales set it.
@@ -433,6 +457,7 @@ export async function runComps(
       removedByAi,
     },
     topComps,
+    otherSales,
     arvEstimate,
     // The ARV from the comps alone, and the sites' own estimates.
     compsArv,

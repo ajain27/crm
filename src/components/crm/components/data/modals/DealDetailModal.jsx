@@ -1591,6 +1591,9 @@ function DealDetailModal({
           onClose={() => setAnalyzeOpen(false)}
           item={draft}
           address={formatFullAddress(draft)}
+          photoStore={photoStore}
+          ownerId={deal.id}
+          photos={deal.photos}
         />
       )}
       {compsState.runOpen && (

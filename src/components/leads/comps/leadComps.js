@@ -38,6 +38,17 @@ function fromResult(result, address) {
     rent: numberOrNull(result.rentEstimate),
     estimates: result.valueEstimates || null,
     listingUrls: result.listingUrls || {},
+    summary: result.summary || "",
+    otherSales: (result.otherSales || []).map((c) => ({
+      address: c.address,
+      price: numberOrNull(c.price),
+      beds: numberOrNull(c.beds),
+      baths: numberOrNull(c.baths),
+      sqft: numberOrNull(c.sqft),
+      soldDate: c.soldDate || null,
+      distance: numberOrNull(c.distance),
+      reason: c.reason || null,
+    })),
     subject: {
       address: result.address || address,
       price: null,
@@ -161,6 +172,21 @@ export function compsResultToSave(result, runAt = new Date()) {
     },
     // The property's sales, listings and taxes, read in the same run.
     history: historyToSave(result.history, runAt),
+    // How the ARV was found, as the run explained it.
+    summary: result.summary || "",
+    // The other nearby sales the run looked at, and why each wasn't used.
+    otherSales: (result.otherSales || []).map((c) => ({
+      address: c.address,
+      price: numberOrNull(c.price),
+      beds: numberOrNull(c.beds),
+      baths: numberOrNull(c.baths),
+      sqft: numberOrNull(c.sqft),
+      yearBuilt: numberOrNull(c.yearBuilt),
+      soldDate: c.soldDate || null,
+      distance: numberOrNull(c.distance),
+      url: c.url || "",
+      reason: c.reason || null,
+    })),
     topComps: (result.topComps || []).map((c) => ({
       address: c.address,
       price: numberOrNull(c.price),

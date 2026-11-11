@@ -378,6 +378,9 @@ export default function CommercialLeadDetailModal({
           onClose={() => setAnalyzeOpen(false)}
           item={draft}
           address={draft.address}
+          photoStore={photoStore}
+          ownerId={lead?.id}
+          photos={draft.photos}
         />
       )}
     </>

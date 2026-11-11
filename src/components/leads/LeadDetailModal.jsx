@@ -638,6 +638,9 @@ export default function LeadDetailModal({
           onClose={() => setAnalyzeOpen(false)}
           item={draft}
           address={draft.address}
+          photoStore={photoStore}
+          ownerId={lead?.id}
+          photos={draft.photos}
         />
       )}
     </>
