@@ -134,9 +134,10 @@ export default function DealAnalysisModal({
   const [repairCost, setRepairCost] = useState(
     defaults.repairCost === "" ? "" : String(defaults.repairCost),
   );
-  const [wholesaleFee, setWholesaleFee] = useState(
-    String(defaults.wholesaleFee),
-  );
+  // Each strategy has its own fee: what you'd make on a cash offer
+  // (assigned to a buyer) and on a novation.
+  const [cashFee, setCashFee] = useState(String(defaults.wholesaleFee));
+  const [novationFee, setNovationFee] = useState(String(defaults.novationFee));
   const [buyersProfit, setBuyersProfit] = useState(
     String(defaults.buyersProfitPct),
   );
@@ -157,11 +158,18 @@ export default function DealAnalysisModal({
   const inputs = {
     arv: parseCurrency(arv),
     repairs,
-    wholesaleFee: parseCurrency(wholesaleFee),
+    cashFee: parseCurrency(cashFee),
+    novationFee: parseCurrency(novationFee),
     buyersProfitPct: Math.min(99, Number(buyersProfit) || 0),
   };
-  const wholesale = wholesaleNumbers(inputs);
-  const novation = novationNumbers(inputs);
+  const wholesale = wholesaleNumbers({
+    ...inputs,
+    wholesaleFee: inputs.cashFee,
+  });
+  const novation = novationNumbers({
+    ...inputs,
+    wholesaleFee: inputs.novationFee,
+  });
   const showNumbers = inputs.arv > 0 && answered;
 
   // The report, mounted off-screen only while it's being captured.
@@ -291,11 +299,19 @@ export default function DealAnalysisModal({
                 />
               </label>
               <label className="qa-field">
-                <span>Wholesale fee</span>
+                <span>Cash offer fee</span>
                 <CurrencyInput
-                  value={wholesaleFee}
-                  onValueChange={setWholesaleFee}
-                  aria-label="Wholesale fee"
+                  value={cashFee}
+                  onValueChange={setCashFee}
+                  aria-label="Cash offer fee"
+                />
+              </label>
+              <label className="qa-field">
+                <span>Novation fee</span>
+                <CurrencyInput
+                  value={novationFee}
+                  onValueChange={setNovationFee}
+                  aria-label="Novation fee"
                 />
               </label>
               <label className="qa-field">

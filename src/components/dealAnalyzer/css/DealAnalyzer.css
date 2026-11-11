@@ -305,6 +305,14 @@
     margin: 0;
   }
 
+  /* html2canvas finds where text sits by putting this 1×1 image beside
+     sample text. Tailwind's base style makes images block-level, which
+     drops the image onto its own line, so every PDF's text was drawn a few
+     pixels low (and cut off at the bottom). Only its probe image matches. */
+  img[src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"] {
+    display: inline !important;
+  }
+
   /* ── Shared deal-analyzer PDF export template (always light, print-ready) ── */
   .mm-pdf-container {
     position: fixed;

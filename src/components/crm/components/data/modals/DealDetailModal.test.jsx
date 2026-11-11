@@ -92,12 +92,17 @@ describe("DealDetailModal", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Analyze" }));
     expect(screen.getByLabelText("ARV")).toHaveValue("$450,000");
-    expect(screen.getByLabelText("Wholesale fee")).toHaveValue("$15,000");
+    // Each strategy has its own fee, both starting at the deal's.
+    expect(screen.getByLabelText("Cash offer fee")).toHaveValue("$15,000");
+    expect(screen.getByLabelText("Novation fee")).toHaveValue("$15,000");
     fireEvent.click(screen.getByRole("radio", { name: /Light/ }));
     fireEvent.change(screen.getByLabelText("Repair cost"), {
       target: { value: "40000" },
     });
-    // 450,000 − 30% − 40,000 − 15,000; novation 450,000 × 90% − 40,000 − 15,000.
+    fireEvent.change(screen.getByLabelText("Novation fee"), {
+      target: { value: "20000" },
+    });
+    // 450,000 − 30% − 40,000 − 15,000; novation 450,000 × 90% − 40,000 − 20,000.
     expect(
       within(screen.getByRole("region", { name: "Wholesale" })).getAllByText(
         "$260,000",
@@ -105,7 +110,7 @@ describe("DealDetailModal", () => {
     ).toBeGreaterThan(0);
     expect(
       within(screen.getByRole("region", { name: "Novation" })).getAllByText(
-        "$350,000",
+        "$345,000",
       ).length,
     ).toBeGreaterThan(0);
   });

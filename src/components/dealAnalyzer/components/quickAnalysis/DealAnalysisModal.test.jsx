@@ -85,6 +85,9 @@ describe("DealAnalysisModal report", () => {
     fireEvent.change(screen.getByLabelText("Repair cost"), {
       target: { value: "30000" },
     });
+    fireEvent.change(screen.getByLabelText("Novation fee"), {
+      target: { value: "20000" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "View report" }));
 
     // Shown first; nothing is saved until Download PDF.
@@ -108,6 +111,8 @@ describe("DealAnalysisModal report", () => {
     expect(text).toContain("$163,600");
     // MAO: 184,672 − 30% − 30,000 − 10,000.
     expect(text).toContain("$89,270");
+    // Novation: 184,672 × 90% − 30,000 − 20,000 (its own fee).
+    expect(text).toContain("$116,205");
     expect(text).toContain("Offer to seller");
     expect(text).toContain("Only the renovated comps set the ARV.");
     // Every sale looked at, and why the others weren't used.

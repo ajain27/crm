@@ -43,6 +43,8 @@ export function analysisDefaults(item = {}) {
     repairCost:
       item.rehabType && rehab.rehabCostReady ? rehab.totalRehabCost : "",
     wholesaleFee: fee > 0 ? fee : DEFAULT_WHOLESALE_FEE,
+    // Starts the same as the cash offer's fee; the window asks for each.
+    novationFee: fee > 0 ? fee : DEFAULT_WHOLESALE_FEE,
     buyersProfitPct:
       buyersProfit > 0 && buyersProfit < 100
         ? buyersProfit

@@ -385,7 +385,8 @@ const LeadReportPdf = forwardRef(function LeadReportPdf(
           <p className="lr-repairs">
             Work needed: <strong>{workLabel}</strong> · Repair cost{" "}
             <strong>{money(inputs.repairs)}</strong> · Your fee{" "}
-            <strong>{money(inputs.wholesaleFee)}</strong>
+            <strong>{money(inputs.cashFee)}</strong> cash,{" "}
+            <strong>{money(inputs.novationFee)}</strong> novation
           </p>
           <BarChart
             rows={[

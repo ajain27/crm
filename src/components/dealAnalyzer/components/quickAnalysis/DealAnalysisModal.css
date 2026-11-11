@@ -494,17 +494,19 @@
 
   .lr-bar-row {
     display: grid;
-    grid-template-columns: 150px 1fr 90px;
+    grid-template-columns: 170px 1fr 90px;
     align-items: center;
     gap: 10px;
     font-size: 11.5px;
   }
 
+  /* No overflow clipping here: the PDF capture draws text a little lower
+     than the browser, so a clipped box cuts the bottom of its letters.
+     Long street names wrap instead. */
   .lr-bar-label {
     color: #4b5563;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.35;
+    padding: 1px 0;
   }
 
   .lr-bar-track {

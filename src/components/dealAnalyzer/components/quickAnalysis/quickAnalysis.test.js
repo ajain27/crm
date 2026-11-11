@@ -56,6 +56,7 @@ describe("analysisDefaults", () => {
       rehabType: "",
       repairCost: "",
       wholesaleFee: 10000,
+      novationFee: 10000,
       buyersProfitPct: 30,
       askingPrice: 200000,
       sqft: 1400,
@@ -77,6 +78,7 @@ describe("analysisDefaults", () => {
       rehabType: "light",
       repairCost: 25000,
       wholesaleFee: 15000,
+      novationFee: 15000,
       buyersProfitPct: 25,
       state: "GA",
     });
