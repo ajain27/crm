@@ -8,6 +8,16 @@ import { buildDealFromLead, parseAddress } from "../leadUtils";
 const PROPERTY_PREFIX = "(situs|site|property|prop|location|physical|parcel)";
 const MAILING = /mail/i;
 
+// Columns holding a phone number ("Phone", "Phone 2", "Cell", "Mobile"…).
+export const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone/i;
+export const PHONE_NUMBER =
+  /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g;
+
+// Every phone number in a cell: "(313) 274-5192; (727) 785-9729" → both.
+export function phoneNumbers(text) {
+  return [...String(text || "").matchAll(PHONE_NUMBER)].map((m) => m[0]);
+}
+
 const FIELDS = {
   street: {
     patterns: [
@@ -101,7 +111,30 @@ export function countyRecordFields(columns, row) {
   const ownerName =
     value("ownerName") || [firstName, lastName].filter(Boolean).join(" ");
 
-  return { address, ownerName, firstName, lastName, phone: value("phone") };
+  // Every number in every phone column (fax and mailing ones aside), each
+  // once.
+  const seen = new Set();
+  const phones = columns
+    .flatMap((column, i) =>
+      PHONE_COLUMN.test(column) && !/fax|mail/i.test(column)
+        ? phoneNumbers(row[i])
+        : [],
+    )
+    .filter((phone) => {
+      const digits = phone.replace(/\D/g, "").slice(-10);
+      if (seen.has(digits)) return false;
+      seen.add(digits);
+      return true;
+    });
+
+  return {
+    address,
+    ownerName,
+    firstName,
+    lastName,
+    phone: phones[0] || value("phone"),
+    phones,
+  };
 }
 
 // Builds a CRM deal from a county record, or null when no property
@@ -128,6 +161,7 @@ export function buildDealFromCountyRecord({
       firstName: fields.firstName,
       lastName: fields.lastName,
       phone: fields.phone,
+      phones: fields.phones.slice(1),
       source: "County Records",
       arv: comps?.arv || "",
       notes: [

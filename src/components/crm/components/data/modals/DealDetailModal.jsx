@@ -65,6 +65,7 @@ import {
   ExtraDetails,
   RedfinLink,
   TextLink,
+  CopyButton,
   ZillowLink,
 } from "../../../../leads/components/LeadTableCells";
 import { LEAD_SOURCES } from "../../../../leads/leadsConfig";
@@ -900,6 +901,12 @@ function DealDetailModal({
                               phone={draft.sellerPhone}
                               body={textBody}
                             />
+                            {draft.sellerPhone && (
+                              <CopyButton
+                                text={draft.sellerPhone}
+                                label={`Copy ${draft.sellerPhone}`}
+                              />
+                            )}
                             {!locked && (
                               <button
                                 type="button"
@@ -932,6 +939,12 @@ function DealDetailModal({
                           action={
                             <>
                               <TextLink phone={phone} body={textBody} />
+                              {phone && (
+                                <CopyButton
+                                  text={phone}
+                                  label={`Copy ${phone}`}
+                                />
+                              )}
                               {!locked && (
                                 <button
                                   type="button"

@@ -538,6 +538,46 @@ describe("CountyRecords", () => {
     expect(screen.getByLabelText("Phone 1")).toHaveValue("206-795-9395");
   });
 
+  it("shows every number in a record's phone field as call links", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner Name", "Situs Address", "Phone"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Charles Stan", "17090 Sherborne", "(313) 274-5192; (727) 785-9729"],
+    ]);
+    render(<CountyRecords currentUser={user} />);
+    fireEvent.click(await findInTable("Charles Stan"));
+
+    const modal = document.querySelector(".county-record-modal");
+    expect(within(modal).getByLabelText("Phone")).toHaveValue(
+      "(313) 274-5192; (727) 785-9729",
+    );
+    const links = modal.querySelectorAll(
+      ".county-record-phone-links a.leads-contact-link",
+    );
+    expect([...links].map((a) => a.getAttribute("href"))).toEqual([
+      "tel:3132745192",
+      "tel:7277859729",
+    ]);
+    expect(
+      within(modal).getByRole("button", { name: "Copy (727) 785-9729" }),
+    ).toBeInTheDocument();
+    // Texting either number starts the same cash-offer message.
+    const texts = within(modal).getAllByRole("link", { name: /^Text / });
+    expect(texts).toHaveLength(2);
+    texts.forEach((a) =>
+      expect(decodeURIComponent(a.getAttribute("href"))).toContain(
+        "regarding the property at 17090 Sherborne",
+      ),
+    );
+  });
+
   it("shows a loader, not the empty state, until data arrives", async () => {
     let resolveImports;
     fetchCountyRecordImports.mockReturnValue(

@@ -48,6 +48,29 @@ describe("toCountyRecords", () => {
   });
 });
 
+describe("toCountyRecords phone splitting", () => {
+  it("splits a cell with several phone numbers into its own columns", () => {
+    const { columns, rows } = toCountyRecords([
+      ["Owner", "PHONE", "Status"],
+      ["Charles", "(313) 274-5192; (727) 785-9729; (313) 402-8106", "open"],
+      ["Kathleen", "313-348-2661", "closed"],
+    ]);
+    expect(columns).toEqual(["Owner", "PHONE", "PHONE 2", "PHONE 3", "Status"]);
+    expect(rows).toEqual([
+      ["Charles", "(313) 274-5192", "(727) 785-9729", "(313) 402-8106", "open"],
+      ["Kathleen", "313-348-2661", "", "", "closed"],
+    ]);
+  });
+
+  it("leaves files with one number per phone cell as they are", () => {
+    const { columns } = toCountyRecords([
+      ["Owner", "Phone", "Fax"],
+      ["Ann", "206-555-0100", "206-555-0101, 206-555-0102"],
+    ]);
+    expect(columns).toEqual(["Owner", "Phone", "Fax"]);
+  });
+});
+
 describe("chunkRows", () => {
   it("splits rows into JSON chunks under the byte limit, keeping order", () => {
     const rows = Array.from({ length: 50 }, (_, i) => [

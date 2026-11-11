@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { ChartColumn, Check, Plus, Save, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
-import { countyRecordFields, isAmountDueColumn } from "./countyRecordDeal";
+import {
+  countyRecordFields,
+  isAmountDueColumn,
+  PHONE_COLUMN,
+  phoneNumbers,
+} from "./countyRecordDeal";
+import PhoneLinks from "./PhoneLinks";
+import { cashOfferText } from "../leadUtils";
 import { ZillowLink } from "../components/LeadTableCells";
 import { StreetViewButton } from "../../elements/StreetView";
 import { useLeadComps } from "../comps/useLeadComps";
@@ -13,7 +20,6 @@ import {
 } from "../comps/LeadCompsTabs";
 import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
-const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone/i;
 const LONG_TEXT_COLUMN =
   /reason|note|description|comment|remark|detail|summary|narrative|violation/i;
 
@@ -23,6 +29,17 @@ function nextPhoneColumn(columns) {
   let n = 2;
   while (taken.has(`phone ${n}`)) n += 1;
   return `Phone ${n}`;
+}
+
+// Call and text links for each number in a phone field.
+function PhoneFieldLinks({ value, textBody }) {
+  const numbers = phoneNumbers(value);
+  if (numbers.length === 0) return null;
+  return (
+    <span className="county-record-phone-links">
+      <PhoneLinks value={numbers.join(" ")} textBody={textBody} />
+    </span>
+  );
 }
 
 // One county record as a form: every column can be filled in or edited
@@ -57,6 +74,8 @@ export default function CountyRecordModal({
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
   const { address, ownerName } = countyRecordFields(columns, draft);
+  // Prefilled when a number is texted, as on deals and leads.
+  const textBody = cashOfferText({ address });
 
   // The record's comps, shaped like a lead's for the shared comps pieces.
   const [compsRecord, setCompsRecord] = useState(null);
@@ -104,8 +123,13 @@ export default function CountyRecordModal({
   // the other fields. Decided by the saved value, so a field doesn't turn
   // into a text area while typing.
   const fields = allColumns.map((column, i) => ({ column, i }));
+  // Phone fields stay inputs; one holding several numbers (records
+  // imported before those were split) takes the full width.
+  const isPhone = (i) => PHONE_COLUMN.test(allColumns[i]);
   const isLong = ({ column, i }) =>
-    LONG_TEXT_COLUMN.test(column) || String(row[i] ?? "").length > 60;
+    isPhone(i)
+      ? phoneNumbers(row[i]).length > 1
+      : LONG_TEXT_COLUMN.test(column) || String(row[i] ?? "").length > 60;
   const shortFields = fields.filter((f) => !isLong(f));
   const longFields = fields.filter(isLong);
 
@@ -275,12 +299,17 @@ export default function CountyRecordModal({
                   </span>
                   <input
                     className={`ldm-input${isAmountDueColumn(column) ? " county-amount-due" : ""}`}
-                    type={PHONE_COLUMN.test(column) ? "tel" : "text"}
+                    type={isPhone(i) ? "tel" : "text"}
+                    // The phone links in the label aren't part of its name.
+                    aria-label={isPhone(i) ? column : undefined}
                     value={draft[i] ?? ""}
                     onChange={(e) => setValue(i, e.target.value)}
                     placeholder="—"
                     ref={i === focusIndex ? focusOnce : undefined}
                   />
+                  {isPhone(i) && (
+                    <PhoneFieldLinks value={draft[i]} textBody={textBody} />
+                  )}
                 </label>
               ))}
               <button
@@ -296,13 +325,27 @@ export default function CountyRecordModal({
                   className="ldm-field county-record-long"
                 >
                   <span className="ldm-label">{column}</span>
-                  <textarea
-                    className="ldm-notes"
-                    value={draft[i] ?? ""}
-                    onChange={(e) => setValue(i, e.target.value)}
-                    placeholder="—"
-                    rows={4}
-                  />
+                  {isPhone(i) ? (
+                    <>
+                      <input
+                        className="ldm-input"
+                        type="tel"
+                        aria-label={column}
+                        value={draft[i] ?? ""}
+                        onChange={(e) => setValue(i, e.target.value)}
+                        placeholder="—"
+                      />
+                      <PhoneFieldLinks value={draft[i]} textBody={textBody} />
+                    </>
+                  ) : (
+                    <textarea
+                      className="ldm-notes"
+                      value={draft[i] ?? ""}
+                      onChange={(e) => setValue(i, e.target.value)}
+                      placeholder="—"
+                      rows={4}
+                    />
+                  )}
                 </label>
               ))}
             </div>

@@ -40,6 +40,7 @@ describe("countyRecordDeal", () => {
       firstName: "",
       lastName: "",
       phone: "256-555-0100",
+      phones: ["256-555-0100"],
     });
   });
 
@@ -112,5 +113,28 @@ describe("countyRecordDeal", () => {
     ["Due Date", "Assessed Value", "Amount", "Tax Year"].forEach((c) =>
       expect(isAmountDueColumn(c)).toBe(false),
     );
+  });
+
+  it("finds every phone number and puts the extra ones on the deal", () => {
+    const columns = ["Owner", "Address", "City", "Phone", "Phone 2"];
+    const row = [
+      "Charles Stan",
+      "17090 Sherborne",
+      "Allen Park",
+      "(313) 274-5192; (727) 785-9729",
+      "313-274-5192",
+    ];
+    expect(countyRecordFields(columns, row).phones).toEqual([
+      "(313) 274-5192",
+      "(727) 785-9729",
+    ]);
+    const deal = buildDealFromCountyRecord({
+      columns,
+      row,
+      fileName: "wayne.csv",
+      userId: "u1",
+    });
+    expect(deal.sellerPhone).toBe("(313) 274-5192");
+    expect(deal.sellerPhones).toEqual(["(727) 785-9729"]);
   });
 });

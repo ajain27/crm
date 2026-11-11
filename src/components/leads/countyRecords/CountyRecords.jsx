@@ -3,7 +3,6 @@ import { FileSpreadsheet, Pencil, Trash2, Upload, X } from "lucide-react";
 import Pagination from "../../pagination/Pagination";
 import LoadingScreen from "../../loader/LoadingScreen";
 import { LeadSearchInput } from "../components/LeadListPanel";
-import { TextLink } from "../components/LeadTableCells";
 import {
   deleteCountyRecordImportById,
   deleteCountyRecordRows,
@@ -30,7 +29,8 @@ import {
   propertyKey,
 } from "./countyRecordDeal";
 import CountyRecordModal from "./CountyRecordModal";
-import { displayPhone } from "../../../utils/utils";
+import PhoneLinks from "./PhoneLinks";
+import { cashOfferText } from "../leadUtils";
 import ListNameModal from "./ListNameModal";
 import ResizableTable from "../../elements/ResizableTable";
 import { PAGE_SIZE } from "../../pagination/usePagination";
@@ -38,34 +38,6 @@ import { PAGE_SIZE } from "../../pagination/usePagination";
 const MAX_FILE_MB = 30;
 
 const PHONE_COLUMN = /phone|cell|mobile|\btel\b|telephone|fax/i;
-const PHONE_NUMBER = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g;
-
-// Phone cells as tap-to-call links, each with a text link. Every number in the cell is linked
-// (some exports put two in one cell); other text stays as is.
-function PhoneCellContent({ value }) {
-  const parts = [];
-  let last = 0;
-  for (const match of value.matchAll(PHONE_NUMBER)) {
-    if (match.index > last) parts.push(value.slice(last, match.index));
-    parts.push(
-      <span key={match.index} className="leads-phone">
-        <a
-          href={`tel:${match[0].replace(/[^\d+]/g, "")}`}
-          className="leads-contact-link"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {displayPhone(match[0])}
-        </a>
-        <TextLink phone={match[0]} />
-      </span>,
-    );
-    last = match.index + match[0].length;
-  }
-  if (parts.length === 0) return value;
-  if (last < value.length) parts.push(value.slice(last));
-  return parts;
-}
-
 // FileReader rather than file.text(), which older Safari lacks.
 function readFileText(file) {
   return new Promise((resolve, reject) => {
@@ -393,8 +365,13 @@ export default function CountyRecords({
     return Boolean(key) && crmKeys.has(key);
   };
 
-  function renderCell(cell, columnIndex) {
-    if (phoneColumns[columnIndex]) return <PhoneCellContent value={cell} />;
+  // The record's cash-offer text, prefilled when a number is texted.
+  const textBody = (row) =>
+    cashOfferText({ address: countyRecordFields(columns, row).address });
+
+  function renderCell(cell, columnIndex, row) {
+    if (phoneColumns[columnIndex])
+      return <PhoneLinks value={cell} textBody={textBody(row)} />;
     if (amountDueColumns[columnIndex])
       return <span className="county-amount-due">{cell}</span>;
     return cell;
@@ -787,7 +764,7 @@ export default function CountyRecords({
                       </td>
                       {row.map((cell, i) => (
                         <td key={selected.columns[i]} title={cell}>
-                          {cell ? renderCell(cell, i) : "—"}
+                          {cell ? renderCell(cell, i, row) : "—"}
                           {/* Records already in the CRM are tagged in
                               their first cell. */}
                           {i === 0 && isInCrm(row) && (
@@ -825,7 +802,16 @@ export default function CountyRecords({
                       )}
                       {fields.phone && (
                         <span className="county-record-card-line">
-                          <PhoneCellContent value={fields.phone} />
+                          <PhoneLinks
+                            textBody={cashOfferText({
+                              address: fields.address,
+                            })}
+                            value={
+                              fields.phones.length
+                                ? fields.phones.join(", ")
+                                : fields.phone
+                            }
+                          />
                         </span>
                       )}
                     </button>

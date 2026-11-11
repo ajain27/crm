@@ -217,6 +217,7 @@ export function PhoneLink({ phone, textBody }) {
         {displayPhone(phone)}
       </a>
       <TextLink phone={phone} body={textBody} />
+      <CopyButton text={displayPhone(phone)} label={`Copy ${phone}`} />
     </span>
   ) : (
     EMPTY

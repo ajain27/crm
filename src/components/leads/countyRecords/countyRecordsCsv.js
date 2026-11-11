@@ -1,5 +1,7 @@
 // CSV parsing and storage chunking for County Records imports.
 
+import { PHONE_COLUMN, phoneNumbers } from "./countyRecordDeal";
+
 const DELIMITERS = [",", "\t", ";", "|"];
 
 // Counties export comma-, tab- or semicolon-separated files; pick whichever
@@ -81,7 +83,41 @@ export function toCountyRecords(parsedRows) {
   const rows = body.map((r) =>
     Array.from({ length: width }, (_, i) => r[i] ?? ""),
   );
-  return { columns, rows };
+  return splitPhoneCells(columns, rows);
+}
+
+// A phone cell holding several numbers ("(313) 274-5192; (727) 785-9729")
+// is split so each number is its own field: the first stays, the others
+// go into new columns right after it ("Phone 2", "Phone 3"…).
+function splitPhoneCells(columns, rows) {
+  const extra = columns.map((column, c) =>
+    PHONE_COLUMN.test(column) && !/fax/i.test(column)
+      ? rows.reduce((n, r) => Math.max(n, phoneNumbers(r[c]).length - 1), 0)
+      : 0,
+  );
+  if (!extra.some(Boolean)) return { columns, rows };
+
+  const taken = new Set(columns.map((c) => c.toLowerCase()));
+  const splitColumns = columns.flatMap((column, c) => {
+    const added = [];
+    for (let n = 2; added.length < extra[c]; n += 1) {
+      const name = `${column} ${n}`;
+      if (!taken.has(name.toLowerCase())) {
+        taken.add(name.toLowerCase());
+        added.push(name);
+      }
+    }
+    return [column, ...added];
+  });
+  const splitRows = rows.map((r) =>
+    r.flatMap((cell, c) => {
+      if (!extra[c]) return [cell];
+      const numbers = phoneNumbers(cell);
+      const values = numbers.length > 1 ? numbers : [cell];
+      return Array.from({ length: extra[c] + 1 }, (_, i) => values[i] ?? "");
+    }),
+  );
+  return { columns: splitColumns, rows: splitRows };
 }
 
 const MAX_CHUNK_BYTES = 900_000;

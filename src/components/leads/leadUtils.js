@@ -467,7 +467,11 @@ export function buildDealFromLead(lead, userId) {
     sellerFirstName: firstName,
     sellerLastName: lastName,
     sellerPhone: lead.phone || "",
-    sellerPhones: lead.phone2 ? [lead.phone2] : [],
+    sellerPhones: lead.phones?.length
+      ? lead.phones
+      : lead.phone2
+        ? [lead.phone2]
+        : [],
     sellerEmail: lead.email || lead.sellerEmail || "",
     askingPrice: lead.askingPrice || "",
     occupant: lead.occupant || "",
