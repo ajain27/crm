@@ -578,6 +578,34 @@ describe("CountyRecords", () => {
     );
   });
 
+  it("shows the phone columns right after the ZIP code", async () => {
+    fetchCountyRecordImports.mockResolvedValue([
+      {
+        id: "i1",
+        fileName: "c.csv",
+        columns: ["Owner", "Address", "Zip Code", "State", "Phone"],
+        rowCount: 1,
+        importedAt: "2026-10-06T00:00:00Z",
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValue([
+      ["Leah Holben", "19026 Philomene", "48101", "MI", "(313) 682-2695"],
+    ]);
+    render(<CountyRecords currentUser={user} />);
+    await findInTable("Leah Holben");
+
+    const headers = screen
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent)
+      .filter(Boolean);
+    expect(headers).toEqual(["Owner", "Address", "Zip Code", "Phone", "State"]);
+    const cells = [...document.querySelectorAll("tbody tr td")]
+      .slice(2)
+      .map((td) => td.textContent);
+    expect(cells[3]).toContain("313-682-2695");
+    expect(cells[4]).toBe("MI");
+  });
+
   it("shows a loader, not the empty state, until data arrives", async () => {
     let resolveImports;
     fetchCountyRecordImports.mockReturnValue(

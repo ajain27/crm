@@ -89,6 +89,21 @@ export function findFieldColumn(columns, field) {
   return findColumn(columns, FIELDS[field]);
 }
 
+// The order columns are shown in, as indexes into `columns`: the file's
+// order, with the phone columns moved right after the ZIP code (rows stay
+// stored in the file's order).
+export function displayColumnOrder(columns) {
+  const order = columns.map((_, i) => i);
+  const zip = findColumn(columns, FIELDS.zip);
+  if (zip === -1) return order;
+  const phones = order.filter(
+    (i) => i !== zip && PHONE_COLUMN.test(columns[i]),
+  );
+  const rest = order.filter((i) => !phones.includes(i));
+  rest.splice(rest.indexOf(zip) + 1, 0, ...phones);
+  return rest;
+}
+
 // The record's key fields, pulled out by column name. Blank when the file
 // has no matching column.
 export function countyRecordFields(columns, row) {

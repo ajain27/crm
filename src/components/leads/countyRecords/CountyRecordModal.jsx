@@ -3,6 +3,7 @@ import { ChartColumn, Check, Plus, Save, Trash2 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import {
   countyRecordFields,
+  displayColumnOrder,
   isAmountDueColumn,
   PHONE_COLUMN,
   phoneNumbers,
@@ -122,7 +123,10 @@ export default function CountyRecordModal({
   // Free-text columns (and long values) get a full-width text area after
   // the other fields. Decided by the saved value, so a field doesn't turn
   // into a text area while typing.
-  const fields = allColumns.map((column, i) => ({ column, i }));
+  const fields = displayColumnOrder(allColumns).map((i) => ({
+    column: allColumns[i],
+    i,
+  }));
   // Phone fields stay inputs; one holding several numbers (records
   // imported before those were split) takes the full width.
   const isPhone = (i) => PHONE_COLUMN.test(allColumns[i]);

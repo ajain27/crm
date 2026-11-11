@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildDealFromCountyRecord,
+  displayColumnOrder,
   countyRecordFields,
   countyRecordPropertyKey,
   isAmountDueColumn,
@@ -136,5 +137,18 @@ describe("countyRecordDeal", () => {
     });
     expect(deal.sellerPhone).toBe("(313) 274-5192");
     expect(deal.sellerPhones).toEqual(["(727) 785-9729"]);
+  });
+
+  it("shows phone columns right after the ZIP code", () => {
+    const columns = [
+      "Owner",
+      "Address",
+      "Zip Code",
+      "State",
+      "Phone",
+      "Phone 2",
+    ];
+    expect(displayColumnOrder(columns)).toEqual([0, 1, 2, 4, 5, 3]);
+    expect(displayColumnOrder(["Owner", "Phone"])).toEqual([0, 1]);
   });
 });

@@ -4,6 +4,7 @@ import LeadDetailModal from "./LeadDetailModal";
 import CommercialLeadDetailModal from "./CommercialLeadDetailModal";
 import LeadsStatsRow from "./components/LeadsStatsRow";
 import LeadsTabBar from "./components/LeadsTabBar";
+import GlobalLeadSearch from "./components/GlobalLeadSearch";
 import ResidentialLeadForm from "./residential/ResidentialLeadForm";
 import ResidentialLeadList, {
   RESIDENTIAL_FILTERS,
@@ -33,6 +34,7 @@ import {
   isPplLead,
   isResidentialLead,
   leadIdentityKeys,
+  leadTabOf,
   leadMatchesAnyKey,
   pluralizeLeads,
   uniqueById,
@@ -92,6 +94,9 @@ export default function PotentialLeads({
   const [addLeadTab, setAddLeadTab] = useState(null);
   // Set while that window adds another property for a lead's seller.
   const [addingForSeller, setAddingForSeller] = useState(false);
+  // A county record picked in the search ({ importId, rowIndex }), opened
+  // on the County Records tab.
+  const [countyRecordToOpen, setCountyRecordToOpen] = useState(null);
   // The call being added ({ lead, count }), while its notes are asked for.
   const [callNotes, setCallNotes] = useState(null);
 
@@ -670,6 +675,20 @@ export default function PotentialLeads({
     onStopAutomation: handleStopAutomation,
   };
 
+  // A lead picked in the search: its tab, with it open.
+  function openSearchedLead(lead) {
+    const tab = leadTabOf(lead);
+    setActiveTab(tab);
+    if (tab === "commercial") setCommercialDetailLead(lead);
+    else setDetailLead(lead);
+  }
+
+  function openSearchedCountyRecord(record) {
+    setActiveTab("county");
+    // A new object each time, so picking the same record again reopens it.
+    setCountyRecordToOpen({ ...record });
+  }
+
   const tabs = [
     ...(ppcOnly
       ? []
@@ -701,6 +720,21 @@ export default function PotentialLeads({
         ppcDeletedCount={ppcDeletedCount}
         pplCount={pplLeads.length}
       />
+
+      {!ppcOnly && (
+        <GlobalLeadSearch
+          leads={[
+            ...residentialLeads,
+            ...commercialLeads,
+            ...ppcLeads,
+            ...pplLeads,
+            ...coldCallLeads,
+          ]}
+          currentUser={currentUser}
+          onOpenLead={openSearchedLead}
+          onOpenCountyRecord={openSearchedCountyRecord}
+        />
+      )}
 
       <LeadsTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
@@ -830,6 +864,7 @@ export default function PotentialLeads({
       {activeTab === "county" && !ppcOnly && (
         <CountyRecords
           currentUser={currentUser}
+          openRecord={countyRecordToOpen}
           deals={deals}
           saveDeal={saveDeal}
           setDeals={setDeals}

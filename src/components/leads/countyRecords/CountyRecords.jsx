@@ -24,6 +24,7 @@ import {
   buildDealFromCountyRecord,
   countyRecordFields,
   countyRecordPropertyKey,
+  displayColumnOrder,
   findFieldColumn,
   isAmountDueColumn,
   propertyKey,
@@ -92,8 +93,11 @@ export function clearCountyRecordsCache() {
 // County Records tab: import a county's CSV export and browse it with the
 // file's own columns. Each import is saved to the user's account; pick one
 // from the list to view it, search across every column, or delete it.
+// `openRecord` ({ importId, rowIndex }) opens that record, e.g. one found
+// in the search across all leads.
 export default function CountyRecords({
   currentUser,
+  openRecord,
   deals = [],
   saveDeal,
   setDeals,
@@ -150,6 +154,14 @@ export default function CountyRecords({
       .then((rows) => setRowsById((prev) => ({ ...prev, [selectedId]: rows })))
       .catch(() => setError("Couldn't load these records."));
   }, [selectedId, rowsById]);
+
+  useEffect(() => {
+    if (!openRecord) return;
+    selectImport(openRecord.importId);
+    setOpenRowIndex(openRecord.rowIndex);
+    // Only when a record is asked for.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRecord]);
 
   function selectImport(id) {
     setSelectedId(id);
@@ -359,6 +371,7 @@ export default function CountyRecords({
   const columns = selected?.columns || [];
   const phoneColumns = columns.map((c) => PHONE_COLUMN.test(c));
   const amountDueColumns = columns.map(isAmountDueColumn);
+  const columnOrder = displayColumnOrder(columns);
   const crmKeys = new Set(deals.map(propertyKey).filter(Boolean));
   const isInCrm = (row) => {
     const key = countyRecordPropertyKey(columns, row);
@@ -690,7 +703,8 @@ export default function CountyRecords({
                       />
                     </th>
                     <th className="county-row-action" aria-label="Actions" />
-                    {selected.columns.map((column, i) => {
+                    {columnOrder.map((i) => {
+                      const column = selected.columns[i];
                       const direction =
                         sort?.column === i ? sort.direction : null;
                       return (
@@ -762,12 +776,12 @@ export default function CountyRecords({
                           <Trash2 size={14} />
                         </button>
                       </td>
-                      {row.map((cell, i) => (
-                        <td key={selected.columns[i]} title={cell}>
-                          {cell ? renderCell(cell, i, row) : "—"}
+                      {columnOrder.map((i, position) => (
+                        <td key={selected.columns[i]} title={row[i]}>
+                          {row[i] ? renderCell(row[i], i, row) : "—"}
                           {/* Records already in the CRM are tagged in
                               their first cell. */}
-                          {i === 0 && isInCrm(row) && (
+                          {position === 0 && isInCrm(row) && (
                             <span className="county-in-crm county-in-crm--inline">
                               In CRM
                             </span>

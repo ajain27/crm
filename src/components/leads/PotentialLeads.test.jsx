@@ -7,6 +7,18 @@ import {
   within,
 } from "@testing-library/react";
 import PotentialLeads from "./PotentialLeads";
+import {
+  fetchCountyRecordImports,
+  fetchCountyRecordRows,
+} from "../../firebase/firestoreService";
+
+// The search across all leads reads County Records lists.
+vi.mock("../../firebase/firestoreService", async (importOriginal) => ({
+  ...(await importOriginal()),
+  fetchCountyRecordImports: vi.fn().mockResolvedValue([]),
+  fetchCountyRecordRows: vi.fn().mockResolvedValue([]),
+  fetchCountyRecordComps: vi.fn().mockResolvedValue(null),
+}));
 
 const baseProps = (overrides = {}) => ({
   currentUser: { id: "u1" },
@@ -37,6 +49,101 @@ describe("PotentialLeads", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("searches every lead list at once and opens the lead picked", async () => {
+    const leads = [
+      {
+        id: "r1",
+        leadType: "residential",
+        address: "1 Main St, Dallas, TX",
+        firstName: "Leah",
+        lastName: "Holben",
+      },
+      {
+        id: "p1",
+        source: "PPC",
+        address: "9 Oak Ave, Tampa, FL",
+        firstName: "Leah",
+        lastName: "Smith",
+        phone: "(813) 555-0100",
+      },
+      {
+        id: "c1",
+        source: "Cold Call",
+        address: "5 Pine Rd, Detroit, MI",
+        firstName: "Bob",
+        lastName: "Jones",
+      },
+    ];
+    fetchCountyRecordImports.mockResolvedValueOnce([
+      {
+        id: "i1",
+        name: "MI_TAX",
+        columns: ["Owner", "Address", "City", "Phone"],
+      },
+    ]);
+    fetchCountyRecordRows.mockResolvedValueOnce([
+      ["LEAH HOLBEN", "19026 PHILOMENE", "ALLEN PARK", "(313) 682-2695"],
+      ["KEVIN HAYES", "0 POTTER", "BELLEVILLE", ""],
+    ]);
+    render(<PotentialLeads {...baseProps({ leads })} />);
+
+    fireEvent.change(screen.getByLabelText("Search all leads"), {
+      target: { value: "leah" },
+    });
+    const results = await screen.findByRole("listbox");
+    await within(results).findByText("LEAH HOLBEN");
+    expect(within(results).getByText("Residential")).toBeInTheDocument();
+    expect(within(results).getByText("PPC")).toBeInTheDocument();
+    expect(within(results).getByText("County Records")).toBeInTheDocument();
+    expect(within(results).queryByText("Bob Jones")).toBeNull();
+
+    // Phone numbers match however they're written.
+    fireEvent.change(screen.getByLabelText("Search all leads"), {
+      target: { value: "813-555-0100" },
+    });
+    fireEvent.click(await within(results).findByText("Leah Smith"));
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(
+      await screen.findByDisplayValue("9 Oak Ave, Tampa, FL"),
+    ).toBeInTheDocument();
+  });
+
+  it("opens a county record found in the search on its tab", async () => {
+    const list = {
+      id: "i1",
+      name: "MI_TAX",
+      columns: ["Owner", "Address", "City", "Phone"],
+      rowCount: 2,
+      importedAt: "2026-11-01T00:00:00Z",
+    };
+    const rows = [
+      ["KEVIN HAYES", "0 POTTER", "BELLEVILLE", ""],
+      ["LEAH HOLBEN", "19026 PHILOMENE", "ALLEN PARK", "(313) 682-2695"],
+    ];
+    // Read once by the search, once by the County Records tab.
+    fetchCountyRecordImports
+      .mockResolvedValueOnce([list])
+      .mockResolvedValueOnce([list]);
+    fetchCountyRecordRows
+      .mockResolvedValueOnce(rows)
+      .mockResolvedValueOnce(rows);
+    render(<PotentialLeads {...baseProps()} />);
+
+    fireEvent.change(screen.getByLabelText("Search all leads"), {
+      target: { value: "philomene" },
+    });
+    fireEvent.click(
+      await within(await screen.findByRole("listbox")).findByText(
+        "LEAH HOLBEN",
+      ),
+    );
+    const phone = await screen.findByLabelText("Phone");
+    expect(phone).toHaveValue("(313) 682-2695");
+    expect(phone.closest(".county-record-modal")).toHaveTextContent(
+      "19026 PHILOMENE, ALLEN PARK",
+    );
   });
 
   it("asks how a call went and adds it to the notes with the date", async () => {

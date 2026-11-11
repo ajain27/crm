@@ -188,7 +188,7 @@ export function stableWpLeadId(lead) {
   return lead?.id || crypto.randomUUID();
 }
 
-function leadAddress(lead) {
+export function leadAddress(lead) {
   return (
     lead?.address ||
     lead?.propertyAddress ||
