@@ -20,6 +20,8 @@ import {
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
+  SellerAddresses,
+  SellerPropertiesBadge,
 } from "../components/LeadTableCells";
 import MarkBadLeadModal from "../components/MarkBadLeadModal";
 import LeadExportButton from "../components/LeadExportButton";
@@ -29,8 +31,10 @@ import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import {
   cashOfferText,
+  groupLeadsBySeller,
   leadMatchesSearch,
   matchesCallFilter,
+  sellerGroupPhones,
   sellerNameOf,
 } from "../leadUtils";
 
@@ -81,6 +85,10 @@ export default function CampaignLeadList({
   );
 
   const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
+  // A seller's properties share one row (the first listed), opening to a
+  // tab for each.
+  const sellerGroups = groupLeadsBySeller(filtered);
+  const groupOf = new Map(sellerGroups.map((g) => [g[0].id, g]));
 
   const filterBar = (
     <>
@@ -118,7 +126,8 @@ export default function CampaignLeadList({
       <LeadListPanel
         title={title}
         totalCount={leads.length}
-        filteredLeads={filtered}
+        filteredLeads={sellerGroups.map((g) => g[0])}
+        matchCount={filtered.length}
         listState={listState}
         filters={filterBar}
         statusMessage={statusMessage}
@@ -133,7 +142,9 @@ export default function CampaignLeadList({
                 {!readOnly && (
                   <>
                     <SelectAllHeader
-                      ids={pageLeads.map((l) => l.id)}
+                      ids={pageLeads.flatMap((l) =>
+                        groupOf.get(l.id).map((g) => g.id),
+                      )}
                       selectedIds={selectedIds}
                       onChange={listState.setManySelected}
                     />
@@ -160,6 +171,17 @@ export default function CampaignLeadList({
               {pageLeads.map((lead) => {
                 const isBad = isPpc && !readOnly && lead.ppcQuality === "bad";
                 const clickable = !readOnly && !isBad;
+                const group = groupOf.get(lead.id);
+                const groupIds = group.map((g) => g.id);
+                const selected = groupIds.every((id) => selectedIds.has(id));
+                const toggle = () =>
+                  listState.setManySelected(groupIds, !selected);
+                const name = (
+                  <>
+                    {sellerNameOf(lead) || "—"}
+                    <SellerPropertiesBadge count={group.length} />
+                  </>
+                );
                 return (
                   <tr
                     key={lead.id}
@@ -168,28 +190,31 @@ export default function CampaignLeadList({
                   >
                     {!readOnly && (
                       <>
-                        <SelectCell
-                          checked={selectedIds.has(lead.id)}
-                          onToggle={() => listState.toggleSelected(lead.id)}
+                        <SelectCell checked={selected} onToggle={toggle} />
+                        <DeleteCell
+                          onDelete={() =>
+                            group.length > 1
+                              ? onBulkDelete(group)
+                              : onDelete(lead.id)
+                          }
                         />
-                        <DeleteCell onDelete={() => onDelete(lead.id)} />
                       </>
                     )}
                     <AccordionHeaderCell
                       leading={
                         !readOnly && (
                           <CardSelectCheckbox
-                            checked={selectedIds.has(lead.id)}
-                            onToggle={() => listState.toggleSelected(lead.id)}
+                            checked={selected}
+                            onToggle={toggle}
                           />
                         )
                       }
                       id={lead.id}
                       label="Seller Name"
-                      value={sellerNameOf(lead) || "—"}
+                      value={name}
                       card={{
-                        title: sellerNameOf(lead),
-                        subtitle: lead.address,
+                        title: name,
+                        subtitle: group.map((g) => g.address).join("  ·  "),
                         aside: (
                           <span className="leads-accordion-date">
                             {formatDate(lead.dateAdded)}
@@ -199,12 +224,11 @@ export default function CampaignLeadList({
                     />
                     <EmailCell email={lead.email} />
                     <PhoneCell
-                      phone={lead.phone}
-                      phone2={lead.phone2}
+                      phones={sellerGroupPhones(group)}
                       textBody={cashOfferText(lead)}
                     />
                     <td className="leads-address-cell" data-label="Address">
-                      {lead.address || "—"}
+                      <SellerAddresses leads={group} />
                     </td>
                     <NotesCell notes={lead.notes} />
                     <DateAddedCell date={lead.dateAdded} />

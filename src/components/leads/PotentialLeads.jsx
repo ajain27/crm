@@ -33,8 +33,10 @@ import {
   isPpcLead,
   isPplLead,
   isResidentialLead,
+  groupLeadsBySeller,
   leadIdentityKeys,
   leadTabOf,
+  todayStr,
   leadMatchesAnyKey,
   pluralizeLeads,
   uniqueById,
@@ -92,11 +94,12 @@ export default function PotentialLeads({
   // The tab ("residential", "commercial", "ppc", "ppl" or "coldcall")
   // whose Add a lead window is open.
   const [addLeadTab, setAddLeadTab] = useState(null);
-  // Set while that window adds another property for a lead's seller.
-  const [addingForSeller, setAddingForSeller] = useState(false);
   // A county record picked in the search ({ importId, rowIndex }), opened
   // on the County Records tab.
   const [countyRecordToOpen, setCountyRecordToOpen] = useState(null);
+  // A property added for a lead's seller in the lead window, not saved yet:
+  // { draft, sellerOfId } (the lead it was added from).
+  const [newProperty, setNewProperty] = useState(null);
   // The call being added ({ lead, count }), while its notes are asked for.
   const [callNotes, setCallNotes] = useState(null);
 
@@ -220,34 +223,54 @@ export default function PotentialLeads({
   };
 
   function closeAddLead() {
-    // The seller's details shouldn't stay on the next plain Add a lead.
-    if (addingForSeller) addLeadForms[addLeadTab]?.startWith({});
     setAddLeadTab(null);
-    setAddingForSeller(false);
   }
 
-  // Opens Add a lead on `lead`'s tab with its seller's name, phones and
-  // email filled in, for another property they own.
-  function addPropertyForSeller(lead) {
-    const tab = isPpcLead(lead)
-      ? "ppc"
-      : isPplLead(lead)
-        ? "ppl"
-        : isColdCallLead(lead)
-          ? "coldcall"
-          : "residential";
-    addLeadForms[tab].startWith({
+  // The lead window's property tabs: every lead of this seller on the same
+  // tab of the Leads page, plus one being added.
+  function sellerPropertiesOf(lead) {
+    if (!lead) return [];
+    const anchorId = newProperty ? newProperty.sellerOfId : lead.id;
+    const anchor = visibleLeads.find((l) => l.id === anchorId) || lead;
+    const tabLeads =
+      {
+        residential: residentialLeads,
+        ppc: ppcLeads,
+        ppl: pplLeads,
+        coldcall: coldCallLeads,
+      }[leadTabOf(anchor)] || [];
+    const group = groupLeadsBySeller(tabLeads).find((g) =>
+      g.some((l) => l.id === anchor.id),
+    ) || [anchor];
+    return newProperty ? [...group, newProperty.draft] : group;
+  }
+
+  // Adds a tab to the lead window for another property `lead`'s seller
+  // owns, with their name, phones and email filled in; it becomes a lead
+  // (on the same tab of the Leads page) when saved.
+  function addPropertyTab(lead) {
+    const draft = {
+      ...createEmptyResidentialForm(),
+      id: crypto.randomUUID(),
+      isNewProperty: true,
+      leadType: "residential",
+      source: lead.source || "",
+      ppcSource: lead.ppcSource || false,
+      pplSource: lead.pplSource || false,
       firstName: lead.firstName || "",
       lastName: lead.lastName || "",
       sellerName: lead.sellerName || "",
       phone: lead.phone || "",
       phone2: lead.phone2 || "",
       email: lead.email || "",
-      // The PPC, PPL and Cold Calling forms fix their own source.
-      ...(tab === "residential" ? { source: lead.source || "" } : {}),
-    });
-    setAddingForSeller(true);
-    setAddLeadTab(tab);
+    };
+    setNewProperty({ draft, sellerOfId: newProperty?.sellerOfId || lead.id });
+    setDetailLead(draft);
+  }
+
+  function closeDetail() {
+    setDetailLead(null);
+    setNewProperty(null);
   }
 
   // The user's name, for signing automated emails.
@@ -521,6 +544,7 @@ export default function PotentialLeads({
   // Returns false (without saving) when the lead's address was changed to
   // one already in Leads or the CRM.
   async function handleLeadSave(updated) {
+    if (updated.isNewProperty) return saveNewProperty(updated);
     const before = leads.find((l) => l.id === updated.id);
     if (!sameAddress(before?.address, updated.address)) {
       const conflict = findAddressConflict({
@@ -536,6 +560,31 @@ export default function PotentialLeads({
     }
     await saveLead(updated);
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+    return true;
+  }
+
+  // A property added in the lead window: saved as a new lead.
+  async function saveNewProperty({ isNewProperty: _, ...draft }) {
+    const address = String(draft.address || "").trim();
+    if (!address) {
+      alert("Enter the property's address.");
+      return false;
+    }
+    const conflict = findAddressConflict({ address, leads, deals });
+    if (conflict) {
+      alert(addressConflictMessage(address, conflict));
+      return false;
+    }
+    const lead = {
+      ...draft,
+      address,
+      userId: currentUser.id,
+      dateAdded: todayStr(),
+      dateAddedAt: new Date().toISOString(),
+    };
+    await saveLead(lead);
+    setLeads((prev) => [lead, ...prev]);
+    setNewProperty(null);
     return true;
   }
 
@@ -828,11 +877,7 @@ export default function PotentialLeads({
         <Modal
           isOpen={!!addLeadTab}
           onClose={closeAddLead}
-          title={
-            addingForSeller
-              ? "Add Property for Seller"
-              : ADD_LEAD_TITLES[addLeadTab]
-          }
+          title={ADD_LEAD_TITLES[addLeadTab]}
           className="leads-add-modal"
           style={{
             width: "min(960px, 96vw)",
@@ -873,14 +918,18 @@ export default function PotentialLeads({
 
       {!ppcOnly && (
         <LeadDetailModal
+          // A fresh window for each property tab.
+          key={detailLead?.id}
           isOpen={!!detailLead}
-          onClose={() => setDetailLead(null)}
+          onClose={closeDetail}
           lead={detailLead}
           onSave={handleLeadSave}
           isPpc={detailLead ? isPpcLead(detailLead) : false}
           isPpl={detailLead ? isPplLead(detailLead) : false}
           onHistoryLoaded={handleLeadHistoryLoaded}
-          onAddPropertyForSeller={addPropertyForSeller}
+          onAddPropertyForSeller={addPropertyTab}
+          sellerProperties={sellerPropertiesOf(detailLead)}
+          onSwitchProperty={setDetailLead}
           {...photoProps}
         />
       )}

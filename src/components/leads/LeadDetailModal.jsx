@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "../modal/Modal";
 import { Badge } from "../elements/elements";
 import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
@@ -59,7 +59,12 @@ export default function LeadDetailModal({
   currentUserId,
   onHistoryLoaded,
   onAddPropertyForSeller,
+  sellerProperties = [],
+  onSwitchProperty,
 }) {
+  // A property added from this window that isn't saved yet: no photos or
+  // comps until it's a lead.
+  const isNewProperty = Boolean(lead?.isNewProperty);
   const [draft, setDraft] = useState({});
   // The Analyze window: wholesale and novation numbers from the ARV.
   const [analyzeOpen, setAnalyzeOpen] = useState(false);
@@ -67,7 +72,7 @@ export default function LeadDetailModal({
     lead,
     draft,
     setDraft,
-    photoStore,
+    photoStore: isNewProperty ? undefined : photoStore,
     onPhotosChange,
     currentUserId,
   });
@@ -80,7 +85,7 @@ export default function LeadDetailModal({
     lead,
     draft,
     setDraft,
-    enabled: Boolean(lead) && !isRental,
+    enabled: Boolean(lead) && !isRental && !isNewProperty,
     // The history and listing photo a comps run read save to the lead
     // right away.
     onRunSaved: async (note, result) => {
@@ -97,14 +102,19 @@ export default function LeadDetailModal({
     onLoaded: onHistoryLoaded,
   });
 
+  // The lead as the window opened it, to tell whether it's been edited.
+  const loadedRef = useRef(null);
   useEffect(() => {
-    if (lead)
-      setDraft({
+    if (lead) {
+      const loaded = {
         // Older leads only have a combined sellerName.
         ...(lead.firstName || lead.lastName ? {} : splitName(lead.sellerName)),
         ...lead,
         source: isPpc ? "PPC" : isPpl ? "PPL" : lead.source,
-      });
+      };
+      loadedRef.current = loaded;
+      setDraft(loaded);
+    }
     setEditingNotes(false);
   }, [lead, isPpc, isPpl]);
 
@@ -133,12 +143,33 @@ export default function LeadDetailModal({
     joinName(draft.firstName, draft.lastName) || draft.phone || draft.email,
   );
 
+  // Opens a tab for another property this seller owns, in this window.
   function handleAddPropertyForSeller() {
+    if (!confirmLeaving()) return;
     onAddPropertyForSeller({
       ...draft,
       sellerName: joinName(draft.firstName, draft.lastName) || draft.sellerName,
     });
-    onClose();
+  }
+
+  // Unsaved edits are lost when another property's tab opens.
+  function confirmLeaving() {
+    const edited =
+      loadedRef.current &&
+      Object.keys({ ...draft, ...loadedRef.current }).some(
+        (key) =>
+          !["photos", "compsResult", "propertyHistory"].includes(key) &&
+          (draft[key] ?? "") !== (loadedRef.current[key] ?? ""),
+      );
+    return (
+      !edited ||
+      window.confirm("Discard the changes you haven't saved to this property?")
+    );
+  }
+
+  function switchProperty(property) {
+    if (property.id === lead.id || !confirmLeaving()) return;
+    onSwitchProperty(property);
   }
 
   async function handleSave() {
@@ -208,15 +239,18 @@ export default function LeadDetailModal({
           <ModalActions
             start={
               <>
-                {onAddPropertyForSeller && !isRental && hasSeller && (
-                  <ActionButton
-                    icon={HousePlus}
-                    label="Add Property"
-                    onClick={handleAddPropertyForSeller}
-                    disabled={saving}
-                    title="Add another property this seller owns, with their details filled in"
-                  />
-                )}
+                {onAddPropertyForSeller &&
+                  !isRental &&
+                  hasSeller &&
+                  !isNewProperty && (
+                    <ActionButton
+                      icon={HousePlus}
+                      label="Add Property"
+                      onClick={handleAddPropertyForSeller}
+                      disabled={saving}
+                      title="Add another property this seller owns, with their details filled in"
+                    />
+                  )}
                 <ActionButton
                   icon={Calculator}
                   label="Analyze"
@@ -254,6 +288,28 @@ export default function LeadDetailModal({
         }
       >
         <div className="ldm-body">
+          {sellerProperties.length > 1 && (
+            <div
+              className="ldm-property-tabs"
+              role="tablist"
+              aria-label="This seller's properties"
+            >
+              {sellerProperties.map((property) => (
+                <button
+                  key={property.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={property.id === lead.id}
+                  className={`ldm-property-tab${property.id === lead.id ? " is-active" : ""}`}
+                  onClick={() => switchProperty(property)}
+                  disabled={saving}
+                >
+                  {String(property.address || "").split(",")[0] ||
+                    "New property"}
+                </button>
+              ))}
+            </div>
+          )}
           <LeadCompsTabBar compsState={compsState} extraTabs={HISTORY_TABS} />
 
           {activeTab === "comps" && (

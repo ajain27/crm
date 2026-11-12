@@ -323,6 +323,25 @@ export function DateAddedCell({ date }) {
   );
 }
 
+// "2 properties" beside a seller with more than one lead in the list.
+export function SellerPropertiesBadge({ count }) {
+  return count > 1 ? (
+    <span className="leads-seller-properties">{count} properties</span>
+  ) : null;
+}
+
+// A seller's property addresses, one per line.
+export function SellerAddresses({ leads }) {
+  if (leads.length === 1) return leads[0].address || "—";
+  return (
+    <span className="leads-seller-addresses">
+      {leads.map((lead) => (
+        <span key={lead.id}>{lead.address || "—"}</span>
+      ))}
+    </span>
+  );
+}
+
 export function DeleteCell({ onDelete }) {
   return (
     <ActionCell className="acc-col-action-mobile" guardWholeCell>

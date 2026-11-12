@@ -8,6 +8,7 @@ import {
   dealLeadTab,
   dedupeLeads,
   leadMatchesSearch,
+  groupLeadsBySeller,
   paginate,
   parseAddress,
   leadForTab,
@@ -317,5 +318,29 @@ describe("redfinUrl", () => {
       "https://www.redfin.com/",
     );
     expect(redfinUrl("  ")).toBe("");
+  });
+
+  it("groups leads by seller: same phone, email or full name", () => {
+    const leads = [
+      { id: "1", firstName: "John", lastName: "Winterbottom" },
+      { id: "2", firstName: "Barbara", phone: "309-555-0100" },
+      { id: "3", firstName: "john ", lastName: "winterbottom" },
+      { id: "4", firstName: "Barb", phone: "(309) 555-0100" },
+      { id: "5", firstName: "Julia" },
+      { id: "6", firstName: "Julia" },
+      {
+        id: "7",
+        source: "MLS / Zillow",
+        agentName: "Al",
+        phone: "309-555-0100",
+      },
+    ];
+    expect(groupLeadsBySeller(leads).map((g) => g.map((l) => l.id))).toEqual([
+      ["1", "3"],
+      ["2", "4"],
+      ["5"],
+      ["6"],
+      ["7"],
+    ]);
   });
 });

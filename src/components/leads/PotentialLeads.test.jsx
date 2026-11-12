@@ -405,7 +405,7 @@ describe("PotentialLeads", () => {
     });
   });
 
-  it("adds another property for a lead's seller, with their details filled in", () => {
+  it("adds another property for a lead's seller as a new tab in the lead window", async () => {
     const lead = {
       id: "l1",
       leadType: "residential",
@@ -415,26 +415,106 @@ describe("PotentialLeads", () => {
       phone: "(555) 111-2222",
       source: "Referral",
     };
-    render(<PotentialLeads {...baseProps({ leads: [lead] })} />);
+    const saveLead = vi.fn().mockResolvedValue(undefined);
+    const setLeads = vi.fn();
+    render(
+      <PotentialLeads {...baseProps({ leads: [lead], saveLead, setLeads })} />,
+    );
     fireEvent.click(screen.getByText("1 Main St, Dallas, TX"));
     fireEvent.click(screen.getByRole("button", { name: "Add Property" }));
 
-    const dialog = screen
-      .getByRole("heading", { name: "Add Property for Seller" })
-      .closest(".modal");
-    expect(within(dialog).getByDisplayValue("Ann")).toBeInTheDocument();
-    expect(within(dialog).getByDisplayValue("Lee")).toBeInTheDocument();
+    // Same window, a tab for each property, the new one open with the
+    // seller's details filled in.
+    const tabs = screen.getByRole("tablist", {
+      name: "This seller's properties",
+    });
     expect(
-      within(dialog).getByDisplayValue("(555) 111-2222"),
-    ).toBeInTheDocument();
+      within(tabs)
+        .getAllByRole("tab")
+        .map((t) => t.textContent),
+    ).toEqual(["1 Main St", "New property"]);
     expect(
-      within(dialog).getByPlaceholderText(/123 Main St, Dallas, TX 75201/i),
-    ).toHaveValue("");
+      within(tabs).getByRole("tab", { name: "New property" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByDisplayValue("Ann")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("(555) 111-2222")).toBeInTheDocument();
+    const address = screen.getByPlaceholderText(
+      "e.g. 123 Main St, Dallas, TX 75201",
+    );
+    expect(address).toHaveValue("");
 
-    // Closed without saving, the next Add a lead starts empty.
-    fireEvent.click(dialog.querySelector(".modal-close"));
-    fireEvent.click(screen.getByRole("button", { name: "Add a lead" }));
-    expect(screen.queryByDisplayValue("Ann")).not.toBeInTheDocument();
+    fireEvent.change(address, { target: { value: "9 Oak Ave, Dallas, TX" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() =>
+      expect(saveLead).toHaveBeenCalledWith(
+        expect.objectContaining({
+          address: "9 Oak Ave, Dallas, TX",
+          firstName: "Ann",
+          lastName: "Lee",
+          phone: "(555) 111-2222",
+          source: "Referral",
+          userId: "u1",
+        }),
+      ),
+    );
+    const saved = saveLead.mock.calls[0][0];
+    expect(saved.id).not.toBe("l1");
+    expect(saved).not.toHaveProperty("isNewProperty");
+  });
+
+  it("lists a seller's properties as one row, with a tab for each in the window", () => {
+    const leads = [
+      {
+        id: "a",
+        source: "Cold Call",
+        address: "2510 7th St, Moline, IL",
+        firstName: "John",
+        lastName: "Winterbottom",
+        phone: "309-555-0100",
+      },
+      {
+        id: "b",
+        source: "Cold Call",
+        address: "160 Buffalo Springs Rd, Mabank, TX",
+        firstName: "John",
+        lastName: "Winterbottom",
+      },
+      {
+        id: "c",
+        source: "Cold Call",
+        address: "605 Yew St, Centralia, WA",
+        firstName: "Barbara",
+        lastName: "Kincaid",
+      },
+    ];
+    render(
+      <PotentialLeads {...baseProps({ leads, initialTab: "coldcall" })} />,
+    );
+    expect(screen.getAllByText("2 properties").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("row")).toHaveLength(3); // header + 2 sellers
+
+    fireEvent.click(
+      screen.getAllByText("160 Buffalo Springs Rd, Mabank, TX")[0],
+    );
+    const tabs = screen.getByRole("tablist", {
+      name: "This seller's properties",
+    });
+    const tabNames = within(tabs)
+      .getAllByRole("tab")
+      .map((t) => t.textContent);
+    expect(tabNames).toHaveLength(2);
+    expect(tabNames).toEqual(
+      expect.arrayContaining(["2510 7th St", "160 Buffalo Springs Rd"]),
+    );
+    const other = within(tabs)
+      .getAllByRole("tab")
+      .find((t) => t.getAttribute("aria-selected") === "false");
+    fireEvent.click(other);
+    expect(
+      within(
+        screen.getByRole("tablist", { name: "This seller's properties" }),
+      ).getByRole("tab", { name: other.textContent }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
   it("shows a duplicate-address warning on address blur", () => {

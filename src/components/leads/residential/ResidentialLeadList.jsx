@@ -17,6 +17,8 @@ import {
   CardSelectCheckbox,
   SelectAllHeader,
   SelectCell,
+  SellerAddresses,
+  SellerPropertiesBadge,
 } from "../components/LeadTableCells";
 import LeadImportButton from "../components/LeadImportButton";
 import AddLeadButton from "../components/AddLeadButton";
@@ -27,6 +29,8 @@ import {
   leadMatchesSearch,
   matchesCallFilter,
   parseAddress,
+  groupLeadsBySeller,
+  sellerGroupPhones,
   sellerNameOf,
 } from "../leadUtils";
 
@@ -74,6 +78,11 @@ export default function ResidentialLeadList({
         matchesCallFilter(l, filters.called),
     )
     .sort(byFollowUpDate);
+
+  // A seller's properties share one row (the first listed), opening to a
+  // tab for each.
+  const sellerGroups = groupLeadsBySeller(filtered);
+  const groupOf = new Map(sellerGroups.map((g) => [g[0].id, g]));
 
   const usedSources = unique(leads.map((l) => l.source));
   const usedStates = unique(
@@ -134,7 +143,8 @@ export default function ResidentialLeadList({
     <LeadListPanel
       title="Residential Lead List"
       totalCount={leads.length}
-      filteredLeads={filtered}
+      filteredLeads={sellerGroups.map((g) => g[0])}
+      matchCount={filtered.length}
       listState={listState}
       filters={filterBar}
       noLeadsSubtitle="No leads yet."
@@ -147,7 +157,9 @@ export default function ResidentialLeadList({
           <thead>
             <tr>
               <SelectAllHeader
-                ids={pageLeads.map((l) => l.id)}
+                ids={pageLeads.flatMap((l) =>
+                  groupOf.get(l.id).map((g) => g.id),
+                )}
                 selectedIds={selectedIds}
                 onChange={listState.setManySelected}
               />
@@ -166,37 +178,57 @@ export default function ResidentialLeadList({
           <tbody>
             {pageLeads.map((lead) => {
               const isMls = lead.source === "MLS / Zillow";
+              const group = groupOf.get(lead.id);
+              const groupIds = group.map((g) => g.id);
+              const selected = groupIds.every((id) => selectedIds.has(id));
+              const toggle = () =>
+                listState.setManySelected(groupIds, !selected);
               return (
                 <tr
                   key={lead.id}
                   className={`clickable-row${qualityRowClass(lead.quality)}`}
                   onClick={() => onOpen(lead)}
                 >
-                  <SelectCell
-                    checked={selectedIds.has(lead.id)}
-                    onToggle={() => listState.toggleSelected(lead.id)}
+                  <SelectCell checked={selected} onToggle={toggle} />
+                  <DeleteCell
+                    onDelete={() =>
+                      group.length > 1 ? onBulkDelete(group) : onDelete(lead.id)
+                    }
                   />
-                  <DeleteCell onDelete={() => onDelete(lead.id)} />
                   <AccordionHeaderCell
                     leading={
                       <CardSelectCheckbox
-                        checked={selectedIds.has(lead.id)}
-                        onToggle={() => listState.toggleSelected(lead.id)}
+                        checked={selected}
+                        onToggle={toggle}
                       />
                     }
                     id={lead.id}
                     label="Address"
-                    value={lead.address}
+                    value={<SellerAddresses leads={group} />}
                     card={{
-                      title: sellerNameOf(lead),
-                      subtitle: lead.address,
+                      title: (
+                        <>
+                          {sellerNameOf(lead)}
+                          <SellerPropertiesBadge count={group.length} />
+                        </>
+                      ),
+                      subtitle: group.map((g) => g.address).join("  ·  "),
                     }}
                     className="leads-address-cell"
                   />
-                  <td data-label="Seller">{sellerNameOf(lead) || "—"}</td>
+                  <td data-label="Seller">
+                    {sellerNameOf(lead) || "—"}
+                    <SellerPropertiesBadge count={group.length} />
+                  </td>
                   {/* MLS leads carry the agent's email, not the seller's. */}
                   <EmailCell email={isMls ? "" : lead.email} />
-                  <PhoneCell phone={lead.phone} phone2={lead.phone2} />
+                  <PhoneCell
+                    phones={
+                      isMls
+                        ? [lead.phone, lead.phone2]
+                        : sellerGroupPhones(group)
+                    }
+                  />
                   <NotesCell notes={lead.notes} />
                   <CallCell
                     count={lead.callCount}

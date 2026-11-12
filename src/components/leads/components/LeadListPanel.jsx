@@ -50,11 +50,14 @@ export function LeadClearFilters({ listState }) {
 // bar, empty states, the table and pagination. `children` is a render
 // function given the current page's leads; it returns the <thead>/<tbody>.
 // Columns can be resized by dragging their header edges; widths are
-// remembered under `resizeKey` (the title by default).
+// remembered under `resizeKey` (the title by default). `matchCount` is how
+// many leads match when rows stand for more than one (a seller's
+// properties share a row).
 export default function LeadListPanel({
   title,
   totalCount,
   filteredLeads,
+  matchCount = filteredLeads.length,
   listState,
   filters,
   statusMessage,
@@ -82,7 +85,7 @@ export default function LeadListPanel({
           <p>
             {totalCount === 0
               ? noLeadsSubtitle
-              : `${filteredLeads.length} of ${totalCount} ${pluralizeLeads(totalCount)}`}
+              : `${matchCount} of ${totalCount} ${pluralizeLeads(totalCount)}`}
           </p>
         </div>
         <div className="leads-filters">{filters}</div>

@@ -423,6 +423,60 @@ export function leadSearchValues(lead) {
   });
 }
 
+// What identifies a lead's seller: their phones, email and full name
+// (first and last — a lone first name is too common to go by).
+function sellerKeys(lead) {
+  // An MLS lead's phone and email are the listing agent's, not a seller's.
+  if (lead.source === "MLS / Zillow") return [];
+  const keys = [];
+  for (const phone of [lead.phone, lead.phone2]) {
+    const digits = digitsOf(phone).slice(-10);
+    if (digits.length === 10) keys.push(`phone:${digits}`);
+  }
+  const email = String(lead.email || lead.sellerEmail || "")
+    .trim()
+    .toLowerCase();
+  if (email) keys.push(`email:${email}`);
+  const name = sellerNameOf(lead).toLowerCase().replace(/\s+/g, " ");
+  if (name.split(" ").length >= 2) keys.push(`name:${name}`);
+  return keys;
+}
+
+// Leads grouped by seller — the same phone, email or full name — in the
+// order each seller first appears. Each group is an array of leads.
+export function groupLeadsBySeller(leads) {
+  const parent = leads.map((_, i) => i);
+  const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const firstWithKey = new Map();
+  leads.forEach((lead, i) => {
+    for (const key of sellerKeys(lead)) {
+      if (firstWithKey.has(key)) parent[find(i)] = find(firstWithKey.get(key));
+      else firstWithKey.set(key, i);
+    }
+  });
+  const groups = new Map();
+  leads.forEach((lead, i) => {
+    const root = find(i);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(lead);
+  });
+  // A group is added at its earliest lead, so they come out in list order.
+  return [...groups.values()];
+}
+
+// Every phone across a seller's leads, each once.
+export function sellerGroupPhones(group) {
+  const seen = new Set();
+  return group
+    .flatMap((lead) => [lead.phone, lead.phone2])
+    .filter((phone) => {
+      const digits = digitsOf(phone).slice(-10);
+      if (!digits || seen.has(digits)) return false;
+      seen.add(digits);
+      return true;
+    });
+}
+
 // Every lead list's search box: matches anything on the lead.
 export function leadMatchesSearch(lead, query) {
   if (!String(query || "").trim()) return true;

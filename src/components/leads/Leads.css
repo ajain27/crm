@@ -1657,4 +1657,59 @@
     font-size: 0.75rem;
     color: var(--muted);
   }
+
+  /* A seller with more than one property in the list. */
+  .leads-seller-properties {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--blue) 16%, transparent);
+    color: var(--blue);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .leads-seller-addresses {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  /* A tab for each of the seller's properties, atop the lead window. */
+  .ldm-property-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ldm-property-tab {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      color 0.15s,
+      border-color 0.15s,
+      background 0.15s;
+  }
+
+  .ldm-property-tab:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--text);
+  }
+
+  .ldm-property-tab.is-active {
+    color: var(--blue);
+    border-color: var(--blue);
+    background: color-mix(in srgb, var(--blue) 12%, transparent);
+  }
 }
