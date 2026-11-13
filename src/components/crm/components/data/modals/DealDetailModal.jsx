@@ -37,6 +37,7 @@ import WholesaleOfferPdfTemplate, {
   DEFAULT_OFFER_OPTIONS,
 } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
+import CommercialOfferPdfTemplate from "./CommercialOfferPdfTemplate";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import AssignmentOptionsModal from "./AssignmentOptionsModal";
@@ -253,6 +254,7 @@ function DealDetailModal({
   // The form as the deal was opened (or last saved), for Save Changes.
   const [savedDraft, setSavedDraft] = useState({});
   const [saving, setSaving] = useState(false);
+  const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
   const {
     printRef: offerRef,
     exporting: exportingOffer,
@@ -260,7 +262,11 @@ function DealDetailModal({
     previewImage: offerPreviewImage,
     closePreview: closeOfferPreview,
     downloadReport: downloadOffer,
-  } = useGenerateReport("purchase-and-sale-agreement");
+  } = useGenerateReport(
+    offerOptions.commercial
+      ? "commercial-purchase-and-sale-agreement"
+      : "purchase-and-sale-agreement",
+  );
   const {
     printRef: jvRef,
     exporting: exportingJv,
@@ -288,7 +294,6 @@ function DealDetailModal({
   // The MAO inputs the MAO was last worked out from, so it's only
   // recalculated when one of them changes, not when a deal opens.
   const maoInputs = useRef(null);
-  const [offerOptions, setOfferOptions] = useState(DEFAULT_OFFER_OPTIONS);
 
   // The Comps, Price History and Property History tabs, as in the lead
   // window. They read the deal with its full address; `dealForTabs` only
@@ -1542,7 +1547,18 @@ function DealDetailModal({
         </div>
       </Modal>
 
-      {exportingOffer && (
+      {exportingOffer && offerOptions.commercial && (
+        <CommercialOfferPdfTemplate
+          ref={offerRef}
+          sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
+          propertyAddress={formatFullAddress(draft)}
+          purchasePrice={offerPurchasePrice}
+          emdAmount={offerOptions.emdAmount}
+          inspectionDays={offerOptions.inspectionDays}
+          closingDays={offerOptions.closingDays}
+        />
+      )}
+      {exportingOffer && !offerOptions.commercial && (
         <WholesaleOfferPdfTemplate
           ref={offerRef}
           sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
@@ -1583,6 +1599,7 @@ function DealDetailModal({
         onClose={() => setOfferOptionsOpen(false)}
         onGenerate={handleOfferOptionsSubmit}
         initialOptions={offerOptions}
+        isCommercial={deal?.fromLead?.leadType === "commercial"}
         sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
       />
       {analyzeOpen && (

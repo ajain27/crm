@@ -507,6 +507,62 @@ describe("DealDetailModal", () => {
     );
   });
 
+  it("generates the commercial agreement when the deal is commercial", async () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, contractPrice: 410000 }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Generate Offer"));
+    expect(screen.getByLabelText(/No, residential/)).toBeChecked();
+    fireEvent.click(screen.getByLabelText(/Yes, commercial/));
+    // The commercial agreement is always assignable, with its own periods.
+    expect(screen.queryByLabelText(/No assignment/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Inspection Period")).toHaveValue(30);
+    expect(screen.getByLabelText("Closing Timeline")).toHaveValue(60);
+    fireEvent.change(screen.getByLabelText("Closing Timeline"), {
+      target: { value: "45" },
+    });
+    renderElementToPdfAssets.mockClear();
+    fireEvent.click(screen.getByText("Generate"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
+    expect(text).toContain("COMMERCIAL PURCHASE AND SALE AGREEMENT");
+    expect(text).toContain("Purchase Price: $410,000");
+    expect(text).toContain("Inspection PeriodThirty (30) calendar days");
+    expect(text).toContain(
+      "Closing DateOn or before forty-five (45) calendar days",
+    );
+    expect(text).toContain(
+      "Removal DeadlineForty-five (45) calendar days, and before closing",
+    );
+    expect(text).toContain("2. PROPERTY INCLUDED & EXCLUDED");
+    expect(text).toContain("11. CLOSING COSTS");
+    expect(text).toContain("You Win Estates, and/or assigns");
+  });
+
+  it("asks with commercial picked for a deal from a commercial lead", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, fromLead: { leadType: "commercial" } }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Generate Offer"));
+    expect(screen.getByLabelText(/Yes, commercial/)).toBeChecked();
+    expect(screen.getByLabelText("Inspection Period")).toHaveValue(30);
+    fireEvent.click(screen.getByLabelText(/No, residential/));
+    expect(screen.getByLabelText("Inspection Period")).toHaveValue(14);
+    expect(screen.getByLabelText(/No assignment/)).toBeInTheDocument();
+  });
+
   it("won't generate an offer without an EMD or inspection period", () => {
     render(
       <DealDetailModal
