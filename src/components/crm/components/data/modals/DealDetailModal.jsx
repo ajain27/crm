@@ -1624,16 +1624,26 @@ function DealDetailModal({
       )}
       <PdfReportPreviewModal
         previewImage={offerPreviewImage}
+        title={
+          offerOptions.commercial
+            ? "Commercial Purchase and Sale Agreement"
+            : "Purchase and Sale Agreement"
+        }
+        scroll
         onClose={closeOfferPreview}
         onDownload={downloadOffer}
       />
       <PdfReportPreviewModal
         previewImage={jvPreviewImage}
+        title="JV Agreement"
+        scroll
         onClose={closeJvPreview}
         onDownload={downloadJv}
       />
       <PdfReportPreviewModal
         previewImage={assignmentPreviewImage}
+        title="Assignment of Contract"
+        scroll
         onClose={closeAssignmentPreview}
         onDownload={downloadAssignment}
       />
