@@ -477,6 +477,9 @@ describe("DealDetailModal", () => {
     fireEvent.change(screen.getByLabelText("Closing Timeline"), {
       target: { value: "30" },
     });
+    fireEvent.change(screen.getByLabelText("EMD Due"), {
+      target: { value: "2" },
+    });
     renderElementToPdfAssets.mockClear();
     fireEvent.click(screen.getByText("Generate"));
 
@@ -484,6 +487,9 @@ describe("DealDetailModal", () => {
     const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
     expect(text).toContain("Earnest Money Deposit (EMD): $1,500");
     expect(text).toContain("twenty-one (21) calendar days");
+    expect(text).toContain(
+      "Buyer shall deliver the EMD to the escrow/title agent within two (2) business days after the Effective Date.",
+    );
     // The closing timeline asked for, everywhere the agreement states it.
     expect(text).toContain(
       "Targeted Closing Date: 30 days after mutual acceptance.",
@@ -527,6 +533,10 @@ describe("DealDetailModal", () => {
     fireEvent.change(screen.getByLabelText("Closing Timeline"), {
       target: { value: "45" },
     });
+    expect(screen.getByLabelText("EMD Due")).toHaveValue(3);
+    fireEvent.change(screen.getByLabelText("EMD Due"), {
+      target: { value: "5" },
+    });
     renderElementToPdfAssets.mockClear();
     fireEvent.click(screen.getByText("Generate"));
 
@@ -541,6 +551,7 @@ describe("DealDetailModal", () => {
     expect(text).toContain(
       "Removal DeadlineForty-five (45) calendar days, and before closing",
     );
+    expect(text).toContain("Earnest Money DeliveryFive (5) business days");
     expect(text).toContain("2. PROPERTY INCLUDED & EXCLUDED");
     expect(text).toContain("11. CLOSING COSTS");
     expect(text).toContain("You Win Estates, and/or assigns");
@@ -579,6 +590,25 @@ describe("DealDetailModal", () => {
     expect(screen.getByText("Generate")).toBeDisabled();
     expect(
       screen.getByText(/Enter between 1 and 365 days/),
+    ).toBeInTheDocument();
+  });
+
+  it("won't generate an offer without when the EMD is due", () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Generate Offer"));
+    fireEvent.change(screen.getByLabelText("EMD Due"), {
+      target: { value: "" },
+    });
+    expect(screen.getByText("Generate")).toBeDisabled();
+    expect(
+      screen.getByText("Enter between 1 and 30 business days."),
     ).toBeInTheDocument();
   });
 

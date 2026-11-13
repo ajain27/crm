@@ -48,6 +48,7 @@ function todayFormatted() {
 export const DEFAULT_OFFER_OPTIONS = {
   allowAssignment: true,
   emdAmount: 100,
+  emdDays: 3,
   inspectionDays: 14,
   closingDays: 21,
 };
@@ -97,12 +98,17 @@ export function numberToWords(n) {
   return `${ONES[Math.floor(n / 100)]} hundred${rest ? ` ${numberToWords(rest)}` : ""}`;
 }
 
+// 3 → "three (3) business days", for when the EMD is due.
+export function businessDays(n) {
+  return `${numberToWords(n)} (${n}) business ${n === 1 ? "day" : "days"}`;
+}
+
 // Section 3 of the assignable agreement: when closing is due, when the
 // EMD goes hard, and what happens when closing slips — for a title or
 // agency delay, a seller who won't close, or a buyer who can't — and that
 // an assignment changes none of it. `liensSection` is the Liens, Taxes &
 // Encumbrances clause's number.
-function AssignableClosingTerms({ closingDays, liensSection }) {
+function AssignableClosingTerms({ closingDays, emdDays, liensSection }) {
   const liens = `Section ${liensSection}`;
   return (
     <>
@@ -116,7 +122,7 @@ function AssignableClosingTerms({ closingDays, liensSection }) {
       </p>
       <p>
         <strong>(b) Earnest Money.</strong> Buyer shall deliver the EMD to the
-        escrow/title agent within three (3) business days after the Effective
+        escrow/title agent within {businessDays(emdDays)} after the Effective
         Date. If Buyer does not terminate this Agreement in writing before the
         Inspection Period expires, the EMD becomes non-refundable to Buyer,
         except that it shall be refunded to Buyer in full under Section 3(c),
@@ -184,6 +190,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
     purchasePrice,
     allowAssignment = DEFAULT_OFFER_OPTIONS.allowAssignment,
     emdAmount = DEFAULT_OFFER_OPTIONS.emdAmount,
+    emdDays = DEFAULT_OFFER_OPTIONS.emdDays,
     inspectionDays = DEFAULT_OFFER_OPTIONS.inspectionDays,
     closingDays = DEFAULT_OFFER_OPTIONS.closingDays,
   },
@@ -257,6 +264,8 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
             funds. The Earnest Money Deposit (EMD) shall be held by a mutually
             acceptable escrow or title agent and is fully refundable to Buyer
             during the Inspection Period defined below.
+            {!allowAssignment &&
+              ` Buyer shall deliver the EMD to the escrow/title agent within ${businessDays(emdDays)} after the Effective Date.`}
           </p>
         </Section>
 
@@ -279,6 +288,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
           {allowAssignment ? (
             <AssignableClosingTerms
               closingDays={closingDays}
+              emdDays={emdDays}
               liensSection={afterRemedies + 1}
             />
           ) : (

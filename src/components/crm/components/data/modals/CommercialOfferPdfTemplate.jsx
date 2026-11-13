@@ -8,7 +8,7 @@ import {
   SigLine,
   COMPANY_SIGNATURE,
 } from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
-import { numberToWords } from "./WholesaleOfferPdfTemplate";
+import { numberToWords, businessDays } from "./WholesaleOfferPdfTemplate";
 import "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate.css";
 import "./CommercialOfferPdfTemplate.css";
 
@@ -17,6 +17,7 @@ const BUYER_NAME = "You Win Estates, and/or assigns";
 export const DEFAULT_COMMERCIAL_OPTIONS = {
   inspectionDays: 30,
   closingDays: 60,
+  emdDays: 3,
 };
 
 const ACCEPTANCE = "Mutual acceptance (Seller & Buyer signed)";
@@ -42,8 +43,13 @@ function days(n) {
 // Key Terms is built from divs, not a <table>: the app's global table
 // styles shade rows with color-mix(), which html2canvas can't parse.
 // The Key Terms rows: the inspection period and closing timeline come from
-// the offer options (removal is due by closing); the rest are fixed.
-export function commercialKeyTerms({ inspectionDays, closingDays }) {
+// the offer options (removal is due by closing), as does when the EMD is
+// due; the rest are fixed.
+export function commercialKeyTerms({
+  inspectionDays,
+  closingDays,
+  emdDays = DEFAULT_COMMERCIAL_OPTIONS.emdDays,
+}) {
   return [
     ["Inspection Period", days(inspectionDays), ACCEPTANCE],
     [
@@ -61,7 +67,11 @@ export function commercialKeyTerms({ inspectionDays, closingDays }) {
       `${days(closingDays)}, and before closing`,
       ACCEPTANCE,
     ],
-    ["Earnest Money Delivery", "Three (3) business days", ACCEPTANCE],
+    [
+      "Earnest Money Delivery",
+      businessDays(emdDays).replace(/^\w/, (c) => c.toUpperCase()),
+      ACCEPTANCE,
+    ],
     [
       "Offer Expiration",
       "Twenty-four (24) hours",
@@ -84,6 +94,7 @@ const CommercialOfferPdfTemplate = forwardRef(
       emdAmount = 100,
       inspectionDays = DEFAULT_COMMERCIAL_OPTIONS.inspectionDays,
       closingDays = DEFAULT_COMMERCIAL_OPTIONS.closingDays,
+      emdDays = DEFAULT_COMMERCIAL_OPTIONS.emdDays,
     },
     ref,
   ) {
@@ -148,7 +159,7 @@ const CommercialOfferPdfTemplate = forwardRef(
                 <span role="columnheader">PERIOD</span>
                 <span role="columnheader">COUNTED FROM</span>
               </div>
-              {commercialKeyTerms({ inspectionDays, closingDays }).map(
+              {commercialKeyTerms({ inspectionDays, closingDays, emdDays }).map(
                 ([term, period, from]) => (
                   <div className="oa-pdf-key-row" role="row" key={term}>
                     <span role="cell">{term}</span>

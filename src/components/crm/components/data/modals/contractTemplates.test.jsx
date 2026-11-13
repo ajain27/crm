@@ -63,6 +63,9 @@ describe("contract templates", () => {
       "it shall be refunded to Buyer in full under Section 3(c), Section 3(d), or Section 8.",
     );
     expect(text).toContain("extended by up to fifteen (15) calendar days");
+    expect(text).toContain(
+      "escrow/title agent within three (3) business days after the Effective Date.",
+    );
     expect(text).toContain("Any assignment or novation under Section 6");
     expect(text).not.toContain("Targeted Closing Date");
     unmount();

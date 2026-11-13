@@ -1554,6 +1554,7 @@ function DealDetailModal({
           propertyAddress={formatFullAddress(draft)}
           purchasePrice={offerPurchasePrice}
           emdAmount={offerOptions.emdAmount}
+          emdDays={offerOptions.emdDays}
           inspectionDays={offerOptions.inspectionDays}
           closingDays={offerOptions.closingDays}
         />

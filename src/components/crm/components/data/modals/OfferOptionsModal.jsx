@@ -22,6 +22,7 @@ function toForm(options, sellerName, isCommercial) {
     commercial,
     allowAssignment: options.allowAssignment,
     emdAmount: String(options.emdAmount),
+    emdDays: String(options.emdDays ?? DEFAULT_OFFER_OPTIONS.emdDays),
     inspectionDays: String(timeline.inspectionDays),
     closingDays: String(
       timeline.closingDays ?? DEFAULT_OFFER_OPTIONS.closingDays,
@@ -31,7 +32,7 @@ function toForm(options, sellerName, isCommercial) {
 
 // Asks whether it's a commercial deal (the Commercial Purchase and Sale
 // Agreement: lot and building only, always assignable), then the seller's
-// name, the offer's assignment variant, EMD,
+// name, the offer's assignment variant, EMD and when it's due,
 // inspection period and closing timeline before the Purchase & Sale
 // Agreement is generated.
 // Opens with the deal's seller name and the last options used (or the
@@ -57,6 +58,12 @@ export default function OfferOptionsModal({
   const emdAmount = parseInt(form.emdAmount, 10) || 0;
   const inspectionDays = parseInt(form.inspectionDays, 10) || 0;
   const emdError = emdAmount > 0 ? "" : "Enter an EMD amount.";
+  const emdDays = parseInt(form.emdDays, 10) || 0;
+  // The EMD is due well inside the inspection period, while it's refundable.
+  const emdDaysError =
+    emdDays >= 1 && emdDays <= 30
+      ? ""
+      : "Enter between 1 and 30 business days.";
   const daysError =
     inspectionDays >= 1 && inspectionDays <= MAX_DAYS
       ? ""
@@ -95,12 +102,13 @@ export default function OfferOptionsModal({
 
   function handleSubmit(e) {
     e?.preventDefault();
-    if (emdError || daysError || closingError) return;
+    if (emdError || emdDaysError || daysError || closingError) return;
     onGenerate({
       sellerName: form.sellerName.trim().replace(/\s+/g, " "),
       commercial: form.commercial,
       allowAssignment: form.commercial || form.allowAssignment,
       emdAmount,
+      emdDays,
       inspectionDays,
       closingDays,
     });
@@ -126,7 +134,9 @@ export default function OfferOptionsModal({
                 label="Generate"
                 tone="primary"
                 onClick={handleSubmit}
-                disabled={!!emdError || !!daysError || !!closingError}
+                disabled={
+                  !!emdError || !!emdDaysError || !!daysError || !!closingError
+                }
               />
             </>
           }
@@ -228,6 +238,22 @@ export default function OfferOptionsModal({
             aria-label="Earnest Money Deposit"
           />
           {emdError && <span className="field-error">{emdError}</span>}
+        </label>
+
+        <label className="field">
+          <span>EMD Due (business days after acceptance)</span>
+          <input
+            type="number"
+            min={1}
+            max={30}
+            value={form.emdDays}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, emdDays: digitsOnly(e.target.value) }))
+            }
+            placeholder="3"
+            aria-label="EMD Due"
+          />
+          {emdDaysError && <span className="field-error">{emdDaysError}</span>}
         </label>
 
         <label className="field">
