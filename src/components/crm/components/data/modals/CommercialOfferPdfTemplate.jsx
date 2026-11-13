@@ -39,6 +39,8 @@ function days(n) {
   return `${spelled(n)} calendar ${n === 1 ? "day" : "days"}`;
 }
 
+// Key Terms is built from divs, not a <table>: the app's global table
+// styles shade rows with color-mix(), which html2canvas can't parse.
 // The Key Terms rows: the inspection period and closing timeline come from
 // the offer options (removal is due by closing); the rest are fixed.
 export function commercialKeyTerms({ inspectionDays, closingDays }) {
@@ -140,26 +142,24 @@ const CommercialOfferPdfTemplate = forwardRef(
               The periods below control wherever this Agreement refers to them.
               All periods are calendar days unless stated otherwise.
             </p>
-            <table>
-              <thead>
-                <tr>
-                  <th>TERM</th>
-                  <th>PERIOD</th>
-                  <th>COUNTED FROM</th>
-                </tr>
-              </thead>
-              <tbody>
-                {commercialKeyTerms({ inspectionDays, closingDays }).map(
-                  ([term, period, from]) => (
-                    <tr key={term}>
-                      <td>{term}</td>
-                      <td className="oa-pdf-key-period">{period}</td>
-                      <td>{from}</td>
-                    </tr>
-                  ),
-                )}
-              </tbody>
-            </table>
+            <div className="oa-pdf-key-grid" role="table">
+              <div className="oa-pdf-key-row oa-pdf-key-head" role="row">
+                <span role="columnheader">TERM</span>
+                <span role="columnheader">PERIOD</span>
+                <span role="columnheader">COUNTED FROM</span>
+              </div>
+              {commercialKeyTerms({ inspectionDays, closingDays }).map(
+                ([term, period, from]) => (
+                  <div className="oa-pdf-key-row" role="row" key={term}>
+                    <span role="cell">{term}</span>
+                    <span role="cell" className="oa-pdf-key-period">
+                      {period}
+                    </span>
+                    <span role="cell">{from}</span>
+                  </div>
+                ),
+              )}
+            </div>
           </div>
 
           <Section number={1} title="PURCHASE PRICE & FINANCIAL TERMS">
