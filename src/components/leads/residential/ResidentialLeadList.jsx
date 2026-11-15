@@ -228,6 +228,7 @@ export default function ResidentialLeadList({
                         ? [lead.phone, lead.phone2]
                         : sellerGroupPhones(group)
                     }
+                    lead={lead}
                   />
                   <NotesCell notes={lead.notes} />
                   <CallCell

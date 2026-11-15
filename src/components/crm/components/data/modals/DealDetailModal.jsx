@@ -17,7 +17,6 @@ import Modal from "../../../../modal/Modal";
 import { Badge } from "../../../../elements/elements";
 import { STATE_OPTIONS } from "../../../../../constants/stateOptions";
 import {
-  cashOfferText,
   dealLeadTab,
   joinName,
   LEAD_TAB_IDS,
@@ -470,7 +469,6 @@ function DealDetailModal({
   );
   const sellerPhones = draft.sellerPhones || [];
   // The message each seller phone's Text button writes.
-  const textBody = cashOfferText({ address: formatFullAddress(draft) });
   const hasChanges = isDraftChanged(draft, savedDraft);
   const assignedPriceTooLow = isAssignedPriceTooLow(
     parseCurrency(draft.contractPrice),
@@ -902,10 +900,7 @@ function DealDetailModal({
                         label="Seller Phone"
                         action={
                           <>
-                            <TextLink
-                              phone={draft.sellerPhone}
-                              body={textBody}
-                            />
+                            <TextLink phone={draft.sellerPhone} lead={draft} />
                             {draft.sellerPhone && (
                               <CopyButton
                                 text={draft.sellerPhone}
@@ -943,7 +938,7 @@ function DealDetailModal({
                           label={`Seller Phone ${i + 2}`}
                           action={
                             <>
-                              <TextLink phone={phone} body={textBody} />
+                              <TextLink phone={phone} lead={draft} />
                               {phone && (
                                 <CopyButton
                                   text={phone}

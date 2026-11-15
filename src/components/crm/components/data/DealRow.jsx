@@ -88,6 +88,7 @@ function DealRow({ deal, index, onRowDetailClick, onSetCalls }) {
           deal.sellerPhone || deal.agentPhone,
           ...(deal.sellerPhones || []),
         ]}
+        lead={deal}
       />
       {onSetCalls && (
         <CallCell

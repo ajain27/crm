@@ -30,7 +30,6 @@ import AddLeadButton from "../components/AddLeadButton";
 import LeadDedupeButton from "../components/LeadDedupeButton";
 import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import {
-  cashOfferText,
   groupLeadsBySeller,
   leadMatchesSearch,
   matchesCallFilter,
@@ -223,10 +222,7 @@ export default function CampaignLeadList({
                       }}
                     />
                     <EmailCell email={lead.email} />
-                    <PhoneCell
-                      phones={sellerGroupPhones(group)}
-                      textBody={cashOfferText(lead)}
-                    />
+                    <PhoneCell phones={sellerGroupPhones(group)} lead={lead} />
                     <td className="leads-address-cell" data-label="Address">
                       <SellerAddresses leads={group} />
                     </td>

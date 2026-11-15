@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CallCell, PhoneCell } from "./LeadTableCells";
+import { cashOfferText } from "../leadUtils";
 
 function renderCell(count, onChange = vi.fn(), onRowClick = vi.fn()) {
   render(
@@ -52,6 +53,38 @@ describe("PhoneCell", () => {
       // jsdom isn't an Apple device: Android's form.
       `sms:+17166651501?body=${encodeURIComponent("Hi Ann, cash offer?")}`,
     );
+  });
+
+  it("writes the cash-offer text for the lead or deal it's given", () => {
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <PhoneCell
+              phones={["716-665-1501", "716-665-1502"]}
+              lead={{
+                address: "12 Main St",
+                city: "Dallas",
+                state: "TX",
+                zipCode: "75201",
+              }}
+            />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    const body = encodeURIComponent(
+      cashOfferText({ address: "12 Main St, Dallas, TX 75201" }),
+    );
+    for (const phone of ["716-665-1501", "716-665-1502"]) {
+      const href = screen
+        .getByRole("link", { name: `Text ${phone}` })
+        .getAttribute("href");
+      expect(href).toContain(`body=${body}`);
+      expect(decodeURIComponent(href)).toContain(
+        "the property at 12 Main St, Dallas, TX 75201",
+      );
+    }
   });
 
   it("also copies the message, in case Messages leaves it out", async () => {

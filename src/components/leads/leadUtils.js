@@ -369,8 +369,22 @@ export function parseAddress(full) {
 // The text the Text button writes to a seller, asking whether they'd sell
 // the property for a cash offer. "the property at …", or "your property"
 // when the lead has no address.
+// The address a text names: a lead's or deal's street, with its city, state
+// and ZIP when they're kept apart (a deal's are) — as is when it already
+// reads as a full address ("123 Main St, Dallas, TX 75201").
+export function messageAddress(record) {
+  const street = leadAddress(record);
+  if (!street || street.includes(",")) return street;
+  const stateZip = [record.state, record.zipCode || record.zip]
+    .filter(Boolean)
+    .join(" ");
+  return [street, record.city, stateZip].filter(Boolean).join(", ");
+}
+
+// The cash-offer text a Text button prefills. Takes any lead, deal or
+// record with an address, so every list and window writes the same message.
 export function cashOfferText(lead) {
-  const address = String(lead?.address || "").trim();
+  const address = messageAddress(lead);
   return [
     `Hi, I'm reaching out regarding ${address ? `the property at ${address}` : "your property"}.`,
     "I wanted to see if you would be open to selling it.",

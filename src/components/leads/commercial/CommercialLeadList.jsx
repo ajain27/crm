@@ -161,7 +161,11 @@ export default function CommercialLeadList({
                   )}
                 </td>
                 <EmailCell email={lead.sellerEmail || lead.email} />
-                <PhoneCell phone={lead.phone} phone2={lead.phone2} />
+                <PhoneCell
+                  phone={lead.phone}
+                  phone2={lead.phone2}
+                  lead={lead}
+                />
                 <CallCell
                   count={lead.callCount}
                   onChange={(count) => onSetCalls(lead, count)}

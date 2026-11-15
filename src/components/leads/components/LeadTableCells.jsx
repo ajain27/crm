@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { displayPhone, formatDate } from "../../../utils/utils";
-import { redfinUrl, zillowUrl } from "../leadUtils";
+import { cashOfferText, redfinUrl, zillowUrl } from "../leadUtils";
 import { requestRedfinUrl } from "../../../services/compsService";
 import CompsNoteView from "../../crm/components/data/comps/CompsNoteView";
 
@@ -165,7 +165,11 @@ export function smsHref(phone, body = "", userAgent = currentUserAgent()) {
 // number that tel: links call from.
 // `body` (optional) is written into the message, and copied too: a
 // Messages app that leaves it out (some versions do) can have it pasted.
-export function TextLink({ phone, body = "" }) {
+// Given a `lead` (any lead, deal or record with an address) instead, the
+// message is the cash-offer text for it, so wherever a lead's number shows
+// its Text button opens the same message.
+export function TextLink({ phone, body: bodyProp = "", lead }) {
+  const body = bodyProp || (lead ? cashOfferText(lead) : "");
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return undefined;
@@ -210,13 +214,13 @@ export function TextLink({ phone, body = "" }) {
   );
 }
 
-export function PhoneLink({ phone, textBody }) {
+export function PhoneLink({ phone, textBody, lead }) {
   return phone ? (
     <span className="leads-phone">
       <a href={`tel:${phone}`} className="leads-contact-link">
         {displayPhone(phone)}
       </a>
-      <TextLink phone={phone} body={textBody} />
+      <TextLink phone={phone} body={textBody} lead={lead} />
       <CopyButton text={displayPhone(phone)} label={`Copy ${phone}`} />
     </span>
   ) : (
@@ -233,20 +237,28 @@ export function EmailCell({ email, className }) {
 }
 
 // A second number (`phone2`, e.g. from an import) shows under the first;
-// `phones` lists any number of them instead. `textBody` prefills the text
-// each number's Text button opens.
-export function PhoneCell({ phone, phone2, phones, className, textBody }) {
+// `phones` lists any number of them instead. `lead` (the lead or deal the
+// numbers belong to) prefills the cash-offer text each number's Text button
+// opens; `textBody` sets a different message.
+export function PhoneCell({
+  phone,
+  phone2,
+  phones,
+  className,
+  textBody,
+  lead,
+}) {
   const all = (phones || [phone, phone2]).filter(Boolean);
   return (
     <ActionCell className={className} data-label="Phone">
       {all.length > 1 ? (
         <span className="leads-phone-stack">
           {all.map((p, i) => (
-            <PhoneLink key={i} phone={p} textBody={textBody} />
+            <PhoneLink key={i} phone={p} textBody={textBody} lead={lead} />
           ))}
         </span>
       ) : (
-        <PhoneLink phone={all[0]} textBody={textBody} />
+        <PhoneLink phone={all[0]} textBody={textBody} lead={lead} />
       )}
     </ActionCell>
   );
