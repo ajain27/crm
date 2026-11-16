@@ -68,8 +68,8 @@ function CheckOption({ checked, children }) {
 // it. Reproduces the uploaded You Win Estates release clause for clause.
 // Seller Name(s), Property Address and the Agreement Date (the deal's Offer
 // Date) are filled in from the deal; the Escrow / File No. and how the EMD
-// is handled come from the Cancel Deal window. Buyer signs and dates today;
-// the Seller's lines are left to fill in by hand, with their printed name.
+// is handled come from the Cancel Deal window. Buyer signs it;
+// both signature dates are today, and the Seller's printed name is filled in.
 const MutualReleasePdfTemplate = forwardRef(function MutualReleasePdfTemplate(
   {
     sellerName,
@@ -317,7 +317,7 @@ const MutualReleasePdfTemplate = forwardRef(function MutualReleasePdfTemplate(
             <h3>SELLER</h3>
             <SigLine label="Signature" />
             <SigLine label="Printed Name" value={sellerName} />
-            <SigLine label="Date" />
+            <SigLine label="Date" value={today} />
           </div>
           <div className="oa-pdf-sig-box">
             <h3>BUYER</h3>

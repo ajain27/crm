@@ -110,7 +110,7 @@ describe("contract templates", () => {
     unmount();
   });
 
-  it("mutual release: fills in the deal, checks the EMD choice, buyer signs and dates today", () => {
+  it("mutual release: fills in the deal, checks the EMD choice, buyer signs, both dated today", () => {
     const { unmount } = render(
       <MutualReleasePdfTemplate
         sellerName="Jane Doe"
@@ -135,9 +135,9 @@ describe("contract templates", () => {
     expect(checked).toEqual(["", "X", ""]);
     expect(text).toContain("Jane DoePrinted Name");
     expect(text).toContain("11. GENERAL PROVISIONS");
-    // The Buyer signs and dates it; the Seller's date is left to fill in.
+    // The Buyer signs it; both signature dates are today.
     expect(signatures()).toEqual(["Ankit jain", "AJ"]);
-    expect(dateLines()).toEqual([undefined, today]);
+    expect(dateLines()).toEqual([today, today]);
     unmount();
   });
 
