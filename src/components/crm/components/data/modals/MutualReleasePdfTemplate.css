@@ -1,0 +1,54 @@
+@layer components {
+  /* The "check one" EMD options in the Mutual Release & Cancellation. */
+  .mr-pdf-checks {
+    display: grid;
+    gap: 4px;
+    margin: 4px 0 8px 12px;
+  }
+
+  .mr-pdf-check-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .mr-pdf-check-box {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 11px;
+    height: 11px;
+    border: 1px solid #1a1a2e;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1a1a2e;
+  }
+
+  /* The "Other:" line runs most of the way across. */
+  .mr-pdf-blank-wide {
+    width: 360px;
+  }
+
+  .mr-pdf-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .mr-pdf-initials {
+    display: inline-block;
+    min-width: 40px;
+    margin-right: 10px;
+    border-bottom: 1px solid #9ca3af;
+    text-align: center;
+  }
+
+  .mr-pdf-initials.oa-pdf-sig-script {
+    font-size: 16px;
+    letter-spacing: 0;
+  }
+}

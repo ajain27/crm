@@ -5,6 +5,7 @@ import {
   Calculator,
   ChartColumn,
   FileText,
+  FileX,
   HousePlus,
   Loader2,
   Plus,
@@ -40,6 +41,8 @@ import CommercialOfferPdfTemplate from "./CommercialOfferPdfTemplate";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import AssignmentOptionsModal from "./AssignmentOptionsModal";
+import MutualReleasePdfTemplate from "./MutualReleasePdfTemplate";
+import CancelDealOptionsModal from "./CancelDealOptionsModal";
 import RunCompsModal from "../comps/RunCompsModal";
 import DealAnalysisModal from "../../../../dealAnalyzer/components/quickAnalysis/DealAnalysisModal";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
@@ -282,6 +285,17 @@ function DealDetailModal({
     closePreview: closeAssignmentPreview,
     downloadReport: downloadAssignment,
   } = useGenerateReport("assignment-of-contract");
+  const {
+    printRef: releaseRef,
+    exporting: exportingRelease,
+    handleGenerateReport: handleGenerateRelease,
+    previewImage: releasePreviewImage,
+    closePreview: closeReleasePreview,
+    downloadReport: downloadRelease,
+  } = useGenerateReport("mutual-release-and-cancellation");
+  // Cancel Deal: its window, and the details the release is generated with.
+  const [cancelOptionsOpen, setCancelOptionsOpen] = useState(false);
+  const [releaseOptions, setReleaseOptions] = useState(null);
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
   const [assignmentOptionsOpen, setAssignmentOptionsOpen] = useState(false);
   const [assignmentInspection, setAssignmentInspection] = useState(false);
@@ -368,6 +382,21 @@ function DealDetailModal({
     setAssignmentInspection(inspectionPeriod);
     setAssignmentOptionsOpen(false);
     handleGenerateAssignment();
+  }
+
+  // Like the offer options: the details are committed together with the
+  // print template's mount, and the seller name typed there is written back
+  // to the deal's name fields.
+  function handleCancelOptionsSubmit({ sellerName, ...options }) {
+    const { firstName, lastName } = splitName(sellerName);
+    setDraft((prev) => ({
+      ...prev,
+      sellerFirstName: firstName,
+      sellerLastName: lastName,
+    }));
+    setReleaseOptions({ sellerName, ...options });
+    setCancelOptionsOpen(false);
+    handleGenerateRelease();
   }
 
   useEffect(() => {
@@ -698,6 +727,15 @@ function DealDetailModal({
                     tone="accent"
                     onClick={() => setOfferOptionsOpen(true)}
                     disabled={saving || exportingOffer}
+                  />
+                )}
+                {!isRental && (
+                  <ActionButton
+                    icon={FileX}
+                    label={exportingRelease ? "Generating…" : "Cancel Deal"}
+                    onClick={() => setCancelOptionsOpen(true)}
+                    disabled={saving || exportingRelease}
+                    title="Generate the Mutual Release & Cancellation Agreement for the seller to sign"
                   />
                 )}
                 {onMakeInactive && (
@@ -1584,6 +1622,21 @@ function DealDetailModal({
           inspectionPeriod={assignmentInspection}
         />
       )}
+      {exportingRelease && releaseOptions && (
+        <MutualReleasePdfTemplate
+          ref={releaseRef}
+          propertyAddress={formatFullAddress(draft)}
+          {...releaseOptions}
+        />
+      )}
+      <CancelDealOptionsModal
+        isOpen={cancelOptionsOpen}
+        onClose={() => setCancelOptionsOpen(false)}
+        onGenerate={handleCancelOptionsSubmit}
+        sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
+        agreementDate={draft.offerDate}
+        emdAmount={offerOptions.emdAmount}
+      />
       <AssignmentOptionsModal
         isOpen={assignmentOptionsOpen}
         onClose={() => setAssignmentOptionsOpen(false)}
@@ -1642,6 +1695,13 @@ function DealDetailModal({
         scroll
         onClose={closeAssignmentPreview}
         onDownload={downloadAssignment}
+      />
+      <PdfReportPreviewModal
+        previewImage={releasePreviewImage}
+        title="Mutual Release & Cancellation Agreement"
+        scroll
+        onClose={closeReleasePreview}
+        onDownload={downloadRelease}
       />
     </>
   );

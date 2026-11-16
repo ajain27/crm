@@ -234,7 +234,7 @@ describe("DealDetailModal", () => {
         updateDealPatch={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Cancel$/i }));
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -966,6 +966,41 @@ describe("DealDetailModal", () => {
       />,
     );
     expect(screen.getByText("Create assignment")).toBeInTheDocument();
+  });
+
+  it("cancels a deal with a mutual release filled in from the deal", async () => {
+    renderElementToPdfAssets.mockClear();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{
+          ...deal,
+          offerDate: "2026-09-05",
+          sellerFirstName: "Jane",
+          sellerLastName: "Doe",
+        }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Cancel Deal"));
+    expect(screen.getByLabelText("Agreement Date")).toHaveValue("2026-09-05");
+    expect(screen.getByLabelText("EMD Amount")).toHaveValue("$100");
+    fireEvent.change(screen.getByLabelText("Escrow / File No."), {
+      target: { value: "TX-889" },
+    });
+    fireEvent.click(screen.getByText("Generate Release"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
+    expect(text).toContain("MUTUAL RELEASE & CANCELLATION AGREEMENT");
+    expect(text).toContain("Seller Name(s):Jane Doe");
+    expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
+    expect(text).toContain("Agreement Date:September 5, 2026");
+    expect(text).toContain("Escrow / File No.:TX-889");
+    expect(text).toContain("The EMD of $100.00 shall be refunded");
+    expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
 
   it("creates an assignment of contract to the buyer typed in the form", async () => {

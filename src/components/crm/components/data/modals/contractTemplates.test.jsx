@@ -3,6 +3,10 @@ import { render } from "@testing-library/react";
 import WholesaleOfferPdfTemplate from "./WholesaleOfferPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
+import MutualReleasePdfTemplate, {
+  EMD_OTHER,
+  EMD_REFUND,
+} from "./MutualReleasePdfTemplate";
 import OfferAgreementPdfTemplate from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
 
 const today = new Date().toLocaleDateString("en-US", {
@@ -103,6 +107,55 @@ describe("contract templates", () => {
     expect(document.body).toHaveTextContent("Seller Name(s):Jane Doe");
     expect(signatures()).toEqual(["Ankit jain"]);
     expect(dateLines()).toEqual([today, today]);
+    unmount();
+  });
+
+  it("mutual release: fills in the deal, checks the EMD choice, buyer signs and dates today", () => {
+    const { unmount } = render(
+      <MutualReleasePdfTemplate
+        sellerName="Jane Doe"
+        propertyAddress="1 Main St, Dallas, TX"
+        agreementDate="2026-09-05"
+        escrowNumber="ESC-123"
+        emdHandling={EMD_REFUND}
+        emdAmount={500}
+      />,
+    );
+    const text = document.body.textContent;
+    expect(text).toContain("MUTUAL RELEASE & CANCELLATION AGREEMENT");
+    expect(text).toContain("Seller Name(s):Jane Doe");
+    expect(text).toContain("Buyer Name:You Win Estates, and/or assigns");
+    expect(text).toContain("Property Address:1 Main St, Dallas, TX");
+    expect(text).toContain("Agreement Date:September 5, 2026");
+    expect(text).toContain("Escrow / File No.:ESC-123");
+    expect(text).toContain("The EMD of $500.00 shall be refunded");
+    const checked = [...document.querySelectorAll(".mr-pdf-check-box")].map(
+      (el) => el.textContent,
+    );
+    expect(checked).toEqual(["", "X", ""]);
+    expect(text).toContain("Jane DoePrinted Name");
+    expect(text).toContain("11. GENERAL PROVISIONS");
+    // The Buyer signs and dates it; the Seller's date is left to fill in.
+    expect(signatures()).toEqual(["Ankit jain", "AJ"]);
+    expect(dateLines()).toEqual([undefined, today]);
+    unmount();
+  });
+
+  it("mutual release: writes in an 'other' EMD arrangement", () => {
+    const { unmount } = render(
+      <MutualReleasePdfTemplate
+        sellerName="Jane Doe"
+        propertyAddress="1 Main St"
+        emdHandling={EMD_OTHER}
+        emdOther="Released to Seller"
+      />,
+    );
+    expect(document.body).toHaveTextContent("Other: Released to Seller");
+    expect(
+      [...document.querySelectorAll(".mr-pdf-check-box")].map(
+        (el) => el.textContent,
+      ),
+    ).toEqual(["", "", "X"]);
     unmount();
   });
 
