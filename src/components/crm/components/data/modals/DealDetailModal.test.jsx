@@ -1204,4 +1204,31 @@ describe("DealDetailModal", () => {
     expect(text).toContain("7. DEFAULT & REMEDIES");
     expect(text).toContain("8. ENTIRE AGREEMENT");
   });
+
+  it("adds and saves extra seller emails, dropping blank ones", async () => {
+    const updateDealPatch = vi.fn();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={deal}
+        updateDealPatch={updateDealPatch}
+        existingDeals={[deal]}
+        existingLeads={[]}
+      />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("seller@email.com"), {
+      target: { value: "pat@example.com" },
+    });
+    fireEvent.click(screen.getByText("Add email"));
+    fireEvent.change(screen.getByLabelText("Seller Email 2"), {
+      target: { value: "  pat.work@example.com " },
+    });
+    fireEvent.click(screen.getByText("Add email"));
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+    await waitFor(() => expect(updateDealPatch).toHaveBeenCalled());
+    const patch = updateDealPatch.mock.calls[0][1];
+    expect(patch.sellerEmail).toBe("pat@example.com");
+    expect(patch.sellerEmails).toEqual(["pat.work@example.com"]);
+  });
 });

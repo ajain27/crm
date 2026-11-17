@@ -149,6 +149,8 @@ function initDraft(deal) {
   if (!Array.isArray(d.sellerPhones)) {
     d.sellerPhones = d.fromLead?.phone2 ? [d.fromLead.phone2] : [];
   }
+  // Emails past the first.
+  if (!Array.isArray(d.sellerEmails)) d.sellerEmails = [];
   CURRENCY_FIELDS.forEach((f) => {
     d[f] = d[f] ? fmtCurrency(String(d[f])) : "";
   });
@@ -172,9 +174,10 @@ function maoInputsKey(d) {
 }
 
 // A field's value for comparing the form with the saved deal: blank and
-// missing are the same, and blank extra phones aren't saved.
+// missing are the same, and blank extra phones and emails aren't saved.
 function comparable(key, value) {
-  if (key === "sellerPhones") return (value || []).filter((p) => p.trim());
+  if (key === "sellerPhones" || key === "sellerEmails")
+    return (value || []).map((v) => v.trim()).filter(Boolean);
   return value ?? "";
 }
 
@@ -508,6 +511,7 @@ function DealDetailModal({
     draft.sellerEmail,
   );
   const sellerPhones = draft.sellerPhones || [];
+  const sellerEmails = draft.sellerEmails || [];
   // The message each seller phone's Text button writes.
   const hasChanges = isDraftChanged(draft, savedDraft);
   const assignedPriceTooLow = isAssignedPriceTooLow(
@@ -630,6 +634,9 @@ function DealDetailModal({
         ...rest,
         ...numeric,
         sellerPhones: (rest.sellerPhones || []).filter((p) => p.trim()),
+        sellerEmails: (rest.sellerEmails || [])
+          .map((e) => e.trim())
+          .filter(Boolean),
         closedDate,
         closedInMonth,
       });
@@ -1030,7 +1037,23 @@ function DealDetailModal({
                           />
                         </Field>
                       ))}
-                      <Field label="Seller Email">
+                      <Field
+                        label="Seller Email"
+                        action={
+                          !locked && (
+                            <button
+                              type="button"
+                              className="leads-mls-link ddm-doc-link"
+                              onClick={() =>
+                                set("sellerEmails", [...sellerEmails, ""])
+                              }
+                            >
+                              <Plus size={12} />
+                              Add email
+                            </button>
+                          )
+                        }
+                      >
                         <input
                           disabled={locked}
                           type="email"
@@ -1042,6 +1065,53 @@ function DealDetailModal({
                           placeholder="seller@email.com"
                         />
                       </Field>
+                      {sellerEmails.map((email, i) => (
+                        <Field
+                          key={i}
+                          label={`Seller Email ${i + 2}`}
+                          action={
+                            !locked && (
+                              <button
+                                type="button"
+                                className="leads-mls-link ddm-doc-link"
+                                onClick={() =>
+                                  set(
+                                    "sellerEmails",
+                                    sellerEmails.filter((_, j) => j !== i),
+                                  )
+                                }
+                              >
+                                <X size={12} />
+                                Remove
+                              </button>
+                            )
+                          }
+                        >
+                          <input
+                            disabled={locked}
+                            type="email"
+                            value={email}
+                            onChange={(e) =>
+                              set(
+                                "sellerEmails",
+                                sellerEmails.map((v, j) =>
+                                  j === i ? e.target.value : v,
+                                ),
+                              )
+                            }
+                            onBlur={(e) =>
+                              set(
+                                "sellerEmails",
+                                sellerEmails.map((v, j) =>
+                                  j === i ? e.target.value.trim() : v,
+                                ),
+                              )
+                            }
+                            placeholder="seller@email.com"
+                            aria-label={`Seller Email ${i + 2}`}
+                          />
+                        </Field>
+                      ))}
                       <Field label="On Market">
                         <select
                           disabled={locked}

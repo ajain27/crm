@@ -69,6 +69,7 @@ export function createEmptyDealForm() {
     sellerPhone: "",
     sellerPhones: [],
     sellerEmail: "",
+    sellerEmails: [],
     askingPrice: "",
     occupant: "",
     sellingUrgency: "",
@@ -122,6 +123,7 @@ export function createDealFormForSeller(deal) {
     sellerPhone: deal?.sellerPhone || "",
     sellerPhones: [...(deal?.sellerPhones || [])],
     sellerEmail: deal?.sellerEmail || "",
+    sellerEmails: [...(deal?.sellerEmails || [])],
     source: deal?.source || "",
   };
 }
