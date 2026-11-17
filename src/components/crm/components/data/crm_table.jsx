@@ -4,6 +4,7 @@ import { Select } from "../../../elements/elements";
 import {
   getContractVersions,
   isDealInactive,
+  isDealInProgress,
   isDealRejected,
   isDealWithdrawn,
   months,
@@ -60,7 +61,8 @@ function Wholesale_data({
   const tabFilteredDeals = filteredDeals.filter((d) => {
     if (tab === "closed") return isClosed(d);
     if (tab === "inactive") return isInactive(d) && !isClosed(d);
-    return !isInactive(d) && !isClosed(d);
+    if (tab === "inProgress") return isDealInProgress(d);
+    return !isInactive(d) && !isClosed(d) && !isDealInProgress(d);
   });
 
   const {
@@ -169,8 +171,9 @@ function Wholesale_data({
   const contractMimeType = selectedContractVersion?.type || "";
 
   const activeCount = filteredDeals.filter(
-    (d) => !isInactive(d) && !isClosed(d),
+    (d) => !isInactive(d) && !isClosed(d) && !isDealInProgress(d),
   ).length;
+  const inProgressCount = filteredDeals.filter(isDealInProgress).length;
   const inactiveCount = filteredDeals.filter(
     (d) => isInactive(d) && !isClosed(d),
   ).length;
@@ -199,6 +202,16 @@ function Wholesale_data({
           >
             Active
             <span className="deal-tab-count">{activeCount}</span>
+          </button>
+          <button
+            className={`deal-tab-btn${tab === "inProgress" ? " deal-tab-btn--active" : ""}`}
+            onClick={() => {
+              setTab("inProgress");
+              setCurrentPage(1);
+            }}
+          >
+            In Progress
+            <span className="deal-tab-count">{inProgressCount}</span>
           </button>
           <button
             className={`deal-tab-btn${tab === "inactive" ? " deal-tab-btn--active" : ""}`}

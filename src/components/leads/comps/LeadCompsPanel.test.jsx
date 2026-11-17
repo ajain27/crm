@@ -42,7 +42,9 @@ describe("LeadCompsPanel", () => {
   it("shows the headline figures and a row per home, subject first", () => {
     render(<LeadCompsPanel comps={comps} lead={{ askingPrice: "$350,000" }} />);
     expect(screen.getByText("$400,000")).toBeInTheDocument();
-    expect(screen.getByText("$350,000")).toBeInTheDocument();
+    // The asking price isn't shown on the comps tab.
+    expect(screen.queryByText("Asking price")).not.toBeInTheDocument();
+    expect(screen.queryByText("$350,000")).not.toBeInTheDocument();
     const rows = screen.getAllByRole("row").slice(1);
     expect(rows[0]).toHaveTextContent("1 Main St");
     expect(rows[0]).toHaveTextContent("Subject");

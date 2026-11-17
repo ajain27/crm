@@ -158,10 +158,6 @@ export default function LeadCompsPanel({ comps, lead }) {
             ) : null
           }
         />
-        <Stat
-          label="Asking price"
-          value={money(parseMoney(lead.askingPrice))}
-        />
         <Stat label="Median price / sq ft" value={money(ppsf)} />
         <Stat label="Rent estimate" value={money(comps.rent)} suffix="/mo" />
       </div>

@@ -145,6 +145,16 @@ export function isDealInactive(deal) {
   );
 }
 
+// An assigned deal that isn't closed or inactive is in progress; it shows in
+// the dashboard's In Progress tab instead of Active.
+export function isDealInProgress(deal) {
+  return (
+    (deal.assigned || "No") === "Yes" &&
+    (deal.closed || "No") !== "Yes" &&
+    !isDealInactive(deal)
+  );
+}
+
 export function createContractVersion({
   name,
   type,

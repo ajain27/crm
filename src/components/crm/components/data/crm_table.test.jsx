@@ -219,6 +219,29 @@ describe("Wholesale_data", () => {
     ).toBeInTheDocument();
   });
 
+  it("moves an assigned deal from Active to the In Progress tab", () => {
+    const assigned = {
+      ...deal,
+      id: "d2",
+      address: "9 Elm St",
+      assigned: "Yes",
+    };
+    const { container } = render(
+      <Wholesale_data
+        filteredDeals={[deal, assigned]}
+        deals={[deal, assigned]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+    expect(getRenderedDealIds(container)).toEqual(["d1"]);
+    const tab = screen.getByRole("button", { name: /In Progress/ });
+    expect(tab).toHaveTextContent("In Progress1");
+    fireEvent.click(tab);
+    expect(getRenderedDealIds(container)).toEqual(["d2"]);
+  });
+
   it("deletes a deal from the details modal", () => {
     const deleteDeal = vi.fn();
     vi.spyOn(window, "confirm").mockReturnValue(true);
