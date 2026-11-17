@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Modal from "../modal/Modal";
+import AddressAutocompleteInput from "../elements/AddressAutocompleteInput";
 import { ExtraDetails, ZillowLink } from "./components/LeadTableCells";
 import {
   LeadMainPhotoRow,
@@ -189,10 +190,10 @@ export default function CommercialLeadDetailModal({
                         </>
                       }
                     >
-                      <input
+                      <AddressAutocompleteInput
                         className="ldm-input ldm-wide"
                         value={draft.address || ""}
-                        onChange={(e) => set("address", e.target.value)}
+                        onChange={(address) => set("address", address)}
                         placeholder="e.g. 500 Commerce St, Dallas, TX 75201"
                       />
                     </Field>

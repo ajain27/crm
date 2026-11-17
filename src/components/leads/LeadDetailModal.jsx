@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Modal from "../modal/Modal";
+import AddressAutocompleteInput from "../elements/AddressAutocompleteInput";
 import { Badge } from "../elements/elements";
 import { fmtCurrencyInput, formatPhone } from "../../utils/utils";
 import { DEAL_TYPES } from "../crm/components/crmConfig";
@@ -363,10 +364,10 @@ export default function LeadDetailModal({
                         </select>
                       </Field>
                       <Field label="Address">
-                        <input
+                        <AddressAutocompleteInput
                           className="ldm-input ldm-wide"
                           value={draft.address || ""}
-                          onChange={(e) => set("address", e.target.value)}
+                          onChange={(address) => set("address", address)}
                           placeholder="e.g. 123 Main St, Dallas, TX 75201"
                         />
                       </Field>
