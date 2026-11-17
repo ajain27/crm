@@ -2,23 +2,39 @@ import { useEffect, useState } from "react";
 import Modal from "../../../../modal/Modal";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
-// Asks whether the buyer gets an inspection period before the Assignment
-// of Contract is generated. Opens with the last choice made.
+// Asks for the closing date and whether the buyer gets an inspection
+// period before the Assignment of Contract is generated. Opens with the
+// last choices made; the closing date is required.
 export default function AssignmentOptionsModal({
   isOpen,
   onClose,
   onGenerate,
   initialInspectionPeriod = false,
+  initialClosingDate = "",
 }) {
   const [inspectionPeriod, setInspectionPeriod] = useState(
     initialInspectionPeriod,
   );
+  const [closingDate, setClosingDate] = useState(initialClosingDate);
+  const [touched, setTouched] = useState(false);
 
   // Reset only when the window opens.
   useEffect(() => {
-    if (isOpen) setInspectionPeriod(initialInspectionPeriod);
+    if (isOpen) {
+      setInspectionPeriod(initialInspectionPeriod);
+      setClosingDate(initialClosingDate || "");
+      setTouched(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  const closingError = closingDate ? "" : "Enter the closing date";
+
+  function handleGenerate() {
+    setTouched(true);
+    if (closingError) return;
+    onGenerate({ inspectionPeriod, closingDate });
+  }
 
   return (
     <Modal
@@ -39,7 +55,7 @@ export default function AssignmentOptionsModal({
               <ActionButton
                 label="Generate"
                 tone="primary"
-                onClick={() => onGenerate({ inspectionPeriod })}
+                onClick={handleGenerate}
               />
             </>
           }
@@ -47,6 +63,20 @@ export default function AssignmentOptionsModal({
       }
     >
       <div className="offer-options-body">
+        <label className="field">
+          <span>Closing Date</span>
+          <input
+            type="date"
+            value={closingDate}
+            onChange={(e) => setClosingDate(e.target.value)}
+            onBlur={() => setTouched(true)}
+            aria-label="Closing Date"
+          />
+          {touched && closingError && (
+            <span className="field-error">{closingError}</span>
+          )}
+        </label>
+
         <label className="ddm-switch-row">
           <span>
             <strong>Buyer needs an inspection period</strong>

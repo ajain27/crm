@@ -50,7 +50,9 @@ function Blank({ children }) {
 // uploaded You Win Estates assignment clause for clause; the Assignee is
 // the deal's buyer, the Seller the deal's seller, the Assignment Price its Assigned Price, and the
 // Assignee Deposit 10% of that. The Original Agreement is dated the deal's
-// Offer Date (today if it has none); both signature dates are today.
+// Offer Date (today if it has none); both signature dates are today. The
+// Closing clause names the closing date chosen when generating it (a blank
+// line to fill in by hand if none is given).
 // With an inspection period, a seven-day "Inspection Period" clause goes in
 // as Section 5, the clauses after it shift down one, and Representations
 // defers to it instead of saying the Assignee has already inspected.
@@ -61,6 +63,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
     propertyAddress,
     assignedPrice,
     originalAgreementDate,
+    closingDate,
     inspectionPeriod = false,
   },
   ref,
@@ -200,10 +203,11 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
         <Section number={afterRelease} title="CLOSING">
           <p>
             Closing shall occur through the escrow or title agent designated
-            under the Original Agreement, on or before the closing date set
-            forth therein, unless extended or modified by the parties in
-            writing. Assignee shall execute all documents and deposit all funds
-            required to complete the transaction.
+            under the Original Agreement, on or before{" "}
+            <Blank>{closingDate ? formatDate(closingDate) : null}</Blank> (the{" "}
+            <strong>"Closing Date"</strong>), unless extended or modified by the
+            parties in writing. Assignee shall execute all documents and deposit
+            all funds required to complete the transaction.
           </p>
         </Section>
 

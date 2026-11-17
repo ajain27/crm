@@ -1024,11 +1024,21 @@ describe("DealDetailModal", () => {
       target: { value: "Pat Buyer LLC" },
     });
     fireEvent.click(screen.getByText("Create assignment"));
+    // The closing date is required.
+    fireEvent.click(screen.getByText("Generate"));
+    expect(screen.getByText("Enter the closing date")).toBeInTheDocument();
+    expect(renderElementToPdfAssets).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Closing Date"), {
+      target: { value: "2026-10-15" },
+    });
     fireEvent.click(screen.getByText("Generate"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
     const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
     expect(text).toContain("ASSIGNMENT OF CONTRACT");
+    expect(text).toContain(
+      'on or before October 15, 2026 (the "Closing Date")',
+    );
     expect(text).toContain("Assignor Name:You Win Estates LLC");
     expect(text).toContain("Assignee Name(s):Pat Buyer LLC");
     expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
@@ -1150,6 +1160,9 @@ describe("DealDetailModal", () => {
     );
 
     fireEvent.click(screen.getByText("Create assignment"));
+    fireEvent.change(screen.getByLabelText("Closing Date"), {
+      target: { value: "2026-10-15" },
+    });
     fireEvent.click(
       screen.getByRole("switch", { name: "Buyer needs an inspection period" }),
     );
