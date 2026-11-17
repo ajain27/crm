@@ -437,10 +437,12 @@ describe("DealDetailModal", () => {
       month: "long",
       day: "numeric",
     });
-    expect(text).toContain(`Effective Date:${today}`);
+    // No Effective Date row up top, as in the PSA; the seller's and
+    // buyer's Effective Date lines carry today's date.
+    expect(text).not.toContain("Effective Date:");
     expect(text).toContain("Jane DoePrinted Name");
-    // Effective Date, plus the seller's and buyer's signature dates.
-    expect(text.split(today)).toHaveLength(4);
+    expect(text).toContain(`${today}Effective Date`);
+    expect(text.split(today)).toHaveLength(3);
     expect(text).toContain("You Win Estates, and/or assigns");
     expect(text).toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
     expect(text).toContain("8. LIENS, TAXES & ENCUMBRANCES");
@@ -498,7 +500,7 @@ describe("DealDetailModal", () => {
       "unable to close within the thirty (30) day timeframe",
     );
     expect(text).not.toMatch(/\b21 days after|\(21\) day timeframe/);
-    expect(text).toContain("Effective Date:");
+    expect(text).not.toContain("Effective Date:");
     expect(text).not.toContain("and/or assigns");
     expect(text).not.toContain("SUCCESSORS, ASSIGNMENT & NOVATION");
     expect(text).toContain("6. ENTIRE AGREEMENT");

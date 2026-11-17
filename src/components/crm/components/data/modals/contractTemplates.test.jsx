@@ -35,7 +35,7 @@ describe("contract templates", () => {
       />,
     );
     expect(signatures()).toEqual(["Ankit jain"]);
-    expect(document.body).toHaveTextContent(`Effective Date:${today}`);
+    expect(document.body).not.toHaveTextContent("Effective Date:");
     expect(dateLines()).toEqual([today, today]);
     expect(document.body).toHaveTextContent("youwinestates@gmail.com");
     unmount();
