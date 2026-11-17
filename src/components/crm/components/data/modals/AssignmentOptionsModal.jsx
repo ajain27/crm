@@ -3,33 +3,34 @@ import Modal from "../../../../modal/Modal";
 import CurrencyInput from "../../../../elements/CurrencyInput";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
-// Asks for the closing date, the buyer's EMD (the Assignee Deposit) and
-// whether the buyer gets an inspection period before the Assignment of
-// Contract is generated. Opens with the last choices made; the closing
-// date and EMD are required.
+// Asks for the closing date, the buyer's EMD (the Assignee Deposit), the
+// assignee's representative and the inspection period in days before the
+// Assignment of Contract is generated. Opens with the last choices made;
+// the closing date, EMD and inspection days are required, and the EMD and
+// inspection days may be zero.
 export default function AssignmentOptionsModal({
   isOpen,
   onClose,
   onGenerate,
-  initialInspectionPeriod = false,
+  initialInspectionDays = 0,
   initialClosingDate = "",
   initialEmdAmount = "",
   initialAssigneeRep = "",
 }) {
-  const [inspectionPeriod, setInspectionPeriod] = useState(
-    initialInspectionPeriod,
+  const [inspectionDays, setInspectionDays] = useState(
+    String(initialInspectionDays ?? ""),
   );
   const [closingDate, setClosingDate] = useState(initialClosingDate);
-  const [emdAmount, setEmdAmount] = useState(String(initialEmdAmount || ""));
+  const [emdAmount, setEmdAmount] = useState(String(initialEmdAmount ?? ""));
   const [assigneeRep, setAssigneeRep] = useState(initialAssigneeRep);
   const [touched, setTouched] = useState(false);
 
   // Reset only when the window opens.
   useEffect(() => {
     if (isOpen) {
-      setInspectionPeriod(initialInspectionPeriod);
+      setInspectionDays(String(initialInspectionDays ?? ""));
       setClosingDate(initialClosingDate || "");
-      setEmdAmount(String(initialEmdAmount || ""));
+      setEmdAmount(String(initialEmdAmount ?? ""));
       setAssigneeRep(initialAssigneeRep || "");
       setTouched(false);
     }
@@ -37,14 +38,16 @@ export default function AssignmentOptionsModal({
   }, [isOpen]);
 
   const closingError = closingDate ? "" : "Enter the closing date";
+  // $0 and zero days are allowed; only an empty field is an error.
+  const emdError = emdAmount === "" ? "Enter the EMD amount" : "";
+  const daysError = inspectionDays === "" ? "Enter the inspection days" : "";
   const emd = parseInt(emdAmount, 10) || 0;
-  const emdError = emd > 0 ? "" : "Enter the EMD amount";
 
   function handleGenerate() {
     setTouched(true);
-    if (closingError || emdError) return;
+    if (closingError || emdError || daysError) return;
     onGenerate({
-      inspectionPeriod,
+      inspectionDays: parseInt(inspectionDays, 10) || 0,
       closingDate,
       emdAmount: emd,
       assigneeRep: assigneeRep.trim(),
@@ -119,22 +122,21 @@ export default function AssignmentOptionsModal({
           />
         </label>
 
-        <label className="ddm-switch-row">
-          <span>
-            <strong>Buyer needs an inspection period</strong>
-            <small>
-              Adds a seven (7) day inspection period; the deposit is refunded if
-              the buyer backs out within it.
-            </small>
-          </span>
+        <label className="field">
+          <span>Inspection Period (days, 0 for none)</span>
           <input
-            type="checkbox"
-            role="switch"
-            className="ddm-switch"
-            checked={inspectionPeriod}
-            onChange={(e) => setInspectionPeriod(e.target.checked)}
-            aria-label="Buyer needs an inspection period"
+            type="text"
+            inputMode="numeric"
+            value={inspectionDays}
+            onChange={(e) =>
+              setInspectionDays(e.target.value.replace(/\D/g, ""))
+            }
+            placeholder="7"
+            aria-label="Inspection Period"
           />
+          {touched && daysError && (
+            <span className="field-error">{daysError}</span>
+          )}
         </label>
       </div>
     </Modal>

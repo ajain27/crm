@@ -298,7 +298,7 @@ function DealDetailModal({
   const [releaseOptions, setReleaseOptions] = useState(null);
   const [offerOptionsOpen, setOfferOptionsOpen] = useState(false);
   const [assignmentOptionsOpen, setAssignmentOptionsOpen] = useState(false);
-  const [assignmentInspection, setAssignmentInspection] = useState(false);
+  const [assignmentInspection, setAssignmentInspection] = useState(0);
   const [assignmentClosingDate, setAssignmentClosingDate] = useState("");
   const [assignmentEmd, setAssignmentEmd] = useState("");
   const [assignmentRep, setAssignmentRep] = useState("");
@@ -382,12 +382,12 @@ function DealDetailModal({
   // Like the offer options: the choice is committed together with the
   // print template's mount.
   function handleAssignmentOptionsSubmit({
-    inspectionPeriod,
+    inspectionDays,
     closingDate,
     emdAmount,
     assigneeRep,
   }) {
-    setAssignmentInspection(inspectionPeriod);
+    setAssignmentInspection(inspectionDays);
     setAssignmentRep(assigneeRep);
     setAssignmentClosingDate(closingDate);
     setAssignmentEmd(emdAmount);
@@ -1635,7 +1635,7 @@ function DealDetailModal({
           closingDate={assignmentClosingDate}
           depositAmount={assignmentEmd}
           assigneeRep={assignmentRep}
-          inspectionPeriod={assignmentInspection}
+          inspectionDays={assignmentInspection}
         />
       )}
       {exportingRelease && releaseOptions && (
@@ -1657,7 +1657,7 @@ function DealDetailModal({
         isOpen={assignmentOptionsOpen}
         onClose={() => setAssignmentOptionsOpen(false)}
         onGenerate={handleAssignmentOptionsSubmit}
-        initialInspectionPeriod={assignmentInspection}
+        initialInspectionDays={assignmentInspection}
         initialClosingDate={assignmentClosingDate}
         initialEmdAmount={assignmentEmd}
         initialAssigneeRep={assignmentRep}

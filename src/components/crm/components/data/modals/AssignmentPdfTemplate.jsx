@@ -10,6 +10,7 @@ import {
 } from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
 import "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate.css";
 import "./AssignmentPdfTemplate.css";
+import { numberToWords } from "./WholesaleOfferPdfTemplate";
 
 const COMPANY = {
   name: "YOU WIN ESTATES",
@@ -53,10 +54,9 @@ function Blank({ children }) {
 // generating it (a blank line if none). The Original Agreement is dated the deal's
 // Offer Date (today if it has none); both signature dates are today. The
 // Closing clause names the closing date chosen when generating it (a blank
-// line to fill in by hand if none is given).
-// With an inspection period, a seven-day "Inspection Period" clause goes in
-// as Section 5, the clauses after it shift down one, and Representations
-// defers to it instead of saying the Assignee has already inspected.
+// line to fill in by hand if none is given). Section 2's Inspection Period
+// runs the number of days chosen when generating it (zero allowed), and the
+// Assignee Deposit may be $0.
 const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
   {
     assigneeName,
@@ -67,15 +67,15 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
     originalAgreementDate,
     closingDate,
     depositAmount,
-    inspectionPeriod = false,
+    inspectionDays = 0,
   },
   ref,
 ) {
-  const deposit = Number(depositAmount) || 0;
+  const deposit = Number(depositAmount);
+  const hasDeposit =
+    depositAmount !== "" && depositAmount != null && deposit >= 0;
+  const days = Math.max(0, Number(inspectionDays) || 0);
   const today = formatDate();
-  // Clauses after Release of Assignor shift down one with an inspection
-  // period.
-  const afterRelease = inspectionPeriod ? 6 : 5;
 
   if (typeof document === "undefined") return null;
 
@@ -146,7 +146,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
             <strong>Assignment Price: </strong>
             <Blank>{assignedPrice > 0 ? fmt(assignedPrice) : null}</Blank>
             &nbsp;&nbsp;&nbsp; <strong>Assignee Deposit: </strong>
-            <Blank>{deposit > 0 ? fmt(deposit) : null}</Blank>
+            <Blank>{hasDeposit ? fmt(deposit) : null}</Blank>
           </p>
           <p>
             The Assignment Price is the total purchase price at which the
@@ -155,6 +155,19 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
             escrow or title agent. The Assignee Deposit shall be delivered to
             the escrow or title agent upon execution of this Assignment and
             shall be credited toward the Assignment Price at closing.
+          </p>
+          <p>
+            <strong>Inspection Period & Earnest Money.</strong> Assignee shall
+            have {numberToWords(days)} ({days}) {days === 1 ? "day" : "days"}{" "}
+            following the Effective Date to inspect the Property (the{" "}
+            <strong>"Inspection Period"</strong>). Regardless of Section 7, the
+            Assignee Deposit shall remain fully refundable during the Inspection
+            Period, and if Assignee delivers written notice of termination to
+            Assignor on or before its expiration, this Assignment shall
+            terminate and the Assignee Deposit shall be returned to Assignee in
+            full. The Assignee Deposit shall become non-refundable ("go hard")
+            only upon expiration of the Inspection Period, except in the event
+            of Assignor's default.
           </p>
         </Section>
 
@@ -185,25 +198,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
           </p>
         </Section>
 
-        {inspectionPeriod && (
-          <Section number={5} title="INSPECTION PERIOD">
-            <p>
-              Assignee shall have seven (7) calendar days from the Effective
-              Date (the "Inspection Period") to inspect the Property, at
-              Assignee's sole cost and expense, subject to the access terms of
-              the Original Agreement. If Assignee is not satisfied with the
-              Property for any reason, in its sole discretion, Assignee may
-              terminate this Assignment by delivering written notice to Assignor
-              before the Inspection Period expires, in which case the Assignee
-              Deposit shall be returned to Assignee in full and neither party
-              shall have any further obligation hereunder. If no such notice is
-              timely delivered, this inspection contingency shall be deemed
-              waived.
-            </p>
-          </Section>
-        )}
-
-        <Section number={afterRelease} title="CLOSING">
+        <Section number={5} title="CLOSING">
           <p>
             Closing shall occur through the escrow or title agent designated
             under the Original Agreement, on or before{" "}
@@ -214,34 +209,18 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
           </p>
         </Section>
 
-        <Section
-          number={afterRelease + 1}
-          title="REPRESENTATIONS & CONDITION OF PROPERTY"
-        >
-          {inspectionPeriod ? (
-            <p>
-              Assignee acknowledges that it has received a complete copy of the
-              Original Agreement and, subject to Assignee's rights under Section
-              5 (Inspection Period), accepts the Property in its present "AS-IS,
-              WHERE-IS" condition, subject to the terms of the Original
-              Agreement. Assignor makes no representations or warranties
-              regarding the Property except as expressly stated in the Original
-              Agreement.
-            </p>
-          ) : (
-            <p>
-              Assignee acknowledges that it has received a complete copy of the
-              Original Agreement, has had the opportunity to inspect the
-              Property, and accepts the Property in its present "AS-IS,
-              WHERE-IS" condition, subject to the terms of the Original
-              Agreement. Assignor makes no representations or warranties
-              regarding the Property except as expressly stated in the Original
-              Agreement.
-            </p>
-          )}
+        <Section number={6} title="REPRESENTATIONS & CONDITION OF PROPERTY">
+          <p>
+            Assignee acknowledges that it has received a complete copy of the
+            Original Agreement, has had the opportunity to inspect the Property,
+            and accepts the Property in its present "AS-IS, WHERE-IS" condition,
+            subject to the terms of the Original Agreement. Assignor makes no
+            representations or warranties regarding the Property except as
+            expressly stated in the Original Agreement.
+          </p>
         </Section>
 
-        <Section number={afterRelease + 2} title="DEFAULT & REMEDIES">
+        <Section number={7} title="DEFAULT & REMEDIES">
           <p>
             If Assignee defaults under this Assignment, Assignor's sole and
             exclusive remedy shall be to retain the Assignee Deposit as
@@ -251,7 +230,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
           </p>
         </Section>
 
-        <Section number={afterRelease + 3} title="ENTIRE AGREEMENT">
+        <Section number={8} title="ENTIRE AGREEMENT">
           <p>
             This Assignment, together with the Original Agreement, constitutes
             the final and entire agreement between the parties regarding the

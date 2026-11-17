@@ -1067,9 +1067,11 @@ describe("DealDetailModal", () => {
     expect(text).toContain("Sam RepAuthorized Representative");
     expect(text).not.toContain("Old Buyer");
     // No inspection period unless asked for.
-    expect(text).not.toContain("INSPECTION PERIOD");
+    // Inspection days default to zero.
+    expect(text).toContain("Assignee shall have zero (0) days following");
     expect(text).toContain("5. CLOSING");
     expect(text).toContain("has had the opportunity to inspect the");
+    expect(text).toContain("8. ENTIRE AGREEMENT");
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
   });
 
@@ -1155,7 +1157,7 @@ describe("DealDetailModal", () => {
     expect(screen.queryByText(error)).not.toBeInTheDocument();
   });
 
-  it("adds a seven-day inspection period to the assignment when switched on", async () => {
+  it("writes the chosen inspection days and allows a $0 EMD on the assignment", async () => {
     renderElementToPdfAssets.mockClear();
     render(
       <DealDetailModal
@@ -1175,23 +1177,31 @@ describe("DealDetailModal", () => {
     fireEvent.change(screen.getByLabelText("Closing Date"), {
       target: { value: "2026-10-15" },
     });
-    fireEvent.change(screen.getByLabelText("Earnest Money Deposit"), {
-      target: { value: "2500" },
+    // Empty inspection days is an error; zero is not.
+    fireEvent.change(screen.getByLabelText("Inspection Period"), {
+      target: { value: "" },
     });
-    fireEvent.click(
-      screen.getByRole("switch", { name: "Buyer needs an inspection period" }),
-    );
+    fireEvent.click(screen.getByText("Generate"));
+    expect(screen.getByText("Enter the inspection days")).toBeInTheDocument();
+    expect(renderElementToPdfAssets).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Inspection Period"), {
+      target: { value: "10" },
+    });
+    fireEvent.change(screen.getByLabelText("Earnest Money Deposit"), {
+      target: { value: "0" },
+    });
     fireEvent.click(screen.getByText("Generate"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
     const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
-    expect(text).toContain("5. INSPECTION PERIOD");
-    expect(text).toContain("seven (7) calendar days from the Effective");
-    expect(text).toContain("6. CLOSING");
-    expect(text).toContain("7. REPRESENTATIONS & CONDITION OF PROPERTY");
-    expect(text).toContain("under Section 5 (Inspection Period)");
-    expect(text).not.toContain("has had the opportunity to inspect");
-    expect(text).toContain("8. DEFAULT & REMEDIES");
-    expect(text).toContain("9. ENTIRE AGREEMENT");
+    expect(text).toContain("Assignee Deposit: $0");
+    expect(text).toContain(
+      "Inspection Period & Earnest Money. Assignee shall have ten (10) days following the Effective Date",
+    );
+    expect(text).toContain("Regardless of Section 7");
+    expect(text).toContain("5. CLOSING");
+    expect(text).toContain("6. REPRESENTATIONS & CONDITION OF PROPERTY");
+    expect(text).toContain("7. DEFAULT & REMEDIES");
+    expect(text).toContain("8. ENTIRE AGREEMENT");
   });
 });
