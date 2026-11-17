@@ -734,7 +734,9 @@ function DealDetailModal({
                 {!isRental && (
                   <ActionButton
                     icon={FileX}
-                    label={exportingRelease ? "Generating…" : "Cancel Deal"}
+                    label={
+                      exportingRelease ? "Generating…" : "Send Cancellation"
+                    }
                     onClick={() => setCancelOptionsOpen(true)}
                     disabled={saving || exportingRelease}
                     title="Generate the Mutual Release & Cancellation Agreement for the seller to sign"

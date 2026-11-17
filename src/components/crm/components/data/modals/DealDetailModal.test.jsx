@@ -984,7 +984,7 @@ describe("DealDetailModal", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Cancel Deal"));
+    fireEvent.click(screen.getByText("Send Cancellation"));
     expect(screen.getByLabelText("Agreement Date")).toHaveValue("2026-09-05");
     expect(screen.getByLabelText("EMD Amount")).toHaveValue("$100");
     fireEvent.change(screen.getByLabelText("Escrow / File No."), {
