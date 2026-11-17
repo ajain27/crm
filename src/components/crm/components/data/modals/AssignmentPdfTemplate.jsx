@@ -21,7 +21,6 @@ const COMPANY = {
 
 const ASSIGNOR_NAME = "You Win Estates LLC";
 const ASSIGNOR_REP = "Ankit Jain";
-const DEPOSIT_RATE = 0.1;
 
 // A date as e.g. "October 18, 2026"; today when none is given. A
 // "YYYY-MM-DD" date is read as a local date so it doesn't shift a day.
@@ -48,8 +47,8 @@ function Blank({ children }) {
 
 // Assignment of Contract generated from an assigned deal. Reproduces the
 // uploaded You Win Estates assignment clause for clause; the Assignee is
-// the deal's buyer, the Seller the deal's seller, the Assignment Price its Assigned Price, and the
-// Assignee Deposit 10% of that. The Original Agreement is dated the deal's
+// the deal's buyer, the Seller the deal's seller, the Assignment Price its
+// Assigned Price, and the Assignee Deposit the EMD entered when generating it. The Original Agreement is dated the deal's
 // Offer Date (today if it has none); both signature dates are today. The
 // Closing clause names the closing date chosen when generating it (a blank
 // line to fill in by hand if none is given).
@@ -64,11 +63,12 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
     assignedPrice,
     originalAgreementDate,
     closingDate,
+    depositAmount,
     inspectionPeriod = false,
   },
   ref,
 ) {
-  const deposit = Math.round(assignedPrice * DEPOSIT_RATE);
+  const deposit = Number(depositAmount) || 0;
   const today = formatDate();
   // Clauses after Release of Assignor shift down one with an inspection
   // period.

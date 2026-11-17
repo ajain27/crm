@@ -1026,12 +1026,16 @@ describe("DealDetailModal", () => {
       target: { value: "Pat Buyer LLC" },
     });
     fireEvent.click(screen.getByText("Create assignment"));
-    // The closing date is required.
+    // The closing date and EMD are required.
     fireEvent.click(screen.getByText("Generate"));
     expect(screen.getByText("Enter the closing date")).toBeInTheDocument();
+    expect(screen.getByText("Enter the EMD amount")).toBeInTheDocument();
     expect(renderElementToPdfAssets).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText("Closing Date"), {
       target: { value: "2026-10-15" },
+    });
+    fireEvent.change(screen.getByLabelText("Earnest Money Deposit"), {
+      target: { value: "5000" },
     });
     fireEvent.click(screen.getByText("Generate"));
 
@@ -1045,7 +1049,8 @@ describe("DealDetailModal", () => {
     expect(text).toContain("Assignee Name(s):Pat Buyer LLC");
     expect(text).toContain("Property Address:1 Main St, Austin, TX 78701");
     expect(text).toContain("Assignment Price: $220,000");
-    expect(text).toContain("Assignee Deposit: $22,000");
+    expect(text).toContain("Assignee Deposit: $5,000");
+    expect(text).not.toContain("$22,000");
     expect(text).toContain("with Seller, dated September 5, 2026,");
     const today = new Date().toLocaleDateString("en-US", {
       year: "numeric",
@@ -1164,6 +1169,9 @@ describe("DealDetailModal", () => {
     fireEvent.click(screen.getByText("Create assignment"));
     fireEvent.change(screen.getByLabelText("Closing Date"), {
       target: { value: "2026-10-15" },
+    });
+    fireEvent.change(screen.getByLabelText("Earnest Money Deposit"), {
+      target: { value: "2500" },
     });
     fireEvent.click(
       screen.getByRole("switch", { name: "Buyer needs an inspection period" }),

@@ -300,6 +300,7 @@ function DealDetailModal({
   const [assignmentOptionsOpen, setAssignmentOptionsOpen] = useState(false);
   const [assignmentInspection, setAssignmentInspection] = useState(false);
   const [assignmentClosingDate, setAssignmentClosingDate] = useState("");
+  const [assignmentEmd, setAssignmentEmd] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
   // The notes Run comps is saving: when the deal comes back with exactly
   // these notes, only the notes are taken in, so unsaved edits survive.
@@ -379,9 +380,14 @@ function DealDetailModal({
 
   // Like the offer options: the choice is committed together with the
   // print template's mount.
-  function handleAssignmentOptionsSubmit({ inspectionPeriod, closingDate }) {
+  function handleAssignmentOptionsSubmit({
+    inspectionPeriod,
+    closingDate,
+    emdAmount,
+  }) {
     setAssignmentInspection(inspectionPeriod);
     setAssignmentClosingDate(closingDate);
+    setAssignmentEmd(emdAmount);
     setAssignmentOptionsOpen(false);
     handleGenerateAssignment();
   }
@@ -1624,6 +1630,7 @@ function DealDetailModal({
           assignedPrice={parseCurrency(draft.assignedPrice)}
           originalAgreementDate={draft.offerDate}
           closingDate={assignmentClosingDate}
+          depositAmount={assignmentEmd}
           inspectionPeriod={assignmentInspection}
         />
       )}
@@ -1648,6 +1655,7 @@ function DealDetailModal({
         onGenerate={handleAssignmentOptionsSubmit}
         initialInspectionPeriod={assignmentInspection}
         initialClosingDate={assignmentClosingDate}
+        initialEmdAmount={assignmentEmd}
       />
       <OfferOptionsModal
         isOpen={offerOptionsOpen}

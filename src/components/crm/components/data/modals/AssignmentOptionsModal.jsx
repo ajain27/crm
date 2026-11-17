@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
 import Modal from "../../../../modal/Modal";
+import CurrencyInput from "../../../../elements/CurrencyInput";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 
-// Asks for the closing date and whether the buyer gets an inspection
-// period before the Assignment of Contract is generated. Opens with the
-// last choices made; the closing date is required.
+// Asks for the closing date, the buyer's EMD (the Assignee Deposit) and
+// whether the buyer gets an inspection period before the Assignment of
+// Contract is generated. Opens with the last choices made; the closing
+// date and EMD are required.
 export default function AssignmentOptionsModal({
   isOpen,
   onClose,
   onGenerate,
   initialInspectionPeriod = false,
   initialClosingDate = "",
+  initialEmdAmount = "",
 }) {
   const [inspectionPeriod, setInspectionPeriod] = useState(
     initialInspectionPeriod,
   );
   const [closingDate, setClosingDate] = useState(initialClosingDate);
+  const [emdAmount, setEmdAmount] = useState(String(initialEmdAmount || ""));
   const [touched, setTouched] = useState(false);
 
   // Reset only when the window opens.
@@ -23,17 +27,20 @@ export default function AssignmentOptionsModal({
     if (isOpen) {
       setInspectionPeriod(initialInspectionPeriod);
       setClosingDate(initialClosingDate || "");
+      setEmdAmount(String(initialEmdAmount || ""));
       setTouched(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const closingError = closingDate ? "" : "Enter the closing date";
+  const emd = parseInt(emdAmount, 10) || 0;
+  const emdError = emd > 0 ? "" : "Enter the EMD amount";
 
   function handleGenerate() {
     setTouched(true);
-    if (closingError) return;
-    onGenerate({ inspectionPeriod, closingDate });
+    if (closingError || emdError) return;
+    onGenerate({ inspectionPeriod, closingDate, emdAmount: emd });
   }
 
   return (
@@ -74,6 +81,21 @@ export default function AssignmentOptionsModal({
           />
           {touched && closingError && (
             <span className="field-error">{closingError}</span>
+          )}
+        </label>
+
+        <label className="field">
+          <span>Earnest Money Deposit (EMD)</span>
+          <CurrencyInput
+            value={emdAmount}
+            onValueChange={(v) =>
+              setEmdAmount(String(v ?? "").replace(/\D/g, ""))
+            }
+            placeholder="$5,000"
+            aria-label="Earnest Money Deposit"
+          />
+          {touched && emdError && (
+            <span className="field-error">{emdError}</span>
           )}
         </label>
 
