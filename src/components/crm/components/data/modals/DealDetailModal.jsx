@@ -301,6 +301,7 @@ function DealDetailModal({
   const [assignmentInspection, setAssignmentInspection] = useState(false);
   const [assignmentClosingDate, setAssignmentClosingDate] = useState("");
   const [assignmentEmd, setAssignmentEmd] = useState("");
+  const [assignmentRep, setAssignmentRep] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
   // The notes Run comps is saving: when the deal comes back with exactly
   // these notes, only the notes are taken in, so unsaved edits survive.
@@ -384,8 +385,10 @@ function DealDetailModal({
     inspectionPeriod,
     closingDate,
     emdAmount,
+    assigneeRep,
   }) {
     setAssignmentInspection(inspectionPeriod);
+    setAssignmentRep(assigneeRep);
     setAssignmentClosingDate(closingDate);
     setAssignmentEmd(emdAmount);
     setAssignmentOptionsOpen(false);
@@ -1631,6 +1634,7 @@ function DealDetailModal({
           originalAgreementDate={draft.offerDate}
           closingDate={assignmentClosingDate}
           depositAmount={assignmentEmd}
+          assigneeRep={assignmentRep}
           inspectionPeriod={assignmentInspection}
         />
       )}
@@ -1656,6 +1660,7 @@ function DealDetailModal({
         initialInspectionPeriod={assignmentInspection}
         initialClosingDate={assignmentClosingDate}
         initialEmdAmount={assignmentEmd}
+        initialAssigneeRep={assignmentRep}
       />
       <OfferOptionsModal
         isOpen={offerOptionsOpen}

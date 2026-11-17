@@ -14,12 +14,14 @@ export default function AssignmentOptionsModal({
   initialInspectionPeriod = false,
   initialClosingDate = "",
   initialEmdAmount = "",
+  initialAssigneeRep = "",
 }) {
   const [inspectionPeriod, setInspectionPeriod] = useState(
     initialInspectionPeriod,
   );
   const [closingDate, setClosingDate] = useState(initialClosingDate);
   const [emdAmount, setEmdAmount] = useState(String(initialEmdAmount || ""));
+  const [assigneeRep, setAssigneeRep] = useState(initialAssigneeRep);
   const [touched, setTouched] = useState(false);
 
   // Reset only when the window opens.
@@ -28,6 +30,7 @@ export default function AssignmentOptionsModal({
       setInspectionPeriod(initialInspectionPeriod);
       setClosingDate(initialClosingDate || "");
       setEmdAmount(String(initialEmdAmount || ""));
+      setAssigneeRep(initialAssigneeRep || "");
       setTouched(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -40,7 +43,12 @@ export default function AssignmentOptionsModal({
   function handleGenerate() {
     setTouched(true);
     if (closingError || emdError) return;
-    onGenerate({ inspectionPeriod, closingDate, emdAmount: emd });
+    onGenerate({
+      inspectionPeriod,
+      closingDate,
+      emdAmount: emd,
+      assigneeRep: assigneeRep.trim(),
+    });
   }
 
   return (
@@ -97,6 +105,18 @@ export default function AssignmentOptionsModal({
           {touched && emdError && (
             <span className="field-error">{emdError}</span>
           )}
+        </label>
+
+        <label className="field">
+          <span>Assignee's Authorized Representative (optional)</span>
+          <input
+            type="text"
+            value={assigneeRep}
+            onChange={(e) => setAssigneeRep(e.target.value)}
+            onBlur={(e) => setAssigneeRep(e.target.value.trim())}
+            placeholder="Name of the person signing for the buyer"
+            aria-label="Assignee's Authorized Representative"
+          />
         </label>
 
         <label className="ddm-switch-row">

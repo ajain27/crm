@@ -48,7 +48,9 @@ function Blank({ children }) {
 // Assignment of Contract generated from an assigned deal. Reproduces the
 // uploaded You Win Estates assignment clause for clause; the Assignee is
 // the deal's buyer, the Seller the deal's seller, the Assignment Price its
-// Assigned Price, and the Assignee Deposit the EMD entered when generating it. The Original Agreement is dated the deal's
+// Assigned Price, and the Assignee Deposit the EMD entered when generating it.
+// The assignee's Authorized Representative is the name entered when
+// generating it (a blank line if none). The Original Agreement is dated the deal's
 // Offer Date (today if it has none); both signature dates are today. The
 // Closing clause names the closing date chosen when generating it (a blank
 // line to fill in by hand if none is given).
@@ -58,6 +60,7 @@ function Blank({ children }) {
 const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
   {
     assigneeName,
+    assigneeRep,
     sellerName,
     propertyAddress,
     assignedPrice,
@@ -275,7 +278,7 @@ const AssignmentPdfTemplate = forwardRef(function AssignmentPdfTemplate(
           <div className="oa-pdf-sig-box">
             <h3>ASSIGNEE</h3>
             <SigLine label="Printed Name / Company" value={assigneeName} />
-            <SigLine label="Authorized Representative" />
+            <SigLine label="Authorized Representative" value={assigneeRep} />
             <SigLine label="Signature" />
             <SigLine label="Date" value={today} />
           </div>

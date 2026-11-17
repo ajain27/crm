@@ -1037,6 +1037,10 @@ describe("DealDetailModal", () => {
     fireEvent.change(screen.getByLabelText("Earnest Money Deposit"), {
       target: { value: "5000" },
     });
+    fireEvent.change(
+      screen.getByLabelText("Assignee's Authorized Representative"),
+      { target: { value: "  Sam Rep  " } },
+    );
     fireEvent.click(screen.getByText("Generate"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
@@ -1060,6 +1064,7 @@ describe("DealDetailModal", () => {
     // The assignor's and assignee's signature dates.
     expect(text.split(`${today}Date`)).toHaveLength(3);
     expect(text).toContain("Pat Buyer LLCPrinted Name / Company");
+    expect(text).toContain("Sam RepAuthorized Representative");
     expect(text).not.toContain("Old Buyer");
     // No inspection period unless asked for.
     expect(text).not.toContain("INSPECTION PERIOD");
