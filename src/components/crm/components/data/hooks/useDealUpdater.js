@@ -6,10 +6,15 @@ export function useDealUpdater({
   saveBuyer,
   setFilters,
 }) {
+  // A patch for a deal that isn't in the list yet (a property just added
+  // for a seller in the deal window) adds it.
   function updateDealPatch(id, patch) {
-    const nextDeals = deals.map((dealItem) =>
-      dealItem.id === id ? { ...dealItem, ...patch } : dealItem,
-    );
+    const exists = deals.some((dealItem) => dealItem.id === id);
+    const nextDeals = exists
+      ? deals.map((dealItem) =>
+          dealItem.id === id ? { ...dealItem, ...patch } : dealItem,
+        )
+      : [...deals, { ...patch, id }];
     const updatedDeal = nextDeals.find((deal) => deal.id === id);
 
     return saveDeal(updatedDeal)

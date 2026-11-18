@@ -191,7 +191,6 @@ function Wholesale() {
     formError,
     tableLoading,
     resetForm,
-    startForSeller,
     handleChange,
     handleBlur,
     handleContractFileChange,
@@ -212,21 +211,11 @@ function Wholesale() {
 
   // The dashboard's Add a lead window; it closes once the deal is saved.
   const [addDealOpen, setAddDealOpen] = useState(false);
-  // Set while that window adds another property for a deal's seller.
-  const [addingForSeller, setAddingForSeller] = useState(false);
   async function handleAddDeal(event) {
     if (await addDeal(event)) closeAddDeal();
   }
   function closeAddDeal() {
     setAddDealOpen(false);
-    // The seller's details shouldn't stay on the next plain Add a lead.
-    if (addingForSeller) resetForm();
-    setAddingForSeller(false);
-  }
-  function addPropertyForSeller(deal) {
-    startForSeller(deal);
-    setAddingForSeller(true);
-    setAddDealOpen(true);
   }
 
   async function convertDealToRental(deal) {
@@ -489,11 +478,7 @@ function Wholesale() {
             <Modal
               isOpen={addDealOpen}
               onClose={closeAddDeal}
-              title={
-                addingForSeller
-                  ? "Add Property for Seller"
-                  : "Add Property Lead"
-              }
+              title="Add Property Lead"
               className="leads-add-modal"
               style={{
                 width: "min(960px, 96vw)",
@@ -552,7 +537,6 @@ function Wholesale() {
                 currentUserId={currentUser.id}
                 convertDealToRental={convertDealToRental}
                 moveDealToLeads={ppcOnly ? undefined : moveDealToLeads}
-                onAddPropertyForSeller={addPropertyForSeller}
                 leads={leads}
                 onRemoveDuplicates={ppcOnly ? undefined : removeDuplicateDeals}
               />

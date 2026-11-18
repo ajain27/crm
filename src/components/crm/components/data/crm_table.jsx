@@ -2,6 +2,7 @@ import { useState } from "react";
 import Pagination from "../../../pagination/Pagination";
 import { Select } from "../../../elements/elements";
 import {
+  createDealFormForSeller,
   getContractVersions,
   isDealInactive,
   isDealInProgress,
@@ -18,10 +19,29 @@ import ContractPreviewModal from "./modals/ContractPreviewModal";
 import DealDetailModal from "./modals/DealDetailModal";
 import LeadDedupeButton from "../../../leads/components/LeadDedupeButton";
 import { dealAddress } from "../../../leads/leadDuplicates";
+import { groupLeadsBySeller } from "../../../leads/leadUtils";
 import AccordionTable from "../../../elements/AccordionTable";
 import CallNotesModal from "../../../leads/components/CallNotesModal";
 import { callCountOf } from "./comps/notesTable";
 import { withNoteAdded } from "./comps/compsNote";
+
+// Deals grouped by seller — the same phone, email or full name, as on the
+// Leads page — in list order. Each group is an array of deals.
+function groupDealsBySeller(deals) {
+  const asSeller = (d) => ({
+    id: d.id,
+    source: d.source,
+    firstName: d.sellerFirstName,
+    lastName: d.sellerLastName,
+    phone: d.sellerPhone,
+    phone2: d.sellerPhones?.[0],
+    email: d.sellerEmail,
+  });
+  const byId = new Map(deals.map((d) => [d.id, d]));
+  return groupLeadsBySeller(deals.map(asSeller)).map((group) =>
+    group.map((s) => byId.get(s.id)),
+  );
+}
 
 function Wholesale_data({
   filteredDeals,
@@ -40,7 +60,6 @@ function Wholesale_data({
   photoStore,
   convertDealToRental,
   moveDealToLeads,
-  onAddPropertyForSeller,
   leads = [],
   onRemoveDuplicates,
 }) {
@@ -50,20 +69,75 @@ function Wholesale_data({
   const [detailDealId, setDetailDealId] = useState(null);
   // The deal whose new call is being noted, and that call's number.
   const [callNotes, setCallNotes] = useState(null);
+  // A property being added for a deal's seller: an unsaved deal shown as
+  // its own tab in the deal window until it's saved.
+  const [newProperty, setNewProperty] = useState(null);
   const detailDeal = detailDealId
-    ? deals.find((d) => d.id === detailDealId) || null
+    ? deals.find((d) => d.id === detailDealId) ||
+      (newProperty?.draft.id === detailDealId ? newProperty.draft : null)
     : null;
+
+  // The deal window's property tabs: every deal of this seller (same phone,
+  // email or full name, as on the Leads page), plus one being added.
+  function sellerPropertiesOf(deal) {
+    if (!deal) return [];
+    const anchorId = newProperty ? newProperty.sellerOfId : deal.id;
+    const anchor = deals.find((d) => d.id === anchorId) || deal;
+    const group = groupDealsBySeller(deals).find((g) =>
+      g.some((d) => d.id === anchor.id),
+    ) || [anchor];
+    const unsaved =
+      newProperty && !deals.some((d) => d.id === newProperty.draft.id);
+    return unsaved ? [...group, newProperty.draft] : group;
+  }
+
+  // Opens a tab in the deal window for another property `deal`'s seller
+  // owns, with their name, phones and emails filled in; it becomes a deal
+  // when saved.
+  function addPropertyTab(deal) {
+    const draft = {
+      ...createDealFormForSeller(deal),
+      id: crypto.randomUUID(),
+      userId: currentUserId || deal.userId || "",
+      createdAt: new Date().toISOString(),
+      isNewProperty: true,
+    };
+    setNewProperty({ draft, sellerOfId: newProperty?.sellerOfId || deal.id });
+    setDetailDealId(draft.id);
+  }
+
+  // Saving anything on a property that's still being added (comps, an
+  // offer, a photo) saves the whole property, not just that change.
+  function patchDeal(id, patch) {
+    if (newProperty?.draft.id === id && !deals.some((d) => d.id === id)) {
+      const { isNewProperty, ...base } = newProperty.draft;
+      return updateDealPatch(id, { ...base, ...patch });
+    }
+    return updateDealPatch(id, patch);
+  }
+
+  function closeDetail() {
+    setDetailDealId(null);
+    setNewProperty(null);
+  }
 
   const isInactive = isDealInactive;
 
   const isClosed = (deal) => (deal.closed || "No") === "Yes";
 
-  const tabFilteredDeals = filteredDeals.filter((d) => {
-    if (tab === "closed") return isClosed(d);
-    if (tab === "inactive") return isInactive(d) && !isClosed(d);
-    if (tab === "inProgress") return isDealInProgress(d);
+  const inTab = (d, t) => {
+    if (t === "closed") return isClosed(d);
+    if (t === "inactive") return isInactive(d) && !isClosed(d);
+    if (t === "inProgress") return isDealInProgress(d);
     return !isInactive(d) && !isClosed(d) && !isDealInProgress(d);
-  });
+  };
+  // A seller's properties on this tab share one row (the first listed);
+  // the deal window opens with a tab for each of their properties.
+  const sellerGroupsOn = (t) =>
+    groupDealsBySeller(filteredDeals.filter((d) => inTab(d, t)));
+  const sellerGroups = sellerGroupsOn(tab);
+  const tabFilteredDeals = sellerGroups.map((g) => g[0]);
+  const groupOf = new Map(sellerGroups.map((g) => [g[0].id, g]));
 
   const {
     currentDeals,
@@ -170,14 +244,11 @@ function Wholesale_data({
     "";
   const contractMimeType = selectedContractVersion?.type || "";
 
-  const activeCount = filteredDeals.filter(
-    (d) => !isInactive(d) && !isClosed(d) && !isDealInProgress(d),
-  ).length;
-  const inProgressCount = filteredDeals.filter(isDealInProgress).length;
-  const inactiveCount = filteredDeals.filter(
-    (d) => isInactive(d) && !isClosed(d),
-  ).length;
-  const closedCount = filteredDeals.filter((d) => isClosed(d)).length;
+  // Each tab counts its rows: sellers, not properties.
+  const activeCount = sellerGroupsOn("active").length;
+  const inProgressCount = sellerGroupsOn("inProgress").length;
+  const inactiveCount = sellerGroupsOn("inactive").length;
+  const closedCount = sellerGroupsOn("closed").length;
 
   return (
     <div data-reveal="zoom" style={{ "--reveal-delay": "240ms" }}>
@@ -285,6 +356,7 @@ function Wholesale_data({
             <DealRow
               key={deal.id}
               deal={deal}
+              group={groupOf.get(deal.id)}
               index={index}
               onRowDetailClick={(d) => setDetailDealId(d.id)}
               onSetCalls={handleSetCalls}
@@ -305,13 +377,15 @@ function Wholesale_data({
 
       <DealDetailModal
         isOpen={!!detailDeal}
-        onClose={() => setDetailDealId(null)}
+        onClose={closeDetail}
         deal={detailDeal}
-        updateDealPatch={updateDealPatch}
+        sellerProperties={sellerPropertiesOf(detailDeal)}
+        onSwitchProperty={(property) => setDetailDealId(property.id)}
+        updateDealPatch={patchDeal}
         deleteDeal={deleteDeal}
         convertDealToRental={convertDealToRental}
         moveDealToLeads={moveDealToLeads}
-        onAddPropertyForSeller={onAddPropertyForSeller}
+        onAddPropertyForSeller={addPropertyTab}
         existingDeals={deals}
         existingLeads={leads}
         openContract={openContract}

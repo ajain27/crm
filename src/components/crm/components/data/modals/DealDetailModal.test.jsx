@@ -138,7 +138,8 @@ describe("DealDetailModal", () => {
         sellerPhone: "(555) 111-2222",
       }),
     );
-    expect(onClose).toHaveBeenCalled();
+    // The new property opens as a tab in this window.
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("offers no Add Property without a seller", () => {

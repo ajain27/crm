@@ -9,6 +9,7 @@ import {
   EmailCell,
   NotesCell,
   PhoneCell,
+  SellerPropertiesBadge,
 } from "../../../leads/components/LeadTableCells";
 import { callCountOf } from "./comps/notesTable";
 import { dealLeadDetail, isDealRejected, isDealWithdrawn } from "../crmConfig";
@@ -19,7 +20,15 @@ function formatFullAddress(deal) {
 }
 
 // `onSetCalls(deal, count)` changes how many times the seller was called.
-function DealRow({ deal, index, onRowDetailClick, onSetCalls }) {
+// `group` is every property of this deal's seller on the tab; they share
+// this row, which lists each address.
+function DealRow({
+  deal,
+  group = [deal],
+  index,
+  onRowDetailClick,
+  onSetCalls,
+}) {
   const isRejected = isDealRejected(deal);
   // Made inactive by hand: greyed out like a withdrawn offer.
   const isWithdrawn = isDealWithdrawn(deal) || deal.inactive === true;
@@ -60,9 +69,27 @@ function DealRow({ deal, index, onRowDetailClick, onSetCalls }) {
       <AccordionHeaderCell
         id={deal.id}
         label="Address"
-        value={formatFullAddress(deal)}
+        value={
+          group.length > 1 ? (
+            <span className="leads-seller-addresses">
+              {group.map((d) => (
+                <span key={d.id}>{formatFullAddress(d) || "—"}</span>
+              ))}
+            </span>
+          ) : (
+            formatFullAddress(deal)
+          )
+        }
         valueClassName="readonly-input addr-cell"
-        card={{ title: sellerName, subtitle: formatFullAddress(deal) }}
+        card={{
+          title: (
+            <>
+              {sellerName}
+              <SellerPropertiesBadge count={group.length} />
+            </>
+          ),
+          subtitle: group.map(formatFullAddress).join("  ·  "),
+        }}
       />
       <ReadOnlyCell value={deal.arv ? currency(deal.arv) : "—"} label="ARV" />
       <ReadOnlyCell value={deal.mao ? currency(deal.mao) : "—"} label="MAO" />
@@ -75,7 +102,10 @@ function DealRow({ deal, index, onRowDetailClick, onSetCalls }) {
       </td>
       {/* The seller heads the card, so only the table shows this. */}
       <td className="acc-col-hide-mobile" data-label="Seller">
-        <span className="readonly-input">{sellerName || "—"}</span>
+        <span className="readonly-input">
+          {sellerName || "—"}
+          <SellerPropertiesBadge count={group.length} />
+        </span>
       </td>
       {/* Card-only, like the address and notes below. */}
       <EmailCell
@@ -99,7 +129,7 @@ function DealRow({ deal, index, onRowDetailClick, onSetCalls }) {
       {/* Card-only (an open card reads like a lead's): the address and the
           full notes. */}
       <td className="acc-col-card-only dt-card-contact" data-label="Address">
-        {formatFullAddress(deal) || "—"}
+        {group.map(formatFullAddress).filter(Boolean).join("  ·  ") || "—"}
       </td>
       <NotesCell className="acc-col-card-only" notes={deal.notes} />
     </tr>

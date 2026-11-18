@@ -242,6 +242,8 @@ function DealDetailModal({
   convertDealToRental,
   moveDealToLeads,
   onAddPropertyForSeller,
+  sellerProperties = [],
+  onSwitchProperty,
   openContract,
   handleContractUpload,
   handleDeleteContractVersion,
@@ -524,9 +526,23 @@ function DealDetailModal({
     if (deleted) onClose();
   }
 
+  // Unsaved edits are lost when another property's tab opens.
+  function confirmLeaving() {
+    return (
+      !hasChanges ||
+      window.confirm("Discard the changes you haven't saved to this property?")
+    );
+  }
+
+  // Opens a tab for another property this seller owns, in this window.
   function handleAddPropertyForSeller() {
+    if (!confirmLeaving()) return;
     onAddPropertyForSeller(draft);
-    onClose();
+  }
+
+  function switchProperty(property) {
+    if (property.id === deal.id || !confirmLeaving()) return;
+    onSwitchProperty(property);
   }
 
   async function handleMoveToLeads(tab) {
@@ -559,6 +575,10 @@ function DealDetailModal({
   }
 
   async function handleSave() {
+    if (deal.isNewProperty && !String(draft.address || "").trim()) {
+      alert("Please enter the new property's address.");
+      return;
+    }
     const closing = draft.closed === "Yes" && deal.closed !== "Yes";
 
     // A changed address can't be one already in the CRM or Leads.
@@ -629,7 +649,7 @@ function DealDetailModal({
       }
 
       // Photos are saved as they're added; the draft's copy may be stale.
-      const { id, photos, ...rest } = draft;
+      const { id, photos, isNewProperty, ...rest } = draft;
       await updateDealPatch(deal.id, {
         ...rest,
         ...numeric,
@@ -795,6 +815,28 @@ function DealDetailModal({
         }
       >
         <div className="ddm-body">
+          {sellerProperties.length > 1 && (
+            <div
+              className="ldm-property-tabs"
+              role="tablist"
+              aria-label="This seller's properties"
+            >
+              {sellerProperties.map((property) => (
+                <button
+                  key={property.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={property.id === deal.id}
+                  className={`ldm-property-tab${property.id === deal.id ? " is-active" : ""}`}
+                  onClick={() => switchProperty(property)}
+                  disabled={saving}
+                >
+                  {String(property.address || "").split(",")[0] ||
+                    "New property"}
+                </button>
+              ))}
+            </div>
+          )}
           <LeadCompsTabBar compsState={compsState} extraTabs={HISTORY_TABS} />
 
           {activeTab === "comps" && (

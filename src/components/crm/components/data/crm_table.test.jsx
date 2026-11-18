@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import Wholesale_data from "./crm_table";
 
 const deal = {
@@ -240,6 +246,104 @@ describe("Wholesale_data", () => {
     expect(tab).toHaveTextContent("In Progress1");
     fireEvent.click(tab);
     expect(getRenderedDealIds(container)).toEqual(["d2"]);
+  });
+
+  it("shows a seller's properties as one row that opens with a tab for each", () => {
+    const first = {
+      ...deal,
+      sellerFirstName: "Nadine",
+      sellerLastName: "Rice",
+      sellerPhone: "314-652-4076",
+    };
+    const second = {
+      ...first,
+      id: "d2",
+      address: "420 Peete St",
+      city: "Covington",
+      state: "TN",
+      zipCode: "38019",
+    };
+    const other = { ...deal, id: "d3", address: "9 Elm St" };
+    const { container } = render(
+      <Wholesale_data
+        filteredDeals={[first, other, second]}
+        deals={[first, other, second]}
+        deleteDeal={vi.fn()}
+        persist={vi.fn()}
+        saveDeal={vi.fn()}
+      />,
+    );
+    expect(getRenderedDealIds(container)).toEqual(["d1", "d3"]);
+    expect(screen.getByRole("button", { name: /Active/ })).toHaveTextContent(
+      "Active2",
+    );
+    const row = container.querySelector('tr[data-deal-id="d1"]');
+    expect(row).toHaveTextContent("123 Main St, Austin, TX 78701");
+    expect(row).toHaveTextContent("420 Peete St, Covington, TN 38019");
+    expect(row).toHaveTextContent("2 properties");
+
+    fireEvent.click(screen.getAllByText("123 Main St, Austin, TX 78701")[0]);
+    const tabs = screen.getByRole("tablist", {
+      name: "This seller's properties",
+    });
+    expect(
+      within(tabs)
+        .getAllByRole("tab")
+        .map((t) => t.textContent),
+    ).toEqual(["123 Main St", "420 Peete St"]);
+    fireEvent.click(within(tabs).getByRole("tab", { name: "420 Peete St" }));
+    expect(screen.getByPlaceholderText("Street address")).toHaveValue(
+      "420 Peete St",
+    );
+  });
+
+  it("adds a property for the seller as a new tab, saved as a deal", async () => {
+    const seller = {
+      ...deal,
+      sellerFirstName: "Nadine",
+      sellerLastName: "Rice",
+      sellerPhone: "314-652-4076",
+    };
+    const saveDeal = vi.fn(async (d) => d);
+    const persist = vi.fn();
+    render(
+      <Wholesale_data
+        filteredDeals={[seller]}
+        deals={[seller]}
+        deleteDeal={vi.fn()}
+        persist={persist}
+        saveDeal={saveDeal}
+        currentUserId="u1"
+      />,
+    );
+    fireEvent.click(screen.getAllByText("123 Main St, Austin, TX 78701")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Add Property" }));
+
+    const tabs = screen.getByRole("tablist", {
+      name: "This seller's properties",
+    });
+    expect(
+      within(tabs)
+        .getAllByRole("tab")
+        .map((t) => t.textContent),
+    ).toEqual(["123 Main St", "New property"]);
+    expect(screen.getByDisplayValue("Nadine")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("Street address"), {
+      target: { value: "420 Peete St" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+
+    await waitFor(() => expect(persist).toHaveBeenCalled());
+    const saved = saveDeal.mock.calls.at(-1)[0];
+    expect(saved).toMatchObject({
+      address: "420 Peete St",
+      sellerFirstName: "Nadine",
+      sellerLastName: "Rice",
+      sellerPhone: "314-652-4076",
+      userId: "u1",
+    });
+    expect(saved.isNewProperty).toBeUndefined();
+    expect(persist.mock.calls.at(-1)[0]).toHaveLength(2);
   });
 
   it("deletes a deal from the details modal", () => {
