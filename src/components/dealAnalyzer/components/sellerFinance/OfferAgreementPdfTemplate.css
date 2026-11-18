@@ -103,6 +103,53 @@
     color: #1a3560;
   }
 
+  /* The Purchase and Sale Agreement's header, as in the uploaded PSA: a
+     white card with a blue top edge, inset from the page, above a title bar
+     with a navy rule. */
+  .oa-pdf-container--light-header {
+    padding-top: 24px;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-header {
+    margin: 0 32px 18px;
+    padding: 18px 22px;
+    background: #fff;
+    color: #1a3560;
+    border: 1px solid #d7deec;
+    border-top: 4px solid #2563eb;
+    border-radius: 8px;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-brand-icon {
+    border: 2px solid #1a3560;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-company-name {
+    font-size: 28px;
+    color: #1a3560;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-tagline {
+    color: #2563eb;
+    letter-spacing: 0.25em;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-contact,
+  .oa-pdf-container--light-header .oa-pdf-contact p {
+    color: #374151;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-contact strong {
+    color: #1a3560;
+    font-weight: 700;
+  }
+
+  .oa-pdf-container--light-header .oa-pdf-title-bar {
+    margin: 0 32px;
+    border-top: 3px solid #1a3560;
+    border-bottom: none;
+  }
+
   .oa-pdf-body {
     padding: 24px 32px 4px;
   }

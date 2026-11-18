@@ -70,7 +70,7 @@ const JvAgreementPdfTemplate = forwardRef(function JvAgreementPdfTemplate(
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="oa-pdf-container" ref={ref}>
+    <div className="oa-pdf-container oa-pdf-container--light-header" ref={ref}>
       <div className="oa-pdf-header">
         <div className="oa-pdf-brand">
           <div className="oa-pdf-brand-icon">
