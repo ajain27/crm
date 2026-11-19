@@ -467,8 +467,17 @@ describe("DealDetailModal", () => {
   it("adds a clause typed in plain words to the offer, written up as a numbered section", async () => {
     requestClauseDraft.mockReset();
     requestClauseDraft.mockResolvedValue({
-      title: "SELLER POSSESSION AFTER CLOSING",
-      body: "Seller may remain in possession of the Property for fourteen (14) calendar days after closing at no cost to Seller.",
+      title: "CODE VIOLATION MATTERS",
+      subsections: [
+        {
+          heading: "Definitions",
+          text: '"Code Violation Matter" means any notice, fine or proceeding.',
+        },
+        {
+          heading: "Transfer of Cases",
+          text: "At closing, the End Buyer shall become the defendant.",
+        },
+      ],
     });
     renderElementToPdfAssets.mockClear();
     render(
@@ -496,13 +505,22 @@ describe("DealDetailModal", () => {
     fireEvent.click(screen.getByText("Generate"));
 
     await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
-    expect(requestClauseDraft).toHaveBeenCalledWith(
-      "seller can stay 2 weeks after closing for free",
+    // Claude is sent the agreement it's for, and the section's number.
+    const [term, context] = requestClauseDraft.mock.calls[0];
+    expect(term).toBe("seller can stay 2 weeks after closing for free");
+    expect(context.sectionNumber).toBe(11);
+    expect(context.agreement).toContain("8. LIENS, TAXES & ENCUMBRANCES");
+    expect(context.agreement).toContain(
+      "Seller's obligations under Section 8 are unchanged.",
     );
+    expect(context.agreement).toContain(
+      "Buyer Name: | You Win Estates, and/or assigns",
+    );
+    expect(context.agreement).not.toContain("11.");
     const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
     expect(text).toContain("10. CLOSING COSTS");
     expect(text).toContain(
-      "11. SELLER POSSESSION AFTER CLOSINGSeller may remain in possession of the Property for fourteen (14) calendar days after closing",
+      '11. CODE VIOLATION MATTERS(a) Definitions. "Code Violation Matter" means any notice, fine or proceeding.(b) Transfer of Cases. At closing, the End Buyer shall become the defendant.',
     );
   });
 

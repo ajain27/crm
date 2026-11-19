@@ -46,22 +46,43 @@ describe("run-comps: draft an offer clause", () => {
           type: "text",
           text: JSON.stringify({
             title: "Hoa Transfer Fee",
-            body: " Buyer shall pay the HOA transfer fee at closing. ",
+            subsections: [
+              {
+                heading: " Payment ",
+                text: " Buyer shall pay the HOA transfer fee at closing. ",
+              },
+              { heading: "Empty", text: "  " },
+            ],
           }),
         },
       ],
     });
-    const res = await call({ draftClause: "  buyer pays HOA transfer fee " });
+    const res = await call({
+      draftClause: "  buyer pays HOA transfer fee ",
+      agreement: "8. LIENS, TAXES & ENCUMBRANCES\nSeller shall convey title...",
+      sectionNumber: 11,
+    });
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({
       title: "HOA TRANSFER FEE",
-      body: "Buyer shall pay the HOA transfer fee at closing.",
+      subsections: [
+        {
+          heading: "Payment",
+          text: "Buyer shall pay the HOA transfer fee at closing.",
+        },
+      ],
     });
+    // Claude reads the agreement, and drafts it as the section it'll be.
     const request = claudeCreate.mock.calls[0][0];
     expect(request.messages).toEqual([
-      { role: "user", content: "buyer pays HOA transfer fee" },
+      {
+        role: "user",
+        content:
+          "<agreement>\n8. LIENS, TAXES & ENCUMBRANCES\nSeller shall convey title...\n</agreement>\n\n<term>\nbuyer pays HOA transfer fee\n</term>",
+      },
     ]);
-    expect(request.system).toContain("Do not add conditions");
+    expect(request.system).toContain("Draft it as Section 11");
+    expect(request.system).toContain('"Notwithstanding Section 8, ..."');
   });
 
   it("asks for the clause when none is typed, without calling Claude", async () => {

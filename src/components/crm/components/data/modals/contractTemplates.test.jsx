@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import WholesaleOfferPdfTemplate from "./WholesaleOfferPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
+import CommercialOfferPdfTemplate from "./CommercialOfferPdfTemplate";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import MutualReleasePdfTemplate, {
   EMD_OTHER,
@@ -93,6 +94,44 @@ describe("contract templates", () => {
     );
     expect(text).not.toContain("or if the Buyer is unable to close");
     unmount();
+  });
+
+  it("an added clause follows Closing Costs: unlettered alone, lettered (a), (b)… when in parts", () => {
+    const { unmount } = render(
+      <WholesaleOfferPdfTemplate
+        sellerName="Jane Doe"
+        propertyAddress="1 Main St"
+        purchasePrice={150000}
+        allowAssignment={false}
+        additionalClause={{
+          title: "ADDITIONAL TERMS",
+          subsections: [{ heading: "", text: "Buyer pays the HOA fee." }],
+        }}
+      />,
+    );
+    expect(document.body.textContent).toContain(
+      "10. ADDITIONAL TERMSBuyer pays the HOA fee.",
+    );
+    unmount();
+
+    const commercial = render(
+      <CommercialOfferPdfTemplate
+        sellerName="Jane Doe"
+        propertyAddress="1 Main St"
+        purchasePrice={150000}
+        additionalClause={{
+          title: "CODE VIOLATIONS",
+          subsections: [
+            { heading: "Definitions.", text: "One." },
+            { heading: "Release of Seller", text: "Two." },
+          ],
+        }}
+      />,
+    );
+    expect(document.body.textContent).toContain(
+      "12. CODE VIOLATIONS(a) Definitions. One.(b) Release of Seller. Two.",
+    );
+    commercial.unmount();
   });
 
   it("assignment: names the seller, signed and dated today", () => {

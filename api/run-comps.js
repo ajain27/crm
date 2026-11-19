@@ -9,7 +9,11 @@
 
 import { runComps } from "./_lib/comps/runComps.js";
 import { findRedfinUrl } from "./_lib/comps/subject.js";
-import { draftClause, MAX_CLAUSE_LENGTH } from "./_lib/clause.js";
+import {
+  draftClause,
+  MAX_AGREEMENT_LENGTH,
+  MAX_CLAUSE_LENGTH,
+} from "./_lib/clause.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -20,9 +24,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // { draftClause: "text" } → { title, body }: a clause for the offer typed
-  // in plain words, written as contract language (kept in this endpoint
-  // for the same 12-function limit).
+  // { draftClause: "text", agreement, sectionNumber } → { title,
+  // subsections }: a term for the offer typed in plain words, drafted as
+  // that numbered section of the agreement whose text is sent (kept in
+  // this endpoint for the same 12-function limit).
   if (req.body?.draftClause !== undefined) {
     const text = String(req.body.draftClause || "").trim();
     if (!text || text.length > MAX_CLAUSE_LENGTH) {
@@ -33,10 +38,18 @@ export default async function handler(req, res) {
     if (!process.env.ANTHROPIC_API_KEY) {
       return res.status(500).json({ error: "Missing ANTHROPIC_API_KEY." });
     }
+    const agreement = String(req.body.agreement || "").slice(
+      0,
+      MAX_AGREEMENT_LENGTH,
+    );
+    const sectionNumber = Number(req.body.sectionNumber) || null;
     try {
-      return res
-        .status(200)
-        .json(await draftClause(text, process.env.ANTHROPIC_API_KEY));
+      return res.status(200).json(
+        await draftClause(text, process.env.ANTHROPIC_API_KEY, {
+          agreement,
+          sectionNumber,
+        }),
+      );
     } catch (err) {
       console.error("run-comps draft clause error:", err);
       return res

@@ -1,14 +1,15 @@
-// Has a clause typed in plain words written as contract language for the
-// offer, through /api/run-comps (see api/_lib/clause.js). Resolves to
-// { title, body }.
-export async function requestClauseDraft(text) {
+// Has a term typed in plain words drafted as a section of the offer,
+// through /api/run-comps (see api/_lib/clause.js). `context` is
+// { agreement, sectionNumber } (see offerAgreementText). Resolves to
+// { title, subsections: [{ heading, text }] }.
+export async function requestClauseDraft(text, context = {}) {
   const res = await fetch("/api/run-comps", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ draftClause: text }),
+    body: JSON.stringify({ draftClause: text, ...context }),
   });
   const data = await res.json().catch(() => null);
-  if (res.ok && data?.body) return data;
+  if (res.ok && data?.subsections?.length) return data;
   if (data?.error) throw new Error(data.error);
   throw new Error(
     [502, 503, 504].includes(res.status)

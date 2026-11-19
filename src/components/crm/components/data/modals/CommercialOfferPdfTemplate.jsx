@@ -18,6 +18,9 @@ import "./CommercialOfferPdfTemplate.css";
 
 const BUYER_NAME = "You Win Estates, and/or assigns";
 
+// A clause added when generating the offer follows Closing Costs.
+export const COMMERCIAL_ADDITIONAL_CLAUSE_NUMBER = 12;
+
 export const DEFAULT_COMMERCIAL_OPTIONS = {
   inspectionDays: 30,
   closingDays: 60,
@@ -100,13 +103,14 @@ const CommercialOfferPdfTemplate = forwardRef(
       closingDays = DEFAULT_COMMERCIAL_OPTIONS.closingDays,
       emdDays = DEFAULT_COMMERCIAL_OPTIONS.emdDays,
       additionalClause = null,
+      inline = false,
     },
     ref,
   ) {
     const today = todayFormatted();
     if (typeof document === "undefined") return null;
 
-    return createPortal(
+    const page = (
       <div className="oa-pdf-container" ref={ref}>
         <div className="oa-pdf-header">
           <div className="oa-pdf-brand">
@@ -437,7 +441,10 @@ const CommercialOfferPdfTemplate = forwardRef(
             </p>
           </Section>
 
-          <AdditionalClause clause={additionalClause} number={12} />
+          <AdditionalClause
+            clause={additionalClause}
+            number={COMMERCIAL_ADDITIONAL_CLAUSE_NUMBER}
+          />
 
           <div className="oa-pdf-warning">
             THIS IS INTENDED TO BE A LEGALLY BINDING CONTRACT. IF YOU DO NOT
@@ -466,9 +473,11 @@ const CommercialOfferPdfTemplate = forwardRef(
         <div className="oa-pdf-footer">
           YOU WIN ESTATES — COMMERCIAL PURCHASE AND SALE AGREEMENT
         </div>
-      </div>,
-      document.body,
+      </div>
     );
+    // `inline` renders it in place, to read its text (see
+    // offerAgreementText).
+    return inline ? page : createPortal(page, document.body);
   },
 );
 

@@ -178,12 +178,36 @@ function AssignableClosingTerms({ closingDays, emdDays, liensSection }) {
   );
 }
 
-// A clause added when generating the offer, as a numbered section.
+// The section number a clause added when generating the offer gets: the
+// one after Closing Costs.
+export function additionalClauseNumber(allowAssignment) {
+  return allowAssignment ? 11 : 10;
+}
+
+// A clause added when generating the offer ({ title, subsections:
+// [{ heading, text }] }), as a numbered section. Several subsections are
+// lettered (a), (b)… with their headings in bold, like Section 3's.
 export function AdditionalClause({ clause, number }) {
-  if (!clause?.body) return null;
+  const parts = (clause?.subsections || []).filter((s) => s.text);
+  if (parts.length === 0) return null;
+  const lettered = parts.length > 1;
   return (
     <Section number={number} title={clause.title || "ADDITIONAL TERMS"}>
-      <p>{clause.body}</p>
+      {parts.map((part, i) => {
+        const label = [
+          lettered && `(${String.fromCharCode(97 + i)})`,
+          part.heading && `${part.heading.replace(/[.:]\s*$/, "")}.`,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          <p key={i}>
+            {label && <strong>{label}</strong>}
+            {label && " "}
+            {part.text}
+          </p>
+        );
+      })}
     </Section>
   );
 }
@@ -205,6 +229,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
     inspectionDays = DEFAULT_OFFER_OPTIONS.inspectionDays,
     closingDays = DEFAULT_OFFER_OPTIONS.closingDays,
     additionalClause = null,
+    inline = false,
   },
   ref,
 ) {
@@ -215,7 +240,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
 
   if (typeof document === "undefined") return null;
 
-  return createPortal(
+  const page = (
     <div className="oa-pdf-container oa-pdf-container--light-header" ref={ref}>
       <div className="oa-pdf-header">
         <div className="oa-pdf-brand">
@@ -423,7 +448,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
 
         <AdditionalClause
           clause={additionalClause}
-          number={afterRemedies + 4}
+          number={additionalClauseNumber(allowAssignment)}
         />
 
         <div className="oa-pdf-warning">
@@ -453,9 +478,10 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
       <div className="oa-pdf-footer">
         YOU WIN ESTATES — PURCHASE AND SALE AGREEMENT
       </div>
-    </div>,
-    document.body,
+    </div>
   );
+  // `inline` renders it in place, to read its text (see offerAgreementText).
+  return inline ? page : createPortal(page, document.body);
 });
 
 export default WholesaleOfferPdfTemplate;

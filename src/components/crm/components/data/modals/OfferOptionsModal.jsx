@@ -5,6 +5,7 @@ import { DEFAULT_COMMERCIAL_OPTIONS } from "./CommercialOfferPdfTemplate";
 import CurrencyInput from "../../../../elements/CurrencyInput";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
 import { requestClauseDraft } from "../../../../../services/clauseService";
+import { offerAgreementText } from "./offerAgreementText";
 
 const MAX_DAYS = 365;
 const MAX_CLAUSE_LENGTH = 2000;
@@ -127,15 +128,20 @@ export default function OfferOptionsModal({
     });
   }
 
+  // The agreement's options as chosen; the clause is written to fit them.
+  const agreementOptions = {
+    commercial: form.commercial,
+    allowAssignment: form.commercial || form.allowAssignment,
+    emdAmount,
+    emdDays,
+    inspectionDays,
+    closingDays,
+  };
+
   function generate(additionalClause) {
     onGenerate({
       sellerName: form.sellerName.trim().replace(/\s+/g, " "),
-      commercial: form.commercial,
-      allowAssignment: form.commercial || form.allowAssignment,
-      emdAmount,
-      emdDays,
-      inspectionDays,
-      closingDays,
+      ...agreementOptions,
       clauseText: additionalClause ? clauseText : "",
       additionalClause,
     });
@@ -146,15 +152,24 @@ export default function OfferOptionsModal({
     if (hasError || drafting) return;
     if (clauseError) return setClauseTouched(true);
     if (!form.addClause) return generate(null);
-    // The same words as last time: keep the clause already written.
+    // The same words for the same kind of agreement as last time: keep the
+    // clause already written.
     const previous = initialOptions.additionalClause;
-    if (previous && initialOptions.clauseText === clauseText) {
+    if (
+      previous &&
+      initialOptions.clauseText === clauseText &&
+      !!initialOptions.commercial === agreementOptions.commercial &&
+      !!initialOptions.allowAssignment === agreementOptions.allowAssignment
+    ) {
       return generate(previous);
     }
     setDrafting(true);
     setClauseFailure("");
     try {
-      const clause = await requestClauseDraft(clauseText);
+      const clause = await requestClauseDraft(
+        clauseText,
+        offerAgreementText(agreementOptions),
+      );
       setDrafting(false);
       generate(clause);
     } catch (err) {
@@ -165,13 +180,18 @@ export default function OfferOptionsModal({
 
   // The clause as typed, when it couldn't be written up.
   function generateAsTyped() {
-    const body = clauseText.replace(/\s+/g, " ");
+    const text = clauseText.replace(/\s+/g, " ");
     generate({
       title: "ADDITIONAL TERMS",
-      body:
-        body.charAt(0).toUpperCase() +
-        body.slice(1) +
-        (/[.!?]$/.test(body) ? "" : "."),
+      subsections: [
+        {
+          heading: "",
+          text:
+            text.charAt(0).toUpperCase() +
+            text.slice(1) +
+            (/[.!?]$/.test(text) ? "" : "."),
+        },
+      ],
     });
   }
 
@@ -192,7 +212,7 @@ export default function OfferOptionsModal({
             <>
               <ActionButton label="Cancel" onClick={onClose} />
               <ActionButton
-                label={drafting ? "Writing clause…" : "Generate"}
+                label={drafting ? "Writing clause (about 30s)…" : "Generate"}
                 tone="primary"
                 onClick={handleSubmit}
                 disabled={hasError || drafting}
