@@ -231,6 +231,33 @@
     font-size: 0.75rem;
   }
 
+  .lcp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .lcp-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    background: none;
+    color: var(--blue);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .lcp-copy-btn:hover {
+    background: color-mix(in srgb, var(--blue) 10%, transparent);
+  }
+
   /* Map */
   .comps-map {
     position: relative;

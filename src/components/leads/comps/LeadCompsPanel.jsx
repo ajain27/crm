@@ -1,21 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, Home } from "lucide-react";
+import { Check, Copy, ExternalLink, Home } from "lucide-react";
 import { StreetViewButton } from "../../elements/StreetView";
 import CompsMap from "./CompsMap";
 import { medianPricePerSqft } from "./leadComps";
+import { copyComps, money, num, parseMoney, shortDate } from "./compsCopy";
 import "./LeadComps.css";
 import ResizableTable from "../../elements/ResizableTable";
-
-const money = (n) =>
-  typeof n === "number" && Number.isFinite(n) && n > 0
-    ? `$${Math.round(n).toLocaleString("en-US")}`
-    : "—";
-const num = (n) =>
-  typeof n === "number" && Number.isFinite(n) ? n.toLocaleString("en-US") : "—";
-const parseMoney = (text) => {
-  const n = Number(String(text || "").replace(/[$,\s]/g, ""));
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
 
 // "123 Main St, Dallas, TX 75201" → ["123 Main St", "Dallas, TX 75201"]
 function addressLines(address) {
@@ -23,12 +13,6 @@ function addressLines(address) {
     .replace(/, USA$/, "")
     .split(",");
   return [street.trim(), rest.join(",").trim()];
-}
-
-// "2026-09-30" → "9/30/26"
-function shortDate(date) {
-  const m = String(date || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${Number(m[2])}/${Number(m[3])}/${m[1].slice(2)}` : date || "";
 }
 
 function Stat({ label, value, suffix, note }) {
@@ -109,6 +93,37 @@ function PropertyCell({ home, isSubject }) {
         </span>
       </div>
     </td>
+  );
+}
+
+// Copies every comp at once, as readable text (and a table for apps that
+// take one); a check shows for a moment once it has.
+function CopyCompsButton({ comps, lead }) {
+  const [state, setState] = useState(null); // null | "copied" | "failed"
+  useEffect(() => {
+    if (!state) return undefined;
+    const timer = setTimeout(() => setState(null), 2000);
+    return () => clearTimeout(timer);
+  }, [state]);
+
+  async function handleClick() {
+    try {
+      await copyComps(comps, lead);
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+  }
+
+  return (
+    <button type="button" className="lcp-copy-btn" onClick={handleClick}>
+      {state === "copied" ? <Check size={13} /> : <Copy size={13} />}
+      {state === "copied"
+        ? "Copied"
+        : state === "failed"
+          ? "Couldn't copy"
+          : "Copy comps"}
+    </button>
   );
 }
 
@@ -243,9 +258,12 @@ export default function LeadCompsPanel({ comps, lead }) {
           {rows.length === 0 && (
             <p className="lcp-muted lcp-empty">No homes sold nearby.</p>
           )}
-          {comps.date && (
-            <p className="lcp-muted lcp-footnote">Comps run {comps.date}</p>
-          )}
+          <div className="lcp-footer">
+            <p className="lcp-muted lcp-footnote">
+              {comps.date ? `Comps run ${comps.date}` : ""}
+            </p>
+            <CopyCompsButton comps={comps} lead={lead} />
+          </div>
         </div>
 
         <CompsMap points={points} selectedKey={selectedKey} onSelect={select} />
