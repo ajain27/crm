@@ -9,7 +9,7 @@ import {
 } from "../../../../utils/pdfExport";
 import LeadReportPdf from "./LeadReportPdf";
 import PdfReportPreviewModal from "../pdfExport/PdfReportPreviewModal";
-import { loadFrontImage, reportContact, reportFilename } from "./leadReport";
+import { loadFrontImage, reportFilename } from "./leadReport";
 import CurrencyInput from "../../../elements/CurrencyInput";
 import { parseCurrency } from "../../../../utils/utils";
 import {
@@ -116,8 +116,8 @@ function ResultCard({
 // Analyze a deal or lead from its window: asks how much work the property
 // needs and what it'll cost, then lays out the wholesale and novation
 // numbers from its ARV. `item` is the deal or lead (its draft).
-// View report shows a PDF report of the property with its comps and these
-// numbers, to download from there; its front picture is the item's main photo (`photos[0]` from
+// View report shows a PDF report of the property and its comps (nothing
+// about the seller or the offer), to download from there; its front picture is the item's main photo (`photos[0]` from
 // `photoStore`, owned by `ownerId`), else Street View.
 export default function DealAnalysisModal({
   isOpen,
@@ -236,7 +236,7 @@ export default function DealAnalysisModal({
                   label={reportBusy ? "Making report…" : "View report"}
                   onClick={viewReport}
                   disabled={reportBusy}
-                  title="A PDF report of the property with its photo, comps and these numbers"
+                  title="A PDF report of the property with its photo and comps (no seller details or offers)"
                 />
               </>
             }
@@ -336,21 +336,8 @@ export default function DealAnalysisModal({
               ref={reportRef}
               address={address}
               frontImage={report.frontImage}
-              contact={reportContact(item)}
               comps={leadComps(item)}
-              askingPrice={defaults.askingPrice}
-              analysis={
-                showNumbers
-                  ? {
-                      inputs,
-                      wholesale,
-                      novation,
-                      workLabel:
-                        WORK_OPTIONS.find((o) => o.value === rehabType)
-                          ?.label || "—",
-                    }
-                  : null
-              }
+              arv={inputs.arv}
             />
           )}
           {!(inputs.arv > 0) ? (

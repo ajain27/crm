@@ -1,42 +1,4 @@
 import { loadPhoto } from "../../../elements/photos/photoCache";
-import { joinName, sellerNameOf } from "../../../leads/leadUtils";
-import { displayPhone } from "../../../../utils/utils";
-
-// What the report says about the seller and the lead, from a lead, a CRM
-// deal or a county record (whichever fields it has). Blank parts are
-// left out.
-export function reportContact(item = {}) {
-  const phones = [
-    item.phone,
-    item.phone2,
-    item.sellerPhone,
-    ...(item.sellerPhones || []),
-    ...(item.phones || []),
-  ]
-    .map((p) => String(p || "").trim())
-    .filter(Boolean);
-  const seen = new Set();
-  const uniquePhones = phones.filter((p) => {
-    const digits = p.replace(/\D/g, "").slice(-10);
-    if (seen.has(digits)) return false;
-    seen.add(digits);
-    return true;
-  });
-  return [
-    [
-      "Seller",
-      sellerNameOf(item) ||
-        joinName(item.sellerFirstName, item.sellerLastName) ||
-        item.ownerName,
-    ],
-    ["Phone", uniquePhones.map(displayPhone).join(", ")],
-    ["Email", item.email || item.sellerEmail],
-    ["Lead source", item.source],
-    ["Occupancy", item.occupant],
-    ["Motivation", item.sellerMotivation],
-    ["Timeline", item.sellingUrgency],
-  ].filter(([, value]) => String(value || "").trim());
-}
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {

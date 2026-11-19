@@ -342,30 +342,6 @@
     font-size: 13px;
   }
 
-  .lr-contact {
-    margin-top: 14px;
-    display: grid;
-    gap: 2px;
-  }
-
-  .lr-contact-row {
-    display: grid;
-    grid-template-columns: 92px 1fr;
-    gap: 8px;
-    padding: 3px 0;
-    border-bottom: 1px dotted #e5e7eb;
-    font-size: 12.5px;
-  }
-
-  .lr-contact-row span {
-    color: #6b7280;
-  }
-
-  .lr-contact-row strong {
-    font-weight: 600;
-    color: #1a1a2e;
-  }
-
   .lr-tiles {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
