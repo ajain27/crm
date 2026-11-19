@@ -626,7 +626,10 @@ describe("DealDetailModal", () => {
 
     fireEvent.click(screen.getByText("Generate Offer"));
     expect(screen.getByLabelText(/No, residential/)).toBeChecked();
+    expect(screen.queryByLabelText(/^Business/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByLabelText(/Yes, commercial/));
+    // A business is the default kind of commercial property.
+    expect(screen.getByLabelText(/^Business/)).toBeChecked();
     // The commercial agreement is always assignable, with its own periods.
     expect(screen.queryByLabelText(/No assignment/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Inspection Period")).toHaveValue(30);
@@ -656,6 +659,68 @@ describe("DealDetailModal", () => {
     expect(text).toContain("2. PROPERTY INCLUDED & EXCLUDED");
     expect(text).toContain("11. CLOSING COSTS");
     expect(text).toContain("You Win Estates, and/or assigns");
+    // As in the new PDF: periods are editable, and closing isn't extended
+    // automatically.
+    expect(text).toContain(
+      "Each period is editable: change the entry here and it applies throughout this Agreement.",
+    );
+    expect(text).not.toContain("Automatic Extension Period");
+    expect(text).toContain(
+      "the Closing Date shall not be extended automatically.",
+    );
+    expect(text).toContain(
+      "The Closing Date may be extended only by a written agreement signed by both parties.",
+    );
+    expect(text).toContain(
+      "(as extended by written agreement of the parties, if any)",
+    );
+    expect(
+      await screen.findByText("Commercial Purchase and Sale Agreement"),
+    ).toBeInTheDocument();
+  });
+
+  it("generates the multifamily agreement for a multifamily commercial deal", async () => {
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, contractPrice: 900000 }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Generate Offer"));
+    fireEvent.click(screen.getByLabelText(/Yes, commercial/));
+    fireEvent.click(screen.getByLabelText(/^Multifamily/));
+    expect(screen.getByLabelText("Inspection Period")).toHaveValue(30);
+    expect(screen.getByLabelText("Closing Timeline")).toHaveValue(60);
+    renderElementToPdfAssets.mockClear();
+    fireEvent.click(screen.getByText("Generate"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls[0][0].textContent;
+    expect(text).toContain("MULTIFAMILY PURCHASE AND SALE AGREEMENT");
+    expect(text).not.toContain("COMMERCIAL PURCHASE AND SALE AGREEMENT");
+    expect(text).toContain("Purchase Price: $900,000");
+    expect(text).toContain("Inspection PeriodThirty (30) calendar days");
+    expect(text).toContain("Closing DateOn or before sixty (60) calendar days");
+    expect(text).toContain("Document DeliveryFive (5) business days");
+    expect(text).toContain("Earnest Money DeliveryThree (3) business days");
+    for (const heading of [
+      "3. SELLER DOCUMENT DELIVERY",
+      "6. RENTS, DEPOSITS & PRORATIONS",
+      "7. OPERATION OF PROPERTY BEFORE CLOSING",
+      "12. LIENS, TAXES & ENCUMBRANCES",
+      "14. CLOSING COSTS",
+    ]) {
+      expect(text).toContain(heading);
+    }
+    expect(text).toContain(
+      "The credits and prorations under Section 6 and Seller's obligations under Section 12 are unchanged.",
+    );
+    expect(
+      await screen.findByText("Multifamily Purchase and Sale Agreement"),
+    ).toBeInTheDocument();
   });
 
   it("asks with commercial picked for a deal from a commercial lead", () => {

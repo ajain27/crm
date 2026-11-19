@@ -27,9 +27,9 @@ export const DEFAULT_COMMERCIAL_OPTIONS = {
   emdDays: 3,
 };
 
-const ACCEPTANCE = "Mutual acceptance (Seller & Buyer signed)";
+export const ACCEPTANCE = "Mutual acceptance (Seller & Buyer signed)";
 
-function todayFormatted() {
+export function todayFormatted() {
   return new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -43,8 +43,38 @@ function spelled(n) {
   return `${words[0].toUpperCase()}${words.slice(1)} (${n})`;
 }
 
-function days(n) {
+export function days(n) {
   return `${spelled(n)} calendar ${n === 1 ? "day" : "days"}`;
+}
+
+// The Key Terms section: `rows` are [term, period, counted from].
+export function KeyTerms({ rows }) {
+  return (
+    <div className="oa-pdf-section oa-pdf-key-terms">
+      <h2>KEY TERMS</h2>
+      <p>
+        The periods below control wherever this Agreement refers to them. Each
+        period is editable: change the entry here and it applies throughout this
+        Agreement. All periods are calendar days unless stated otherwise.
+      </p>
+      <div className="oa-pdf-key-grid" role="table">
+        <div className="oa-pdf-key-row oa-pdf-key-head" role="row">
+          <span role="columnheader">TERM</span>
+          <span role="columnheader">PERIOD</span>
+          <span role="columnheader">COUNTED FROM</span>
+        </div>
+        {rows.map(([term, period, from]) => (
+          <div className="oa-pdf-key-row" role="row" key={term}>
+            <span role="cell">{term}</span>
+            <span role="cell" className="oa-pdf-key-period">
+              {period}
+            </span>
+            <span role="cell">{from}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // Key Terms is built from divs, not a <table>: the app's global table
@@ -63,11 +93,6 @@ export function commercialKeyTerms({
       "Closing Date",
       `On or before ${days(closingDays).replace(/^\w/, (c) => c.toLowerCase())}`,
       ACCEPTANCE,
-    ],
-    [
-      "Automatic Extension Period",
-      "Up to thirty (30) calendar days",
-      "Scheduled Closing Date",
     ],
     [
       "Removal Deadline",
@@ -156,31 +181,9 @@ const CommercialOfferPdfTemplate = forwardRef(
             <Field label="Property Address:" value={propertyAddress} />
           </div>
 
-          <div className="oa-pdf-section oa-pdf-key-terms">
-            <h2>KEY TERMS</h2>
-            <p>
-              The periods below control wherever this Agreement refers to them.
-              All periods are calendar days unless stated otherwise.
-            </p>
-            <div className="oa-pdf-key-grid" role="table">
-              <div className="oa-pdf-key-row oa-pdf-key-head" role="row">
-                <span role="columnheader">TERM</span>
-                <span role="columnheader">PERIOD</span>
-                <span role="columnheader">COUNTED FROM</span>
-              </div>
-              {commercialKeyTerms({ inspectionDays, closingDays, emdDays }).map(
-                ([term, period, from]) => (
-                  <div className="oa-pdf-key-row" role="row" key={term}>
-                    <span role="cell">{term}</span>
-                    <span role="cell" className="oa-pdf-key-period">
-                      {period}
-                    </span>
-                    <span role="cell">{from}</span>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
+          <KeyTerms
+            rows={commercialKeyTerms({ inspectionDays, closingDays, emdDays })}
+          />
 
           <Section number={1} title="PURCHASE PRICE & FINANCIAL TERMS">
             <p>
@@ -281,17 +284,16 @@ const CommercialOfferPdfTemplate = forwardRef(
               cannot occur by the Closing Date because of (i) a title defect,
               lien, or encumbrance, or (ii) a delay by the escrow/title agent,
               the recording office, or a government agency that is not caused by
-              Buyer or Seller, the Closing Date shall automatically be extended
-              by the Automatic Extension Period stated in the Key Terms (the{" "}
-              <strong>"Extension Period"</strong>). During the Extension Period,
-              Seller shall diligently work to cure any title matter and Buyer
-              shall remain ready to close. If closing still cannot occur by the
-              end of the Extension Period for one of these reasons, either party
-              may terminate this Agreement by written notice; the EMD shall then
-              be refunded to Buyer in full, and both parties shall be released
-              from further obligations. Buyer may instead elect in writing to
-              accept title as-is, subject to Section 9, and close. The parties
-              may agree in writing to any further extension.
+              Buyer or Seller, the Closing Date shall not be extended
+              automatically. Seller shall diligently work to cure any title
+              matter before the Closing Date, and Buyer shall remain ready to
+              close. If closing cannot occur by the Closing Date for one of
+              these reasons, either party may terminate this Agreement by
+              written notice; the EMD shall then be refunded to Buyer in full,
+              and both parties shall be released from further obligations. Buyer
+              may instead elect in writing to accept title as-is, subject to
+              Section 9, and close. The Closing Date may be extended only by a
+              written agreement signed by both parties.
             </p>
             <p>
               <strong>(d) Seller's Failure to Close.</strong> If closing does
@@ -306,8 +308,8 @@ const CommercialOfferPdfTemplate = forwardRef(
             <p>
               <strong>(e) Buyer's Failure to Close.</strong> If the Inspection
               Period has expired without Buyer terminating this Agreement and
-              Buyer fails to close by the Closing Date (as extended under
-              Section 4(c), if applicable) for any reason not described in
+              Buyer fails to close by the Closing Date (as extended by written
+              agreement of the parties, if any) for any reason not described in
               Sections 4(c), 4(d) or 5(c), Seller shall give Buyer written
               notice, and Buyer shall have three (3) business days to close. If
               Buyer does not close within that time, Buyer shall be in default,

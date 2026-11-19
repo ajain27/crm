@@ -7,6 +7,36 @@ import WholesaleOfferPdfTemplate, {
 import CommercialOfferPdfTemplate, {
   COMMERCIAL_ADDITIONAL_CLAUSE_NUMBER,
 } from "./CommercialOfferPdfTemplate";
+import MultifamilyOfferPdfTemplate, {
+  MULTIFAMILY_ADDITIONAL_CLAUSE_NUMBER,
+} from "./MultifamilyOfferPdfTemplate";
+
+// The agreement an offer with these options is generated from, and the
+// section number a clause added to it gets.
+export function offerAgreement(options) {
+  if (options.commercial && options.commercialKind === "multifamily") {
+    return {
+      template: MultifamilyOfferPdfTemplate,
+      clauseNumber: MULTIFAMILY_ADDITIONAL_CLAUSE_NUMBER,
+      title: "Multifamily Purchase and Sale Agreement",
+      fileName: "multifamily-purchase-and-sale-agreement",
+    };
+  }
+  if (options.commercial) {
+    return {
+      template: CommercialOfferPdfTemplate,
+      clauseNumber: COMMERCIAL_ADDITIONAL_CLAUSE_NUMBER,
+      title: "Commercial Purchase and Sale Agreement",
+      fileName: "commercial-purchase-and-sale-agreement",
+    };
+  }
+  return {
+    template: WholesaleOfferPdfTemplate,
+    clauseNumber: additionalClauseNumber(options.allowAssignment !== false),
+    title: "Purchase and Sale Agreement",
+    fileName: "purchase-and-sale-agreement",
+  };
+}
 
 // The headings, rows and paragraphs of an agreement, one per line.
 const ROWS = ".oa-pdf-field-row, [role='row']";
@@ -17,10 +47,7 @@ const BLOCKS = `h1, h2, h3, p, ${ROWS}`;
 // gets, so the clause can be written to fit the agreement: it can refer
 // to its sections by number and say which one controls where they differ.
 export function offerAgreementText(options) {
-  const commercial = !!options.commercial;
-  const template = commercial
-    ? CommercialOfferPdfTemplate
-    : WholesaleOfferPdfTemplate;
+  const { template, clauseNumber } = offerAgreement(options);
   const host = document.createElement("div");
   const root = createRoot(host);
   try {
@@ -50,9 +77,7 @@ export function offerAgreementText(options) {
       .join("\n");
     return {
       agreement: text,
-      sectionNumber: commercial
-        ? COMMERCIAL_ADDITIONAL_CLAUSE_NUMBER
-        : additionalClauseNumber(options.allowAssignment !== false),
+      sectionNumber: clauseNumber,
     };
   } finally {
     root.unmount();

@@ -23,6 +23,7 @@ function toForm(options, sellerName, isCommercial) {
   return {
     sellerName: sellerName || "",
     commercial,
+    commercialKind: options.commercialKind || "business",
     allowAssignment: options.allowAssignment,
     emdAmount: String(options.emdAmount),
     emdDays: String(options.emdDays ?? DEFAULT_OFFER_OPTIONS.emdDays),
@@ -35,8 +36,10 @@ function toForm(options, sellerName, isCommercial) {
   };
 }
 
-// Asks whether it's a commercial deal (the Commercial Purchase and Sale
-// Agreement: lot and building only, always assignable), then the seller's
+// Asks whether it's a commercial deal and, if so, whether it's a business
+// (the Commercial Purchase and Sale Agreement: lot and building only) or a
+// multifamily property (the Multifamily Purchase and Sale Agreement: sold
+// with its leases); both are always assignable. Then it asks the seller's
 // name, the offer's assignment variant, EMD and when it's due,
 // inspection period and closing timeline before the Purchase & Sale
 // Agreement is generated. It also asks whether to add a clause: one typed
@@ -131,6 +134,7 @@ export default function OfferOptionsModal({
   // The agreement's options as chosen; the clause is written to fit them.
   const agreementOptions = {
     commercial: form.commercial,
+    commercialKind: form.commercialKind,
     allowAssignment: form.commercial || form.allowAssignment,
     emdAmount,
     emdDays,
@@ -159,6 +163,8 @@ export default function OfferOptionsModal({
       previous &&
       initialOptions.clauseText === clauseText &&
       !!initialOptions.commercial === agreementOptions.commercial &&
+      (initialOptions.commercialKind || "business") ===
+        agreementOptions.commercialKind &&
       !!initialOptions.allowAssignment === agreementOptions.allowAssignment
     ) {
       return generate(previous);
@@ -246,13 +252,50 @@ export default function OfferOptionsModal({
             />
             <span>
               <strong>Yes, commercial</strong>
-              <small>
-                The Commercial Purchase and Sale Agreement: lot and building
-                only, seller removes equipment and inventory.
-              </small>
+              <small>A business or a multifamily property.</small>
             </span>
           </label>
         </fieldset>
+
+        {form.commercial && (
+          <fieldset className="offer-options-choice">
+            <legend>What kind of commercial property?</legend>
+            <label>
+              <input
+                type="radio"
+                name="commercialKind"
+                checked={form.commercialKind !== "multifamily"}
+                onChange={() =>
+                  setForm((p) => ({ ...p, commercialKind: "business" }))
+                }
+              />
+              <span>
+                <strong>Business</strong>
+                <small>
+                  The Commercial Purchase and Sale Agreement: lot and building
+                  only, seller removes equipment and inventory.
+                </small>
+              </span>
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="commercialKind"
+                checked={form.commercialKind === "multifamily"}
+                onChange={() =>
+                  setForm((p) => ({ ...p, commercialKind: "multifamily" }))
+                }
+              />
+              <span>
+                <strong>Multifamily</strong>
+                <small>
+                  The Multifamily Purchase and Sale Agreement: sold with the
+                  leases, rent roll and records, rent and deposit prorations.
+                </small>
+              </span>
+            </label>
+          </fieldset>
+        )}
 
         <label className="field">
           <span>Seller Name</span>

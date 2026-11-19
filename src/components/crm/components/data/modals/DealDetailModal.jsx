@@ -33,11 +33,9 @@ import {
 import { formatPhone } from "../../../../../utils/utils";
 import { useGenerateReport } from "../../../../dealAnalyzer/components/pdfExport/useGenerateReport";
 import PdfReportPreviewModal from "../../../../dealAnalyzer/components/pdfExport/PdfReportPreviewModal";
-import WholesaleOfferPdfTemplate, {
-  DEFAULT_OFFER_OPTIONS,
-} from "./WholesaleOfferPdfTemplate";
+import { DEFAULT_OFFER_OPTIONS } from "./WholesaleOfferPdfTemplate";
 import OfferOptionsModal from "./OfferOptionsModal";
-import CommercialOfferPdfTemplate from "./CommercialOfferPdfTemplate";
+import { offerAgreement } from "./offerAgreementText";
 import JvAgreementPdfTemplate from "./JvAgreementPdfTemplate";
 import AssignmentPdfTemplate from "./AssignmentPdfTemplate";
 import AssignmentOptionsModal from "./AssignmentOptionsModal";
@@ -269,11 +267,9 @@ function DealDetailModal({
     previewImage: offerPreviewImage,
     closePreview: closeOfferPreview,
     downloadReport: downloadOffer,
-  } = useGenerateReport(
-    offerOptions.commercial
-      ? "commercial-purchase-and-sale-agreement"
-      : "purchase-and-sale-agreement",
-  );
+  } = useGenerateReport(offerAgreement(offerOptions).fileName);
+  // The residential, business or multifamily agreement, as chosen.
+  const OfferTemplate = offerAgreement(offerOptions).template;
   const {
     printRef: jvRef,
     exporting: exportingJv,
@@ -1705,21 +1701,8 @@ function DealDetailModal({
         </div>
       </Modal>
 
-      {exportingOffer && offerOptions.commercial && (
-        <CommercialOfferPdfTemplate
-          ref={offerRef}
-          sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
-          propertyAddress={formatFullAddress(draft)}
-          purchasePrice={offerPurchasePrice}
-          emdAmount={offerOptions.emdAmount}
-          emdDays={offerOptions.emdDays}
-          inspectionDays={offerOptions.inspectionDays}
-          closingDays={offerOptions.closingDays}
-          additionalClause={offerOptions.additionalClause}
-        />
-      )}
-      {exportingOffer && !offerOptions.commercial && (
-        <WholesaleOfferPdfTemplate
+      {exportingOffer && (
+        <OfferTemplate
           ref={offerRef}
           sellerName={joinName(draft.sellerFirstName, draft.sellerLastName)}
           propertyAddress={formatFullAddress(draft)}
@@ -1805,11 +1788,7 @@ function DealDetailModal({
       )}
       <PdfReportPreviewModal
         previewImage={offerPreviewImage}
-        title={
-          offerOptions.commercial
-            ? "Commercial Purchase and Sale Agreement"
-            : "Purchase and Sale Agreement"
-        }
+        title={offerAgreement(offerOptions).title}
         scroll
         onClose={closeOfferPreview}
         onDownload={downloadOffer}
