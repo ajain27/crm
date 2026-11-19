@@ -12,6 +12,7 @@ import { PAGE_SIZE } from "../pagination/usePagination";
 import PageHero from "../elements/PageHero";
 import { PAGE_HEROES } from "../crm/components/pageHeroes";
 import ModalActions, { ActionButton } from "../elements/ModalActions";
+import { CopyButton } from "../leads/components/LeadTableCells";
 
 function createEmptyForm() {
   return {
@@ -612,6 +613,7 @@ export default function TitleCompanies({
                         {company.emails.map((email) => (
                           <span key={email} className="tc-email-chip">
                             {email}
+                            <CopyButton text={email} label={`Copy ${email}`} />
                           </span>
                         ))}
                       </div>
