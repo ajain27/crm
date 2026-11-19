@@ -23,13 +23,25 @@ export default async function handler(req, res) {
     });
   }
 
-  const { toEmail, subject, textContent, htmlContent, fromName } =
+  const { toEmail, subject, textContent, htmlContent, fromName, attachments } =
     req.body || {};
   if (!toEmail || !subject || !textContent) {
     return res.status(400).json({
       error: "toEmail, subject, and textContent are required.",
     });
   }
+
+  // Optional files: [{ filename, contentType, content (base64) }].
+  const files = Array.isArray(attachments)
+    ? attachments
+        .filter((a) => a && a.filename && typeof a.content === "string")
+        .map((a) => ({
+          filename: String(a.filename),
+          content: a.content,
+          encoding: "base64",
+          ...(a.contentType ? { contentType: String(a.contentType) } : {}),
+        }))
+    : [];
 
   try {
     const transport = nodemailer.createTransport({
@@ -42,6 +54,7 @@ export default async function handler(req, res) {
       subject,
       text: textContent,
       ...(htmlContent ? { html: htmlContent } : {}),
+      ...(files.length ? { attachments: files } : {}),
     });
     return res
       .status(200)

@@ -226,8 +226,34 @@ describe("MailMergeModal", () => {
       fireEvent.change(preview, { target: { value: "Custom message body" } });
       expect(preview.value).toBe("Custom message body");
       expect(
-        screen.getByText(/edited — sent as-is to every recipient/i),
+        screen.getByText(/edited — sent to every recipient/i),
       ).toBeInTheDocument();
+    });
+
+    it("re-addresses an edited body's greeting to each recipient", async () => {
+      renderModal();
+      fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), {
+        target: { value: "123 Oak St" },
+      });
+      const preview = screen.getByDisplayValue(/Hi Jane,/);
+      fireEvent.change(preview, {
+        target: { value: "Hi Jane,\n\nJane, a custom deal note." },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /Send to 2 Buyers/i }),
+      );
+
+      await waitFor(() => {
+        // Only this test's sends (an earlier test's send loop can still
+        // be finishing).
+        const bodies = globalThis.fetch.mock.calls
+          .map((c) => JSON.parse(c[1].body).textContent)
+          .filter((b) => b.includes("custom deal note"));
+        expect(bodies).toEqual([
+          "Hi Jane,\n\nJane, a custom deal note.",
+          "Hi John,\n\nJane, a custom deal note.",
+        ]);
+      });
     });
 
     it("sends the edited body verbatim to every recipient", async () => {
@@ -357,6 +383,62 @@ describe("MailMergeModal", () => {
       await waitFor(() => {
         expect(screen.getByText(/Failed:/i)).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("attachments", () => {
+    it("attaches files and sends them with every email", async () => {
+      renderModal();
+      fireEvent.change(screen.getByPlaceholderText(/123 Main St/i), {
+        target: { value: "123 Oak St" },
+      });
+      const file = new File(["hello"], "flyer.pdf", {
+        type: "application/pdf",
+      });
+      fireEvent.change(screen.getByTestId("mail-merge-file-input"), {
+        target: { files: [file] },
+      });
+      expect(await screen.findByText("flyer.pdf")).toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /Send to 2 Buyers/i }),
+      );
+      await waitFor(() => {
+        const sent = globalThis.fetch.mock.calls
+          .map((c) => JSON.parse(c[1].body))
+          .filter((b) => b.attachments);
+        expect(sent).toHaveLength(2);
+        expect(sent[0].attachments).toEqual([
+          {
+            filename: "flyer.pdf",
+            contentType: "application/pdf",
+            content: btoa("hello"),
+          },
+        ]);
+      });
+    });
+
+    it("can remove an attached file", async () => {
+      renderModal();
+      fireEvent.change(screen.getByTestId("mail-merge-file-input"), {
+        target: { files: [new File(["x"], "a.txt", { type: "text/plain" })] },
+      });
+      await screen.findByText("a.txt");
+      fireEvent.click(screen.getByRole("button", { name: "Remove a.txt" }));
+      expect(screen.queryByText("a.txt")).not.toBeInTheDocument();
+    });
+
+    it("refuses files over the size limit", async () => {
+      renderModal();
+      const big = new File(["x"], "big.mov", { type: "video/quicktime" });
+      Object.defineProperty(big, "size", { value: 4 * 1024 * 1024 });
+      fireEvent.change(screen.getByTestId("mail-merge-file-input"), {
+        target: { files: [big] },
+      });
+      expect(
+        await screen.findByText(/Attachments can total up to 3.0 MB/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("big.mov")).not.toBeInTheDocument();
     });
   });
 

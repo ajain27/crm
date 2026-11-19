@@ -271,6 +271,73 @@
     grid-column: 1 / -1;
   }
 
+  .mail-merge-attach-total {
+    margin-left: 0.4rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .mail-merge-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .mail-merge-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+
+  .mail-merge-attachment-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 16rem;
+  }
+
+  .mail-merge-attachment-size {
+    color: var(--muted);
+  }
+
+  .mail-merge-attachment button {
+    display: inline-flex;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .mail-merge-attach-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px dashed var(--line);
+    border-radius: 999px;
+    background: none;
+    color: var(--blue);
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .mail-merge-attach-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--blue) 10%, transparent);
+  }
+
+  .mail-merge-attach-error {
+    margin-top: 0.4rem;
+  }
+
   .mail-merge-preview-wrap {
     border: 1px solid var(--line);
     border-radius: 10px;

@@ -6,6 +6,7 @@ import {
   Loader,
   X,
   Pencil,
+  Paperclip,
 } from "lucide-react";
 import Modal from "../../modal/Modal";
 import { useAddressAutocomplete } from "../../../hooks/useAddressAutocomplete";
@@ -14,7 +15,7 @@ import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
 // Sends through the app's email API (/api/send-email), which sends from
 // youwinestates@gmail.com — the same route account and reset emails use.
-async function sendBuyerEmail({ toEmail, subject, body }) {
+async function sendBuyerEmail({ toEmail, subject, body, attachments = [] }) {
   const requestOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -23,6 +24,17 @@ async function sendBuyerEmail({ toEmail, subject, body }) {
       subject,
       textContent: body,
       fromName: "You Win Estates",
+      ...(attachments.length
+        ? {
+            attachments: attachments.map(
+              ({ filename, contentType, content }) => ({
+                filename,
+                contentType,
+                content,
+              }),
+            ),
+          }
+        : {}),
     }),
   };
   let res = await fetch("/api/send-email", requestOptions);
@@ -37,6 +49,34 @@ async function sendBuyerEmail({ toEmail, subject, body }) {
     throw new Error(err.error || err.message || `HTTP ${res.status}`);
   }
   return res;
+}
+
+// Attachments ride along in each send request, base64-encoded (a third
+// bigger than the files), and Vercel caps a request at 4.5 MB — so the
+// files together stay under 3 MB.
+export const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+
+export function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// A file as { filename, contentType, size, content } with `content` its
+// base64 (no "data:" prefix).
+function readAttachment(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      resolve({
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+        size: file.size,
+        content: String(reader.result || "").split(",")[1] || "",
+      });
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 const EMPTY_DEAL = {
@@ -113,6 +153,25 @@ function buildDealBody(template, buyerFullName) {
   ].join("\n");
 }
 
+// An edited deal body was written for the buyer shown in the preview
+// (`writtenFor`): its greeting line ("Hi Alex,") is re-addressed to each
+// recipient, so every buyer gets their own name and the rest of the edits
+// stay as typed. A greeting without that name is left alone.
+function personalizeEditedBody(body, writtenFor, buyerFullName) {
+  if (!writtenFor) return body;
+  const lines = body.split("\n");
+  const i = lines.findIndex((line) => line.trim());
+  if (i === -1) return body;
+  const escaped = writtenFor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const nameRe = new RegExp(`(^|[^\\p{L}])${escaped}(?![\\p{L}])`, "u");
+  if (!nameRe.test(lines[i])) return body;
+  lines[i] = lines[i].replace(
+    nameRe,
+    (_, before) => `${before}${getFirstName(buyerFullName)}`,
+  );
+  return lines.join("\n");
+}
+
 // Its own component so Places attaches when the input mounts (the modal,
 // and the Deal tab, render it only after the modal itself has mounted).
 function AddressAutocompleteInput({ onSelect, ...props }) {
@@ -125,6 +184,9 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
   const [mode, setMode] = useState("deal"); // "deal" | "regular"
   const [dealTemplate, setDealTemplate] = useState(EMPTY_DEAL);
   const [dealBodyOverride, setDealBodyOverride] = useState(null);
+  // First name the edited body's greeting was written for (see
+  // personalizeEditedBody).
+  const [overrideWrittenFor, setOverrideWrittenFor] = useState(null);
   const [regularTemplate, setRegularTemplate] = useState(EMPTY_REGULAR);
   const [removedIds, setRemovedIds] = useState(new Set());
   const [emailOverrides, setEmailOverrides] = useState({});
@@ -133,7 +195,41 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
   const [sendStatus, setSendStatus] = useState(null);
   const [sendProgress, setSendProgress] = useState({ sent: 0, total: 0 });
   const [sendErrors, setSendErrors] = useState([]);
+  const [attachments, setAttachments] = useState([]);
+  const [attachError, setAttachError] = useState("");
+  const fileInputRef = useRef(null);
   const abortRef = useRef(false);
+
+  const attachedBytes = attachments.reduce((sum, a) => sum + a.size, 0);
+
+  async function handleAttach(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    setAttachError("");
+    const fresh = files.filter(
+      (f) =>
+        !attachments.some((a) => a.filename === f.name && a.size === f.size),
+    );
+    const total = attachedBytes + fresh.reduce((sum, f) => sum + f.size, 0);
+    if (total > MAX_ATTACHMENT_BYTES) {
+      setAttachError(
+        `Attachments can total up to ${formatBytes(MAX_ATTACHMENT_BYTES)} — these come to ${formatBytes(total)}. Share bigger files as a link (e.g. Google Drive).`,
+      );
+      return;
+    }
+    try {
+      const read = await Promise.all(fresh.map(readAttachment));
+      setAttachments((prev) => [...prev, ...read]);
+    } catch {
+      setAttachError("Couldn't read that file. Try again.");
+    }
+  }
+
+  function removeAttachment(index) {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setAttachError("");
+  }
 
   const recipients = selectedBuyers
     .filter((b) => !removedIds.has(b.id))
@@ -213,11 +309,18 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
             : regularTemplate.subject;
         const body =
           mode === "deal"
-            ? (dealBodyOverride ?? buildDealBody(dealTemplate, buyer.fullName))
+            ? dealBodyOverride !== null
+              ? personalizeEditedBody(
+                  dealBodyOverride,
+                  overrideWrittenFor,
+                  buyer.fullName,
+                )
+              : buildDealBody(dealTemplate, buyer.fullName)
             : regularTemplate.body;
 
         await sendBuyerEmail({
           toEmail: buyer.email.trim(),
+          attachments,
           subject,
           body,
         });
@@ -246,10 +349,13 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
     setSendErrors([]);
     setDealTemplate(EMPTY_DEAL);
     setDealBodyOverride(null);
+    setOverrideWrittenFor(null);
     setRegularTemplate(EMPTY_REGULAR);
     setRemovedIds(new Set());
     setEmailOverrides({});
     setEditingId(null);
+    setAttachments([]);
+    setAttachError("");
     onClose();
   }
 
@@ -272,7 +378,13 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
       : regularTemplate.subject;
   const previewBuyer = recipients[0] || { fullName: "Investor Name" };
   const dealPreviewBody =
-    dealBodyOverride ?? buildDealBody(dealTemplate, previewBuyer.fullName);
+    dealBodyOverride !== null
+      ? personalizeEditedBody(
+          dealBodyOverride,
+          overrideWrittenFor,
+          previewBuyer.fullName,
+        )
+      : buildDealBody(dealTemplate, previewBuyer.fullName);
 
   return (
     <Modal
@@ -531,7 +643,7 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
                   }}
                 >
                   {dealBodyOverride !== null
-                    ? "(edited — sent as-is to every recipient)"
+                    ? "(edited — sent to every recipient, greeted by their own first name)"
                     : `(personalized for ${getFirstName(previewBuyer.fullName)})`}
                 </span>
               )}
@@ -543,7 +655,10 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               <textarea
                 className="mail-merge-preview mail-merge-preview-editable"
                 value={dealPreviewBody}
-                onChange={(e) => setDealBodyOverride(e.target.value)}
+                onChange={(e) => {
+                  setDealBodyOverride(e.target.value);
+                  setOverrideWrittenFor(getFirstName(previewBuyer.fullName));
+                }}
                 disabled={sendStatus === "sending"}
                 rows={12}
               />
@@ -589,6 +704,57 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
               </>
             )}
           </>
+        )}
+
+        <div className="mail-merge-section-label">
+          Attachments
+          {attachments.length > 0 && (
+            <span className="mail-merge-attach-total">
+              {formatBytes(attachedBytes)} of{" "}
+              {formatBytes(MAX_ATTACHMENT_BYTES)}
+            </span>
+          )}
+        </div>
+        <div className="mail-merge-attachments">
+          {attachments.map((a, i) => (
+            <span key={`${a.filename}-${i}`} className="mail-merge-attachment">
+              <Paperclip size={12} />
+              <span className="mail-merge-attachment-name">{a.filename}</span>
+              <span className="mail-merge-attachment-size">
+                {formatBytes(a.size)}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeAttachment(i)}
+                disabled={sendStatus === "sending"}
+                aria-label={`Remove ${a.filename}`}
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            className="mail-merge-attach-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sendStatus === "sending"}
+          >
+            <Paperclip size={13} />
+            Attach files
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            hidden
+            onChange={handleAttach}
+            data-testid="mail-merge-file-input"
+          />
+        </div>
+        {attachError && (
+          <div className="mail-merge-warning mail-merge-attach-error">
+            {attachError}
+          </div>
         )}
       </div>
     </Modal>
