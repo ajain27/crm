@@ -8,7 +8,11 @@ import {
   SigLine,
   COMPANY_SIGNATURE,
 } from "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate";
-import { numberToWords, businessDays } from "./WholesaleOfferPdfTemplate";
+import {
+  AdditionalClause,
+  numberToWords,
+  businessDays,
+} from "./WholesaleOfferPdfTemplate";
 import "../../../../dealAnalyzer/components/sellerFinance/OfferAgreementPdfTemplate.css";
 import "./CommercialOfferPdfTemplate.css";
 
@@ -95,6 +99,7 @@ const CommercialOfferPdfTemplate = forwardRef(
       inspectionDays = DEFAULT_COMMERCIAL_OPTIONS.inspectionDays,
       closingDays = DEFAULT_COMMERCIAL_OPTIONS.closingDays,
       emdDays = DEFAULT_COMMERCIAL_OPTIONS.emdDays,
+      additionalClause = null,
     },
     ref,
   ) {
@@ -431,6 +436,8 @@ const CommercialOfferPdfTemplate = forwardRef(
               Section 9 are unchanged.
             </p>
           </Section>
+
+          <AdditionalClause clause={additionalClause} number={12} />
 
           <div className="oa-pdf-warning">
             THIS IS INTENDED TO BE A LEGALLY BINDING CONTRACT. IF YOU DO NOT

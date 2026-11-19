@@ -1715,6 +1715,7 @@ function DealDetailModal({
           emdDays={offerOptions.emdDays}
           inspectionDays={offerOptions.inspectionDays}
           closingDays={offerOptions.closingDays}
+          additionalClause={offerOptions.additionalClause}
         />
       )}
       {exportingOffer && !offerOptions.commercial && (

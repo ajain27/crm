@@ -9,6 +9,7 @@
 
 import { runComps } from "./_lib/comps/runComps.js";
 import { findRedfinUrl } from "./_lib/comps/subject.js";
+import { draftClause, MAX_CLAUSE_LENGTH } from "./_lib/clause.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -17,6 +18,31 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // { draftClause: "text" } → { title, body }: a clause for the offer typed
+  // in plain words, written as contract language (kept in this endpoint
+  // for the same 12-function limit).
+  if (req.body?.draftClause !== undefined) {
+    const text = String(req.body.draftClause || "").trim();
+    if (!text || text.length > MAX_CLAUSE_LENGTH) {
+      return res.status(400).json({
+        error: `Type the clause (up to ${MAX_CLAUSE_LENGTH} characters).`,
+      });
+    }
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(500).json({ error: "Missing ANTHROPIC_API_KEY." });
+    }
+    try {
+      return res
+        .status(200)
+        .json(await draftClause(text, process.env.ANTHROPIC_API_KEY));
+    } catch (err) {
+      console.error("run-comps draft clause error:", err);
+      return res
+        .status(502)
+        .json({ error: err.message || "Writing the clause failed." });
+    }
   }
 
   const address = String(req.body?.address || "").trim();

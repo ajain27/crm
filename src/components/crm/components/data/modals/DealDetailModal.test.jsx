@@ -9,10 +9,15 @@ import {
 import DealDetailModal from "./DealDetailModal";
 import { renderElementToPdfAssets } from "../../../../../utils/pdfExport";
 import { requestComps } from "../comps/compsNote";
+import { requestClauseDraft } from "../../../../../services/clauseService";
 
 vi.mock("../comps/compsNote", async (importOriginal) => ({
   ...(await importOriginal()),
   requestComps: vi.fn(),
+}));
+
+vi.mock("../../../../../services/clauseService", () => ({
+  requestClauseDraft: vi.fn(),
 }));
 
 vi.mock("../../../../../utils/pdfExport", () => ({
@@ -457,6 +462,81 @@ describe("DealDetailModal", () => {
       "Seller's obligations under Section 8 are unchanged.",
     );
     expect(await screen.findByAltText("Report preview")).toBeInTheDocument();
+  });
+
+  it("adds a clause typed in plain words to the offer, written up as a numbered section", async () => {
+    requestClauseDraft.mockReset();
+    requestClauseDraft.mockResolvedValue({
+      title: "SELLER POSSESSION AFTER CLOSING",
+      body: "Seller may remain in possession of the Property for fourteen (14) calendar days after closing at no cost to Seller.",
+    });
+    renderElementToPdfAssets.mockClear();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, contractPrice: 210000 }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Generate Offer"));
+    expect(screen.queryByLabelText("Clause")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /Yes, add a clause/ }));
+    // An empty clause is pointed out, and nothing is generated.
+    fireEvent.click(screen.getByText("Generate"));
+    expect(
+      screen.getByText("Type the clause, or choose No."),
+    ).toBeInTheDocument();
+    expect(requestClauseDraft).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Clause"), {
+      target: { value: "  seller can stay 2 weeks after closing for free " },
+    });
+    fireEvent.click(screen.getByText("Generate"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    expect(requestClauseDraft).toHaveBeenCalledWith(
+      "seller can stay 2 weeks after closing for free",
+    );
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
+    expect(text).toContain("10. CLOSING COSTS");
+    expect(text).toContain(
+      "11. SELLER POSSESSION AFTER CLOSINGSeller may remain in possession of the Property for fourteen (14) calendar days after closing",
+    );
+  });
+
+  it("can add the clause as typed when it couldn't be written up", async () => {
+    requestClauseDraft.mockReset();
+    requestClauseDraft.mockRejectedValue(new Error("Service down."));
+    renderElementToPdfAssets.mockClear();
+    render(
+      <DealDetailModal
+        isOpen={true}
+        onClose={vi.fn()}
+        deal={{ ...deal, contractPrice: 210000 }}
+        updateDealPatch={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Generate Offer"));
+    fireEvent.click(screen.getByRole("radio", { name: /Yes, add a clause/ }));
+    fireEvent.change(screen.getByLabelText("Clause"), {
+      target: { value: "buyer pays the HOA transfer fee" },
+    });
+    fireEvent.click(screen.getByText("Generate"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't write up the clause: Service down.",
+    );
+    expect(renderElementToPdfAssets).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Add it as typed"));
+
+    await waitFor(() => expect(renderElementToPdfAssets).toHaveBeenCalled());
+    const text = renderElementToPdfAssets.mock.calls.at(-1)[0].textContent;
+    expect(text).toContain(
+      "11. ADDITIONAL TERMSBuyer pays the HOA transfer fee.",
+    );
   });
 
   it("generates a no-assignment offer with the chosen EMD and inspection period", async () => {

@@ -988,6 +988,26 @@
     line-height: 1.35;
   }
 
+  .offer-options-body textarea {
+    width: 100%;
+    min-height: 6rem;
+    resize: vertical;
+    font: inherit;
+    line-height: 1.45;
+  }
+
+  /* "Add it as typed", inside the clause's error message. */
+  .offer-options-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--green);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
   /* An on/off switch with its label and hint on the left. */
   .ddm-switch-row {
     display: flex;

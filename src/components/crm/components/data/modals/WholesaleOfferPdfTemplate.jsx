@@ -178,11 +178,22 @@ function AssignableClosingTerms({ closingDays, emdDays, liensSection }) {
   );
 }
 
+// A clause added when generating the offer, as a numbered section.
+export function AdditionalClause({ clause, number }) {
+  if (!clause?.body) return null;
+  return (
+    <Section number={number} title={clause.title || "ADDITIONAL TERMS"}>
+      <p>{clause.body}</p>
+    </Section>
+  );
+}
+
 // Purchase & Sale Agreement generated from a dashboard deal. Reproduces the
 // uploaded You Win Estates wholesale contracts clause for clause; Seller
 // Name(s), Property Address and Purchase Price come from the deal, and the
 // EMD, inspection period, closing timeline and assignment variant are chosen
-// when generating.
+// when generating. A clause added when generating ({ title, body }) is
+// the last numbered section.
 const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
   {
     sellerName,
@@ -193,6 +204,7 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
     emdDays = DEFAULT_OFFER_OPTIONS.emdDays,
     inspectionDays = DEFAULT_OFFER_OPTIONS.inspectionDays,
     closingDays = DEFAULT_OFFER_OPTIONS.closingDays,
+    additionalClause = null,
   },
   ref,
 ) {
@@ -408,6 +420,11 @@ const WholesaleOfferPdfTemplate = forwardRef(function WholesaleOfferPdfTemplate(
             obligations under Section {afterRemedies + 1} are unchanged.
           </p>
         </Section>
+
+        <AdditionalClause
+          clause={additionalClause}
+          number={afterRemedies + 4}
+        />
 
         <div className="oa-pdf-warning">
           THIS IS INTENDED TO BE A LEGALLY BINDING CONTRACT. IF YOU DO NOT

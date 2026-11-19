@@ -4,8 +4,10 @@ import { DEFAULT_OFFER_OPTIONS } from "./WholesaleOfferPdfTemplate";
 import { DEFAULT_COMMERCIAL_OPTIONS } from "./CommercialOfferPdfTemplate";
 import CurrencyInput from "../../../../elements/CurrencyInput";
 import ModalActions, { ActionButton } from "../../../../elements/ModalActions";
+import { requestClauseDraft } from "../../../../../services/clauseService";
 
 const MAX_DAYS = 365;
+const MAX_CLAUSE_LENGTH = 2000;
 
 function digitsOnly(value) {
   return String(value ?? "").replace(/[^0-9]/g, "");
@@ -27,6 +29,8 @@ function toForm(options, sellerName, isCommercial) {
     closingDays: String(
       timeline.closingDays ?? DEFAULT_OFFER_OPTIONS.closingDays,
     ),
+    addClause: !!options.clauseText,
+    clauseText: options.clauseText || "",
   };
 }
 
@@ -34,7 +38,10 @@ function toForm(options, sellerName, isCommercial) {
 // Agreement: lot and building only, always assignable), then the seller's
 // name, the offer's assignment variant, EMD and when it's due,
 // inspection period and closing timeline before the Purchase & Sale
-// Agreement is generated.
+// Agreement is generated. It also asks whether to add a clause: one typed
+// in plain words is written up as contract language (by Claude, through
+// the API) and added to the agreement as its last numbered section. If
+// that fails, the clause can be added as typed instead.
 // Opens with the deal's seller name and the last options used (or the
 // defaults), so regenerating doesn't mean retyping them.
 export default function OfferOptionsModal({
@@ -48,10 +55,19 @@ export default function OfferOptionsModal({
   const [form, setForm] = useState(() =>
     toForm(initialOptions, sellerName, isCommercial),
   );
+  const [drafting, setDrafting] = useState(false);
+  const [clauseFailure, setClauseFailure] = useState("");
+  // An empty clause is pointed out once Generate is pressed.
+  const [clauseTouched, setClauseTouched] = useState(false);
 
   // Reset only when the window opens, so typing isn't overwritten.
   useEffect(() => {
-    if (isOpen) setForm(toForm(initialOptions, sellerName, isCommercial));
+    if (isOpen) {
+      setForm(toForm(initialOptions, sellerName, isCommercial));
+      setDrafting(false);
+      setClauseFailure("");
+      setClauseTouched(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -78,6 +94,17 @@ export default function OfferOptionsModal({
         ? "Closing can't be before the inspection period ends."
         : "";
 
+  const clauseText = form.clauseText.trim();
+  const clauseError = !form.addClause
+    ? ""
+    : !clauseText
+      ? "Type the clause, or choose No."
+      : clauseText.length > MAX_CLAUSE_LENGTH
+        ? `Keep the clause under ${MAX_CLAUSE_LENGTH} characters.`
+        : "";
+  const hasError =
+    !!emdError || !!emdDaysError || !!daysError || !!closingError;
+
   // Switching deal type moves the periods to that agreement's defaults,
   // unless they were changed from the other one's.
   function chooseCommercial(commercial) {
@@ -100,9 +127,7 @@ export default function OfferOptionsModal({
     });
   }
 
-  function handleSubmit(e) {
-    e?.preventDefault();
-    if (emdError || emdDaysError || daysError || closingError) return;
+  function generate(additionalClause) {
     onGenerate({
       sellerName: form.sellerName.trim().replace(/\s+/g, " "),
       commercial: form.commercial,
@@ -111,6 +136,42 @@ export default function OfferOptionsModal({
       emdDays,
       inspectionDays,
       closingDays,
+      clauseText: additionalClause ? clauseText : "",
+      additionalClause,
+    });
+  }
+
+  async function handleSubmit(e) {
+    e?.preventDefault();
+    if (hasError || drafting) return;
+    if (clauseError) return setClauseTouched(true);
+    if (!form.addClause) return generate(null);
+    // The same words as last time: keep the clause already written.
+    const previous = initialOptions.additionalClause;
+    if (previous && initialOptions.clauseText === clauseText) {
+      return generate(previous);
+    }
+    setDrafting(true);
+    setClauseFailure("");
+    try {
+      const clause = await requestClauseDraft(clauseText);
+      setDrafting(false);
+      generate(clause);
+    } catch (err) {
+      setDrafting(false);
+      setClauseFailure(err.message || "Writing the clause failed.");
+    }
+  }
+
+  // The clause as typed, when it couldn't be written up.
+  function generateAsTyped() {
+    const body = clauseText.replace(/\s+/g, " ");
+    generate({
+      title: "ADDITIONAL TERMS",
+      body:
+        body.charAt(0).toUpperCase() +
+        body.slice(1) +
+        (/[.!?]$/.test(body) ? "" : "."),
     });
   }
 
@@ -131,12 +192,10 @@ export default function OfferOptionsModal({
             <>
               <ActionButton label="Cancel" onClick={onClose} />
               <ActionButton
-                label="Generate"
+                label={drafting ? "Writing clause…" : "Generate"}
                 tone="primary"
                 onClick={handleSubmit}
-                disabled={
-                  !!emdError || !!emdDaysError || !!daysError || !!closingError
-                }
+                disabled={hasError || drafting}
               />
             </>
           }
@@ -293,6 +352,74 @@ export default function OfferOptionsModal({
           />
           {closingError && <span className="field-error">{closingError}</span>}
         </label>
+
+        <fieldset className="offer-options-choice">
+          <legend>Add a clause?</legend>
+          <label>
+            <input
+              type="radio"
+              name="addClause"
+              checked={!form.addClause}
+              onChange={() => {
+                setForm((p) => ({ ...p, addClause: false }));
+                setClauseFailure("");
+              }}
+            />
+            <span>
+              <strong>No</strong>
+            </span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="addClause"
+              checked={form.addClause}
+              onChange={() => setForm((p) => ({ ...p, addClause: true }))}
+            />
+            <span>
+              <strong>Yes, add a clause</strong>
+              <small>
+                Type it in your own words; it's written up as a contract clause
+                and added at the end of the agreement.
+              </small>
+            </span>
+          </label>
+        </fieldset>
+
+        {form.addClause && (
+          <label className="field">
+            <span>Clause</span>
+            <textarea
+              rows={4}
+              value={form.clauseText}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, clauseText: e.target.value }));
+                setClauseFailure("");
+              }}
+              onBlur={(e) =>
+                setForm((p) => ({ ...p, clauseText: e.target.value.trim() }))
+              }
+              placeholder="e.g. Seller can stay in the house for 2 weeks after closing for free"
+              aria-label="Clause"
+              disabled={drafting}
+            />
+            {clauseError && (clauseTouched || form.clauseText !== "") && (
+              <span className="field-error">{clauseError}</span>
+            )}
+            {clauseFailure && (
+              <span className="field-error" role="alert">
+                Couldn't write up the clause: {clauseFailure}{" "}
+                <button
+                  type="button"
+                  className="offer-options-link"
+                  onClick={generateAsTyped}
+                >
+                  Add it as typed
+                </button>
+              </span>
+            )}
+          </label>
+        )}
 
         {/* Lets Enter submit from any input. */}
         <button type="submit" hidden />
