@@ -1,6 +1,8 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { randomUUID } from "crypto";
+import nodemailer from "nodemailer";
+import { AUTOMATION_SENDER_EMAIL } from "../src/constants/emailSequence.js";
 
 function initAdmin() {
   if (getApps().length) return;
@@ -109,13 +111,16 @@ function leadNotificationHtml(lead) {
   `;
 }
 
+// Sent from the business Gmail, youwinestates@gmail.com (only invoices go
+// out from info@youwinconcepts.com).
 async function sendLeadNotification(db, userId, lead) {
-  const apiKey = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const user = process.env.GMAIL_USER || AUTOMATION_SENDER_EMAIL;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!pass) {
     console.warn(
-      "lead-webhook notification skipped: Resend API key not configured",
+      "lead-webhook notification skipped: GMAIL_APP_PASSWORD not configured",
     );
-    return { skipped: true, reason: "missing_api_key" };
+    return { skipped: true, reason: "missing_gmail_password" };
   }
 
   const to = await getNotificationEmails(db, userId);
@@ -124,44 +129,29 @@ async function sendLeadNotification(db, userId, lead) {
     return { skipped: true, reason: "missing_recipient" };
   }
 
-  const from =
-    process.env.LEAD_NOTIFICATION_FROM ||
-    process.env.RESEND_FROM_EMAIL ||
-    "You Win Concepts <info@youwinconcepts.com>";
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to,
-      subject: `New PPC lead${lead.sellerName ? `: ${lead.sellerName}` : ""}`,
-      html: leadNotificationHtml(lead),
-      text: [
-        "New PPC lead submitted",
-        `Name: ${lead.sellerName || ""}`,
-        `Email: ${lead.email || ""}`,
-        `Phone: ${lead.phone || ""}`,
-        `Address: ${lead.address || ""}`,
-        `Source: ${lead.source || ""}`,
-        `Deal Type: ${lead.dealType || ""}`,
-        `Listing URL: ${lead.url || ""}`,
-        `Notes: ${lead.notes || ""}`,
-      ].join("\n"),
-    }),
+  const transport = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  });
+  const info = await transport.sendMail({
+    from: `"You Win Estates" <${user}>`,
+    to,
+    subject: `New PPC lead${lead.sellerName ? `: ${lead.sellerName}` : ""}`,
+    html: leadNotificationHtml(lead),
+    text: [
+      "New PPC lead submitted",
+      `Name: ${lead.sellerName || ""}`,
+      `Email: ${lead.email || ""}`,
+      `Phone: ${lead.phone || ""}`,
+      `Address: ${lead.address || ""}`,
+      `Source: ${lead.source || ""}`,
+      `Deal Type: ${lead.dealType || ""}`,
+      `Listing URL: ${lead.url || ""}`,
+      `Notes: ${lead.notes || ""}`,
+    ].join("\n"),
   });
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(
-      data.message || `Resend failed with HTTP ${response.status}`,
-    );
-  }
-
-  return { skipped: false, id: data.id };
+  return { skipped: false, id: info.messageId };
 }
 
 // Maps flexible WordPress / Zapier field names → lead shape

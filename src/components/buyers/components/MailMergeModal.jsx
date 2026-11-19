@@ -12,31 +12,29 @@ import { useAddressAutocomplete } from "../../../hooks/useAddressAutocomplete";
 import CurrencyInput from "../../elements/CurrencyInput";
 import ModalActions, { ActionButton } from "../../elements/ModalActions";
 
-async function sendViaBrevo({
-  apiKey,
-  senderEmail,
-  toEmail,
-  toName,
-  subject,
-  body,
-}) {
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+// Sends through the app's email API (/api/send-email), which sends from
+// youwinestates@gmail.com — the same route account and reset emails use.
+async function sendBuyerEmail({ toEmail, subject, body }) {
+  const requestOptions = {
     method: "POST",
-    headers: {
-      "api-key": apiKey,
-      "Content-Type": "application/json",
-      accept: "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "You Win Estates", email: senderEmail },
-      to: [{ email: toEmail, name: toName || toEmail }],
+      toEmail,
       subject,
       textContent: body,
+      fromName: "You Win Estates",
     }),
-  });
+  };
+  let res = await fetch("/api/send-email", requestOptions);
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (res.status === 404 && isLocalhost) {
+    res = await fetch("http://localhost:3001/api/send-email", requestOptions);
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `HTTP ${res.status}`);
+    throw new Error(err.error || err.message || `HTTP ${res.status}`);
   }
   return res;
 }
@@ -124,11 +122,6 @@ function AddressAutocompleteInput({ onSelect, ...props }) {
 }
 
 function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
-  const brevoApiKey = import.meta.env.VITE_BREVO_API_KEY || "";
-  const brevoSenderEmail =
-    import.meta.env.VITE_BREVO_SENDER_EMAIL || "ankit4pace@gmail.com";
-  const NOT_CONFIGURED = !brevoApiKey;
-
   const [mode, setMode] = useState("deal"); // "deal" | "regular"
   const [dealTemplate, setDealTemplate] = useState(EMPTY_DEAL);
   const [dealBodyOverride, setDealBodyOverride] = useState(null);
@@ -203,8 +196,6 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
   }
 
   async function handleSend() {
-    if (NOT_CONFIGURED) return;
-
     abortRef.current = false;
     setSendStatus("sending");
     setSendProgress({ sent: 0, total: recipients.length });
@@ -225,11 +216,8 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
             ? (dealBodyOverride ?? buildDealBody(dealTemplate, buyer.fullName))
             : regularTemplate.body;
 
-        await sendViaBrevo({
-          apiKey: brevoApiKey,
-          senderEmail: brevoSenderEmail,
+        await sendBuyerEmail({
           toEmail: buyer.email.trim(),
-          toName: buyer.fullName || "",
           subject,
           body,
         });
@@ -240,7 +228,10 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
         }
       } catch (err) {
         console.error(`Failed to send email to ${buyer.email}:`, err);
-        errors.push(buyer.fullName || buyer.email);
+        errors.push({
+          name: buyer.fullName || buyer.email,
+          reason: err.message,
+        });
       }
     }
 
@@ -263,13 +254,11 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
   }
 
   const isDealReady =
-    !NOT_CONFIGURED &&
     recipients.length > 0 &&
     dealTemplate.address.trim() &&
     sendStatus !== "sending";
 
   const isRegularReady =
-    !NOT_CONFIGURED &&
     recipients.length > 0 &&
     regularTemplate.subject.trim() &&
     regularTemplate.body.trim() &&
@@ -325,14 +314,6 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
       }
     >
       <div className="mail-merge-modal">
-        {NOT_CONFIGURED && (
-          <div className="mail-merge-warning mail-merge-warning-error">
-            <AlertCircle size={15} />
-            Brevo is not configured. Add <code>VITE_BREVO_API_KEY</code> to your{" "}
-            <code>.env.local</code> and redeploy.
-          </div>
-        )}
-
         {sendStatus === "done" && (
           <div
             className={`mail-merge-send-result ${sendErrors.length ? "mail-merge-warning" : "mail-merge-success"}`}
@@ -348,7 +329,10 @@ function MailMergeModal({ isOpen, onClose, selectedBuyers }) {
                 <AlertCircle size={15} />
                 Sent to {sendProgress.sent} buyer
                 {sendProgress.sent !== 1 ? "s" : ""}. Failed:{" "}
-                {sendErrors.join(", ")}.
+                {sendErrors.map((e) => e.name).join(", ")}.
+                {[...new Set(sendErrors.map((e) => e.reason).filter(Boolean))]
+                  .map((reason) => ` ${reason}`)
+                  .join("")}
               </>
             )}
           </div>

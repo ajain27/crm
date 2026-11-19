@@ -1,3 +1,10 @@
+import nodemailer from "nodemailer";
+import { AUTOMATION_SENDER_EMAIL } from "../src/constants/emailSequence.js";
+
+// Every email this route sends (buyer emails, account activation, password
+// reset) goes out from the business Gmail, youwinestates@gmail.com, through
+// Gmail's SMTP with an app password — the same account and setup as the
+// seller follow-up sequence (api/send-scheduled-lead-emails.js).
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -8,84 +15,40 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = process.env.BREVO_API_KEY || process.env.VITE_BREVO_API_KEY;
-  const resendApiKey =
-    process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
-  if (!apiKey && !resendApiKey) {
+  const user = process.env.GMAIL_USER || AUTOMATION_SENDER_EMAIL;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!pass) {
     return res.status(500).json({
-      error:
-        "Email is not configured. Missing BREVO_API_KEY or RESEND_API_KEY.",
+      error: `Email is not configured. Set GMAIL_APP_PASSWORD (an app password for ${user}).`,
     });
   }
 
-  const { toEmail, subject, textContent, htmlContent } = req.body || {};
+  const { toEmail, subject, textContent, htmlContent, fromName } =
+    req.body || {};
   if (!toEmail || !subject || !textContent) {
     return res.status(400).json({
       error: "toEmail, subject, and textContent are required.",
     });
   }
 
-  const senderEmail =
-    process.env.BREVO_SENDER_EMAIL ||
-    process.env.VITE_BREVO_SENDER_EMAIL ||
-    "ankit4pace@gmail.com";
-
-  if (resendApiKey) {
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from:
-          process.env.RESEND_FROM_EMAIL ||
-          "You Win Estates CRM <info@youwinconcepts.com>",
-        to: [toEmail],
-        subject,
-        text: textContent,
-        ...(htmlContent ? { html: htmlContent } : {}),
-      }),
+  try {
+    const transport = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user, pass },
     });
-
-    const resendData = await resendResponse.json().catch(() => ({}));
-    if (!resendResponse.ok) {
-      return res.status(resendResponse.status).json({
-        error:
-          resendData.message ||
-          `Resend failed with HTTP ${resendResponse.status}`,
-        details: resendData,
-      });
-    }
-
+    const info = await transport.sendMail({
+      from: `"${fromName || "You Win Estates"}" <${user}>`,
+      to: toEmail,
+      subject,
+      text: textContent,
+      ...(htmlContent ? { html: htmlContent } : {}),
+    });
     return res
       .status(200)
-      .json({ ok: true, provider: "resend", data: resendData });
-  }
-
-  const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": apiKey,
-      "Content-Type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      sender: { name: "You Win Estates CRM", email: senderEmail },
-      to: [{ email: toEmail }],
-      subject,
-      textContent,
-      ...(htmlContent ? { htmlContent } : {}),
-    }),
-  });
-
-  const data = await brevoResponse.json().catch(() => ({}));
-  if (!brevoResponse.ok) {
-    return res.status(brevoResponse.status).json({
-      error: data.message || `Brevo failed with HTTP ${brevoResponse.status}`,
-      details: data,
+      .json({ ok: true, provider: "gmail", messageId: info.messageId });
+  } catch (err) {
+    return res.status(502).json({
+      error: `Gmail could not send the email: ${err.message}`,
     });
   }
-
-  return res.status(200).json({ ok: true, provider: "brevo", data });
 }

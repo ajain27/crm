@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   act,
   render,
@@ -6,11 +6,6 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
-
-// Set env var before module import so NOT_CONFIGURED is false
-beforeAll(() => {
-  vi.stubEnv("VITE_BREVO_API_KEY", "test-brevo-key");
-});
 
 vi.mock("../../../hooks/useAddressAutocomplete", () => ({
   useAddressAutocomplete: vi.fn(),
@@ -129,7 +124,7 @@ describe("MailMergeModal", () => {
       await waitFor(() => {
         const calls = globalThis.fetch.mock.calls;
         const bodies = calls.map((c) => JSON.parse(c[1].body));
-        const sentTo = bodies.map((b) => b.to[0].email);
+        const sentTo = bodies.map((b) => b.toEmail);
         expect(sentTo).toContain("jane-new@example.com");
         expect(sentTo).not.toContain("jane@example.com");
       });
@@ -308,7 +303,7 @@ describe("MailMergeModal", () => {
       await waitFor(() => {
         const calls = globalThis.fetch.mock.calls;
         const bodies = calls.map((c) => JSON.parse(c[1].body));
-        const sentTo = bodies.map((b) => b.to[0].email);
+        const sentTo = bodies.map((b) => b.toEmail);
         expect(sentTo).toContain("jane@example.com");
         expect(sentTo).toContain("john@example.com");
       });
