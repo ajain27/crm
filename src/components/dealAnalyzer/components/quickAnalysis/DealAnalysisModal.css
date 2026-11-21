@@ -101,6 +101,10 @@
 
   .qa-field {
     display: grid;
+    /* Label then input, packed at the top: a field stretched to its row's
+       height would otherwise spread its rows apart, dropping the input
+       below its label and the % sign below the input. */
+    align-content: start;
     gap: 0.35rem;
     color: var(--muted);
     font-size: 0.75rem;
@@ -114,12 +118,19 @@
     display: block;
   }
 
+  .qa-pct input {
+    padding-right: 2rem;
+  }
+
   .qa-pct > span {
     position: absolute;
     top: 50%;
     right: 0.75rem;
     transform: translateY(-50%);
     color: var(--muted);
+    font-size: 0.9375rem;
+    line-height: 1;
+    pointer-events: none;
     text-transform: none;
   }
 
