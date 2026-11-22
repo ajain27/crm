@@ -344,3 +344,19 @@ describe("redfinUrl", () => {
     ]);
   });
 });
+
+describe("matchesStateFilter", () => {
+  it("uses the lead's State field, else the state in its address", async () => {
+    const { matchesStateFilter, leadStateOf } = await import("./leadUtils");
+    expect(leadStateOf({ state: "Georgia" })).toBe("GA");
+    expect(leadStateOf({ state: "tx" })).toBe("TX");
+    expect(leadStateOf({ address: "1 Main St, Dallas, TX 75201" })).toBe("TX");
+    expect(
+      matchesStateFilter({ address: "1 Main St, Dallas, TX 75201" }, "TX"),
+    ).toBe(true);
+    expect(
+      matchesStateFilter({ address: "1 Main St, Dallas, TX 75201" }, "GA"),
+    ).toBe(false);
+    expect(matchesStateFilter({}, "")).toBe(true);
+  });
+});

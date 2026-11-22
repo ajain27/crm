@@ -3,6 +3,7 @@ import LeadListPanel, {
   LeadCallFilter,
   LeadClearFilters,
   LeadSearchInput,
+  LeadStateFilter,
 } from "../components/LeadListPanel";
 import {
   AutomationCell,
@@ -28,7 +29,7 @@ import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import {
   leadMatchesSearch,
   matchesCallFilter,
-  parseAddress,
+  matchesStateFilter,
   groupLeadsBySeller,
   sellerGroupPhones,
   sellerNameOf,
@@ -74,7 +75,7 @@ export default function ResidentialLeadList({
       (l) =>
         leadMatchesSearch(l, search) &&
         (!filters.source || l.source === filters.source) &&
-        (!filters.state || parseAddress(l.address).state === filters.state) &&
+        matchesStateFilter(l, filters.state) &&
         matchesCallFilter(l, filters.called),
     )
     .sort(byFollowUpDate);
@@ -85,9 +86,6 @@ export default function ResidentialLeadList({
   const groupOf = new Map(sellerGroups.map((g) => [g[0].id, g]));
 
   const usedSources = unique(leads.map((l) => l.source));
-  const usedStates = unique(
-    leads.map((l) => parseAddress(l.address).state),
-  ).sort();
 
   const filterBar = (
     <>
@@ -108,18 +106,7 @@ export default function ResidentialLeadList({
           </option>
         ))}
       </select>
-      <select
-        value={filters.state}
-        onChange={(e) => setFilter("state", e.target.value)}
-        className="leads-filter-select"
-      >
-        <option value="">All states</option>
-        {usedStates.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
+      <LeadStateFilter listState={listState} leads={leads} />
       <LeadCallFilter listState={listState} />
       <LeadClearFilters listState={listState} />
       <LeadBulkDeleteButton

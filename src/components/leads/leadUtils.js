@@ -505,6 +505,19 @@ export function matchesCallFilter(lead, value) {
   return value === "called" ? called : !called;
 }
 
+// A lead's state code: its own State field (a code or a name) when it has
+// one, else the state in its address. "" when neither gives one.
+export function leadStateOf(lead) {
+  return (
+    findState([String(lead?.state || "")]) || parseAddress(lead?.address).state
+  );
+}
+
+// The State filter: empty keeps everything.
+export function matchesStateFilter(lead, value) {
+  return !value || leadStateOf(lead) === value;
+}
+
 export function pluralizeLeads(count) {
   return `lead${count !== 1 ? "s" : ""}`;
 }

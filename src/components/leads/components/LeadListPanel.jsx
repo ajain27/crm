@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import ClearFiltersButton from "../../elements/ClearFiltersButton";
 import Pagination from "../../pagination/Pagination";
-import { paginate, pluralizeLeads } from "../leadUtils";
+import { leadStateOf, paginate, pluralizeLeads } from "../leadUtils";
 import AccordionTable from "../../elements/AccordionTable";
 
 export function LeadSearchInput({ value, onChange, placeholder }) {
@@ -31,6 +31,27 @@ export function LeadCallFilter({ listState }) {
       <option value="">Called or not</option>
       <option value="called">Called</option>
       <option value="notCalled">Not called</option>
+    </select>
+  );
+}
+
+// State filter, stored as `filters.state`; lists only the states the
+// given leads are in.
+export function LeadStateFilter({ listState, leads }) {
+  const states = [...new Set(leads.map(leadStateOf).filter(Boolean))].sort();
+  return (
+    <select
+      value={listState.filters.state || ""}
+      onChange={(e) => listState.setFilter("state", e.target.value)}
+      className="leads-filter-select"
+      aria-label="Filter by state"
+    >
+      <option value="">All states</option>
+      {states.map((s) => (
+        <option key={s} value={s}>
+          {s}
+        </option>
+      ))}
     </select>
   );
 }

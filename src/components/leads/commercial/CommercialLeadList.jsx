@@ -4,6 +4,7 @@ import LeadListPanel, {
   LeadCallFilter,
   LeadClearFilters,
   LeadSearchInput,
+  LeadStateFilter,
 } from "../components/LeadListPanel";
 import {
   CallCell,
@@ -25,6 +26,7 @@ import LeadBulkDeleteButton from "../components/LeadBulkDeleteButton";
 import {
   leadMatchesSearch,
   matchesCallFilter,
+  matchesStateFilter,
   sellerNameOf,
 } from "../leadUtils";
 
@@ -44,6 +46,7 @@ export default function CommercialLeadList({
   const filtered = leads.filter(
     (l) =>
       leadMatchesSearch(l, listState.search) &&
+      matchesStateFilter(l, listState.filters.state) &&
       matchesCallFilter(l, listState.filters.called),
   );
   const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
@@ -55,6 +58,7 @@ export default function CommercialLeadList({
         onChange={listState.setSearch}
         placeholder="Search anything: name, address, phone, notes…"
       />
+      <LeadStateFilter listState={listState} leads={leads} />
       <LeadCallFilter listState={listState} />
       <LeadClearFilters listState={listState} />
       <LeadBulkDeleteButton

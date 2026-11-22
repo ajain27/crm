@@ -5,6 +5,7 @@ import LeadListPanel, {
   LeadCallFilter,
   LeadClearFilters,
   LeadSearchInput,
+  LeadStateFilter,
 } from "../components/LeadListPanel";
 import {
   AutomationCell,
@@ -33,6 +34,7 @@ import {
   groupLeadsBySeller,
   leadMatchesSearch,
   matchesCallFilter,
+  matchesStateFilter,
   sellerGroupPhones,
   sellerNameOf,
 } from "../leadUtils";
@@ -80,6 +82,7 @@ export default function CampaignLeadList({
   const filtered = leads.filter(
     (l) =>
       leadMatchesSearch(l, listState.search) &&
+      matchesStateFilter(l, listState.filters.state) &&
       (!showCalls || matchesCallFilter(l, listState.filters.called)),
   );
 
@@ -96,6 +99,7 @@ export default function CampaignLeadList({
         onChange={listState.setSearch}
         placeholder="Search anything: name, address, phone, notes…"
       />
+      <LeadStateFilter listState={listState} leads={leads} />
       {showCalls && <LeadCallFilter listState={listState} />}
       <LeadClearFilters listState={listState} />
       {!readOnly && (
