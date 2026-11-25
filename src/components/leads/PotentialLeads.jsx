@@ -232,17 +232,24 @@ export default function PotentialLeads({
     if (!lead) return [];
     const anchorId = newProperty ? newProperty.sellerOfId : lead.id;
     const anchor = visibleLeads.find((l) => l.id === anchorId) || lead;
+    const group = sellerGroupOf(anchor);
+    return newProperty ? [...group, newProperty.draft] : group;
+  }
+
+  // Every lead (property) of `lead`'s seller on its tab, `lead` included.
+  function sellerGroupOf(lead) {
     const tabLeads =
       {
         residential: residentialLeads,
         ppc: ppcLeads,
         ppl: pplLeads,
         coldcall: coldCallLeads,
-      }[leadTabOf(anchor)] || [];
-    const group = groupLeadsBySeller(tabLeads).find((g) =>
-      g.some((l) => l.id === anchor.id),
-    ) || [anchor];
-    return newProperty ? [...group, newProperty.draft] : group;
+      }[leadTabOf(lead)] || [];
+    return (
+      groupLeadsBySeller(tabLeads).find((g) =>
+        g.some((l) => l.id === lead.id),
+      ) || [lead]
+    );
   }
 
   // Adds a tab to the lead window for another property `lead`'s seller
@@ -662,36 +669,62 @@ export default function PotentialLeads({
     });
   }
 
+  // Moves the whole lead to the CRM: a seller with several properties
+  // becomes a deal per property, and all of them leave Leads together.
   async function handleAddToCrm(leadId) {
+    const lead = visibleLeads.find((l) => l.id === leadId);
+    if (!lead) return;
+    const group = sellerGroupOf(lead);
+
     if (
       !window.confirm(
-        "Add this lead to the CRM pipeline? It will be removed from Leads.",
+        group.length > 1
+          ? `Add this lead and all ${group.length} of its properties to the CRM pipeline? They will be removed from Leads.`
+          : "Add this lead to the CRM pipeline? It will be removed from Leads.",
       )
     )
       return;
 
-    const lead = visibleLeads.find((l) => l.id === leadId);
-    if (!lead) return;
-
-    const deal = buildDealFromLead(lead, currentUser.id);
-    if (!deal) {
-      alert(
-        "This lead does not have a property address, so it was not added to CRM.",
-      );
-      return;
+    // A deal per property; ones with no address, or already in the CRM
+    // (or twice in this lead), stay in Leads.
+    const moved = [];
+    const newDeals = [];
+    const problems = [];
+    for (const property of group) {
+      const deal = buildDealFromLead(property, currentUser.id);
+      if (!deal) {
+        problems.push(
+          `${property.address?.trim() || "A property"} has no usable property address.`,
+        );
+        continue;
+      }
+      const conflict = findAddressConflict({
+        address: property.address,
+        deals: [...newDeals, ...deals],
+      });
+      if (conflict) {
+        problems.push(addressConflictMessage(property.address, conflict));
+        continue;
+      }
+      moved.push(property);
+      newDeals.push(deal);
     }
-    const conflict = findAddressConflict({ address: lead.address, deals });
-    if (conflict) {
-      alert(
-        `${addressConflictMessage(lead.address, conflict)} It wasn't added again.`,
-      );
-      return;
-    }
 
-    await saveDeal(deal);
-    if (isPpcLead(lead)) await deleteWordPressLead(lead);
-    setDeals((prev) => [deal, ...prev]);
-    await removeLeads([lead]);
+    if (problems.length) {
+      const skipped =
+        group.length > 1
+          ? `${moved.length ? "These weren't added" : "Nothing was added"}:\n\n${problems.join("\n")}`
+          : `${problems[0]} It wasn't added to CRM.`;
+      alert(skipped);
+    }
+    if (!newDeals.length) return;
+
+    await Promise.all(newDeals.map((deal) => saveDeal(deal)));
+    await Promise.all(
+      moved.filter(isPpcLead).map((property) => deleteWordPressLead(property)),
+    );
+    setDeals((prev) => [...newDeals, ...prev]);
+    await removeLeads(moved);
     setActiveView("dashboard");
   }
 
