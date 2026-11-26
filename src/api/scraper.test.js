@@ -5,6 +5,7 @@ import {
   extractJson,
   missingScraperKey,
   ogImageFromHtml,
+  isOutOfCredits,
   resetScraperState,
   scrapeHtml,
 } from "../../api/_lib/scraper.js";
@@ -131,6 +132,42 @@ describe("scraper", () => {
     expect(await Promise.all(pages.map((p) => scrapeHtml(p, ALL)))).toEqual(
       pages.map((p) => `<html>${p}</html>`),
     );
+  });
+
+  it("knows each scraper's ways of saying it's out of credits", () => {
+    for (const message of [
+      "Insufficient credits to perform this request.",
+      "Payment Required: Failed to scrape URL.",
+      "You have run out of credits",
+      "Monthly quota exceeded",
+      "InsufficientBalanceError: Insufficient balance",
+      "no_credit",
+      "Credits exhausted for this billing period",
+    ]) {
+      expect(isOutOfCredits(403, message)).toBe(true);
+    }
+    expect(isOutOfCredits(402, "")).toBe(true);
+    for (const message of [
+      "Rate limit exceeded, retry after 12s",
+      "Timed out",
+      "This website is not supported",
+      "",
+    ]) {
+      expect(isOutOfCredits(500, message)).toBe(false);
+    }
+  });
+
+  it("switches on when an out-of-credits reply isn't a 402", async () => {
+    const { asked } = mockScrapers({
+      firecrawl: () =>
+        reply(403, { success: false, error: "Monthly quota exceeded" }),
+      crawl4ai: () => reply(403, { ok: false, reason: "Insufficient balance" }),
+      jina: () => reply(200, { code: 200, data: { html: "<html>jn</html>" } }),
+    });
+    expect(await scrapeHtml(PAGE, ALL)).toBe("<html>jn</html>");
+    // Both are skipped from now on, straight to Jina.
+    expect(await scrapeHtml(PAGE, ALL)).toBe("<html>jn</html>");
+    expect(asked()).toEqual(["firecrawl", "crawl4ai", "jina", "jina"]);
   });
 
   it("explains when every scraper is out of credits", async () => {

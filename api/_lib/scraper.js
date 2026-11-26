@@ -38,6 +38,15 @@ function outOfCredits(name) {
   return error;
 }
 
+// Whether a scraper's reply means its credits (or plan quota) are used up:
+// 402, or an error naming credits, balance or quota as gone, e.g.
+// "Insufficient credits", "Insufficient balance", "Monthly quota exceeded".
+const NO_CREDITS =
+  /\b(?:insufficient|no|not enough|out of|ran out of|run out of)\s+(?:\w+\s+)?(?:credits?|balance|quota)\b|\b(?:credits?|balance|quota)\s+(?:\w+\s+)?(?:exhausted|exceeded|used up|depleted|reached)\b|\bno_credits?\b|\bpayment required\b/i;
+export function isOutOfCredits(status, message) {
+  return status === 402 || NO_CREDITS.test(String(message || ""));
+}
+
 function rateLimited(name, seconds) {
   const error = errorWithStatus(
     `${NAMES[name]} is getting pages faster than its plan allows.`,
@@ -113,7 +122,7 @@ async function firecrawl(key, body) {
   });
   const data = await res.json().catch(() => ({}));
   const message = data.error || "";
-  if (res.status === 402 || /insufficient credits/i.test(message)) {
+  if (isOutOfCredits(res.status, message)) {
     throw outOfCredits("firecrawl");
   }
   if (res.status === 429 || /rate limit/i.test(message)) {
@@ -156,7 +165,14 @@ async function crawl4ai(key, path, body, timeoutMs) {
     throw err;
   });
   const data = await res.json().catch(() => ({}));
-  if (res.status === 402) throw outOfCredits("crawl4ai");
+  if (
+    isOutOfCredits(
+      res.status,
+      [data.error, data.reason, data.message].filter(Boolean).join(" "),
+    )
+  ) {
+    throw outOfCredits("crawl4ai");
+  }
   const error =
     res.status === 429
       ? rateLimited("crawl4ai", 30)
@@ -187,7 +203,9 @@ async function jina(key, url) {
     signal: AbortSignal.timeout(HTML_TIMEOUT_MS),
   });
   const data = await res.json().catch(() => ({}));
-  if (res.status === 402) throw outOfCredits("jina");
+  if (isOutOfCredits(res.status, [data.name, data.message].join(" "))) {
+    throw outOfCredits("jina");
+  }
   if (res.status === 429) throw rateLimited("jina", 30);
   if (!res.ok) {
     throw new Error(`Jina failed (${data.message || res.status})`);
