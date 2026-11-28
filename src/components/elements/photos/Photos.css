@@ -31,6 +31,17 @@
     border-style: dashed;
     font-size: 0.8125rem;
     cursor: default;
+    /* Nothing to drag: a swipe here scrolls the window. */
+    touch-action: auto;
+  }
+
+  /* On a phone the photo spans the window, so a swipe that starts on it
+     must still scroll the window: up and down scrolls, sideways drags
+     the photo's position. */
+  @media (pointer: coarse) {
+    .ddm-main-photo:not(.is-empty) {
+      touch-action: pan-y;
+    }
   }
 
   .ddm-main-photo:active {
