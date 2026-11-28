@@ -5,6 +5,7 @@ import {
   fmt,
   fmtCurrencyInput,
 } from "../fixAndFlip/fixAndFlipConfig";
+import TabReport from "../pdfExport/TabReport";
 
 const CURRENCY_FIELDS = new Set(["arv", "repairs", "wholesaleFee"]);
 
@@ -230,6 +231,65 @@ function NovationTab({ tab }) {
                 </strong>
               </div>
             </div>
+
+            <TabReport
+              filename="novation-report"
+              tagline="Novation Deal Summary"
+              verdict={{
+                label: "Offer Price",
+                value: fmt(summary.offerPrice),
+                positive: summary.offerPrice > 0,
+              }}
+              sections={[
+                {
+                  title: "Breakdown",
+                  rows: [
+                    { label: "ARV", value: fmt(summary.arv), tone: "positive" },
+                    { label: "90% of ARV", value: fmt(summary.arv * 0.9) },
+                    {
+                      label: "Repairs",
+                      value: fmt(summary.repairs),
+                      tone: "negative",
+                    },
+                    {
+                      label: "Assignment Fee",
+                      value: fmt(summary.wholesaleFee),
+                      tone: "positive",
+                    },
+                    {
+                      label: "Offer Price",
+                      value: fmt(summary.offerPrice),
+                      bold: true,
+                      tone: summary.offerPrice >= 0 ? "positive" : "negative",
+                    },
+                  ],
+                },
+                {
+                  title: "10% ARV Reserve Breakdown",
+                  rows: [
+                    {
+                      label: "Agent Commissions (6%)",
+                      value: fmt(summary.agentCommission),
+                      tone: "negative",
+                    },
+                    {
+                      label: "Buffer (3%)",
+                      value: fmt(summary.buffer),
+                      tone: "negative",
+                    },
+                    {
+                      label: "Closing Costs (1%)",
+                      value: fmt(summary.closingCosts),
+                      tone: "negative",
+                    },
+                  ],
+                },
+              ]}
+              formula={{
+                text: "Offer Price = (ARV × 90%) − Repairs − Assignment Fee",
+                calc: `(${fmt(summary.arv)} × 90%) − ${fmt(summary.repairs)} − ${fmt(summary.wholesaleFee)} = ${fmt(summary.offerPrice)}`,
+              }}
+            />
           </div>
         )}
       </section>

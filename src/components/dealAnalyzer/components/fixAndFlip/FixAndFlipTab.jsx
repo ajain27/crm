@@ -5,6 +5,7 @@ const CLOSING_COSTS_PCT = 2;
 const AGENT_COMMISSION_PCT = 3;
 import { Field, AnimatedAmount } from "../../../elements/elements";
 import FixAndFlipPieChart from "./FixAndFlipPieChart";
+import TabReport from "../pdfExport/TabReport";
 import {
   REHAB_OPTIONS,
   initialForm,
@@ -597,6 +598,115 @@ function FixAndFlipTab({ tab }) {
                 </p>
               )}
             </div>
+
+            <TabReport
+              filename="fix-and-flip-report"
+              tagline="Fix & Flip Deal Summary"
+              verdict={{
+                label: "Final Verdict",
+                value: `${summary.isDeal ? "Deal" : "No Deal"} · Net Profit ${fmt(summary.netProfit)}`,
+                positive: summary.isDeal,
+              }}
+              sections={[
+                {
+                  title: "Deal",
+                  rows: [
+                    { label: "ARV", value: fmt(summary.arv), tone: "positive" },
+                    {
+                      label: "Purchase Price",
+                      value: fmt(summary.purchasePrice),
+                    },
+                    {
+                      label: "LTV (Purchase Price ÷ ARV)",
+                      value: `${summary.ltvPct.toFixed(1)}% — ${summary.ltvQualifies ? "Qualifies for Loan" : "Does Not Qualify (LTV > 70%)"}`,
+                      tone: summary.ltvQualifies ? "positive" : "negative",
+                    },
+                    {
+                      label: "Total Rehab Cost",
+                      value: fmt(summary.totalRehab),
+                      tone: "negative",
+                    },
+                    {
+                      label: "Total Capital Needed",
+                      value: fmt(summary.totalCapital),
+                      bold: true,
+                    },
+                  ],
+                },
+                {
+                  title: "Financing",
+                  rows: [
+                    {
+                      label: "Lender Funds (90% LTC)",
+                      value: fmt(summary.lenderFunds),
+                    },
+                    {
+                      label: `Points Cost (${summary.pointsPct}%)`,
+                      value: fmt(summary.pointsCost),
+                    },
+                    {
+                      label: `Monthly Interest (Loan × ${summary.interestRatePct}% ÷ 12)`,
+                      value: fmt(summary.monthlyInterest),
+                    },
+                    {
+                      label: `Total Interest (${summary.duration} mo × monthly)`,
+                      value: fmt(summary.totalInterest),
+                    },
+                    {
+                      label: "Origination Fees",
+                      value: fmt(summary.originationFees),
+                    },
+                    { label: "Doc Fees", value: fmt(summary.legalFees) },
+                    {
+                      label: "Appraisal Fees",
+                      value: fmt(summary.appraisalFees),
+                    },
+                    { label: "Total Misc Fees", value: fmt(summary.miscFees) },
+                    {
+                      label: "Total Financing Cost",
+                      value: fmt(summary.totalFinancingCost),
+                      bold: true,
+                      tone: "negative",
+                    },
+                  ],
+                },
+                {
+                  title: "Selling & Return",
+                  rows: [
+                    {
+                      label: `Closing Costs (${CLOSING_COSTS_PCT}%)`,
+                      value: fmt(summary.closingCosts),
+                      tone: "negative",
+                    },
+                    {
+                      label: `Agent Commission (${AGENT_COMMISSION_PCT}%)`,
+                      value: fmt(summary.agentCommission),
+                      tone: "negative",
+                    },
+                    {
+                      label: "Total Out of Pocket",
+                      value: fmt(summary.outOfPocket),
+                    },
+                    {
+                      label: "Net Profit",
+                      value: fmt(summary.netProfit),
+                      bold: true,
+                      tone: summary.netProfit >= 0 ? "positive" : "negative",
+                    },
+                    {
+                      label: "ROI",
+                      value: `${summary.roi.toFixed(1)}%`,
+                      tone: summary.roi >= 0 ? "positive" : "negative",
+                    },
+                  ],
+                },
+              ]}
+              formula={{
+                text: "Net Profit = ARV − Purchase Price − Total Rehab Cost − Total Financing Cost − Closing Costs − Agent Commission",
+                calc: `${fmt(summary.arv)} − ${fmt(summary.purchasePrice)} − ${fmt(summary.totalRehab)} − ${fmt(summary.totalFinancingCost)} − ${fmt(summary.closingCosts)} − ${fmt(summary.agentCommission)} = ${fmt(summary.netProfit)}`,
+              }}
+              note={summary.notDealReason || ""}
+            />
           </div>
         )}
       </section>

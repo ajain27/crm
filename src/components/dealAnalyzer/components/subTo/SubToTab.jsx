@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Field, Select, AnimatedAmount } from "../../../elements/elements";
 import { calculateMonthlyPayment } from "../../../../utils/utils";
+import TabReport from "../pdfExport/TabReport";
 
 const initialSubToForm = {
   propertyValue: "",
@@ -632,6 +633,123 @@ function SubToTab({ tab }) {
               <span>Final Verdict</span>
               <strong>{analysisSummary.verdict}</strong>
             </div>
+
+            <TabReport
+              filename="sub-to-report"
+              tagline="Subject-To Deal Summary"
+              verdict={{
+                label: "Final Verdict",
+                value: `${analysisSummary.verdict} · Cash on Cash ${analysisSummary.cashOnCashValue}`,
+                positive: analysisSummary.verdict === "DEAL",
+              }}
+              sections={[
+                {
+                  title: "Entry",
+                  rows: [
+                    {
+                      label: "Property Value",
+                      value: analysisSummary.propertyValue,
+                    },
+                    { label: "Entry Fee", value: analysisSummary.entryFee },
+                    {
+                      label: "Rehab Cost",
+                      value: analysisSummary.rehabCost,
+                      tone: "negative",
+                    },
+                    {
+                      label: "Arrears",
+                      value:
+                        analysisSummary.hasArrears === "Yes"
+                          ? analysisSummary.arrearsAmount
+                          : "None",
+                      tone:
+                        analysisSummary.hasArrears === "Yes"
+                          ? "negative"
+                          : undefined,
+                    },
+                    {
+                      label: "Total Entry",
+                      value: analysisSummary.totalEntryAmount,
+                      bold: true,
+                      tone: "negative",
+                    },
+                  ],
+                },
+                {
+                  title: "Existing Loan",
+                  rows: [
+                    {
+                      label: "Mortgage Balance",
+                      value: analysisSummary.mortgageBalance,
+                    },
+                    {
+                      label: "Interest",
+                      value: analysisSummary.interest,
+                      tone:
+                        parseFloat(analysisSummary.interest) < 5
+                          ? "positive"
+                          : "negative",
+                    },
+                    {
+                      label: "Term",
+                      value: `${analysisSummary.termYears} years (${analysisSummary.totalMonths} months)`,
+                    },
+                    {
+                      label: "Principal + Interest (/mo)",
+                      value: formatAmount(
+                        analysisSummary.raw.principalAndInterest,
+                      ),
+                    },
+                    {
+                      label: "Principal / Interest Split",
+                      value: analysisSummary.principalBreakdown || null,
+                    },
+                    { label: "Tax (/yr)", value: analysisSummary.tax },
+                    {
+                      label: "Insurance (/yr)",
+                      value: analysisSummary.insurance,
+                    },
+                    {
+                      label: "Total PITI (/mo)",
+                      value: formatAmount(analysisSummary.raw.piti),
+                      bold: true,
+                      tone: "negative",
+                    },
+                  ],
+                },
+                {
+                  title: "Return",
+                  rows: [
+                    {
+                      label: "Rent Estimate (/mo)",
+                      value: analysisSummary.rentEstimate,
+                    },
+                    {
+                      label: "Cash Flow (/mo)",
+                      value: formatAmount(analysisSummary.raw.cashFlow),
+                      tone:
+                        analysisSummary.raw.cashFlow >= 0
+                          ? "positive"
+                          : "negative",
+                    },
+                    {
+                      label: "Cash on Cash Return",
+                      value: analysisSummary.cashOnCashValue,
+                      bold: true,
+                      tone:
+                        analysisSummary.cashOnCashReturn != null &&
+                        analysisSummary.cashOnCashReturn >= 8
+                          ? "positive"
+                          : "negative",
+                    },
+                  ],
+                },
+              ]}
+              formula={{
+                text: "Cash Flow = Monthly Rent − (Principal + Interest + Monthly Tax + Monthly Insurance); Cash on Cash = (Cash Flow × 12) ÷ Total Entry. A deal needs positive cash flow and at least 8% cash on cash.",
+                calc: `(${formatAmount(analysisSummary.raw.cashFlow)} × 12) ÷ ${analysisSummary.totalEntryAmount} = ${analysisSummary.cashOnCashValue}`,
+              }}
+            />
           </div>
         ) : null}
       </section>

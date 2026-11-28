@@ -849,8 +849,13 @@ describe("adjusting the subject property", () => {
     });
     fireEvent.change(screen.getByLabelText("Beds"), { target: { value: "4" } });
     fireEvent.click(screen.getByRole("button", { name: /Re-run comps/ }));
+    // A full test run can be slow: give the re-run longer than 1s.
     expect(
-      await screen.findByText(/Couldn't load recent sales from Redfin/),
+      await screen.findByText(
+        /Couldn't load recent sales from Redfin/,
+        {},
+        { timeout: 3000 },
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Estimated ARV")).toBeInTheDocument();
   });

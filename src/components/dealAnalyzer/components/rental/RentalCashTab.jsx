@@ -11,6 +11,8 @@ import {
   SellerCreditCarrybackSummaryRow,
 } from "./SellerCreditCarryback";
 import RentalPieChart from "./RentalPieChart";
+import TabReport from "../pdfExport/TabReport";
+import { rentalReportProps } from "./rentalReport";
 import {
   HOA_FORM_DEFAULTS,
   HoaFields,
@@ -523,6 +525,12 @@ function RentalCashTab() {
               {fmt(summary.annualCashFlow)}
             </span>
           </div>
+          <TabReport
+            {...rentalReportProps(summary, {
+              heloc: false,
+              propMgmtPct: PROP_MGMT_PCT,
+            })}
+          />
         </div>
       )}
     </section>

@@ -17,6 +17,7 @@ import {
   PropertyHistory,
 } from "../../../propertyHistory/PropertyHistoryViews";
 import { historyToSave } from "../../../propertyHistory/propertyHistory";
+import TabReport from "../pdfExport/TabReport";
 
 // v4: the upper-quartile ARV, distressed sales left out, and the
 // property's history. Searches saved under older keys (looser comps, the
@@ -183,6 +184,79 @@ function deleteFromCache(searchAddress) {
 }
 
 const fmt = (n) => (n != null ? `$${Math.round(n).toLocaleString()}` : "—");
+
+// "3 bd · 2 ba · 1,450 sq ft · built 1962" — whichever facts it has.
+function factsText(p) {
+  return [
+    p.bedrooms != null && `${p.bedrooms} bd`,
+    p.bathrooms != null && `${p.bathrooms} ba`,
+    p.squareFootage && `${p.squareFootage.toLocaleString()} sq ft`,
+    p.lotSqft && `${p.lotSqft.toLocaleString()} sq ft lot`,
+    p.yearBuilt && `built ${p.yearBuilt}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+// The Generate Report props (see TabReport) for a comps search: the
+// subject, its ARV and estimates, and every comp (not just this page's).
+export function compsReportProps(result, subject, address) {
+  const comps = result.comparables || [];
+  return {
+    filename: "comps-report",
+    tagline: "Comparable Sales Report",
+    verdict: {
+      label: "Estimated ARV",
+      value: fmt(result.price),
+      positive: result.price > 0,
+    },
+    sections: [
+      {
+        title: "Property",
+        rows: [
+          { label: "Address", value: subject?.formattedAddress || address },
+          {
+            label: "Facts",
+            value: subject ? factsText(subject) || null : null,
+          },
+          {
+            label: "Rent Estimate",
+            value:
+              result.rentEstimate != null
+                ? `${fmt(result.rentEstimate)}/mo`
+                : null,
+          },
+          {
+            label: "Online Value Estimate",
+            value:
+              result.valueEstimate != null ? fmt(result.valueEstimate) : null,
+          },
+        ],
+      },
+      {
+        title: `Comparable Sales (${comps.length})`,
+        rows: comps.map((c, i) => ({
+          label: `${i + 1}. ${c.formattedAddress}`,
+          value: [
+            fmt(c.price),
+            [c.status, c.soldDate].filter(Boolean).join(" "),
+            factsText(c),
+            typeof c.distance === "number" ? `${c.distance} mi` : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        })),
+      },
+    ],
+    formula: result.criteria
+      ? {
+          text: `Rules: ${compsCriteriaText(result)}`,
+          calc: compsStatsText(result),
+        }
+      : null,
+    note: result.summary || "",
+  };
+}
 
 const statusColor = (s) => {
   if (!s) return "var(--muted)";
@@ -709,6 +783,8 @@ function FindCompsTab({ tab }) {
                 <PriceHistory history={result.history} />
               </div>
             )}
+
+            <TabReport {...compsReportProps(result, sp, address)} />
           </div>
         )}
       </section>
