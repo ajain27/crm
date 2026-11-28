@@ -35,6 +35,7 @@ import {
   keywordLabel,
   money,
   pricePerSqft,
+  uniqueListings,
   visibleListings,
 } from "./marketDeals";
 import "./OnMarketDeals.css";
@@ -297,6 +298,8 @@ export default function OnMarketDeals() {
   const [comps, setComps] = useState(saved.comps || {});
   const [compsLoadingId, setCompsLoadingId] = useState(null);
   const [compsError, setCompsError] = useState("");
+  // Letters of intent sent, by listing: { id: { sentAt, toEmail, price } }.
+  const [lois, setLois] = useState(saved.lois || {});
 
   function persist(next) {
     save({
@@ -308,8 +311,15 @@ export default function OnMarketDeals() {
       details,
       comps,
       favorites,
+      lois,
       ...next,
     });
+  }
+
+  function recordLoi(listing, sent) {
+    const next = { ...lois, [listing.id]: sent };
+    setLois(next);
+    persist({ lois: next });
   }
 
   // Runs comps on the home (the Find Comps API) for its ARV and
@@ -513,9 +523,11 @@ export default function OnMarketDeals() {
   const shownCities = cities.filter((c) => results[cityKey(c)]);
   const favoriteList = Object.values(favorites);
   const showingFavorites = cityFilter === "favorites";
-  const pooled = shownCities
-    .filter((c) => cityFilter === "all" || cityKey(c) === cityFilter)
-    .flatMap((c) => results[cityKey(c)].listings);
+  const pooled = uniqueListings(
+    shownCities
+      .filter((c) => cityFilter === "all" || cityKey(c) === cityFilter)
+      .flatMap((c) => results[cityKey(c)].listings),
+  );
   // Favorites show whatever their days on market.
   const listings = showingFavorites
     ? [...favoriteList].sort(SORTS[sort]?.compare || SORTS.longest.compare)
@@ -766,7 +778,16 @@ export default function OnMarketDeals() {
               >
                 All
                 <span className="omd-tab-count">
-                  {shownCities.reduce((n, c) => n + countFor(c), 0)}
+                  {
+                    visibleListings(
+                      uniqueListings(
+                        shownCities.flatMap(
+                          (c) => results[cityKey(c)]?.listings || [],
+                        ),
+                      ),
+                      { minDays, sort },
+                    ).length
+                  }
                 </span>
               </button>
               {shownCities.map((c) => (
@@ -872,6 +893,8 @@ export default function OnMarketDeals() {
           }}
           favorite={Boolean(favorites[openListing.id])}
           onToggleFavorite={() => toggleFavorite(openListing)}
+          loiSent={lois[openListing.id] || null}
+          onLoiSent={(sent) => recordLoi(openListing, sent)}
           onClose={() => setOpenId(null)}
         />
       )}

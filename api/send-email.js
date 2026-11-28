@@ -23,8 +23,16 @@ export default async function handler(req, res) {
     });
   }
 
-  const { toEmail, subject, textContent, htmlContent, fromName, attachments } =
-    req.body || {};
+  const {
+    toEmail,
+    subject,
+    textContent,
+    htmlContent,
+    fromName,
+    attachments,
+    replyTo,
+    cc,
+  } = req.body || {};
   if (!toEmail || !subject || !textContent) {
     return res.status(400).json({
       error: "toEmail, subject, and textContent are required.",
@@ -54,6 +62,10 @@ export default async function handler(req, res) {
       subject,
       text: textContent,
       ...(htmlContent ? { html: htmlContent } : {}),
+      // A letter sent for a user (e.g. an LOI): the agent's reply goes to
+      // them, and they get a copy.
+      ...(replyTo ? { replyTo: String(replyTo) } : {}),
+      ...(cc ? { cc: String(cc) } : {}),
       ...(files.length ? { attachments: files } : {}),
     });
     return res

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ChartColumn,
+  FileSignature,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -25,6 +26,7 @@ import {
   pricePerSqft,
 } from "./marketDeals";
 import { ActionButton } from "../elements/ModalActions";
+import LoiModal from "./loi/LoiModal";
 
 // "248-765-9901" → "tel:+12487659901".
 function telHref(phone) {
@@ -292,8 +294,11 @@ export default function ListingDetailsModal({
   compsState,
   favorite,
   onToggleFavorite,
+  loiSent,
+  onLoiSent,
   onClose,
 }) {
+  const [loiOpen, setLoiOpen] = useState(false);
   if (!l) return null;
   const { details, loading, error, retry } = detailsState;
   const under = belowZestimate(l);
@@ -405,7 +410,25 @@ export default function ListingDetailsModal({
               onToggle={onToggleFavorite}
               withLabel
             />
+            <ActionButton
+              icon={FileSignature}
+              label={loiSent ? "Send LOI again" : "Send LOI"}
+              tone="primary"
+              onClick={() => setLoiOpen(true)}
+              title="Email the listing agent a letter of intent to buy this home"
+            />
           </div>
+          {loiSent && (
+            <div className="omd-loi-sent">
+              LOI for {loiSent.price || "this home"} sent to {loiSent.toEmail}{" "}
+              on{" "}
+              {new Date(loiSent.sentAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </div>
+          )}
           {l.zestimate > 0 && (
             <div className="omd-zestimate">
               Zestimate {money(l.zestimate)}
@@ -462,6 +485,14 @@ export default function ListingDetailsModal({
 
         <CompsSection listing={l} compsState={compsState} />
       </div>
+      {loiOpen && (
+        <LoiModal
+          listing={l}
+          contacts={details?.contacts || []}
+          onClose={() => setLoiOpen(false)}
+          onSent={onLoiSent}
+        />
+      )}
     </Modal>
   );
 }

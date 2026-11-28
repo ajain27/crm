@@ -98,6 +98,30 @@ export function combineCityResults(byKeyword, redfinHomes = []) {
   return [...byId.values()];
 }
 
+// Several cities' listings as one list: a home two searches both found
+// (overlapping cities, a city and a ZIP in it) once, with the keywords
+// either matched.
+export function uniqueListings(listings) {
+  const byId = new Map();
+  listings.forEach((l) => {
+    const existing = byId.get(l.id);
+    if (!existing) {
+      byId.set(l.id, l);
+      return;
+    }
+    const missing = (l.keywords || []).filter(
+      (k) => !existing.keywords?.includes(k),
+    );
+    if (missing.length) {
+      byId.set(l.id, {
+        ...existing,
+        keywords: [...(existing.keywords || []), ...missing],
+      });
+    }
+  });
+  return [...byId.values()];
+}
+
 export const pricePerSqft = (l) =>
   l.price > 0 && l.sqft > 0 ? l.price / l.sqft : null;
 
